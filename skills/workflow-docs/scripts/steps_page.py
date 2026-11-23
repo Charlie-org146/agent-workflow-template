@@ -36,6 +36,7 @@ PAGE = os.path.join("docs", "wiki", "Steps.md")
 
 
 def steps_module():
+    sys.dont_write_bytecode = True
     here = os.path.dirname(os.path.abspath(__file__))
     for path in (os.path.join(here, "..", ".."), os.path.join(here, "..", "..", "..", "shared")):
         if os.path.exists(os.path.join(path, "steps.py")):
@@ -99,9 +100,11 @@ def cmd_file(args):
 
 def cmd_show(args):
     st = steps_module()
-    record = json.load(open(os.path.join(args.root, ".git", "loop", "runs", args.slug + ".json")))
+    record = records(os.path.abspath(args.root)).get(args.slug)
+    if record is None:
+        sys.exit("REFUSED: no run record for %s here. Fix: run it from the repository the goal belongs to." % args.slug)
     for row in st.entries(record):
-        print("%-16s %-8s %4dm  tokens %s  %s" % (row["step"], row["state"], row["minutes"], row["tokens"], row["result"]))
+        print("%-16s %-8s %4dm  tokens %s  start %s  end %s  %s" % (row["step"], row["state"], row["minutes"], row["tokens"], row["start"] or "-", row["end"] or "-", row["result"]))
     return 0
 
 

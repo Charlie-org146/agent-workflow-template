@@ -8,6 +8,7 @@ import sys
 def steps():
     """The shared steps.py by name, found in skills/ (repo) or shared/ (pack); a named refusal when it is missing."""
     if "steps" not in sys.modules:
+        sys.dont_write_bytecode = True  # the one shared file sits where a cache folder would break the package check
         here = os.path.dirname(os.path.abspath(__file__))
         for path in (os.path.join(here, "..", ".."), os.path.join(here, "..", "..", "..", "shared")):
             if os.path.exists(os.path.join(path, "steps.py")):

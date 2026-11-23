@@ -166,11 +166,12 @@ def add_cause(state, step, text=""):
     """Record one structured cause {step, key}: the key is the step plus the CODE a refusal ends with, else ':failed'. No free text
     is kept. True when the key is new."""
     found = CODE.search(text or "")
-    key = "%s:%s" % (name_of(step) or "-", found.group(1) if found else "failed")
+    name = name_of(step)
+    key = "%s:%s" % (name if name in STEPS else STEPS[0], found.group(1) if found else "failed")  # a stop before any step has run belongs to freeze
     held = state.setdefault("causes", [])
     if not KEY.match(key) or any(item.get("key") == key for item in held):
         return False
-    held.append({"step": name_of(step), "key": key})
+    held.append({"step": key.split(":")[0], "key": key})
     return True
 
 

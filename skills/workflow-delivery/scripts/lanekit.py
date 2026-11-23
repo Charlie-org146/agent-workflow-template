@@ -414,9 +414,8 @@ def hit(runs, slug, step, kind, limit, left):
         return
     kept = [h for h in state.get("budget_hits") or [] if not (h.get("step") == step and h.get("kind") == kind)]
     state["budget_hits"] = kept + [{"step": step, "kind": kind, "minutes": limit, "left": left or "not stated"}]
-    with tempfile.NamedTemporaryFile("w", dir=runs, delete=False, suffix=".tmp") as handle:
-        json.dump(state, handle, indent=2)
-    os.replace(handle.name, path)
+    import moved
+    moved.steps().commit(path, state, state.get("updated") or "1970-01-01T00:00:00Z")
 
 
 def reached(state, step):

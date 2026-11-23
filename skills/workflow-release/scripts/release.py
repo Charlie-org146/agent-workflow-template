@@ -341,12 +341,12 @@ def cmd_cut(args):
     state["step"] = "release"
     save(state, "cutting %s from %s" % (tag, old_version))
     open(vpath, "w").write(version + "\n")
-    open(cpath, "w").write(changelog_text(old, version, day, bullets, steps))
+    open(cpath, "w").write(changelog_text(old, version, day, bullets, state["release_steps"]))
     if run(["git", "add", "--"] + files, cwd).returncode or run(["git", "commit", "-m", message, "--"] + files, cwd).returncode:
         restore(cwd, files, before, message)
         sys.exit("REFUSED: could not commit the release files.")
     text = "\n".join("- " + item for item in bullets) + "\n\n## How to verify\n\n%s\n\n## Documentation\n\n%s\n\nPull request: %s\n" % (
-        steps, "\n\n".join(docs_lines(cwd, cfg, base)), state.get("pr", "")) + review.left_text(left)
+        state["release_steps"], "\n\n".join(docs_lines(cwd, cfg, base)), state.get("pr", "")) + review.left_text(left)
     import autorelease
     stop = autorelease.private_check(cwd, base, {"release notes": text}, bool(git("ls-remote", "origin", branch, cwd=cwd, check=False)))
     if stop:
