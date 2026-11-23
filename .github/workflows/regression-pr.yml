@@ -28,11 +28,12 @@ jobs:
           python-version: "3.12"
       - uses: actions/cache/restore@v4
         with:
-          path: ${{ runner.temp }}/t.tsv
+          path: all.tsv
           key: row-times-${{ github.sha }}
           restore-keys: row-times-
       - run: |
           git diff --name-only origin/main...HEAD | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; >>${{ runner.temp }}/t.tsv; exit 0; }
+          touch all.tsv; cat .github/workflows/row-times.tsv all.tsv >${{ runner.temp }}/t.tsv 2>/dev/null||:; rm all.tsv  # o852: committed times, the cache's over them
           R="python3 skills/workflow-regression/scripts/regression.py run nightly --reuse --tier goal"
           B=120; git diff --name-only origin/main...HEAD | grep -qE '^[.]loop/regression(-known)?[.]tsv$' && B=-1  # rows changed: no budget, nothing LEFT
           [ "${{ matrix.shard }}" != tree ] || exec $R --tree --timeout 200
