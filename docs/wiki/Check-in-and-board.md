@@ -56,11 +56,11 @@ None
 
 - CHK-2: moved to CHK-1
 - CHK-3: moved to CHK-1
-- CHK-4: moved to HLT-7
+- CHK-4: moved to DEL-17
 - CHK-5: moved to CHK-1
 - CHK-6: moved to CHK-1
 - CHK-7: moved to OPS-1
-- CHK-8: moved to HLT-7
+- CHK-8: moved to DEL-17
 - CHK-9: moved to CHK-1
 
 ### CHK-1

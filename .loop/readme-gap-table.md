@@ -207,8 +207,8 @@ The run: 1,055 passed, 81 failed, 30 known, 106 skipped of 1,273 rows (28m 29s; 
 | REG-7.3 | REG-14 | partial | Caps: settings.py:61-62; refusal at qa: delivery/role.py:253-275 (net rows, base branch cap); rows test-caps-own-cap, test-caps-consolidate-allowed... | suite time is the slowest recorded full run (role.py:268, lean.py:141), not the latest full run on main | - | G11 |
 | HLT-7.1 | HLT-7 | done | rules.py:314-316 check-time (60 s); row hlt7-fast-check | - | - | - |
 | HLT-7.2 | DOC-12 | done | row docs-check-speed (DOC-12, under 30 s on this repo) | - | - | - |
-| HLT-7.3 | CHK-8 | done | row mon9-board-fast (CHK-8); toy of 12 goals and a slow gh, not this repo's own board | - | - | - |
-| HLT-7.4 | AUT-7 | done | rounds.py:27 BUDGET_MINUTES=45, over flag rounds.py:220; rows aut-email-rounds, aut7-budget-agrees | - | - | - |
+| HLT-7.3 | CHK-8 | done | row grd8-silent-worker (CHK-8; its mon9 case folded in); toy of 12 goals and a slow gh, not this repo's own board | - | - | - |
+| HLT-7.4 | AUT-7 | done | rounds.py:27 BUDGET_MINUTES=45, over flag rounds.py:220; rows aut-email-rounds, budgets-agree (aut7-budget-agrees folded in) | - | - | - |
 | HLT-7.5 | CHK-4 | done* | govern_hook.py:284 quiet_decide (QUIET_MINUTES 120, no model turn), checkin.py:311 op_append to o... | no row names CHK-4 (page: not enforced) | 5220 | - |
 | GRD-8.1 | GRD-15 | done | guards.py:131 add_tokens; proctree.py:289 add reads the session transcript; row token-diet-step-t... | - | 5223 | - |
 | GRD-8.2 | GRD-15 | done | fit.py:109 "tokens unread"; board_lines.py:332; rows tokens-unread-shown, grd2-tokens-unknown (pa... | - | 5223 | - |

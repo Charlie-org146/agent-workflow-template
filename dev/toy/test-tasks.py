@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-monitoring/scripts/board_lines.py skills/workflow-monitoring/scripts/live_board.py skills/workflow-monitoring/scripts/checkin.py
+# reads: dev/toy/approved-row-changes.tsv skills/workflow-monitoring/scripts/board_lines.py skills/workflow-monitoring/scripts/live_board.py skills/workflow-monitoring/scripts/checkin.py
 """DEL-23: tasks. Each brief under .loop/tasks/ becomes one line of the Tasks list on the check-in and the live board, by name, with its
 state (queued, running, waiting, done or replaced), its goals and progress, and its ETA. A fixture repo holds toy briefs and fake run
 records; nothing here touches the real .git/loop, a network or a held toy."""
@@ -220,6 +220,17 @@ def git(*args):
     return subprocess.run(["git", *args], cwd=top, capture_output=True, text=True)
 
 
+def unapproved(diff_rows, ok):
+    """The changed or removed existing rows in a diff whose id the approved list does not name."""
+    return [l for l in diff_rows if l.startswith("-") and not l.startswith("---") and l[1:].split("\t")[0] not in ok]
+
+
+# the rows an approved record names (owner words or an operation ruling), each with its record: dev/toy/approved-row-changes.tsv
+listed = os.path.join(here, "approved-row-changes.tsv")
+approved = [l.split("\t") for l in open(listed, encoding="utf-8").read().splitlines() if l.strip() and not l.startswith("#")] if os.path.exists(listed) else []
+ok = {a[0] for a in approved}
+check(all(len(a) == 3 and a[1].strip() and a[2].strip() for a in approved), "every approved row change names its record and its reason")
+check(unapproved(["-some-other-row\tland\tcommand"], ok) != [] and unapproved(["--- a/.loop/regression.tsv"], ok) == [], "negative control: a changed or removed row the list does not name still fails")
 base = git("merge-base", "origin/main", "HEAD")
 added = ""
 if base.returncode:
@@ -227,7 +238,7 @@ if base.returncode:
 else:
     sha = base.stdout.strip()
     rows = git("diff", sha, "--", ".loop/regression.tsv").stdout.splitlines()  # the working tree against the merge base
-    check(not [l for l in rows if l.startswith("-") and not l.startswith("---")], "no existing regression row is changed or removed")
+    check(not unapproved(rows, ok), "no existing regression row is changed or removed except the rows an approved record names (%d listed)" % len(ok))
     added = git("diff", "--name-status", "--diff-filter=A", sha, "HEAD", "--", "skills").stdout + git("ls-files", "-o", "--exclude-standard", "--", "skills").stdout
 ALLOWED = ("skills/workflow-monitoring/scripts/board_tasks.py",  # owner o788: the file this goal may add under skills/
            "skills/workflow-release/scripts/brief.py")  # o719 and TD721: the implementation's one file (o718)

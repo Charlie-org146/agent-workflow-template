@@ -22,7 +22,7 @@
 </style>
 <defs><marker id="ah" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" class="d-ah"/></marker></defs>
 <rect width="420" height="266" class="d-bg"/>
-<text x="12" y="24" class="d-t">Principle 5: fast, cheap and small</text>
+<text x="12" y="24" class="d-t">Principle 3: fast</text>
 <rect x="10" y="38" width="400" height="62" rx="8" class="d-find" stroke-width="1.2"/>
 <text x="210.0" y="58.0" text-anchor="middle" class="d-b">It breaks when</text>
 <text x="210.0" y="73.0" text-anchor="middle" class="d-s">A goal or test run goes past its budget, or a</text>
