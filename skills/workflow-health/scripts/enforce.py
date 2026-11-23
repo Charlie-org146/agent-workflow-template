@@ -252,7 +252,7 @@ def docs_gaps(root, g):
     for line in out:
         kind, _, rest = line.partition(" ")
         page, _, detail = rest.partition(": ")
-        if kind in ("LAG", "SKIPPED", "CHANGED", "CAP") or line.startswith(("DOCS OK", "NO PAGES")) or "ENTRY_" in detail or page in ("Settings", "Automation", "README line"):
+        if kind in ("LAG", "SKIPPED", "CHANGED", "CAP", "NOTE") or line.startswith(("DOCS OK", "NO PAGES")) or "ENTRY_" in detail or page in ("Settings", "Automation", "README line"):
             continue
         what, _, fix = detail.partition(". Fix: ")
         g("MIG_RUNBOOK" if "Runbook: DOC-16" in detail else "MIG_FORMAT", clean(page), clean(what), clean(fix) or tool("workflow-docs", "docs.py", "audit"))

@@ -96,7 +96,7 @@ eta = fields["eta"]
 check(isinstance(eta.get("minutes"), int) and eta["minutes"] >= 30 and eta["minutes"] % 5 == 0 and eta.get("basis"),
       "freezing a goal records a hard ETA in whole minutes (at least 30, to 5) with its basis: %s" % eta)
 check(eta["minutes"] == 240 and "time budget" in eta["basis"], "with no finished goals to estimate from, the ETA is the time budget")
-check("- ETA: %d active minutes" % eta["minutes"] in proctree.TEMPLATE.format(goal="g", slug="x", touches="t", eta=fit.eta_line(fields), done="1. one"),
+check("- ETA: %d active minutes" % eta["minutes"] in proctree.TEMPLATE.format(goal="g", slug="x", touches="t", eta=fit.eta_line(fields), task="t", release="none", done="1. one"),
       "the goal file holds an ETA line next to its done lines")
 check(auto.eta_margin({}) == 1.25, "the margin over the estimate is 25 percent")
 

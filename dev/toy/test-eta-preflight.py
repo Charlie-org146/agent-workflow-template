@@ -168,7 +168,7 @@ lines = ["1. one"]
 def goal_state(slug, **more):
     """A goal at pr with a real goal file (goal.py checks the frozen done lines) and its run record."""
     os.makedirs(os.path.dirname(g.goal_file(slug)), exist_ok=True)
-    open(g.goal_file(slug), "w").write(g.TEMPLATE.format(goal="toy", slug=slug, touches="docs", eta="60 active minutes", done="\n".join(lines)))
+    open(g.goal_file(slug), "w").write(g.TEMPLATE.format(goal="toy", slug=slug, touches="docs", eta="60 active minutes", task="t", release="none", done="\n".join(lines)))
     write(slug, dict({"status": "running", "step": "pr", "flow": {s: "done" for s in g.FLOW}, "log": [ago(5) + " start pr"], "touches": ["docs"], "goal": "toy",
                       "branch": "loop/" + slug, "done_sha": g.done_sha(lines), "eta": run["eta"], "preflight": {"items": freeze()}}, **more))
 
