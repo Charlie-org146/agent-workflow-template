@@ -59,8 +59,8 @@ def git(*args):
 with open(os.path.join(repo, ".loop", "config.json"), "w") as handle:
     json.dump({"min_free_memory_gb": 0, "base": "main"}, handle)
 with open(os.path.join(repo, skip.WORKFLOW), "w") as handle:
-    handle.write("name: regression-pr\njobs:\n  shard:\n    if: github.event_name != 'merge_group'\n    runs-on: ubuntu-latest\n  affected:\n    needs: shard\n    if: always() && github.event_name != 'merge_group'\n"
-                 "  small:\n    if: github.event_name == 'merge_group'\n")
+    handle.write("name: regression-pr\njobs:\n  shard:\n    if: github.event_name != 'merge_group'\n    runs-on: ubuntu-latest\n  affected:\n    needs: shard\n    if: always() && github.event_name != 'merge_group'\n    runs-on: ubuntu-latest\n"
+                 "  small:\n    if: github.event_name == 'merge_group'\n    runs-on: ubuntu-latest\n")
 git("init", "-q", "-b", "main")
 git("add", "-A")
 git("commit", "-qm", "one")
@@ -132,8 +132,19 @@ skip.subprocess.run = fake_gh(QUEUED)
 check(skip.accepts(runs, SLUG, "ship", head1) == "", "regression-pr's shard still queued beside an unrelated green check: refused")
 skip.subprocess.run = fake_gh(SHARDS)
 check(skip.accepts(runs, SLUG, "ship", head1) == "", "regression-pr's shards green but its other pull-request job missing: refused")
+WORKFLOW_TEXT = ("name: regression-pr" + chr(10) + "jobs:" + chr(10) + "  shard:" + chr(10) + "    if: github.event_name != 'merge_group'" + chr(10) + "    runs-on: ubuntu-latest" + chr(10)
+                 + "  affected:" + chr(10) + "    runs-on: ubuntu-latest" + chr(10) + "  small:" + chr(10) + "    if: github.event_name == 'merge_group'" + chr(10) + "    runs-on: ubuntu-latest" + chr(10))
+check(skip.required_jobs(WORKFLOW_TEXT) == ["shard", "affected"], "required_jobs: the pull-request jobs of the workflow text, not the merge-queue job")
+check(skip.required_jobs("") == [] and skip.required_jobs("name: x" + chr(10)) == [], "required_jobs: an empty or job-less text gives no jobs, so accepts refuses")
+short = WORKFLOW_TEXT.replace("  affected:", '  "affected":')
+check(skip.required_jobs(short) == [], "required_jobs: a parse that missed a job id (counts differ) gives no jobs, so accepts refuses")
 skip.subprocess.run = fake_gh(GREEN)
 check(skip.accepts(runs, SLUG, "ship", head1) == head1 and role.need_lane(runs, SLUG, reply, "ship") is None and role.need_lane(runs, SLUG, reply, "qa") is None, "every regression-pr job (41 runs here, more than one page) is green on this exact head: qa and ship accept the skip, and role.py is unchanged")
+with open(os.path.join(repo, skip.WORKFLOW), "w") as handle:
+    handle.write("name: regression-pr" + chr(10) + "jobs:" + chr(10) + "  small:" + chr(10) + "    runs-on: ubuntu-latest" + chr(10))
+check(skip.accepts(runs, SLUG, "ship", head1) == head1, "accepts reads the workflow at the head, not the working tree: an edited working copy changes nothing")
+with open(os.path.join(repo, skip.WORKFLOW), "w") as handle:
+    handle.write(git("show", head1 + ":" + skip.WORKFLOW) + chr(10))
 check("--paginate" in asked[-1] and not any("merge_group" in a for a in asked[-1]), "the check-runs call is paginated")
 skip.subprocess.run = fake_gh(FAIL)
 check(skip.accepts(runs, SLUG, "ship", head1) == "" and (role.need_lane(runs, SLUG, reply, "ship") or ("",) * 3)[2] == "LANE_MISSING", "a check pending or failed on that head: ship refuses the skip")
