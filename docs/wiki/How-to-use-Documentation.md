@@ -5,7 +5,7 @@
 
 Keeps the wiki and README in one enforced format (feature pages are PRDs with no Usage section;.
 
-`docs.py check` also fails a stale `docs/wiki/Steps.md`; regenerate it with `python3 skills/workflow-docs/scripts/steps_page.py render --write`.
+`docs.py check` also fails a stale `docs/wiki/Steps.md`; regenerate it with `python3 skills/workflow-docs/scripts/steps_page.py render --write`; `steps_page.py show SLUG` prints a goal's step table.
 
 ### What's delivered
 

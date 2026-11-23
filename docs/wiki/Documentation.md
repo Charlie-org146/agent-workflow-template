@@ -203,13 +203,13 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 ### Non-functional
 
 None
-- `docs.py check` fails a Steps page that differs from `steps.py`; `steps_page.py render` writes it and `steps_page.py show SLUG` prints a goal's step table.
 
 ## Non-goals
 - It never writes or reviews the owner's PRD for them: only the owner marks a PRD or a requirement Reviewed.
 - It keeps docs only in the repo's wiki folder and its GitHub wiki, nowhere else.
 - It never writes to an external document without an accepted delta, and never chooses which PRDs opt in: the owner sets a page's PRD source.
 - Syncing the README or Google Docs from an external source: left for later goals. (Milestone sync is INT-8.)
+- It does not write the Steps page by hand: `steps_page.py render` generates it from the code and `docs.py check` fails a stale one.
 
 ## Success metrics
 - The docs check prints DOCS OK on the main branch after every merge, and a link-form PRD page never holds a merge on the unmigrated-Revisions note.

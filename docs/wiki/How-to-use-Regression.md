@@ -5,7 +5,7 @@
 
 Keeps every requirement and defect tied to a test that runs, and shows the results, including red proof recorded from another runner or owed to another machine, without blocking a goal.
 
-The generated `regression.yml` summary job carries one added step, "Preview the step causes", which runs `steps_page.py file` when the script is in the repo and says so when it is not.
+The generated `regression.yml` (written only by `regression.py workflow`) summary job carries one added step, "Preview the step causes", which runs `steps_page.py file` when the script is in the repo and says so when it is not.
 
 ### What's delivered
 

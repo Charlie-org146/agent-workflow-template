@@ -50,12 +50,12 @@ None
 - It never commits private settings or values.
 - An update never overwrites a repo's own config, requirements, docs or local settings.
 - It doesn't rewrite a page that has its own sections; that page is listed for a person.
+- It does not copy the step list into every skill: `update.py` ships the one `steps.py` as `shared/steps.py`.
 
 ## Success metrics
 - One command adopts a fresh or existing repo with no blocking step, and the health check run right after it is green or names every gap with its fix.
 - A new session in an adopted repo can name every feature and how to use it from the entry point alone.
 - A template update reaches every governed repo without losing any repo setting or page.
-- `update.py` keeps `shared/steps.py` when it updates a pack, so every skill finds the one step list.
 
 ## Revisions
 
