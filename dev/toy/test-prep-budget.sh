@@ -152,7 +152,7 @@ json.dump({"slug": "h", "status": "running"}, open(sys.argv[2] + "/h.json", "w")
 lanekit.hit(sys.argv[2], "h", "pr", "prep", 0, "waiting for a slot ran long (prep 0s, planning 1s, slot wait 2s)")
 PY
 out=$(python3 "$here/skills/workflow-monitoring/scripts/monitor.py" report 2>&1); echo "$out" | grep -A3 "BUDGET HITS"
-check "the report lists the lane that hit the preparation budget and the part that ran long" 'grep -q "^- h: pr preparation hit its 0-minute budget; left: waiting for a slot ran long" <<<"$out"'
+check "the report lists the lane that hit the preparation budget and the part that ran long" 'grep -q "^- h: merge preparation hit its 0-minute budget; left: waiting for a slot ran long" <<<"$out" && ! grep -q "^- h: pr preparation" <<<"$out"'
 out=$(python3 -c "
 import sys; sys.path.insert(0, sys.argv[1]); import lean
 for r in lean.hit_rows('.'): print(r['state'], r['detail'])" "$here/skills/workflow-health/scripts" 2>&1)

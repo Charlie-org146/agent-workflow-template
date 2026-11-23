@@ -13,6 +13,8 @@ import re
 import subprocess
 import sys
 
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt can hang a script
+
 # One suggested fix per cause (step:CODE). A cause with no entry gets the fix its own code names.
 FIX = {"merge:failed": "run goal.py pr SLUG, then merge.py SLUG again",
        "merge:HEAD_MOVED": "run goal.py pr SLUG so the lane runs on the new head, then merge.py SLUG",

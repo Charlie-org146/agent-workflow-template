@@ -127,7 +127,7 @@ sys.exit(0 if any(h[\"step\"] == \"ship\" and h[\"kind\"] == \"step\" and h[\"le
 echo "== the board and health show what hit a budget"
 unset LOOP_ROLE
 out=$(python3 "$S/workflow-monitoring/scripts/monitor.py" report 2>&1); echo "$out" | grep -A3 "BUDGET HITS"
-check "the report lists each budget hit with what it left" 'grep -q "^- bg: review step hit its .*-minute budget; left: " <<<"$out" && grep -q "^- bg: ship step hit its 30-minute budget; left: the changelog" <<<"$out"'
+check "the report lists each budget hit with what it left" 'grep -q "^- bg: tests step hit its .*-minute budget; left: " <<<"$out" && grep -q "^- bg: tests step hit its 30-minute budget; left: the changelog" <<<"$out" && ! grep -q "^- bg: \(review\|ship\) step hit" <<<"$out"'
 out=$(python3 -c "
 import sys; sys.path.insert(0, sys.argv[1]); import lean
 for r in lean.hit_rows('.'): print(r['state'], r['detail'])" "$S/workflow-health/scripts" 2>&1)
