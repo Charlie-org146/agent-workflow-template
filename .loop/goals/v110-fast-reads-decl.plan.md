@@ -32,7 +32,7 @@ Line 1 of the static goal (selection counts per leaf script), the 307-row floor 
 
 ## Estimate
 The queue's frozen ETA of 310 active minutes is superseded by the measured basis below: the checks and the plan review are already done (the review took about 90 minutes of agent time across the driver runs and red teams), and what is left is the PR notes, the merge of main with its recheck, the three Mac rows and the lane at the pushed sha, about 90 minutes in all. It is an estimate; the tool has no option to lower the frozen ETA, so this plan states the figure. The 480-minute cap (o805) applies.
-Token budget, with its basis: the review, the two leak reads and the Mac run together stay under 400,000 tokens. The basis is the runs of this goal so far: each reviewer run read about 70,000 to 90,000 tokens, the review ran eight of them and the red teams and leak reads about eleven more, and what is left is one more red team, one leak pair and the Mac run. A run over this is reported with its cause.
+Token budget, with its basis: the review, the two leak reads and the Mac run together stay under 400,000 tokens. The basis is the runs of this goal so far: each reviewer run read about 70,000 to 90,000 tokens, the review ran eight of them in the driver (four CEO and four Eng, native only), and there were five red teams and two leak reads besides, and what is left is one more red team, one leak pair and the Mac run. A run over this is reported with its cause.
 
 ## What a green check does not say
 The green `lanes_cli.py check` says the declarations are well formed. It says nothing about narrowing: the selection got wider for the nine rows of the disclosed toys (a bare `skills/` read), and the PR body and the board say so beside the green.
