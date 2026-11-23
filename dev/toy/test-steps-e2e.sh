@@ -4,12 +4,12 @@
 # reads: skills/workflow-docs/scripts/steps_page.py skills/steps.py skills/workflow-setup/scripts/update.py
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
-# DEL-19 end-to-end (v110-fast-steps-2, TD1065, TD1072, TD1105): the path an ADOPTER gets, not the repo's own tree. A built pack is
-# unpacked and its scripts run in a toy repo with fakegh: the pack carries shared/steps.py and update.py keeps it; a goal that stops
-# before its pull request opens a draft one carrying the cause, which goal.py pr later reuses; a refusal after the pull request and a
-# merge-queue merge write their causes and release summary into the pull request body (no head moves, no ref is made). The summary
-# job's step reads only those bodies, in a fresh clone, and previews one fix per cause; filing is off in this release.
-# It is red on a tree without the build. usage: test-steps-e2e.sh
+# DEL-19 end-to-end (v110-fast-steps-2): the path an ADOPTER gets, not the repo's own tree. A built pack is unpacked and its scripts run
+# in a toy repo with fakegh: the pack carries shared/steps.py and update.py keeps it; "no done line" and "skip the review" are refused
+# with their own text; a stop before any pull request, a refusal after it, a goal left unreleased, a merge-queue merge and a release cut
+# by hand each record their steps (every step that ran has a start and an end) and causes, which the summary job's step previews, one
+# fix per cause, grouped with repeats. Filing ships off in v1.1.0: nothing is written to GitHub. Red on a tree without the build.
+# usage: test-steps-e2e.sh
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH GH_TOKEN GITHUB_TOKEN CLAUDE_CODE_HOST_SESSION_ID CLAUDE_CODE_SESSION_ID CLAUDE_SESSION_ID LOOP_POD_ID
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID GITHUB_ACTIONS GITHUB_REF
@@ -43,7 +43,7 @@ python3 "$PK/workflow-delivery/scripts/goal.py" --help >/dev/null 2>&1 && ok "go
 # One toy repo with a bare origin and fakegh (the same stand-ins the release toy uses).
 "$here/dev/toy/make.sh" "$d/t" >/dev/null || exit 1
 export LOOP_FLOW="$d/t/flow.json"
-export FAKE_GH_PR_LOOKUP=1 PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh" FAKE_GH_ORIGIN="$d/t/origin.git"
+export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh" FAKE_GH_ORIGIN="$d/t/origin.git"
 cd "$d/t/repo" || exit 1
 python3 "$PK/workflow-setup/scripts/setup.py" --bare >"$d/setup.log" 2>&1 || bad "setup.py from the pack: $(tail -2 "$d/setup.log" | tr '\n' ' ')"
 git switch -q main 2>/dev/null; git merge -q --no-edit workflow-setup 2>/dev/null
@@ -56,7 +56,7 @@ git add -A; git commit -qm "Setup and auto_merge" 2>/dev/null; git tag v0.1.0
 
 writes() { grep -cE "pr create --draft|pr edit|pr ready|issue " "$FAKE_GH_DIR/calls.log" 2>/dev/null || true; }  # filing ships off: nothing but goal.py pr's own pull request may reach GitHub
 preview() { (cd "$d/t/repo" && env -u LOOP_ROLE $filer file 2>&1); }  # the summary job's step: previews the causes the records hold, grouped by key
-ran() { (cd "$d/t/repo" && python3 "$PK/workflow-docs/scripts/steps_page.py" show "$1" 2>/dev/null | awk -v n="$2" 'index($0, n) == 1 && $0 ~ / ran / {f=1} END {exit f ? 0 : 1}'); }
+ran() { (cd "$d/t/repo" && python3 "$PK/workflow-docs/scripts/steps_page.py" show "$1" 2>/dev/null | awk -v n="$2" 'index($0, n) == 1 && $0 ~ / ran / && $0 !~ / start - / && $0 !~ / end - / {f=1} END {exit f ? 0 : 1}'); }
 table() { (cd "$d/t/repo" && python3 "$PK/workflow-docs/scripts/steps_page.py" show "$1" 2>&1 | tr '\n' '|' | cut -c1-420); }
 causes_of() { python3 -c 'import json, sys; print(len(json.load(open(sys.argv[1])).get("causes") or []))' "$(cd "$d/t/repo" && git rev-parse --git-common-dir)/loop/runs/$1.json" 2>/dev/null || echo 0; }
 flowdone() {  # every step of a goal's flow, through the pack's flow.py, with the stand-in flow
@@ -112,6 +112,10 @@ echo "== a goal left unreleased: its merge row ends"
 git switch -q main 2>/dev/null; newgoal leavd main
 python3 "$PK/workflow-release/scripts/release.py" leave leavd >"$d/leave.log" 2>&1 || bad "release.py leave leavd: $(tail -2 "$d/leave.log" | tr '\n' ' ')"
 ran leavd "merge" && ok "a goal left unreleased has its merge row ended" || bad "leavd: the merge row is not ended: $(table leavd)"
+
+echo "== a release cut by hand carries the per-step summary"
+git switch -q main 2>/dev/null; newgoal cutg main
+python3 "$PK/workflow-release/scripts/release.py" cut cutg --user >"$d/cut.log" 2>&1; grep -qF "### Steps" "$FAKE_GH_DIR/notes.log" 2>/dev/null && ok "the manual cut's draft notes carry the Steps block" || bad "the manual cut has no Steps summary: $(tail -2 "$d/cut.log" | tr '\n' ' ')"
 
 echo "== a merge-queue merge: its steps start and end, and a repeated cause is previewed grouped under one key"
 python3 - <<'PY'

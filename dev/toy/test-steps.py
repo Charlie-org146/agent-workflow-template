@@ -7,6 +7,8 @@
 so a case that never ran fails the row. Each case has a good fixture and a fixture that breaks only its own rule.
 usage: test-steps.py"""
 import importlib
+import sys
+sys.dont_write_bytecode = True  # the shared file lives under skills/, where a cache folder would fail the package check
 import json
 import os
 import re
@@ -43,12 +45,39 @@ sys.path[:0] = [os.path.join(SKILLS, "workflow-delivery", "scripts"), os.path.jo
 flow, fit, proctree, board_log = (importlib.import_module(n) for n in ("flow", "fit", "proctree", "board_log"))
 LISTS = {"flow.STEPS": flow.STEPS, "fit.STEPS": fit.STEPS, "proctree.FLOW": proctree.FLOW, "board_log.FLOW": board_log.FLOW}
 moved_mon = importlib.import_module("moved_mon")
-shown_ok = all(moved_mon.shown({"step": label, "status": "running"}, label) == (steps.name_of(label), steps.STEPS.index(steps.name_of(label)) + 1)
-               for have in LISTS.values() for label in have)
-case("reports-derive-from-the-list", shown_ok, "a label in an older list does not map onto the eight steps")
+checkin = importlib.import_module("checkin")
+import datetime
+
+
+def check_in_rows(records):
+    """The check-in's session rows for a throwaway repository holding these run records (a real checkin.render)."""
+    with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home:
+        env = dict(os.environ, HOME=home, USERPROFILE=home, LOOP_MACHINE_NAME="pc", LOOP_PRIVATE_NAMES="/dev/null")
+        root = os.path.join(tmp, "toyrepo")
+        subprocess.run(["git", "init", "-q", "-b", "main", root], check=True, env=env)
+        os.makedirs(os.path.join(root, ".loop"))
+        os.makedirs(os.path.join(root, "docs", "wiki"))
+        json.dump({"base": "main"}, open(os.path.join(root, ".loop", "config.json"), "w"))
+        runs = os.path.join(root, ".git", "loop", "runs")
+        os.makedirs(runs)
+        now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        for rec in records:
+            json.dump(dict({"goal": "A goal", "worker": "session", "pid": os.getpid(), "updated": now, "machine": "pc",
+                            "report": {"at": now, "text": "working"}}, **rec), open(os.path.join(runs, rec["slug"] + ".json"), "w"))
+        old = {k: os.environ.get(k) for k in env}
+        os.environ.update(env)
+        try:
+            return "\n".join(checkin.render(root=root, at=datetime.datetime.now(datetime.timezone.utc), stamp="0000"))
+        finally:
+            for k, v in old.items():
+                os.environ.pop(k, None) if v is None else os.environ.__setitem__(k, v)
+
+
+rows = check_in_rows([{"slug": "rev-goal", "status": "running", "step": "review"},
+                      {"slug": "open-pr", "status": "done", "step": "release", "pr": "https://example.test/pull/7"}])
+case("reports-derive-from-the-list", "tests 5/8" in rows and "review 4/8" not in rows, "the check-in names a review goal by the old list")
+case("reports-name-an-open-pull-request-merge", "merge 6/8" in rows and "release 8/8" not in rows, "the check-in puts an open pull request at the old last step")
 case("reports-break-on-a-label-off-the-list", moved_mon.shown({"step": "zzz", "status": "running"}, "zzz")[1] == 0)  # the fixture that breaks only the rule
-case("reports-name-an-open-pull-request-merge", moved_mon.shown({"step": "release", "status": "done"}, "release") == ("merge", 6)
-     and moved_mon.shown({"step": "release", "status": "done", "release": "cut"}, "release")[0] == "release")
 case("list-bad-label-refused", subprocess.run([sys.executable, "-c", "import sys; sys.path.insert(0, %r); import steps; steps.check('build', 'bogus')" % SKILLS],
                                              capture_output=True, text=True).returncode != 0)
 
@@ -192,7 +221,7 @@ case("size-update-not-grown", len(open(os.path.join(ROOT, "skills/workflow-setup
 
 # 7. causes: only exact keys are read or recorded
 case("cause-key-shape", steps.KEY.match("merge:HEAD_MOVED") and not steps.KEY.match("../x:failed") and not steps.KEY.match("merge:lower"))
-case("cause-unknown-step-refused", steps.add_cause({}, "zzz", "boom (SOME_CODE)") is False and steps.add_cause({}, "pr", "boom (SOME_CODE)") is True)
+case("cause-off-list-step-is-freeze", steps.add_cause(c1 := {}, "zzz", "boom (SOME_CODE)") and c1["causes"][0]["key"] == "freeze:SOME_CODE" and steps.add_cause(c2 := {}, "-", "") and c2["causes"][0]["key"] == "freeze:failed" and steps.add_cause({}, "pr", "boom (SOME_CODE)"))
 st = {"slug": "c", "step": "build", "status": "running", "log": []}
 tmpc = os.path.join(tempfile.mkdtemp(), "runs", "c.json")
 steps.commit(tmpc, st, "2026-11-22T10:00:00Z")
