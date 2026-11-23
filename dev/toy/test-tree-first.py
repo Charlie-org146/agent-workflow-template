@@ -108,7 +108,7 @@ with tempfile.TemporaryDirectory() as tmp:
 flow = lanes_cli.NARROW.replace("@BASE@", "main").replace("@LEVELS@", "nightly")
 job = flow.split("\n  shard:")[1].split("\n  affected:")[0]
 tree_part = next(x for x in job.splitlines() if '= tree' in x or '!= tree' in x)
-check("shard: [0, 1, 2, 3, 4, 5, 6, 7, tree]" in job and "--tree" in tree_part and "--tree" in tree_part and "exec" in tree_part and "&" not in tree_part,
+check("shard: [0, 1, 2, 3, 4, 5, 6, 7, tree]" in job and tree_part.count("--tree") == 1 and "cutgate.py $T tree.tsv .loop/regression-skips.tsv; exit $?; }" in tree_part and "--budget -1 && python3" in tree_part,
       "tree is a cell of the shard matrix: one --tree run, its exit status the cell's")
 affected = flow.split("\n  affected:")[1].split("\n  small:")[0]
 check("needs: shard" in affected and 'test "${{ needs.shard.result }}" = success' in affected, "affected needs the matrix and fails unless it is success, so a red tree cell fails it")

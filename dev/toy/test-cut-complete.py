@@ -8,6 +8,8 @@ Each case uses the real runner (regression.py run, as a PR shard) on a temp repo
                  never counted as run), and fails a skip main does not have;
   over-budget    the generated shard step fails a shard whose rows pass its budget B: the rows it had no time for are CUT and the gate names them;
   tree-budget    the tree job runs with no budget, so a whole-tree row is never cut by one;
+  tree-timeout   a known whole-tree row that passes its row limit fails the tree job;
+  artifacts      the gate fails naming a numbered shard file that is missing (a partial download) and preserves historical times;
   tree-skip      a whole-tree row that skips is judged by the same list rule as the numbered shards' rows;
   notrun         a row that could not start is NOTRUN and fails unless its skip-list row carries the notrun flag; a skip count is printed;
   validate       an unreadable skip list, a malformed times line and a missing argument each fail with a message, and a
@@ -193,8 +195,8 @@ if case("over-budget"):
         for cell in ("0", "1"):
             temp = tempfile.mkdtemp(prefix="cut-complete-over-")
             step = shard_step(cell).replace("/8 ", "/2 ")
-            assert "B=866;" in step or "B=120;" in step, "the step's budget line is not B=<n>"
-            step = step.replace("B=866;", "B=%d;" % budget).replace("B=120;", "B=%d;" % budget)
+            assert "B=866;" in step, "the step's budget line is not B=866"
+            step = step.replace("B=866;", "B=%d;" % budget)
             steps.append(subprocess.run(["bash", "--noprofile", "--norc", "-e", "-c", step], cwd=trees[cell], capture_output=True, text=True, env=dict(env, TEMP_DIR=temp)).returncode)
             files["s/shard-%s/t.tsv" % cell] = open(os.path.join(temp, "t.tsv")).read() if os.path.exists(os.path.join(temp, "t.tsv")) else ""
         return gate(files, known=[]) + (steps,)
@@ -228,27 +230,31 @@ if case("tree-budget"):
     code, out, times = run_step(here, "3")
     check(code == 0 and "--budget 866" in out and "--tree" not in out, "control: a numbered shard keeps its budget and does not take the tree line (exit %d)" % code)
 
-if case("tree-skip"):  # a whole-tree row that skips goes through the same list rule as a numbered shard's rows
-    def tree_project(command_exit):
-        here = repo({"ts": "python3 dev/package.py"})
-        os.makedirs(os.path.join(here, "dev"))
-        with open(os.path.join(here, "dev", "package.py"), "w") as handle:
-            handle.write("raise SystemExit(0)  # before the change\n")
-        os.makedirs(os.path.join(here, "skills", "workflow-regression"))
-        os.symlink(scripts, os.path.join(here, "skills", "workflow-regression", "scripts"))
-        os.makedirs(os.path.join(here, ".loop"), exist_ok=True)
-        with open(os.path.join(here, ".loop", "regression-skips.tsv"), "w") as handle:
-            handle.write("# id\treason\n")
-        git(here, "add", "-A")
-        git(here, "commit", "-qm", "tree row")
-        git(here, "update-ref", "refs/remotes/origin/main", "HEAD")
-        git(here, "checkout", "-q", "-b", "pr")
-        with open(os.path.join(here, "dev", "package.py"), "w") as handle:  # the PR changes the whole-tree row's own script
-            handle.write("raise SystemExit(%d)\n" % command_exit)
-        git(here, "add", "-A")
-        git(here, "commit", "-qm", "change")
-        return here
+def tree_project(command_exit, known=None):
+    here = repo({"ts": "python3 dev/package.py"})
+    os.makedirs(os.path.join(here, "dev"))
+    with open(os.path.join(here, "dev", "package.py"), "w") as handle:
+        handle.write("raise SystemExit(0)  # before the change\n")
+    os.makedirs(os.path.join(here, "skills", "workflow-regression"))
+    os.symlink(scripts, os.path.join(here, "skills", "workflow-regression", "scripts"))
+    os.makedirs(os.path.join(here, ".loop"), exist_ok=True)
+    with open(os.path.join(here, ".loop", "regression-skips.tsv"), "w") as handle:
+        handle.write("# id\treason\n")
+    if known:
+        with open(os.path.join(here, ".loop", "regression-known.tsv"), "w") as handle:
+            handle.write("# id\treason\n%s\tknown slow\n" % known)
+    git(here, "add", "-A")
+    git(here, "commit", "-qm", "tree row")
+    git(here, "update-ref", "refs/remotes/origin/main", "HEAD")
+    git(here, "checkout", "-q", "-b", "pr")
+    with open(os.path.join(here, "dev", "package.py"), "w") as handle:  # the PR changes the whole-tree row's own script
+        handle.write(("raise SystemExit(%d)\n" % command_exit) if isinstance(command_exit, int) else command_exit + "\n")
+    git(here, "add", "-A")
+    git(here, "commit", "-qm", "change")
+    return here
 
+
+if case("tree-skip"):  # a whole-tree row that skips goes through the same list rule as a numbered shard's rows
     code, out, times = run_step(tree_project(77), "tree")
     check(code != 0 and "FAIL skipped and not skipped on main: ts" in out, "a whole-tree row that skips and is not on main's skip list fails the tree job by name (exit %d)" % code)
     code, out, times = run_step(tree_project(0), "tree")
@@ -261,6 +267,35 @@ if case("tree-skip"):  # a whole-tree row that skips goes through the same list 
         handle.write("# id\treason\nts\tskips by design\n")
     code, out, times = run_step(here, "tree")
     check(code == 0 and "SKIPPED ts: skips by design" in out, "control: a whole-tree row on main's skip list is SKIPPED and the tree job is green (exit %d)" % code)
+
+if case("tree-timeout"):
+    here = tree_project("import time; time.sleep(30)", known="ts")  # a known whole-tree row that never finishes within its row limit
+    step = shard_step("tree").replace("--timeout 200", "--timeout 2")
+    temp = tempfile.mkdtemp(prefix="cut-complete-tt-")
+    done = subprocess.run(["bash", "--noprofile", "--norc", "-e", "-c", step], cwd=here, capture_output=True, text=True, env=dict(env, TEMP_DIR=temp))
+    check(done.returncode != 0, "a known whole-tree row that passes its row limit fails the tree job (exit %d)" % done.returncode)
+    here = tree_project(1, known="ts")
+    done = subprocess.run(["bash", "--noprofile", "--norc", "-e", "-c", shard_step("tree")], cwd=here, capture_output=True, text=True, env=dict(env, TEMP_DIR=tempfile.mkdtemp(prefix="cut-complete-tt-")))
+    check(done.returncode == 0, "control: a known whole-tree row that fails for its own reason stays known and the tree job is green (exit %d)" % done.returncode)
+
+if case("artifacts"):
+    work = tempfile.mkdtemp(prefix="cut-complete-artifacts-")
+    for i in (0, 1, 2, 3, 4, 5, 6):  # shard-7's artifact is missing: a partial download
+        os.makedirs(os.path.join(work, "s", "shard-%d" % i))
+        open(os.path.join(work, "s", "shard-%d" % i, "t.tsv"), "w").write("a\t3\tRAN\n" if i == 0 else "a\t0\tSEL\n")
+    done = subprocess.run([sys.executable, GATE, "s/shard-[0-7]/t.tsv", "all.tsv", "no-list.tsv", "8"], cwd=work, capture_output=True, text=True)
+    check(done.returncode == 1 and "FAIL missing shard times file: s/shard-7/t.tsv" in done.stdout, "a numbered shard file that is missing is named and fails the gate (exit %d)" % done.returncode)
+    os.makedirs(os.path.join(work, "s", "shard-7"))
+    open(os.path.join(work, "s", "shard-7", "t.tsv"), "w").write("a\t0\tSEL\n")
+    done = subprocess.run([sys.executable, GATE, "s/shard-[0-7]/t.tsv", "all.tsv", "no-list.tsv", "8"], cwd=work, capture_output=True, text=True)
+    check(done.returncode == 0, "control: all 8 shard files present and every row finished is green (exit %d)" % done.returncode)
+    open(os.path.join(work, "s", "shard-1", "t.tsv"), "w").write("a\t0\tSEL\nold-row\t180\t\n")
+    subprocess.run([sys.executable, GATE, "s/shard-[0-7]/t.tsv", "all.tsv", "no-list.tsv", "8"], cwd=work, capture_output=True, text=True)
+    kept = open(os.path.join(work, "all.tsv")).read().split("\n")
+    check("old-row\t180\t" in kept, "a historical measurement for a row not selected this run is kept in the times file (%s)" % kept)
+    open(os.path.join(work, "s", "shard-1", "t.tsv"), "w").write("a b\t1\tRAN\n")
+    done = subprocess.run([sys.executable, GATE, "s/shard-[0-7]/t.tsv", "all.tsv", "no-list.tsv", "8"], cwd=work, capture_output=True, text=True)
+    check(done.returncode == 1 and "FAIL malformed times line" in done.stdout, "a times line whose id holds a space is malformed, not read as another row (exit %d)" % done.returncode)
 
 if case("notrun"):
     notrun = {"s/shard-0/t.tsv": "fast\t1\tRAN\nnr\t0\tNOTRUN\n", "s/shard-1/t.tsv": "fast\t0\tSEL\nnr\t0\tSEL\n"}

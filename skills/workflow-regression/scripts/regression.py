@@ -317,13 +317,14 @@ def cmd_run(args):
         slots.started()
     limit = (args.budget or runs.budget(root)) if args.reuse and args.budget >= 0 else None
     results, cut = runs.execute(root, picked, todo, est, limit, args.timeout, expected, args.reuse)
+    completion.tree_timeouts(results) if args.tree else 0
     late = [r["id"] for r in results if n > 1 and r["state"] in ("FAIL", "KNOWN") and r["rc"] == 124]
     results, cut = [r for r in results if r["id"] not in late], cut + late
     if late:
         print("LEFT %d over the %d s row limit: %s" % (len(late), args.timeout, ", ".join(late)))
     if path:
         rows = merged(path, results, late, args.timeout)
-        for key in every:  # RAN: this shard's, CUT: budget, SEL: others'
+        for key in every:
             row = rows.setdefault(key, [0, ""])
             row[1] = completion.state(row[1], key, cut, todo, results)
         open(path, "w").writelines("%s\t%s\t%s\n" % (k, *v) for k, v in sorted(rows.items()))

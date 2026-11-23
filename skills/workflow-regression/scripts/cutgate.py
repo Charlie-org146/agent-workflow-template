@@ -2,7 +2,7 @@
 """The cut gate (DEL-26.4, #5757): a test cut for time, or not run, fails the checks, naming the test and its time.
 
 Run by the PR workflow's affected job (lanes_cli.py), and by any gate that must fail on an unfinished row:
-    python3 cutgate.py 's/shard-[0-7]/t.tsv' [all.tsv [skips.tsv]]
+    python3 cutgate.py 's/shard-[0-7]/t.tsv' [all.tsv [skips.tsv [8]]]
 It reads the shard times files (rows `id TAB seconds TAB status`: RAN on the shard that ran the row, SEL on the others, CUT
 when the budget ran out, LEFT when the row passed its limit, SKIP when the row asked to be skipped, NOTRUN when the runner could
 not start it). A row that is SEL or RAN somewhere and RAN nowhere is unfinished: it prints `FAIL cut or not run: <id> <STATUS>
@@ -11,7 +11,7 @@ and line before anything is written. It writes the best non-SEL line of each row
 only when there is a record, and replaces the file whole; it prints `run twice: <ids>` for a row two shards ran. A SKIP or
 NOTRUN row is never counted as run: it passes only when its id is in skips.tsv (`id TAB reason`, the rows that skip by design
 on main; a NOTRUN row also needs the flag `notrun` in the third column) and is printed `SKIPPED <id>: <reason>`; any other
-prints a FAIL line naming the row and the repair. A skips.tsv that does not exist is an empty list, so every skipped row fails; one that exists but cannot be read is exit 1. It reruns nothing."""
+prints a FAIL line naming the row and the repair. With a count (8) every numbered shard file must exist. A skips.tsv that does not exist is an empty list, so every skipped row fails; one that exists but cannot be read is exit 1. It reruns nothing."""
 import glob
 import math
 import os
@@ -22,10 +22,15 @@ LIST = ".loop/regression-skips.tsv"
 
 
 def read(files):
-    """The rows [id, seconds, status] of the times files, or the malformed lines found."""
+    """The rows [id, seconds, status] of the times files (a historical line has an empty status), or the malformed lines found."""
     rows, bad = [], []
     for name in files:
-        for n, line in enumerate(open(name).read().splitlines(), 1):
+        try:
+            lines = open(name, encoding="utf-8").read().splitlines()
+        except (OSError, UnicodeDecodeError) as err:
+            bad.append("FAIL cannot read the times file %s: %s; rerun the shard job" % (name, getattr(err, "strerror", None) or err))
+            continue
+        for n, line in enumerate(lines, 1):
             if not line.strip():
                 continue
             cells = line.split("\t")
@@ -34,18 +39,22 @@ def read(files):
                 ok = math.isfinite(float(sec)) and float(sec) >= 0
             except ValueError:
                 ok = False
-            why = "fields" if len(cells) < 2 or not cells[0].strip() else "seconds" if not ok else "status" if (cells[2:3] or [""])[0] not in STATES else ""
+            why = "fields" if not 2 <= len(cells) <= 3 or not cells[0].strip() or cells[0] != cells[0].strip() or " " in cells[0] else "seconds" if not ok else "status" if (cells[2:3] or [""])[0] not in STATES else ""
             if why:
                 bad.append("FAIL malformed times line: %s:%d: bad %s in %r; the shard's times file is corrupt: rerun the shard job" % (name, n, why, line))
-            elif len(line.split()) >= 3:
-                rows.append(line.split())
+            else:
+                rows.append(cells[:3] + [""] * (3 - len(cells)))
     return rows, bad
 
 
-def main(pattern, out="all.tsv", known=None):
+def main(pattern, out="all.tsv", known=None, expect=None):
     files = sorted(glob.glob(pattern))
     if not files:
         print("FAIL cut or not run: no shard times file matches " + pattern)
+        return 1
+    absent = [pattern.replace("[0-7]", str(i)) for i in range(int(expect or 0)) if pattern.replace("[0-7]", str(i)) not in files]
+    if absent:
+        print("\n".join("FAIL missing shard times file: %s; rerun the shard job (its artifact was not downloaded)" % one for one in absent))
         return 1
     listed = {}
     if known:
@@ -78,7 +87,7 @@ def main(pattern, out="all.tsv", known=None):
     ran = [r[0] for r in rows if r[2] == "RAN"]
     print("run twice: " + ",".join(sorted({i for i in ran if ran.count(i) > 1})))
     skip = sorted({r[0] for r in rows if r[2] in ("SKIP", "NOTRUN")})
-    gone, fail = set(), []
+    fail = []
     for i in skip:
         started = any(r[0] == i and r[2] == "NOTRUN" for r in rows)
         if i in listed and (listed[i][1] or not started):
@@ -90,7 +99,8 @@ def main(pattern, out="all.tsv", known=None):
     if skip:
         picked = {r[0] for r in rows if r[2] in ("RAN", "SEL", "CUT", "LEFT", "SKIP", "NOTRUN")}
         print("skipped, never counted as run: %s (%d of %d selected rows)" % (",".join(skip), len(skip), len(picked)))
-    print("\n".join(fail)) if fail else None
+    if fail:
+        print("\n".join(fail))
     unfinished = sorted({r[0] for r in rows if r[2] in ("SEL", "RAN")} - set(ran) - set(skip))
     for i in unfinished:
         what = "%s %ss" % (best[i][2], best[i][1]) if i in best else "not run"
@@ -103,6 +113,6 @@ if __name__ == "__main__":
         print(__doc__)
         sys.exit(0)
     if len(sys.argv) < 2:
-        print("usage: python3 cutgate.py 's/shard-[0-7]/t.tsv' [all.tsv [skips.tsv]] (see --help)", file=sys.stderr)
+        print("usage: python3 cutgate.py 's/shard-[0-7]/t.tsv' [all.tsv [skips.tsv [8]]] (see --help)", file=sys.stderr)
         sys.exit(2)
-    sys.exit(main(*sys.argv[1:4]))
+    sys.exit(main(*sys.argv[1:5]))

@@ -57,6 +57,8 @@ def step(files):
     """Run the step's command on {relative path: text} in a fresh tree: (exit code, output)."""
     work = tempfile.mkdtemp(prefix="cut-fails-")
     files = dict({".loop/regression-skips.tsv": "# id\treason\n"}, **files)  # the checkout of the affected job holds main's skip list
+    if any(k.startswith("s/shard-") for k in files):  # the job downloads all 8 numbered shard artifacts; a shard with no row uploads an empty file
+        files = dict({"s/shard-%d/t.tsv" % i: "" for i in range(8)}, **files)
     for name, text in files.items():
         os.makedirs(os.path.dirname(os.path.join(work, name)), exist_ok=True)
         open(os.path.join(work, name), "w").write(text)
@@ -137,10 +139,10 @@ if case("generated"):
     flow = lanes_cli.NARROW
     disk = open(os.path.join(root, ".github", "workflows", "regression-pr.yml")).read()
     check(lanes_cli.NARROW in disk or all(x in disk for x in ("cutgate.py", "shard-[0-7]")), "the workflow on disk carries the step")
-    call = "      - run: python3 skills/workflow-regression/scripts/cutgate.py 's/shard-[0-7]/t.tsv' all.tsv .loop/regression-skips.tsv\n"
+    call = "      - run: python3 skills/workflow-regression/scripts/cutgate.py 's/shard-[0-7]/t.tsv' all.tsv .loop/regression-skips.tsv 8\n"
     check(call in flow and "FAIL cut or not run" not in flow,
           "the affected step calls the one script on the numbered shard files with the times file and main's skip list, and the template holds no copy of its check")
-    check(call not in flow.replace(" .loop/regression-skips.tsv", "") and call not in flow.replace(" all.tsv", "") and call not in flow.replace("[0-7]", "0"),
+    check(call not in flow.replace(" .loop/regression-skips.tsv", "") and call not in flow.replace(" 8\n", "\n") and call not in flow.replace(" all.tsv", "") and call not in flow.replace("[0-7]", "0"),
           "negative control: a call without the skip list, the times file or the numbered glob is not the call the step must make")
     check("if: always() && needs.shard.result == 'success'\n        uses: actions/cache/save" in flow,
           "the times cache is saved even when the affected step is red, so cut rows keep their marks")

@@ -11,6 +11,13 @@ def state(old, key, cut, todo, results):
     if key not in todo:
         return "SEL"
     for r in results:
-        if r["id"] == key and r["state"] == "SKIPPED":
-            return "NOTRUN" if r.get("notrun") else "SKIP"
-    return "RAN"
+        if r["id"] == key:
+            return ("NOTRUN" if r.get("notrun") else "SKIP") if r["state"] == "SKIPPED" else "RAN"
+    return "CUT"  # selected here with no result: never counted as run
+
+
+def tree_timeouts(results):
+    """The tree job has no other shard to carry a cut row: a known whole-tree row past its row limit fails the job."""
+    for r in results:
+        if r["state"] == "KNOWN" and r["rc"] == 124:
+            r["state"] = "FAIL"
