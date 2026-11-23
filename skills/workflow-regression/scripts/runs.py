@@ -14,6 +14,7 @@ import tempfile
 import time
 
 import actions
+import completion
 import lanes
 
 # A prompt from gh must fail, not block.
@@ -191,11 +192,12 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
     keep, left = fit(todo, est, limit) if limit else (todo[:], [])
     by, results, start, first = {row["id"]: row for row in picked}, [], time.time(), {}
     for key in keep:
-        remaining = limit - (time.time() - start) if limit else timeout
+        own = completion.limit(root, key, timeout)
+        remaining = limit - (time.time() - start) if limit else own
         if remaining < 1 and key not in first:
             left.append(key)
             continue
-        cap, began = min(timeout, remaining), time.time()
+        cap, began = min(own, remaining), time.time()
         skip = os.path.join(tempfile.gettempdir(), "loop-skip-%d-%s" % (os.getpid(), key))
         env = dict(actions.row_env(), TOY_SKIP_FILE=skip)
         got = first[key] if remaining < 1 else lanes.run_row(by[key]["command"], root, env, cap)
@@ -207,7 +209,7 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
         if code and os.path.exists(skip):
             os.remove(skip)
             code = SKIP_CODE
-        if code == 124 and cap < timeout:
+        if code == 124 and cap < own:
             left.append(key)
             continue
         state = "PASS" if code == 0 else "SKIPPED" if code == SKIP_CODE else ("KNOWN" if key in expected else "FAIL")
