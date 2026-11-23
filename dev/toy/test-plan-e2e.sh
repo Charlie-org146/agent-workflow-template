@@ -5,7 +5,7 @@
 # (never from the agent's reply text) takes the fallback; the reviews run SIDE BY SIDE from flow.py's plan step with the RUNNER
 # writing the stamps; EXACTLY one issue is opened (a worker run only previews it; the main-branch run files it with --live).
 # A stand-in planner, stand-in reviews and a fake gh; no model, no network, no real sleep (the reviews prove they overlap with
-# start files, not with timing). Every push here goes to the toy's own temp bare origin. usage: test-plan-e2e.sh [DIR]
+# start files, not with timing). Nothing is sent: origin is a non-bare local clone. usage: test-plan-e2e.sh [DIR]
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION CLAUDE_CODE_HOST_SESSION_ID CLAUDE_CODE_SESSION_ID CLAUDE_SESSION_ID LOOP_POD_ID
 export LOOP_ROLE=worker
@@ -22,7 +22,9 @@ goal="python3 $S/goal.py"; F="python3 $S/flow.py"; PL="python3 $S/planlevel.py"
 export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh"
 cd "$d/repo" || exit 1
 python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null
-git switch -q main; git merge -q --no-edit workflow-setup; git push -q origin main
+git switch -q main; git merge -q --no-edit workflow-setup
+git clone -q . "$d/up"; git remote set-url origin "$d/up"; git fetch -q origin  # origin is a non-bare local clone: nothing is sent anywhere
+up() { git -C "$d/up" fetch -q "$d/repo" "$1" && git -C "$d/up" merge -q --ff-only FETCH_HEAD && git fetch -q origin; }
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
@@ -39,7 +41,7 @@ c["plan_levels"] = {"guard_log": d + "/guard.jsonl", "fault_codes": ["evidence"]
                     "small": {"needs": ["ceo", "dx", "eng"], "minutes": 10}, "review_command": ["bash", d + "/review.sh"]}
 json.dump(c, open(".loop/config.json", "w"), indent=2)
 PY
-git add -A; git commit -qm "plan settings"; git push -q origin main
+git add -A; git commit -qm "plan settings"; up main
 
 # The stand-in planner: on "refuse" it writes the tool's own guard-log line and prints a refusal; on "forge" it only PRINTS a
 # refusal-looking text (the guard log stays empty); otherwise it plans. It keeps every prompt it was given.
@@ -96,7 +98,7 @@ goal = "e2e" if sys.argv[1] == "with" else "another-goal"
 open("docs/release-brief-1.1.0.md", "w").write(frozen("# v1.1.0 brief\n\n## Tasks\n\n1. task-e2e\n", "o1"))
 open(".loop/tasks/task-e2e.md", "w").write(frozen("# task-e2e\n\n- Feature: DEL-22\n- Release: v1.1.0\n- Goals: %s\n- Needs: \n\n## Purpose\n\nx\n\n## Done when\n\n- x\n" % goal, "o1"))
 PY
-git add -A; git commit -qm "brief $1 this goal"; git push -q origin HEAD:main; }
+git add -A; git commit -qm "brief $1 this goal"; up HEAD; }
 
 # One cycle: ask for the plan again (the step starts the stand-in planner), drain it, record its reply.
 cycle() { rm -rf "$d/rev" "$R/e2e.plan-reviews.json"; $F e2e plan --again --wait 20 > "$d/again.log" 2>&1; step_plan; $goal record e2e plan --file "$R/e2e.plan.txt" >/dev/null 2>&1
@@ -139,7 +141,7 @@ check "the planning tool's refusal on the LAST try was NOT counted and the goal 
 # 5. A SECOND refusal (the free retry is spent) is counted: the goal reaches 3 of 3 tries and stops.
 echo refuse > "$d/mode"; cycle
 check "a second refusal gets no second free retry: it is counted and the goal stops" '[ "$(field tries)" = 3 ] && [ "$(field status)" = stopped ]'
-# 6. The fallback is pinned to its approval: another id or release is off. A FAILED fetch (the origin url points nowhere) reads no ref at all: off, with its reason.
+# 6. The fallback is pinned to its approval: another id or release is off. A FAILED fetch (the origin url points nowhere) reads the last fetched ref (the levels stay as pushed); fallback off, with its reason.
 orig=$(git remote get-url origin)
 pin=$(python3 - "$S" "$orig" <<'PY'
 import os, subprocess, sys
@@ -152,11 +154,43 @@ r = [on({"fallback_approved": held})[0], on({"fallback_approved": dict(held, id=
 subprocess.run(["git", "remote", "set-url", "origin", top + "/gone"])
 cfg = p.config(top)
 subprocess.run(["git", "remote", "set-url", "origin", sys.argv[2]])
-print(r, bool(cfg.get("_fetch_failed")), on(cfg))
+print(r, bool(cfg.get("_fetch_failed")), on(cfg), p.limits(cfg)["small"]["needs"] == ["ceo", "dx", "eng"])
 PY
 )
 check "the approval is pinned: only its own id and release turn the fallback on (another id, another release: off)" '[ "${pin%%\] *}" = "[True, False, False" ]'
-check "a failed fetch fails closed: no ref is read, the fallback is off and says it could not fetch origin/main" '[ "${pin#*\] }" = "True (False, '"'"'could not fetch origin/main'"'"')" ]'
+check "a failed fetch fails closed: the fallback is off and says it could not fetch origin/main" '[ "${pin#*\] }" = "True (False, '"'"'could not fetch origin/main'"'"') True" ]'
+check "a failed fetch does not change the levels: the last fetched ref still gives the pushed small review set, not the default" '[ "${pin##* }" = True ]'
 fi
+# 7. Masking keeps the refusal's own words while its home and tilde paths are masked.
+msk=$(python3 - "$S" <<'PY'
+import sys
+sys.path.insert(0, sys.argv[1])
+import planfault as p
+u = "/" + "Users/bob"
+print(p.mask("cwd " + u + ": refused, snapshot is missing") + "|" + p.mask("(/home/bob) refused: snapshot missing") + "|" + p.mask("~/proj and /home/bob/x"))
+PY
+)
+check "the refusal reason is kept word for word" '[ "${msk%%|*}" = "cwd <masked: path>: refused, snapshot is missing" ]'
+check "a name in parentheses ends at the bracket, and a tilde path is masked" '[ "${msk#*|}" = "(<masked: path>) refused: snapshot missing|<masked: path> and <masked: path>" ]'
+later=$(python3 - "$S" <<'PY'
+import sys
+sys.path.insert(0, sys.argv[1])
+import planfault as p
+u = "/" + "Users/"
+print(p.mask(u + "al denied write to docs/x.md") + "|" + p.mask("/home/bob reason: closed; see foo/bar") + "|" + p.mask("denied: " + u + "al refused, see skills/a/b.py") + "|" + p.mask(u + "Mary Ann/x y"))
+PY
+)
+check "the second set of sample refusals is quoted as expected" '[ "$later" = "<masked: path> denied write to docs/x.md|<masked: path> reason: closed; see foo/bar|denied: <masked: path> refused, see skills/a/b.py|<masked: path> y" ]'
+crash=$(python3 - "$S" "$d" 2>&1 <<'PY'
+import json, os, sys
+sys.path.insert(0, sys.argv[1])
+import planlevel
+runs = os.path.join(sys.argv[2], "crash"); os.makedirs(runs)
+planlevel.run_reviews(["eng"], ["bash", "-c", "x", 3], "c", runs, "C1")
+d = json.load(open(os.path.join(runs, "c.plan-reviews.json")))
+print(d["failed"], "ended" in d["reviews"][0])
+PY
+)
+check "a review command that cannot start is a failed review with its end stamp, and the stamps are written" '[ "$crash" = "['"'"'eng'"'"'] True" ]'
 [ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED"
 [ "$fails" = 0 ]

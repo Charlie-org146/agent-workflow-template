@@ -81,7 +81,7 @@ None
 - GRD-12: moved to OPS-16
 - GRD-13: moved to DEL-17
 - GRD-14: moved to DEL-17
-- GRD-15: moved to DEL-17
+- GRD-15: moved to DEL-28
 - GRD-16: moved to GRD-6
 - GRD-17: moved to DEL-17
 - GRD-18: moved to MCH-1
@@ -91,7 +91,7 @@ None
 - GRD-22: moved to GRD-20
 - GRD-3: moved to DEL-9
 - GRD-7: moved to DEL-17
-- GRD-8: moved to DEL-17
+- GRD-8: moved to DEL-28
 - GRD-9: moved to HLT-2
 
 ### GRD-1
@@ -285,6 +285,7 @@ None
 | [grd5-regression-dry](Tests#t-grd5-regression-dry) | requirement | GRD-5 | Given no token, when the regression run reaches an issue write, then it is a dry run and makes no gh call. | not run |
 | [grd5-health-close](Tests#t-grd5-health-close) | requirement | GRD-5 | Given open findings, when triage close runs without --yes, then it lists them and writes nothing. | not run |
 | [issues-live-only-ci](Tests#t-issues-live-only-ci) | requirement | GRD-5 | Given the GRD-5 cases of test-regression-issues.py, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | not run |
+| [issues-main-only](Tests#t-issues-main-only) | requirement | GRD-5 | Given the regression workflow's issue block and a fake gh, when a failing row runs on main and on a branch, a pull request ref and a tag named main, then main writes the row's issue and every other ref runs and reports the row but makes no issue call. | not run |
 | - | requirement | GRD-5 | no passing test | not enforced |
 | [grd6-head-moved](Tests#t-grd6-head-moved) | requirement | GRD-6 | Given a pull request head that moved since its checks ran, when the release merges, then it is refused with HEAD_MOVED and nothing is merged. | PASS 2026-11-22 |
 | [package-caps-held](Tests#t-package-caps-held) | requirement | GRD-20 | Given the package-limits table on How-to-use-Guardrails and dev/package.py's caps, when the table is missing, a figure of ours is above Agensi's, a script reaches 20,480 bytes or a 201st file is added, or a row other than the agent-upload file row says it no longer applies, then the toy fails, and the real tree stays within the 200-file cap and under the byte cap. | PASS 2026-11-14 FLAKY |

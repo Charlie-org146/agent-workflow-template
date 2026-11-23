@@ -105,11 +105,11 @@ lanes-deleted	lanes-declared
 lanes-check	lanes-declared
 lanes-table	lanes-wide-parity
 hlt6-cannot-fire	hlt6-controls-fire
-hlt6-test-time	hlt6-controls-fire
-hlt6-test-quiet	hlt6-controls-fire
-hlt6-run-times	hlt6-controls-fire
-hlt6-judge-time	hlt6-controls-fire
-hlt6-worktrees	hlt6-controls-fire
+hlt6-test-time	hlt6-refused
+hlt6-test-quiet	hlt6-refused
+hlt6-run-times	hlt6-refused
+hlt6-judge-time	hlt6-refused
+hlt6-worktrees	hlt6-refused
 hlt6-removes-nothing	hlt6-branches
 hlt6-clean-quiet	hlt6-branches
 hlt6-never-filed	hlt6-branches

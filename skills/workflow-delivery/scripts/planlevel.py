@@ -5,7 +5,7 @@
   planlevel.py issue --from-body FILE --live   main's Actions run: file the issue named by the block in a pull request body, once
   planlevel.py run SLUG                   (detached by flow.py) run the level's reviews side by side and write the stamps
   planlevel.py stamp SLUG REVIEW start|end   a session review marks its own start or end (shown as self-reported)
-  planlevel.py ready SLUG [--wait N]      READY once every review has ended; WAITING (seconds left); NOT READY (a review failed, or a record cannot be read; plan anyway, say so) (N up to 240)
+  planlevel.py ready SLUG [--wait N]      READY once every review has ended; WAITING (seconds left; OVERDUE past the limit); NOT READY (a review failed, or a record cannot be read; plan anyway, say so) (N up to 240)
 
 Every hook calls this module lazily inside try, so a fault here never stops a goal or the board (fit.py loads without it).
 """
@@ -17,7 +17,7 @@ import subprocess
 import sys
 import threading
 from planstamps import median, ready, session_stamps, stamps_for
-from planfault import block, brief_goals, fallback_check, fallback_on, faults, issue, mask, quote_of
+from planfault import block, brief_goals, config, fallback_check, fallback_on, faults, issue, mask, quote_of
 import time
 
 LEVELS = {"small": {"needs": ["eng"], "minutes": 10}, "normal": {"needs": ["ceo", "dx", "eng"], "minutes": 30},
@@ -36,18 +36,6 @@ def git(*args, cwd=None, timeout=30):
 
 def runs_dir():
     return os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir").strip() or ".git"), "loop", "runs")
-
-
-def config(top=None):
-    """plan_levels from origin/main's committed config, after a bounded fetch that rewrites the remote-tracking ref (GRD-4):
-    a locally moved ref, the working tree and a worker-named base are never read. Any failure gives {} (defaults, fallback off); a failed fetch says so."""
-    try:
-        if subprocess.run(["git", "fetch", "-q", "origin", "+refs/heads/main:refs/remotes/origin/main"], cwd=top, capture_output=True, timeout=20).returncode:
-            return {"_fetch_failed": True}  # a failed fetch reads no ref at all: defaults, fallback off
-        found = json.loads(git("show", "origin/main:.loop/config.json", cwd=top)).get("plan_levels")
-        return found if isinstance(found, dict) else {}
-    except (OSError, ValueError, subprocess.SubprocessError):
-        return {"_fetch_failed": True}
 
 
 def limits(cfg):
@@ -128,7 +116,7 @@ def run_reviews(names, command, slug, runs, attempt=None):
             done = subprocess.run(list(command) + [names[i]], capture_output=True, text=True, timeout=1800)
             outs[i] = done.stdout
             rows[i]["failed"] = done.returncode != 0
-        except (OSError, subprocess.SubprocessError) as why:
+        except Exception as why:  # any start error (a bad review_command too) is a failed review that still ends
             outs[i], rows[i]["failed"] = "review %s did not run: %s" % (names[i], type(why).__name__), True
         rows[i]["ended"] = time.time()
     threads = [threading.Thread(target=one, args=(i,)) for i in range(len(names))]

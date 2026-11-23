@@ -17,6 +17,23 @@ def pl():
     return planlevel
 
 
+def config(top=None):
+    """plan_levels from origin/main's committed config (the base is main), after a bounded fetch into the remote-tracking ref (GRD-4): a locally moved ref, the
+    working tree and a worker-named base are never read. A fetch that fails (no network, a lost lock race) still reads the last fetched ref, so the levels do not
+    change, but marks _fetch_failed and the fallback is off; a config that cannot be read marks _config_unreadable and gives the defaults."""
+    import subprocess
+    try:
+        lost = subprocess.run(["git", "fetch", "-q", "origin", "+refs/heads/main:refs/remotes/origin/main"], cwd=top, capture_output=True, timeout=20).returncode
+    except (OSError, subprocess.SubprocessError):
+        lost = 1
+    try:
+        found = json.loads(pl().git("show", "origin/main:.loop/config.json", cwd=top)).get("plan_levels")
+        out = dict(found) if isinstance(found, dict) else {}
+    except (OSError, ValueError, subprocess.SubprocessError):
+        out = {"_config_unreadable": True}
+    return dict(out, _fetch_failed=True) if lost else out
+
+
 def brief_goals(release, top=None, why=None, slug=None):
     """The goals of the FROZEN release brief, by implement-v110's own brief.py (TD1078: one brief format, no parser of mine). Everything is read from
     origin/main into a temp tree (the brief.py itself, the release brief, the task briefs), so a worker's own copy of any of them is never used.
@@ -52,8 +69,8 @@ def brief_goals(release, top=None, why=None, slug=None):
             spec = importlib.util.spec_from_file_location("brief_main", os.path.join(tmp, "skills/workflow-release/scripts/brief.py"))
             brief = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(brief)
-            seen = brief.frozen(brief.read(os.path.join(tmp, "docs/release-brief-%s.md" % version)))  # None, or ("", "", "") when the sha256 no longer matches
-            if not seen or seen == ("", "", ""):  # brief.release_tasks tests the tuple's truth, so a CHANGED brief would still list its tasks: refuse it here
+            seen = brief.frozen(brief.read(os.path.join(tmp, "docs/release-brief-%s.md" % version)))  # None, or ("", "", "") for a changed brief
+            if not seen or seen == ("", "", ""):  # a changed brief is refused here
                 why.append("the release brief is not frozen, or its words changed after the freeze (its sha256 does not match)")
                 return []
             named = brief.release_tasks(tmp, version)
@@ -82,6 +99,8 @@ def fallback_check(cfg, slug, top=None):
     """(on, why): the decision and its reason from ONE read of origin/main (so they cannot disagree, and the briefs are copied once)."""
     if isinstance(cfg, dict) and cfg.get("_fetch_failed"):
         return False, "could not fetch origin/main"
+    if isinstance(cfg, dict) and cfg.get("_config_unreadable"):
+        return False, "origin/main has no readable .loop/config.json"
     held = cfg.get("fallback_approved") if isinstance(cfg, dict) else None
     if not (isinstance(held, dict) and held.get("id") and held.get("release")):
         return False, "no plan_levels.fallback_approved on origin/main (the owner's approval record is not set there)"
@@ -99,7 +118,8 @@ def fallback_on(cfg, slug, top=None):
     return fallback_check(cfg, slug, top)[0]
 
 
-HOME = re.compile(r"(?i)(?:file://)?(?:/(?:Users|home)/|[A-Z]:[\\/]{1,2}(?:Users|home)[\\/]{1,2}|\\\\[^\\/\s]+[\\/]{1,2}(?:Users|home)[\\/]{1,2})[^\\/\"\r\n]+")  # a home path: its name runs to the next separator, quote or end of text
+_N = r"[^\\/\s:;,)\"}\]']+(?:'[^\\/\s:;,)\"}\]']+)*"  # one name token (an apostrophe only between letters)
+HOME = re.compile(r"(?i)(?:file://)?(?:/(?:Users|home)/|[A-Z]:[\\/]{1,2}(?:Users|home)[\\/]{1,2}|\\\\[^\\/\s]+[\\/]{1,2}(?:Users|home)[\\/]{1,2})(?:" + _N + r"(?: " + _N + r"){1,2}(?=[\\/])|" + _N + r")(?:[\\/][^\s\"')}\]]*)?")  # a home path, with its whole tail
 
 
 def mask(text):
@@ -123,7 +143,8 @@ def mask(text):
         return "<masked: url>"
     text = re.sub(r"https?://[^\s\"')\]}>]+", url, text)
     text = HOME.sub("<masked: path>", text)
-    text = re.sub(r"(?:/[\w.\-@]+){2,}", "<masked: path>", text)
+    text = re.sub(r"(?<![\w/])~[\w.-]*(?:/[\w.\-@]+)+", "<masked: path>", text)  # a tilde path
+    text = re.sub(r"(?<![\w.\-@])(?:/[\w.\-@]+){2,}", "<masked: path>", text)  # another absolute path
     text = re.sub(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b", "<masked: email>", text)
     text = re.sub(tok, "<masked: token>", text)
     return re.sub(r"\x00%s\x00(\d+)\x00" % tag, lambda m: keep[int(m.group(1))], text)

@@ -45,7 +45,7 @@ def median(values):
 
 def ready(slug, wait):
     """READY once the runner's file for this attempt is there, or every review the ask named has stamped its end; else WAITING with the seconds left of
-    the reviews' own limit, counted from the ask (the exit status is 3 once that limit is over). A goal with no ordered reviews is READY at once.
+    the reviews' own limit, counted from the ask (OVERDUE, exit 3, once that limit is over). A goal with no ordered reviews is READY at once.
     `wait` polls inside this one command, 240 seconds at most."""
     end = time.time() + wait
     while True:
@@ -83,6 +83,6 @@ def ready(slug, wait):
             return 0
         left = int(pl().RUNNER_LIMIT - (time.time() - (held.get("asked_at") or time.time())))
         if time.time() >= end or left <= 0:
-            print("WAITING (%d seconds left of the reviews' own limit)" % max(left, 0))
+            print("%s (%d seconds left of the reviews' own limit)" % ("WAITING" if left > 0 else "OVERDUE", max(left, 0)))
             return 0 if left > 0 else 3
         time.sleep(min(5, max(end - time.time(), 0.1)))

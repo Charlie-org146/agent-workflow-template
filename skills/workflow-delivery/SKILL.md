@@ -146,6 +146,6 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-delivery step SLUG STEP` | `python3 scripts/flow.py SLUG STEP`, repeated until it stops printing `RUNNING` |
 | `/workflow-delivery record SLUG STEP` | `python3 scripts/goal.py record SLUG STEP --file FILE` |
 | `/workflow-delivery pr SLUG` | `python3 scripts/goal.py pr SLUG` |
-| `/workflow-delivery ready SLUG` | `python3 scripts/planlevel.py ready SLUG --wait 240` (prints READY, WAITING or NOT READY; once per turn, never a longer wait) |
+| `/workflow-delivery ready SLUG` | `python3 scripts/planlevel.py ready SLUG --wait 240` (prints READY, WAITING, OVERDUE or NOT READY; once per turn, never a longer wait) |
 | `/workflow-delivery stamp SLUG REVIEW start` | `python3 scripts/planlevel.py stamp SLUG REVIEW start` (a session review marks its own start; `end` marks its end) |
 | `/workflow-delivery plan-issue SLUG` | `python3 scripts/planlevel.py issue SLUG` (previews the one issue a planning-tool fault opens; main's Actions run files it with `--from-body FILE --live`) |

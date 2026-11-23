@@ -91,7 +91,7 @@ planlevel.save("s", held)
 check(subprocess.run([sys.executable, os.path.join(scripts, "planlevel.py"), "ready", "s"], capture_output=True, text=True).returncode == 0, "READY stays READY after the limit (the reviews did finish)")
 planlevel.save("s2", {"names": ["ceo"], "asked_at": time.time() - 4000, "attempt": "B1"})
 late = subprocess.run([sys.executable, os.path.join(scripts, "planlevel.py"), "ready", "s2"], capture_output=True, text=True)
-check(late.returncode == 3 and late.stdout.startswith("WAITING (0 seconds left"), "a session plan's reviews that never ended: past the limit `ready` exits 3 (a deadline from the ask, not a wait that never ends)")
+check(late.returncode == 3 and late.stdout.startswith("OVERDUE (0 seconds left"), "a session plan's reviews that never ended: past the limit `ready` exits 3 (a deadline from the ask, not a wait that never ends)")
 json.dump({"slug": "s", "worker": "session", "plan": {"level": "normal", "rule": "x"}}, open(os.path.join(runs, "s.json"), "w"))
 planlevel.config = lambda top=None: {}
 planlevel.ask("s", "base")

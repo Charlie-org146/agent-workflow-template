@@ -121,6 +121,8 @@ sizes = {"fit.py": 19000, "flow.py": 19000, "fitkit.py": 19000, "planlevel.py": 
 for name, limit in sizes.items():
     n = os.path.getsize(os.path.join(scripts, name))
     check(n < limit if limit == 19000 else n <= limit, "%s is %d bytes, within %d" % (name, n, limit))
+import planfault
+check(planfault.mask("see /home/bob and more") == "see <masked: path> and more", "control: a lower-case word after a home path is not swallowed")
 n = os.path.getsize(os.path.join(here, "skills/workflow-monitoring/scripts/live_board.py"))
 check(n < 19000, "live_board.py is %d bytes, under 19,000" % n)
 print("ALL PASS" if not fails else "%d FAILED" % len(fails))

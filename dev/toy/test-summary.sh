@@ -16,7 +16,7 @@ block() {  # the workflow's inline run block, as the regression run would execut
   python3 - <<'PY'
 import re
 text = open(".github/workflows/regression.yml").read()
-block = re.search(r"python3 - (?:--live )?<<'PY'\n(.*?)\n\s+PY\n", text, re.S).group(1)
+block = re.search(r"python3 - (?:\$L )?<<'PY'\n(.*?)\n\s+PY\n", text, re.S).group(1)
 open("ci-block.py", "w").write("\n".join(line[10:] for line in block.split("\n")))
 PY
 }

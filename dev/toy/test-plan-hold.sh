@@ -18,7 +18,9 @@ goal="python3 $S/goal.py"; F="python3 $S/flow.py"
 export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh"
 cd "$d/repo" || exit 1
 python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null
-git switch -q main; git merge -q --no-edit workflow-setup; git push -q origin main
+git switch -q main; git merge -q --no-edit workflow-setup
+git clone -q . "$d/up"; git remote set-url origin "$d/up"; git fetch -q origin  # origin is a non-bare local clone: nothing is sent anywhere
+up() { git -C "$d/up" fetch -q "$d/repo" "$1" && git -C "$d/up" merge -q --ff-only FETCH_HEAD && git fetch -q origin; }
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
@@ -34,14 +36,14 @@ json.dump(c, open(".loop/config.json", "w"), indent=2)
 json.dump({"command": ["bash", d + "/planner.sh"], "env": {"FAKE_MODE": "unattended"}, "probe": ["bash", "-c", "echo $FAKE_MODE"], "probe_expect": "unattended",
            "steps": {s: "stand-in-" + s for s in ("idea", "plan", "review", "qa", "ship")}}, open(d + "/flow.json", "w"))
 PY
-git add -A; git commit -qm "plan settings"; git push -q origin main
-printf '#!/bin/bash\nprintf "PLAN: the plan\\nDEPTH: full\\nSTEP: done\\n"\n' > "$d/planner.sh"
+git add -A; git commit -qm "plan settings"; up main
+printf '#!/bin/bash\nsleep 3\nprintf "PLAN: the plan\\nDEPTH: full\\nSTEP: done\\n"\n' > "$d/planner.sh"
 export LOOP_FLOW="$d/flow.json"
 git switch -q -c loop/hold; $goal new hold --here --goal "Change calc" --done "calc adds" --touches calc.py >/dev/null || { echo "FAIL: could not freeze the goal"; exit 1; }
 $F hold idea --wait 20 >/dev/null; $goal record hold idea --file "$R/hold.idea.txt" >/dev/null
-# calls while the review is still waiting for its release file: the planner is done, but no call may print NEXT
+# calls while the review waits for its release file: the planner ends MID-WAIT of one call (it sleeps 3 s, each call waits 2 s), and no call may print NEXT
 early=""
-for _ in 1 2 3 4 5 6; do early="$early$($F hold plan --wait 8 2>&1)"; done
+for _ in 1 2 3 4 5 6; do early="$early$($F hold plan --wait 2 2>&1)"; done
 check "while the review is still running, the finished plan reply is not handed on (no NEXT line)" '! grep -q "^NEXT:" <<<"$early"'
 check "the call says the reviews are still running and to run the same command again" 'grep -q "reviews are still running" <<<"$early"'
 : > "$d/release"
@@ -49,5 +51,15 @@ for _ in $(seq 60); do [ -f "$R/hold.plan-reviews.json" ] && break; sleep 0.2; d
 late=""
 for _ in 1 2 3 4; do late=$($F hold plan --wait 8 2>&1); grep -q "^NEXT:" <<<"$late" && break; done
 check "control: once the review has finished, the same call hands the reply on (NEXT)" 'grep -q "^NEXT:" <<<"$late"'
+# a check that cannot run holds: an unexpected error inside the hold prints RUNNING and returns held, and a step other than plan is never held
+exc=$(python3 - "$S" <<'PY'
+import os, sys, tempfile, types
+sys.path.insert(0, sys.argv[1])
+import fit
+job = tempfile.mkstemp(dir=os.environ["TMPDIR"], suffix=".job")[1]
+print(fit.plan_hold(types.SimpleNamespace(step="plan"), "r", "r/x.txt", job), fit.plan_hold(types.SimpleNamespace(step="qa"), "r", "r/x.txt", job))
+PY
+)
+check "an unexpected error inside the hold holds (RUNNING, held) instead of handing on" '[ "${exc#*$'"'"'\n'"'"'}" = "True False" ] && grep -q "^RUNNING" <<<"$exc"'
 [ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED"
 [ "$fails" = 0 ]

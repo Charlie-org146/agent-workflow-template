@@ -12,7 +12,7 @@ import tempfile
 here = os.path.dirname(os.path.abspath(__file__))
 root = os.path.abspath(os.path.join(here, "..", ".."))
 text = open(os.path.join(root, ".github", "workflows", "regression.yml"), encoding="utf-8").read().replace("\r\n", "\n")
-block = re.search(r"python3 - (?:--live )?<<'PY'\n(.*?)\n\s+PY\n", text, re.S).group(1)
+block = re.search(r"python3 - (?:\$L )?<<'PY'\n(.*?)\n\s+PY\n", text, re.S).group(1)
 block = "\n".join(line[10:] for line in block.split("\n"))
 failed = []
 

@@ -246,8 +246,11 @@ def plan_hold(args, runs, reply, job):
     try:
         import planwait
         return planwait.hold(args, runs, reply, job)
-    except Exception:  # no hold: the hand-off is as it was before DEL-22
-        return False
+    except Exception as why:  # a check that cannot run holds, it never hands on
+        if getattr(args, "step", "") != "plan":
+            return False
+        print("RUNNING: the plan hold could not check the reviews (%s); run this same command again." % type(why).__name__)
+        return True
 
 
 def plan_block(seen):
