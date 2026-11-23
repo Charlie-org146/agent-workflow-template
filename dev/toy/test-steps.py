@@ -210,7 +210,7 @@ for dirpath, _dirs, files in os.walk(SKILLS):
             body = open(os.path.join(dirpath, name)).read()
             if re.search(r'json\.dump\(state, handle', body) or re.search(r'os\.replace\(path \+ "\.tmp", path\)', body):
                 writers.append(name)
-case("hook-no-unrouted-writer", not [w for w in writers if w not in ("flow.py", "lanekit.py", "machines.py", "notify.py", "workflows.py")], "unrouted record writers: %s" % writers)
+case("hook-no-unrouted-writer", not [w for w in writers if w not in ("machines.py", "notify.py", "workflows.py")], "unrouted record writers: %s" % writers)
 
 # 5. the package and the page
 page = subprocess.run([sys.executable, "-B", os.path.join(SKILLS, "workflow-docs", "scripts", "steps_page.py"), "render"], capture_output=True, text=True).stdout

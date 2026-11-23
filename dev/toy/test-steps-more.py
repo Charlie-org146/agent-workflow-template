@@ -253,8 +253,16 @@ case("a-direct-write-beside-the-commit-is-caught", extra != board_src and not co
 # what say() reads and leaves alone, and where goal.py names the step
 case("say-leaves-other-text-alone", [steps.say(t) for t in ("plan-review step", "next step review the diff", "pre-step ship, x", "step pr-check failed", "a review step of the draft", None, 3)]
      == ["plan-review step", "next step review the diff", "pre-step ship, x", "step pr-check failed", "a review step of the draft", None, 3], "")
-case("say-reads-the-written-asks", [steps.say(t) for t in ("review left this for you: x", "auto-approved at qa: y", "10 refused records in a row: idea refused: no DEPTH line", "qa: 2 refusals", "review: full_markers for review", "the qa lane has not passed", "the ship reply has no STEP line", "review failed: boom", "idea gave no STEP line")]
-     == ["tests left this for you: x", "auto-approved at tests: y", "10 refused records in a row: freeze refused: no DEPTH line", "tests: 2 refusals", "tests: full_markers for review", "the tests lane has not passed", "the tests reply has no STEP line", "tests failed: boom", "freeze gave no STEP line"], "")
+case("say-reads-the-written-asks", [steps.say(t) for t in ("review left this for you: x", "auto-approved at qa: y", "10 refused records in a row: idea refused: no DEPTH line", "qa: 2 refusals", "review: full_markers for review in the flow file is not a list", "a full_markers string for qa is missing", "10 records: review wasn't run by flow.py", "the qa lane has not passed", "the ship reply has no STEP line", "review failed: boom", "idea gave no STEP line")]
+     == ["tests left this for you: x", "auto-approved at tests: y", "10 refused records in a row: freeze refused: no DEPTH line", "tests: 2 refusals", "tests: full_markers for tests in the flow file is not a list", "a full_markers string for tests is missing", "10 records: tests wasn't run by flow.py", "the tests lane has not passed", "the tests reply has no STEP line", "tests failed: boom", "freeze gave no STEP line"], "")
+
+# the per-release summary lists the worst step first under its header, and a cause is recorded once
+rec = {"log": ["2026-11-22T10:00:00Z start freeze", "2026-11-22T10:05:00Z end freeze: 5m active, tokens 1, done", "2026-11-22T10:05:00Z start plan",
+               "2026-11-22T10:35:00Z end plan: 30m active, tokens 2, done"], "step": "plan", "status": "running"}
+lines = steps.summary(rec).splitlines()
+case("summary-lists-the-worst-step-first", lines[0] == "### Steps" and lines[2].startswith("- plan: 30m") and lines[3].startswith("- freeze: 5m"), str(lines))
+cs = {}
+case("a-cause-is-recorded-once", steps.add_cause(cs, "qa", "x (REFUSED_X)") and not steps.add_cause(cs, "ship", "y (REFUSED_X)") and len(cs["causes"]) == 1, str(cs))
 
 print("ALL PASS" if not failed else "FAILED: %s" % ", ".join(failed))
 sys.exit(1 if failed else 0)
