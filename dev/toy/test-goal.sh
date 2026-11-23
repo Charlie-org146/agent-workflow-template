@@ -20,6 +20,7 @@ W="python3 $here/skills/workflow-monitoring/scripts/watch.py"
 M="python3 $here/skills/workflow-monitoring/scripts/monitor.py"
 export PATH="$here/dev/toy/fakegh:$PATH" FAKE_GH_DIR="$d/gh"
 cd "$d/repo" || exit 1
+git remote set-url origin https://github.com/toy/repo.git; git config url."$d/origin.git".insteadOf https://github.com/toy/repo.git  # a github-looking origin that git rewrites to the local bare repository (the release hold reads the repository name)
 python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null
 git switch -q main; git merge -q --no-edit workflow-setup; git push -q origin main
 fails=0

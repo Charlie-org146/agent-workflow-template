@@ -251,7 +251,7 @@ caps=""; for pair in graph:20480 checkin:20480 operate:20480 goal:20480 sessions
 out="$caps"; check "the touched scripts stay within their budgets" '[ -z "$caps" ]'
 mkdir -p "$T/export" && git -C "$here" archive HEAD | tar -x -C "$T/export"   # a clean export: no __pycache__ from earlier runs
 out=$(python3 "$here/dev/package.py" --root "$T/export" --out "$T/pkg.zip" 2>&1); rc=$?
-check "the package rules pass, 99 files or fewer (dev/package.py)" '[ $rc = 0 ] && has "PASS: " && has " files, ZIP"'
+check "the package rules pass, within the file cap (dev/package.py)" '[ $rc = 0 ] && has "PASS: " && has " files, ZIP"'
 fi
 
 if want docs; then

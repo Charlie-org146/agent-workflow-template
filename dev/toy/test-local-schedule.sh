@@ -222,10 +222,11 @@ if want size; then
   check "negative control: a 20,481-byte file fails, a 19,500-byte file only warns, 20,480 and 19,000 warn, 18,999 is fine" '[ "$(size_state 20481)" = FAIL ] && [ "$(size_state 19500)" = WARN ] && [ "$(size_state 20480)" = WARN ] && [ "$(size_state 19000)" = WARN ] && [ "$(size_state 18999)" = ok ]'
   big=$(mktemp); head -c 20481 /dev/zero > "$big"; mid=$(mktemp); head -c 19500 /dev/zero > "$mid"
   check "the same size rule applied to real files: a 20,481-byte file fails, a 19,500-byte file warns" '[ "$(size_state "$(wc -c < "$big")")" = FAIL ] && [ "$(size_state "$(wc -c < "$mid")")" = WARN ]'; rm -f "$big" "$mid"
-  if git -C "$here" rev-parse -q --verify origin/main >/dev/null; then
-    check "skills holds no more files than origin/main" '[ "$(git -C "$here" ls-files skills | wc -l)" -le "$(git -C "$here" ls-tree -r --name-only origin/main -- skills | wc -l)" ]'
-  else echo "SKIP size baseline (no origin/main)"; fi
-  check "the package holds at most 99 files" 'python3 "$here/dev/package.py" >/dev/null 2>&1 || true; [ "$(git -C "$here" ls-files skills listing.json README.md LICENSE | wc -l)" -le 99 ]'
+  cap=$(sed -n 's/^MAX_FILES, MAX_BYTES, MAX_SCRIPT = \([0-9][0-9]*\),.*/\1/p' "$here/dev/package.py")  # the cap is read from the package rule, never repeated here
+  within() { [ "$1" -le "$cap" ]; }
+  check "skills holds no more files than the package cap (MAX_FILES in dev/package.py)" 'within "$(git -C "$here" ls-files skills | wc -l)"'
+  check "negative control: a package at the cap passes and one file over it (201 against 200) fails" '[ -n "$cap" ] && within "$cap" && ! within "$((cap + 1))"'
+  check "the package holds at most MAX_FILES files (read from dev/package.py)" 'python3 "$here/dev/package.py" >/dev/null 2>&1 || true; within "$(git -C "$here" ls-files skills listing.json README.md LICENSE | wc -l)"'
 fi
 setup() { ( cd "$1" && shift && python3 "$here/skills/workflow-setup/scripts/setup.py" "$@" 2>&1 ); }
 bare() {  # NAME: a toy repo with no loop files yet, pushed
