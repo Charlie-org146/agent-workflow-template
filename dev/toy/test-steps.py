@@ -59,7 +59,6 @@ def run_state(step, status, log=None, **more):
     return dict({"slug": "t", "step": step, "status": status, "log": list(log or [])}, **more)
 
 
-# 1. the list, defined once
 case("list-eight-names", steps.STEPS == ("freeze", "plan", "build", "quick checks", "tests", "merge", "after the merge", "release"), str(steps.STEPS))
 case("list-legacy-maps", all(steps.name_of(k) in steps.STEPS for k in steps.LEGACY) and steps.name_of("zzz") == "zzz")
 sys.path[:0] = [os.path.join(SKILLS, "workflow-delivery", "scripts"), os.path.join(SKILLS, "workflow-monitoring", "scripts")]
@@ -104,7 +103,6 @@ case("reports-break-on-a-label-off-the-list", moved_mon.shown({"step": "zzz", "s
 case("list-bad-label-refused", subprocess.run([sys.executable, "-B", "-c", "import sys; sys.path.insert(0, %r); import steps; steps.check('build', 'bogus')" % SKILLS],
                                              capture_output=True, text=True).returncode != 0)
 
-# 2. the step log
 a = run_state("build", "running")
 steps.transition({}, a, "2026-11-22T10:00:00Z")
 b = dict(a, step_clock=dict(a["step_clock"]), status="done")
@@ -145,7 +143,6 @@ for i, name in enumerate(["plan", "build", "tests"] * 12):
     many = nxt
 case("log-over-30-transitions", len(steps.entries(many)) == 8 and sum(r["attempts"] for r in steps.entries(many)) > 30)
 
-# 3. one writer for every record writer
 tmp = mk()
 path = os.path.join(tmp, "runs", "x.json")
 s1 = run_state("build", "running", log=["2026-11-22T10:00:00Z first"])
@@ -180,7 +177,6 @@ case("commit-two-writers-lose-nothing", not errors and all(("w%d-%d" % (n, i)) i
 case("commit-bad-label-refused", subprocess.run([sys.executable, "-B", "-c", "import sys; sys.path.insert(0, %r); import steps; steps.commit(%r, {'slug': 'x', 'step': 'bogus', 'status': 'running'}, '2026-11-22T10:00:00Z')" % (SKILLS, path)],
                                                capture_output=True, text=True).returncode != 0)
 
-# 4. every writer calls the one hook
 SCR = {"goal": "workflow-delivery", "release": "workflow-release", "sessions": "workflow-monitoring"}
 
 
@@ -212,7 +208,6 @@ for dirpath, _dirs, files in os.walk(SKILLS):
                 writers.append(name)
 case("hook-no-unrouted-writer", not [w for w in writers if w not in ("machines.py", "notify.py", "workflows.py")], "unrouted record writers: %s" % writers)
 
-# 5. the package and the page
 page = subprocess.run([sys.executable, "-B", os.path.join(SKILLS, "workflow-docs", "scripts", "steps_page.py"), "render"], capture_output=True, text=True).stdout
 case("page-equals-render", page.strip() == text("docs/wiki/Steps.md").strip())
 case("page-names-the-list", all(n in page for n in steps.STEPS))
@@ -233,7 +228,6 @@ drift = sp.stale(tmp_root)
 steps.STEPS = was
 case("page-added-step-makes-docs-check-stale", clean == [] and len(drift) == 1 and "differs from the code" in drift[0], str((clean, drift)))
 
-# 6. bytes (done line 3)
 LIM = {}
 for rel in ("skills/workflow-delivery/scripts/goal.py", "skills/workflow-release/scripts/release.py", "skills/workflow-monitoring/scripts/sessions.py",
             "skills/workflow-release/scripts/autorelease.py", "skills/workflow-docs/scripts/docs.py", "skills/workflow-regression/scripts/slots.py",
@@ -242,7 +236,6 @@ for rel in ("skills/workflow-delivery/scripts/goal.py", "skills/workflow-release
 case("size-under-19000", all(n < 19000 for n in LIM.values()), str({k: v for k, v in LIM.items() if v >= 19000}))
 case("size-update-not-grown", len(open(os.path.join(ROOT, "skills/workflow-setup/scripts/update.py"), "rb").read()) <= 19419)
 
-# 27. rendered screens (part 2 of this file's cases): one toy repo with goals whose texts name steps by the older labels; every
 # screen is rendered and read, and each case has a mutation that must fail it (run by the DEL-19 seen-red proof)
 import argparse
 import contextlib
