@@ -369,8 +369,7 @@ def cmd_pr(args):
     role.requirement_gate(ME, slug)
     if git("status", "--porcelain", "--", "."):
         print("NOTE: uncommitted files stay out")
-    head = role.bump_version(ME, state, head)
-    head = fit.regen(ME, slug)
+    head = role.bump_version(ME, state, fit.regen(ME, slug))
     gate, line, ids = role.lane(state_dir(), slug, "pr", role.flow_spec(), cfg)
     print(line)
     if gate == "running":

@@ -279,14 +279,9 @@ def tool(*parts):
 
 
 def regen(g, slug):
-    # #5317
-    if g.git("ls-files", ".loop/START.md"):
-        g.run([sys.executable, tool("workflow-docs", "scripts", "entry.py"), "write"])
-        files = g.git("diff", "--name-only", "--", "CLAUDE.md", "AGENTS.md", ".loop/START.md").split()
-        files and g.git("commit", "-m", "Regenerate START.md for " + slug, "--", *files)
-    done = g.run([sys.executable, tool("workflow-release", "scripts", "wiki.py"), "prepare", slug, "--commit"])
-    done.returncode and print("NOTE: stale page: " + done.stdout)
-    return g.git("rev-parse", "HEAD")
+    # #5317, DEL-25.4: a check, never a rewrite
+    import regen as made
+    return made.regen(g, slug)
 
 
 def nag(g, args):

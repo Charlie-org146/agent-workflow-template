@@ -52,6 +52,8 @@ scan still guards every commit. The risk is plain: a broken or wrong change can 
 the only check left is the regression workflow on GitHub, which reports and never blocks. A repo set up from this
 template keeps every gate until its owner turns one off.
 
+**Quick checks before a push (DEL-25).** On Mac and Linux, install `pre-commit==4.0.1` and run `python3 skills/workflow-delivery/scripts/quick.py install`: it writes `.pre-commit-config.yaml` when absent and installs the pre-push hook. A push then runs the one `quick` hook, which does lint, the docs check and the size limits in one process on one clock, each printing its time, inside the 1-minute limit of the "quick checks" row (a slower run prints the missed line). `quick.py run` does the same by hand. The private-name scan stays the git-native pre-push stub from `setup.py --git-hooks`; pre-commit keeps it as `pre-push.legacy` and still runs it, and `quick.py doctor` refuses when it or pre-commit is missing. Native Windows keeps the push stub only: `install` and `doctor` install nothing there and print a one-line note, and `quick.py run` is run by hand. At `goal.py pr` the generated files (START.md, CLAUDE.md, AGENTS.md, the wiki pages) are checked and never rewritten: a stale one is named in a `REGEN_STALE` NOTE with an ordered Fix (the hard stop ships in v1.2.0).
+
 **What it aims to be**
 
 - **Light:** Markdown instructions and a few small scripts, with no engine to run.

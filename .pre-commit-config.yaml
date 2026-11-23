@@ -1,0 +1,13 @@
+# DEL-25.1: one hook, one clock. The private-name scan is the git-native pre-push stub (pre-commit keeps it as pre-push.legacy).
+default_install_hook_types: [pre-push]
+default_stages: [pre-push]
+repos:
+  - repo: local
+    hooks:
+      - id: quick
+        name: quick checks
+        language: system
+        entry: python3 skills/workflow-delivery/scripts/quick.py run
+        pass_filenames: false
+        always_run: true
+        verbose: true
