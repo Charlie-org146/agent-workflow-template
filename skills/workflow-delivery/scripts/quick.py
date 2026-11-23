@@ -187,9 +187,13 @@ def main(argv):
         return doctor()
     if argv[1:2] == ["install"]:
         return install()
+    usage = "usage: quick.py run | lint | docs-check | size-limits | install | doctor"
+    if argv[1:] in ([], ["-h"], ["--help"]):
+        print(usage)
+        return 0
     names = list(CHECKS) if argv[1:2] == ["run"] else argv[1:2]
     if not names or any(n not in CHECKS for n in names):
-        print("usage: quick.py run | lint | docs-check | size-limits | install | doctor", file=sys.stderr)
+        print(usage, file=sys.stderr)
         return 2
     seconds, where = limit()
     print("limit: %dm (%s)" % (seconds // 60, where))

@@ -169,6 +169,10 @@ git(nobranch, "update-ref", "-d", "refs/remotes/origin/main")
 done = quick(nobranch, "lint")
 check(done.returncode == 1 and "broken.py" in done.stdout, "with no origin/main (a new branch) every tracked file is checked, not none")
 
+alone = sh([PY, os.path.join(root, QUICK)], root, env)
+check(alone.returncode == 0 and alone.stdout.startswith("usage: quick.py"), "quick.py run with no arguments prints its usage and exits 0 (the package's every-script-runs-alone rule)")
+check(sh([PY, os.path.join(root, QUICK), "nonsense"], root, env).returncode == 2, "an unknown command still exits 2")
+
 # 3a. a typical goal: the real three checks on this repo's own tree finish inside DEL-25.2's default limit
 began = time.time()
 real = sh([PY, os.path.join(root, QUICK), "run"], root, env)
