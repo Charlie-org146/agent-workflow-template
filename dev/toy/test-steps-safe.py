@@ -175,6 +175,17 @@ case("a-key-the-caller-removed-stays-removed", "release_error" not in json.load(
 fixes = importlib.import_module("steps_page").FIX
 bad = [k for k, v in fixes.items() if re.search(r"goal\.py record SLUG (?!(?:idea|plan|review|qa|ship)\b)\w", v)]
 case("no-suggested-fix-names-a-record-step-goal-py-refuses", not bad, str(bad))
+ws = {"slug": "ws", "step": "build", "status": "waiting", "waiting": {"ask": "q"}, "log": []}
+steps.commit(os.path.join(folder, "ws.json"), ws, "2026-11-23T10:00:00Z")
+ws = json.load(open(os.path.join(folder, "ws.json")))
+freed = json.loads(json.dumps(ws))
+freed.update(status="running")
+freed.pop("waiting")
+steps.commit(os.path.join(folder, "ws.json"), freed, "2026-11-23T10:01:00Z")
+ws["note"] = "later"
+steps.commit(os.path.join(folder, "ws.json"), ws, "2026-11-23T10:02:00Z")
+held = json.load(open(os.path.join(folder, "ws.json")))
+case("stale-writer-does-not-bring-a-freed-question-back", held.get("status") == "running" and "waiting" not in held and held.get("note") == "later", str(held)[:300])
 new_rec = {"slug": "tk", "step": "plan", "status": "running", "log": []}
 steps.commit(os.path.join(folder, "tk.json"), new_rec, "2026-11-23T10:00:00Z")
 new_rec.update(step="build", tokens={"plan": 150})

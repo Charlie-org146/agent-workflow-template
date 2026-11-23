@@ -5,7 +5,7 @@
 
 Keeps the wiki and README in one enforced format (feature pages are PRDs with no Usage section;.
 
-`docs.py check` also fails a stale `docs/wiki/Steps.md`; regenerate it with `python3 skills/workflow-docs/scripts/steps_page.py render --write`; `steps_page.py show SLUG` prints a goal's step table (start, end, minutes, tokens and result per step), from any worktree of the repository; a repository git cannot find or a record it cannot read is refused with `DISCOVERY_FAILED` or `RECORD_UNREADABLE`.
+`docs.py check` also fails a stale `docs/wiki/Steps.md`; regenerate it with `python3 skills/workflow-docs/scripts/steps_page.py render --write`; `steps_page.py show SLUG` prints a goal's step table (start, end, minutes, tokens and result per step), from any worktree of the repository; a repository git cannot find or a record it cannot read is refused with `DISCOVERY_FAILED` or `RECORD_UNREADABLE`; the fix it suggests for a failed tests step is to run `flow.py SLUG qa` again and record it with the `goal.py record` line that prints.
 
 ### What's delivered
 

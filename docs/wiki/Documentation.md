@@ -209,7 +209,7 @@ None
 - It keeps docs only in the repo's wiki folder and its GitHub wiki, nowhere else.
 - It never writes to an external document without an accepted delta, and never chooses which PRDs opt in: the owner sets a page's PRD source.
 - Syncing the README or Google Docs from an external source: left for later goals. (Milestone sync is INT-8.)
-- It does not write the Steps page by hand: `steps_page.py render` generates it from the code and `docs.py check` fails a stale one; `steps_page.py show SLUG` prints each step's start, end, minutes, tokens and result from any of the repo's worktrees; a repository git cannot find or a record it cannot read is refused (`DISCOVERY_FAILED`, `RECORD_UNREADABLE`), and a folder with no records is an empty store.
+- It does not write the Steps page by hand: `steps_page.py render` generates it from the code and `docs.py check` fails a stale one; `steps_page.py show SLUG` prints each step's start, end, minutes, tokens and result from any of the repo's worktrees; a repository git cannot find or a record it cannot read is refused (`DISCOVERY_FAILED`, `RECORD_UNREADABLE`), a folder with no records is an empty store, and the fix it suggests for a failed tests step names `flow.py SLUG qa` and the `goal.py record` line that prints, a command `goal.py` accepts.
 
 ## Success metrics
 - The docs check prints DOCS OK on the main branch after every merge, and a link-form PRD page never holds a merge on the unmigrated-Revisions note.
