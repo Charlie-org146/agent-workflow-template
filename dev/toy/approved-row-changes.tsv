@@ -27,3 +27,10 @@ full-auto-no-new-file	TD1225	reads full-auto-all's own merge against its first p
 rows-pr-full	o852, TD1183	the description names the 866-second budget the owner set; the command and its checks are unchanged
 limit:tables-prep-151	o889, TD1326	the row's own limit is 300 s (its recorded GitHub time is 196.3 s and it was cut at 200 s; 50% headroom over the 200 s it reached); command and assertions unchanged
 nightly:lanes-trace	o889, TD1326	kept out of the PR shards, still runs in the nightly run (its recorded time is 200.0 s, at the row limit); command and assertions unchanged
+known:guards-rule-start	o889, TD1326 (5), TD1344	local-lane only; green on main 45110588623 and on 45232018029
+known:guards-worker-role	o889, TD1326 (5), TD1344	local-lane only; green on main 45110588623 and on 45232018029
+known:del6-depth-by-size	o889, TD1326 (5), TD1344	local-lane only; green on main 45110588623 and on 45232018029
+known:del7-kill-resume	o889, TD1326 (5), TD1344	local-lane only; green on main 45110588623 and on 45232018029
+known:del9-pr-refuses	o889, TD1326 (5), TD1344	local-lane only; green on main 45110588623 and on 45232018029
+known:issue-38-verdicts	o889, TD1326 (5), TD1344	local-lane only; green on main 45110588623 and on 45232018029
+known:stuck-stays-top	o889, TD1326 (5), TD1344	local-lane only; green on main 45110588623 and on 45232018029
