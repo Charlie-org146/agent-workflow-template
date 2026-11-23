@@ -11,7 +11,7 @@ and line before anything is written. It writes the best non-SEL line of each row
 only when there is a record, and replaces the file whole; it prints `run twice: <ids>` for a row two shards ran. A SKIP or
 NOTRUN row is never counted as run: it passes only when its id is in skips.tsv (`id TAB reason`, the rows that skip by design
 on main; a NOTRUN row also needs the flag `notrun` in the third column) and is printed `SKIPPED <id>: <reason>`; any other
-prints a FAIL line naming the row and the repair. An unreadable skips.tsv is exit 1. It reruns nothing."""
+prints a FAIL line naming the row and the repair. A skips.tsv that does not exist is an empty list, so every skipped row fails; one that exists but cannot be read is exit 1. It reruns nothing."""
 import glob
 import math
 import os
@@ -54,6 +54,8 @@ def main(pattern, out="all.tsv", known=None):
                 cells = x.split("\t")
                 if x.strip() and not x.startswith("#"):
                     listed[cells[0]] = (cells[1] if len(cells) > 1 else "", "notrun" in cells[2:])
+        except FileNotFoundError:  # no list is an empty list: every skipped row fails
+            print("note: no skip list at %s: it is empty, so every skipped row fails" % known)
         except OSError as err:
             print("FAIL cannot read the skip list %s: %s; run from the repo root or restore the file" % (known, err.strerror or err))
             return 1

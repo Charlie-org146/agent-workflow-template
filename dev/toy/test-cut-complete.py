@@ -169,7 +169,7 @@ if case("empty-cache"):  # the times cache keeps the last real record: a run wit
         check(done.returncode == 0 and os.path.exists(os.path.join(work, "all.tsv")) == wrote, "%s: the times file is %s (exit %d)" % (name, "written" if wrote else "not written", done.returncode))
 
 if case("over-budget"):
-    def budgeted(budget, sleep):
+    def budgeted(budget, sleep, shell="sleep %s"):
         """Four rows of `sleep` seconds, two shards of the generated step run on the real runner with B set to budget; the gate's verdict."""
         names = ["t1", "t2", "t3", "t4"]
         here = repo({n: "bash dev/%s.sh" % n for n in names})
@@ -185,24 +185,26 @@ if case("over-budget"):
         git(here, "checkout", "-q", "-b", "pr")
         for n in names:  # the PR changes each row's own script, so every row is selected
             with open(os.path.join(here, "dev", n + ".sh"), "w") as handle:
-                handle.write("sleep %s\n" % sleep)
+                handle.write(shell % sleep + "\n")
         git(here, "add", "-A")
         git(here, "commit", "-qm", "change")
-        files = {}
+        files, steps = {}, []
         trees = {cell: shutil.copytree(here, here + "-cell" + cell, symlinks=True) for cell in ("0", "1")}  # each shard is its own checkout
         for cell in ("0", "1"):
             temp = tempfile.mkdtemp(prefix="cut-complete-over-")
             step = shard_step(cell).replace("/8 ", "/2 ")
             assert "B=866;" in step or "B=120;" in step, "the step's budget line is not B=<n>"
             step = step.replace("B=866;", "B=%d;" % budget).replace("B=120;", "B=%d;" % budget)
-            subprocess.run(["bash", "--noprofile", "--norc", "-e", "-c", step], cwd=trees[cell], capture_output=True, text=True, env=dict(env, TEMP_DIR=temp))
+            steps.append(subprocess.run(["bash", "--noprofile", "--norc", "-e", "-c", step], cwd=trees[cell], capture_output=True, text=True, env=dict(env, TEMP_DIR=temp)).returncode)
             files["s/shard-%s/t.tsv" % cell] = open(os.path.join(temp, "t.tsv")).read() if os.path.exists(os.path.join(temp, "t.tsv")) else ""
-        return gate(files, known=[])
+        return gate(files, known=[]) + (steps,)
 
-    code, out = budgeted(1, 2)
+    code, out, steps = budgeted(1, 2)
     check(code == 1 and "FAIL cut or not run: t" in out and "CUT" in out, "a shard whose rows pass its budget B has the rows it had no time for CUT, and the gate fails and names them (exit %d)" % code)
-    code, out = budgeted(866, 2)
-    check(code == 0 and "FAIL" not in out, "control: the same rows within the budget end green (exit %d)" % code)
+    code, out, steps = budgeted(866, 2)
+    check(code == 0 and "FAIL" not in out and steps == [0, 0], "control: the same rows within the budget end green (exit %d, shards %s)" % (code, steps))
+    code, out, steps = budgeted(866, 1, shell="exit %s")
+    check(all(s != 0 for s in steps), "a shard that ran a failing row ends red whatever the gate says (shards %s)" % steps)
 
 if case("tree-budget"):
     here = repo({"fast": "exit 0"})
@@ -287,7 +289,12 @@ if case("validate"):
         return done.returncode, done.stdout + done.stderr
 
     code, out = call("s/shard-[0-7]/t.tsv", "all.tsv", "no-such-list.tsv")
-    check(code == 1 and "FAIL cannot read the skip list no-such-list.tsv" in out and "not skipped on main" not in out, "an unreadable skip list is named as such, not blamed on the rows (exit %d)" % code)
+    check(code == 0 and "note: no skip list at no-such-list.tsv: it is empty" in out, "a repo with no skip list has an empty one: a row that ran passes (exit %d)" % code)
+    code, out = call("s/shard-[0-7]/t.tsv", "all.tsv", "no-such-list.tsv", files="a\t3\tRAN\nsk\t0\tSKIP\n")
+    check(code == 1 and "FAIL skipped and not skipped on main: sk" in out, "with no skip list every skipped row fails by name (exit %d)" % code)
+    os.makedirs(os.path.join(work, "list-dir.tsv"), exist_ok=True)
+    code, out = call("s/shard-[0-7]/t.tsv", "all.tsv", "list-dir.tsv")
+    check(code == 1 and "FAIL cannot read the skip list list-dir.tsv" in out and "not skipped on main" not in out, "a skip list that exists and cannot be read is named as such, not blamed on the rows (exit %d)" % code)
     for bad, why in (("a\tx\tRAN\n", "seconds"), ("a\t-3\tRAN\n", "seconds"), ("a\t3\tWHAT\n", "status"), ("a\n", "fields"), ("a\tnan\tRAN\n", "seconds")):
         before = open(os.path.join(work, "all.tsv")).read()
         code, out = call("s/shard-[0-7]/t.tsv", "all.tsv", files=bad)
