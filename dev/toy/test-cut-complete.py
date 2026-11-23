@@ -4,7 +4,8 @@
 
 Each case uses the real runner (regression.py run, as a PR shard) on a temp repo, and the real cutgate.py or the generated shard step:
   known-timeout  a row on the known list that passes its row limit is LEFT, so the cut gate fails it by name;
-  skipped        a row that cannot run is written SKIP, never RAN; the gate names it as skipped and does not count it as run;
+  skipped        a row that cannot run is written SKIP, never RAN; the gate passes it only when main's skip list holds it (SKIPPED,
+                 never counted as run), and fails a skip main does not have;
   empty-cache    a run that has no rows leaves the times cache's last record alone, a run with rows writes it;
   diff-fails     the shard step stops with a message when it cannot read the diff against the base, and does not call it
                  a documents-only change; controls: a documents-only diff ends green at once, a code diff reaches the runner.
@@ -68,13 +69,18 @@ def shards(here, n=2):
     return files
 
 
-def gate(files):
+def gate(files, known=None):
     work = tempfile.mkdtemp(prefix="cut-complete-gate-")
     for name, text in files.items():
         os.makedirs(os.path.dirname(os.path.join(work, name)), exist_ok=True)
         with open(os.path.join(work, name), "w") as handle:
             handle.write(text)
-    done = subprocess.run([sys.executable, GATE, "s/shard-[0-7]/t.tsv"], cwd=work, capture_output=True, text=True)
+    extra = []
+    if known is not None:
+        with open(os.path.join(work, "skips.tsv"), "w") as handle:
+            handle.write("# id\treason\n" + "".join("%s\tskips by design\n" % one for one in known))
+        extra = ["all.tsv", "skips.tsv"]
+    done = subprocess.run([sys.executable, GATE, "s/shard-[0-7]/t.tsv", *extra], cwd=work, capture_output=True, text=True)
     return done.returncode, done.stdout + done.stderr
 
 
@@ -88,8 +94,13 @@ if case("skipped"):
     files = shards(here)
     states = [line.split("\t")[2] for text in files.values() for line in text.splitlines() if line.startswith("sk\t")]
     check("RAN" not in states and "SKIP" in states, "a row that cannot run is written SKIP, never RAN (%s)" % states)
+    code, out = gate(files, known=["sk"])
+    check(code == 0 and "SKIPPED sk: skips by design" in out and "never counted as run: sk" in out and "FAIL" not in out,
+          "a row on main's skip list shows as SKIPPED, is never counted as run, and the gate is green (exit %d)" % code)
+    code, out = gate(files, known=["other"])
+    check(code == 1 and "FAIL skipped and not skipped on main: sk" in out, "a skip that main's list does not hold turns the gate red, naming the row (exit %d)" % code)
     code, out = gate(files)
-    check("skipped: sk" in out and "FAIL" not in out and code == 0, "the cut gate names the skipped row and does not count it as run (exit %d)" % code)
+    check(code == 1 and "FAIL skipped and not skipped on main: sk" in out, "with no skip list at all a skipped row fails the gate (exit %d)" % code)
 
 STEP_START, STEP_END = "      - run: |\n", "      - if: always()\n        uses: actions/upload-artifact"
 

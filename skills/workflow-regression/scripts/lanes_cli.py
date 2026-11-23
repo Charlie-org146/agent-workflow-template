@@ -232,7 +232,7 @@ jobs:
         with:
           pattern: shard-*
           path: s
-      - run: python3 skills/workflow-regression/scripts/cutgate.py 's/shard-[0-7]/t.tsv'
+      - run: python3 skills/workflow-regression/scripts/cutgate.py 's/shard-[0-7]/t.tsv' all.tsv .loop/regression-skips.tsv
       - if: always() && needs.shard.result == 'success'
         uses: actions/cache/save@v4
         with:

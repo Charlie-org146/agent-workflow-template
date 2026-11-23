@@ -9,3 +9,16 @@ budgets-agree	o797, TD1036 (REG-4)	now runs the budgets, digest and health cases
 known-no-block	TD842 (the five split rows granted under the TD815 rule)	split into five one-run rows (known-no-block and four siblings), each seen red, no coverage lost
 tasks-rows-only-added	TD1176, TD1184	the skills-file half reads the files v110-tasks' merge added under skills/ (o788 allows board_tasks.py); the row half is unchanged; the row also requires the negative control that a fixture of that merge adding another skills file fails (TD1184)
 guards-null-report-nofiles	o863, TD1194	reads the change it was written for and v110-tasks' own merge against their first parents, board_tasks.py allowed; negative controls run in the row and are mutation-checked; the package cap (GRD-21) stays in force
+skip:aut-email-secrets	TD1215	by-design skip on main run 45110588623 at c2ce6460a
+skip:codex-key-commands	TD1215	by-design skip on main run 45110588623 at c2ce6460a
+skip:grd7-round-cost	TD1215	by-design skip on main run 45110588623 at c2ce6460a
+skip:ls-judge-login	TD1215	by-design skip on main run 45110588623 at c2ce6460a
+skip:ls-log-bounded	TD1215	by-design skip on main run 45110588623 at c2ce6460a
+skip:ls-narrow-triggers	TD1215	by-design skip on main run 45110588623 at c2ce6460a
+skip:ls-nothing-in-repo	TD1215	by-design skip on main run 45110588623 at c2ce6460a
+skip:ls-plist	TD1215	by-design skip on main run 45110588623 at c2ce6460a
+skip:ls-private-no-workflow	TD1215	by-design skip on main run 45110588623 at c2ce6460a
+skip:ls-private-tick	TD1215	by-design skip on main run 45110588623 at c2ce6460a
+skip:ls-size-budget	TD1215	by-design skip on main run 45110588623 at c2ce6460a
+skip:ls-usage-steps	TD1215	by-design skip on main run 45110588623 at c2ce6460a
+skip:package-rows-tracked	TD1215	by-design skip on main run 45110588623 at c2ce6460a
