@@ -40,6 +40,7 @@ toy() { # a toy repo with the loop set up, the stand-in flow and the fake gh
   python3 "$here/skills/workflow-setup/scripts/setup.py" >/dev/null || true  # a bare agent_command is a gap, not a refusal (exit 0)
   git switch -q main; git merge -q --no-edit workflow-setup
   python3 -c 'import json;p=".loop/config.json";c=json.load(open(p));c["min_free_memory_gb"]=0;json.dump(c,open(p,"w"),indent=2)'; git commit -qam "Toy: no memory floor"  # the default floor held every goal on a busy Mac
+  python3 "$here/skills/workflow-docs/scripts/entry.py" write >/dev/null; git add -A .loop $(ls CLAUDE.md AGENTS.md 2>/dev/null); git commit -qm "START.md" 2>/dev/null  # DEL-25.4: made before the tested commit
   # setup's seeded rows count as seen failing here, so the qa lane (which fails unproven rows) passes for the toy goals
   awk -F'\t' 'BEGIN {OFS = FS} !/^#/ && NF > 4 && $5 == "" {$5 = "2026-01-01"} {print}' .loop/regression.tsv > "$d/rows" \
     && cat "$d/rows" > .loop/regression.tsv && git commit -qam "Seen red" 2>/dev/null; git push -q origin main
