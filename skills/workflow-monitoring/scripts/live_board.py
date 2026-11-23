@@ -196,7 +196,9 @@ def issues(runs, gone, root, at=None, taken=None, why="", freezing=()):
             stuck.append("- %s is %s: %s" % (slug, run["status"], plain(ask.get("ask") or report or run.get("finding") or "see its log")))
             stuck.append("    fix: answer by typing %s" % " or ".join('"%s"' % w for w in words))
         if run.get("release_error") and bs.error_open(run, gone, "release failed"):
-            other += ["- %s: the release failed: %s" % (slug, plain(run["release_error"])), '    fix: look at the problem, then type "resume %s"' % slug]
+            held = re.search(r"hold=main-red:(\w+)", str(run["release_error"]))
+            other += ["- %s: the release failed: %s" % (slug, plain(run["release_error"])), "    fix: rerun merge.py %s once issue %s is resolved" % (slug, held.group(1)) if held
+                      else '    fix: look at the problem, then type "resume %s"' % slug]
     for run in runs:
         last = parse_at(run.get("updated"))
         last = graph.last_spoke(run) or last

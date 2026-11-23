@@ -241,6 +241,12 @@ if want("17.2"):
     goal("broke", [("freeze", 5), ("tests", 9)], status="failed")
     clock.CTX.clear()
     check("[lead] broke" in "\n".join(live_board.render(REPO)), "a failed goal shows its lead card too")
+    goal("held-board", [("freeze", 3), ("tests", 4)], status="failed", extra={"release_error": "(MAIN_RED) hold=main-red:12 the merge is done; the release is held by open issue 12 \"t\"."})
+    clock.CTX.clear()
+    held_board = "\n".join(live_board.render(REPO))
+    check("fix: rerun merge.py held-board once issue 12 is resolved" in held_board and 'type "resume held-board"' not in held_board,
+          "the board's fix line for a held release says to rerun merge.py once the issue is resolved, not to type resume")
+    os.remove(os.path.join(RUNS, "held-board.json"))
     write(os.path.join(RUNS, "junk.json"), "[1, 2]")
     clock.CTX.clear()
     check("[lead] live-one" in "\n".join(live_board.render(REPO)) and any(x.startswith("[lead] toy-goal") for x in board_lines.bars(item, datetime.datetime.now(datetime.timezone.utc))),
