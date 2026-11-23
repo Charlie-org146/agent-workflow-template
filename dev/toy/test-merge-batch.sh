@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-monitoring/scripts/machines.py skills/workflow-release/scripts/merge.py
+# reads: skills/workflow-monitoring/scripts/machines.py skills/workflow-release/scripts/merge.py skills/
 # reads: skills/workflow-release/scripts/autorelease.py dev/toy/fakegh/gh
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"

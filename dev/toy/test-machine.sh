@@ -1,6 +1,6 @@
 #!/bin/bash
 # windows: ok
-# reads: dev/machine.py dev/machine_ops.py docs/wiki/Machines.md README.md
+# reads: dev/machine.py dev/machine_ops.py docs/wiki/Machines.md README.md skills/
 # reads: skills/loop-files.md skills/workflow-regression/scripts/actions.py
 # Proves the machine setup (MCH-1): a dry run, apply, a check that writes nothing, a Windows-shaped home, the
 # no-prompt rule, the two layers, the unattended mailer and the caps. One case per regression row id.
