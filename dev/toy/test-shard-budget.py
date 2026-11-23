@@ -44,7 +44,7 @@ def cache_paths(text):
 budget = re.search(r"B=(\d+);", flow)
 check(budget is not None and int(budget.group(1)) <= TARGET, "the workflow's own shard budget (B=%s) never exceeds the owner's %d s" % (budget and budget.group(1), TARGET))
 check(budget is not None and int(budget.group(1)) == TARGET, "the workflow's shard budget is the owner's %d s (o852), never raised or removed to fit a shard" % TARGET)
-check(flow.count("--timeout 200") == 2, "the row limit of 200 s is on both the numbered shard line and the tree line")
+check(len(re.findall(r"--timeout 200(?!\d)", flow)) == 2, "the row limit of 200 s is on both the numbered shard line and the tree line")
 got = cache_paths(flow)
 check(got[0] == got[1] == "all.tsv", "the shard job restores the times cache from the path the affected job saves it to: %s" % (got,))
 old = flow.replace("          path: all.tsv\n          key: row-times-", "          path: ${{ runner.temp }}/t.tsv\n          key: row-times-", 1)
