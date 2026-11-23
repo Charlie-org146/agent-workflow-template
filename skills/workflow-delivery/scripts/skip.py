@@ -64,7 +64,7 @@ def required_jobs(text):
 
 
 def base_ref():
-    """origin/<default branch>, the branch name read from the default branch's own config (else the remote's default); '' when neither resolves."""
+    """origin/<default branch>, the branch name read from the default branch's own config (else the remote's default); '' when neither resolves or the config's base is not a string."""
     import lanekit
     shown = lanekit.git("show", "origin/HEAD:.loop/config.json")
     try:
@@ -72,9 +72,11 @@ def base_ref():
     except ValueError:
         cfg = {}
     name = cfg.get("base") if isinstance(cfg, dict) else None
+    if name is not None and not isinstance(name, str):
+        return ""  # a base that is not a string is refused, never guessed
     if not name:
-        ref = lanekit.git("symbolic-ref", "refs/remotes/origin/HEAD")
-        name = ref.stdout.strip().rsplit("/", 1)[-1] if not ref.returncode else ""
+        ref = lanekit.git("symbolic-ref", "refs/remotes/origin/HEAD").stdout.strip()
+        name = ref[len("refs/remotes/origin/"):] if ref.startswith("refs/remotes/origin/") else ""
     return "origin/" + name if name else ""
 
 

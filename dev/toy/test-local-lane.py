@@ -180,6 +180,24 @@ check(skip.base_ref() == "" and skip.accepts(runs, SLUG, "ship", head_cfg) == ""
 git("update-ref", "refs/remotes/origin/main", head1)
 git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
 check(skip.base_ref() == "origin/main", "the base branch is resolved again once the ref exists")
+# a base that is not a string refuses; a default branch name with a slash is kept whole
+for bad_base in (7, ["main"]):
+    with open(os.path.join(repo, ".loop", "config.json"), "w") as handle:
+        json.dump({"base": bad_base}, handle)
+    git("add", "-A")
+    git("commit", "-qm", "odd base")
+    git("update-ref", "refs/remotes/origin/main", git("rev-parse", "HEAD"))
+    check(skip.base_ref() == "", "a config base of %r is refused, never guessed" % (bad_base,))
+git("update-ref", "refs/remotes/origin/main", head1)
+with open(os.path.join(repo, ".loop", "config.json"), "w") as handle:
+    json.dump({}, handle)
+git("add", "-A")
+git("commit", "-qm", "no base")
+git("update-ref", "refs/remotes/origin/rel/1.x", git("rev-parse", "HEAD"))
+git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/rel/1.x")
+check(skip.base_ref() == "origin/rel/1.x", "the remote's default branch name keeps its slash: %s" % skip.base_ref())
+git("symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main")
+git("update-ref", "-d", "refs/remotes/origin/rel/1.x")
 git("reset", "-q", "--hard", head1)
 skip.subprocess.run = fake_gh(GREEN)
 check("--paginate" in asked[-1] and not any("merge_group" in a for a in asked[-1]), "the check-runs call is paginated")
