@@ -118,7 +118,7 @@ git switch -q main 2>/dev/null; newgoal cutg main
 : > "$FAKE_GH_DIR/notes.log"  # only the cut's own notes count: the automatic release above already wrote its block
 python3 "$PK/workflow-release/scripts/release.py" cut cutg --user >"$d/cut.log" 2>&1
 grep -qF "### Steps" "$FAKE_GH_DIR/notes.log" 2>/dev/null && ok "the manual cut's draft notes carry the Steps block" || bad "the manual cut's notes have no Steps summary: $(tail -2 "$d/cut.log" | tr '\n' ' ')"
-git show HEAD:CHANGELOG.md 2>/dev/null | grep -qF "### Steps" && ok "the manual cut's changelog carries the Steps block" || bad "the manual cut's changelog has no Steps block"
+git show HEAD --format= -- CHANGELOG.md 2>/dev/null | grep "^+" | grep -qF "### Steps" && ok "the manual cut's changelog carries the Steps block" || bad "the manual cut's changelog has no Steps block"
 
 echo "== a merge-queue merge: its steps start and end, and a repeated cause is previewed grouped under one key"
 python3 - <<'PY'
