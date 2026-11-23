@@ -97,6 +97,8 @@ def check_in_rows(records):
 rows = check_in_rows([{"slug": "rev-goal", "status": "running", "step": "review"},
                       {"slug": "open-pr", "status": "done", "step": "release", "pr": "https://example.test/pull/7"}])
 case("reports-derive-from-the-list", "tests 5/8" in rows and "review 4/8" not in rows, "the check-in names a review goal by the old list")
+ask = check_in_rows([{"slug": "ask1", "status": "waiting", "step": "review", "waiting": {"ask": "10 refused records in a row: review refused: no DEPTH line", "words": ["go"]}}])
+case("the-checkin-ask-says-the-list-name", "ask1 asks: 10 refused records in a row: tests refused" in " ".join(ask.split()) and "review refused" not in ask, ask[-500:])
 case("reports-name-an-open-pull-request-merge", "merge 6/8" in rows and "release 8/8" not in rows, "the check-in puts an open pull request at the old last step")
 case("reports-break-on-a-label-off-the-list", moved_mon.shown({"step": "zzz", "status": "running"}, "zzz")[1] == 0)  # the fixture that breaks only the rule
 case("list-bad-label-refused", subprocess.run([sys.executable, "-B", "-c", "import sys; sys.path.insert(0, %r); import steps; steps.check('build', 'bogus')" % SKILLS],

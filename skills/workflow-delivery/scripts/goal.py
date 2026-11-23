@@ -263,7 +263,7 @@ def cmd_record(args):
         guards.refuse_no_try(state, *lane, save)
     reply = os.path.realpath(args.file)
     if reply != os.path.realpath(os.path.join(state_dir(), "%s.%s.txt" % (slug, step))) or not os.path.exists(ran):
-        guards.refuse_no_try(state, "%s wasn't run by flow.py" % moved.steps().name_of(step), "run flow.py %s %s until it prints NEXT" % (
+        guards.refuse_no_try(state, "%s wasn't run by flow.py" % step, "run flow.py %s %s until it prints NEXT" % (
             slug, step), guards.NOT_RUN_BY_FLOW, save)
     text = read(reply)
     found = re.findall(r"^\W*STEP:\s*(done|skipped|pending|failed)\b[ :.-]*(.*)$", text, re.M | re.I)
@@ -272,7 +272,7 @@ def cmd_record(args):
     pending = guards.pending_items(text)
     session = args.in_session or state.get("worker") == "session"
     if not result and not pending and session:
-        guards.refuse_no_try(state, "the %s reply has no STEP line" % moved.steps().name_of(step), "end the reply with the DEPTH line and a "
+        guards.refuse_no_try(state, "the %s reply has no STEP line" % step, "end the reply with the DEPTH line and a "
                              "STEP: done|skipped|pending|failed line, then record again", guards.NO_STEP_LINE, save)
     stamp, cfg = "", config()
     wait = pending or result == "pending"
@@ -297,7 +297,7 @@ def cmd_record(args):
         took = "; ".join(pending) or why or "the step's pending gate"
         state["flow"][step] = "done: auto-approved: " + took[:200] + stamp
         state["step"] = role.after(step)
-        state["note"] = {"text": "auto-approved at %s: %s" % (moved.steps().name_of(step), took[:240]), "at": now()}
+        state["note"] = {"text": "auto-approved at %s: %s" % (step, took[:240]), "at": now()}
         guards.advance(ME, state)
         save(state, "%s auto-approved: %s" % (step, took[:300]))
         print("AUTO-APPROVED %s %s: %s" % (slug, step, took))
@@ -305,7 +305,7 @@ def cmd_record(args):
         return 0
     if wait:
         state["flow"][step] = "pending"
-        ask = "%s left this for you: %s" % (moved.steps().name_of(step), "; ".join(pending) or why or "see its reply")
+        ask = "%s left this for you: %s" % (step, "; ".join(pending) or why or "see its reply")
         guards.hold(state, ask[:600])
         save(state, "%s pending: %s" % (step, ask[:200]))
         print("WAITING %s: %s" % (slug, ask))
@@ -321,7 +321,7 @@ def cmd_record(args):
             print(run([sys.executable, tool, "leftovers", reply, "--goal", slug, "--live"]).stdout.strip())
         print(nxt(args, state))
         return 0
-    failed_try(state, "%s %s" % (moved.steps().name_of(step), "failed: " + why[:200] if result else "gave no STEP line"), step,
+    failed_try(state, "%s %s" % (step, "failed: " + why[:200] if result else "gave no STEP line"), step,
                "fix the cause, then run flow.py %s %s again" % (slug, step))
     return 1
 

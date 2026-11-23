@@ -180,7 +180,7 @@ def render(root=None, at=None, stamp=None):
         elif state == "waiting":
             words = ask.get("words") or ["go on " + run["slug"]]
             rec = ask.get("recommend") or words[0]
-            needs.append("%s asks: %s; options: %s; recommended: %s" % (run["slug"], lb.plain(ask.get("ask"), 160), quoted(words), rec))
+            needs.append("%s asks: %s; options: %s; recommended: %s" % (run["slug"], lb.plain(moved_mon.steps().say(ask.get("ask")), 160), quoted(words), rec))
         elif state == "silent":
             needs.append("%s: its worker has sent nothing for %dm; look at its session" % (
                 run["slug"], graph.silent_for(run, at) // 60))
@@ -221,7 +221,7 @@ def render(root=None, at=None, stamp=None):
             ask = run.get("waiting") or {}
             if g["states"][run["slug"]] == "waiting":
                 readonly.append(owned(g["name"] + "/", run)) if graph.foreign(run) else needs.append("%s/%s asks: %s; options: %s" % (
-                    g["name"], run["slug"], lb.plain(ask.get("ask"), 160), quoted(ask.get("words") or ["go on"])))
+                    g["name"], run["slug"], lb.plain(moved_mon.steps().say(ask.get("ask")), 160), quoted(ask.get("words") or ["go on"])))
     needs += ["%s: can't be read (%s); the other repos are shown" % item for item in broken]
     operation, asks = unattended.lines()
     needs += asks
