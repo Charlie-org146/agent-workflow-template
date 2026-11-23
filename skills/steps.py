@@ -37,12 +37,16 @@ def name_of(label):
 
 def say(text):
     """A sentence naming a step by an older label says it by the one list's name. Only the forms the code writes are read:
-    "step ship" (before a punctuation mark, the end or a status word), "auto-approved at qa:" and "review left this for you"; a hyphenated word or any other text is left alone."""
+    "step ship" (before a punctuation mark, the end or a status word), "auto-approved at qa:", "<label> refused:",
+    "<label> left this for you:", a leading "<label>: " and "the <label> step|lane|reply"; any other text is left alone."""
     if not isinstance(text, str):
         return text  # a number, flag or nothing names no step
-    text = re.sub(r"(?<![\w-])step (\w+)(?=[,;:.)]|$| (?:running|failed|pending|needs|left|broke|hit|stopped|done|is|was|has)\b)", lambda m: "step " + name_of(m.group(1)), text)
-    text = re.sub(r"(?<![\w-])(auto-approved at )(\w+):", lambda m: m.group(1) + name_of(m.group(2)) + ":", text)
-    return re.sub(r"^(\w+)( left this for you:)", lambda m: name_of(m.group(1)) + m.group(2), text)
+    say_one = lambda m: m.group(1) + name_of(m.group(2)) + (m.group(3) if m.re.groups > 2 else "")
+    text = re.sub(r"(?<![\w-])(step )(\w+)(?=[,;:.)]|$| (?:running|failed|pending|needs|left|broke|hit|stopped|done|is|was|has)\b)", say_one, text)
+    text = re.sub(r"(?<![\w-])(auto-approved at )(\w+)(:)", say_one, text)
+    text = re.sub(r"(?<![\w-])()(\w+)(?= refused:| left this for you:)", say_one, text)
+    text = re.sub(r"(?<![\w-])(the )(\w+)(?= (?:step|lane|reply)\b)", say_one, text)
+    return re.sub(r"^()(\w+)(?=: )", say_one, text)
 
 
 def valid(label):
