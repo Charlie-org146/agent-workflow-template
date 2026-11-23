@@ -7,6 +7,8 @@ import re
 import subprocess
 import time
 
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
+
 WORKFLOW = ".github/workflows/regression-pr.yml"
 LINE = "SKIPPED: no local lane is owed on this head; the tests run on GitHub and its required checks decide (DEL-25.3); see them: gh pr checks"
 

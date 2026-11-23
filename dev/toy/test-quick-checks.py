@@ -192,6 +192,7 @@ write(os.path.join(hooks, "pre-push"), ours)
 check(seed.hook_state(os.path.join(hooks, "pre-push")) == "installed", "seed: our stub alone is installed")
 write(os.path.join(hooks, "pre-push"), shim)
 write(os.path.join(hooks, "pre-push.legacy"), ours)
+os.chmod(os.path.join(hooks, "pre-push.legacy"), 0o755)  # pre-commit keeps the hook it moves executable
 check(seed.hook_state(os.path.join(hooks, "pre-push")) == "installed", "seed: a pre-commit shim over our stub (kept as .legacy) is installed, so setup does not report it foreign")
 if os.name != "nt":
     os.chmod(os.path.join(hooks, "pre-push.legacy"), 0o644)
