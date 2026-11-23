@@ -116,6 +116,7 @@ elif args[:2] == ["issue", "list"]:
     if os.environ.get("FAKE_GH_LIST_FAIL"):  # gh cannot read the list: one error line, exit 1
         sys.exit(os.environ["FAKE_GH_LIST_FAIL"])
     pick = [i for i in issues if flag("--milestone") in (None, (i.get("milestone") or {}).get("title"))
+            and flag("--label") in (None, *[l.get("name") for l in i.get("labels") or []])
             and flag("--state") in (None, "all", i["state"].lower())]
     print(json.dumps(pick[:int(flag("--limit"))] if flag("--limit") else pick))
 elif args[:2] == ["issue", "create"]:
@@ -151,4 +152,6 @@ elif args[:2] in (["issue", "edit"], ["issue", "close"], ["issue", "reopen"], ["
                 i["state"] = "CLOSED" if args[1] == "close" else "OPEN"
     save("issues.json", issues)
 elif args[:2] == ["pr", "edit"]:
-    open(os.path.join(d, "pr-milestone-" + args[2]), "w").write(flag("--milestone") or "")
+    if flag("--body") is not None:
+        open(os.path.join(d, "body-" + args[2].rsplit("/", 1)[-1]), "w").write(flag("--body"))
+    open(os.path.join(d, "pr-milestone-" + args[2].rsplit("/", 1)[-1]), "w").write(flag("--milestone") or "")
