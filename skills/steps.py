@@ -37,14 +37,15 @@ def name_of(label):
 
 def say(text):
     """A sentence naming a step by an older label says it by the one list's name. Only the forms the code writes are read:
-    "step ship" (before a punctuation mark, the end or a status word), "auto-approved at qa:", "<label> refused:",
-    "<label> left this for you:", "<label> failed:", "<label> gave no STEP line", "<label> wasn't run", "for <label> in the flow file|is missing", a leading "<label>: " and "the <label> step|lane|reply"; any other text is left alone."""
+    "step ship" (before a punctuation mark, the end or a status word), "auto-approved at qa:", "<label> refused:" and "<label> failed:" (at the start or after "Last: " or "in a row: "),
+    "<label> left this for you:", "<label> gave no STEP line", "<label> wasn't run", "for <label> in the flow file|is missing", a leading "<label>: " and "the <label> step|lane|reply"; any other text is left alone."""
     if not isinstance(text, str):
         return text  # a number, flag or nothing names no step
     say_one = lambda m: m.group(1) + name_of(m.group(2)) + (m.group(3) if m.re.groups > 2 else "")
     text = re.sub(r"(?<![\w-])(step )(\w+)(?=[,;:.)]|$| (?:running|failed|pending|needs|left|broke|hit|stopped|done|is|was|has)\b)", say_one, text)
     text = re.sub(r"(?<![\w-])(auto-approved at )(\w+)(:)", say_one, text)
-    text = re.sub(r"(?<![\w-])()(\w+)(?= refused:| left this for you:| failed:| gave no STEP line| wasn't run)", say_one, text)
+    text = re.sub(r"(?<![\w-])()(\w+)(?= left this for you:| gave no STEP line| wasn't run)", say_one, text)
+    text = re.sub(r"(^|Last: |in a row: )(\w+)(?= failed:| refused:)", say_one, text)
     text = re.sub(r"(?<![\w-])(for )(\w+)(?= (?:in the flow file|is missing))", say_one, text)
     text = re.sub(r"(?<![\w-])(the )(\w+)(?= (?:step|lane|reply)\b)", say_one, text)
     return re.sub(r"^()(\w+)(?=: )", say_one, text)
