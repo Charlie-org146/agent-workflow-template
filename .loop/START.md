@@ -117,6 +117,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `stale_branch_days` | 14 | Days a local branch on no remote may sit before health lists it. |
 | `step_budget_minutes` | 30 | Minutes one review or ship step may take, 15 or more. |
 | `step_limit` | 0 | Seconds a flow step may run when the flow file sets none; 0 is built-in. |
+| `step_report_limits` | (empty) | Minutes a step may take before the board reports it, by size: build=45,code:tests=30; it reports, never stops. |
 | `template_repo` | Charlie-org146/agent-workflow-template | The template's GitHub repo (owner/name) update reads releases from, if the package names none. |
 | `template_version` | 0.27.29 |  |
 | `test_budget_minutes` | 15 | Minutes one in-loop test run may take, 15 or more; later rows wait for the full suite. |

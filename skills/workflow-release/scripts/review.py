@@ -23,6 +23,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import release  # noqa: E402
+from gate import hold, left_text  # noqa: E402
 os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
 
 
@@ -100,10 +101,6 @@ def tsv(*path):
     except OSError:
         return []
 
-
-def left_text(left):
-    """The cut's LEFT section: the count and the ids, or ''."""
-    return "\n## LEFT\n\nLEFT %d rows were not run before the cut's stop: %s\n" % (len(left), ", ".join(left)) if left else ""
 
 
 def criteria(top, cfg, doc_rows, fails):
@@ -283,6 +280,7 @@ def promote(top, cfg, ver, rec, ref, run=""):
     tag, rel, base = "v%d.0.0" % ver, "release/v%d" % ver, cfg.get("base", "main")
     if tag not in re.split(r"[,\s]+", " ".join(r[4] for r in table(top, "owner-words.tsv") if r[0] == rec)) or OK(["refs/tags/" + tag], top):
         sys.exit("REFUSED (OWNER_RECORD): owner-words record %r must name %s, and %s must not exist. Nothing changed." % (rec, tag, tag))
+    hold(top)
     bad, facts = gate_refusals(top, cfg, ver, ref, True, run)
     if bad:
         print(NL.join("GATE REFUSED v%d.0 (%s): %s" % (ver, c, s) for c, s, _ in bad) + NL + "NOT PROMOTED %s: no tag, branch or release." % tag)

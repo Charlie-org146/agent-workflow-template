@@ -151,6 +151,24 @@ Each requirement and how it is delivered:
 - DEL-27: Fast merge: the full tests run once, on the merged result, through the merge queue
 - DEL-28: Every step has a token budget: each step has a budget from its measured usual; past twice that it is flagged; waiting is done in a script.
 
+**Step report limits**
+
+Each step has a time limit the board reports against. It reports; it never stops a step.
+
+- **Setting:** `step_report_limits` in `.loop/config.json`, text of `[doc:|code:]name=minutes` entries joined by commas, for example `build=45,code:tests=30,PR checks=off`.
+- **Names:** the eight steps (freeze, plan, build, quick checks, tests, merge, after the merge, release), `PR checks`, `push to main`, `pr to queue`, `queue to main`, and the checks `health`, `docs check` and `board`. Case, spaces, hyphens and underscores do not matter.
+- **Minutes:** 1 to 1440, or `off` (or `0`) for no limit on that name.
+- **Size:** a doc-only change (only docs, tests and toy files touched) or a code change (anything under skills). `doc:` or `code:` limits one size; a bare entry limits both. The size's entry wins over the bare entry.
+- **Defaults:** quick checks 1, tests 5, merge 5, PR checks 5 (doc) or 30 (code), push to main 3 (doc) or 35 (code), pr to queue 1, queue to main 10. Any other name starts at its measured usual (the median of the last 20 finished goals, at least 3) and reads "awaiting history" until then.
+- **A bad value:** `settings.py fill-repo` refuses it and changes nothing: `REFUSED (STEP_LIMITS_BAD): ... Fix: edit .loop/config.json and run settings.py fill-repo again.` A bad value edited by hand shows one "step_report_limits unreadable (STEP_LIMITS_BAD)" line on the board and the defaults apply.
+
+| What | Reports | Stops |
+|---|---|---|
+| A step past its limit | yes, as a missed line with its cause | no |
+| A goal past its ETA | yes | the older budgets, unchanged |
+
+A goal's lead card shows its time in all and minutes per step, and a missed step shows once under it, for example `missed (was 41m, limit 5m): refused twice: DOC-18`. A line logged by the step writer shows as logged; for older goals the board works the same line out and marks it `(derived)`. Each missed line on a card starts with its step name, for example `tests: missed (was 41m, limit 5m): ...`. With only the setup skill installed, a set `step_report_limits` value is refused until the monitoring skill is installed with it.
+
 ### Skill: workflow-delivery
 - **Say:** "Start a goal to add caching, done when the cache test passes"
 - **Command:** `/workflow-delivery go "goal" --done "line"`

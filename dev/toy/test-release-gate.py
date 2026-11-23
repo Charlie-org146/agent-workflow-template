@@ -40,6 +40,8 @@ tmp = tempfile.mkdtemp(prefix="release-gate-")
 origin, repo = os.path.join(tmp, "origin.git"), os.path.join(tmp, "repo")
 git("init", "-q", "--bare", "-b", "main", origin, cwd=tmp)
 git("clone", "-q", origin, repo, cwd=tmp)
+git("remote", "set-url", "origin", "https://github.com/toy/repo.git", cwd=repo)
+git("config", "url.%s.insteadOf" % origin, "https://github.com/toy/repo.git", cwd=repo)  # a github-looking origin that git rewrites to the local bare repository
 os.makedirs(os.path.join(repo, ".loop", "goals"))
 os.makedirs(os.path.join(repo, "docs", "wiki"))
 config = os.path.join(repo, ".loop", "config.json")
@@ -86,6 +88,8 @@ review.email = lambda top, subject, text: (calls.append(("mail", subject)), MAIL
 
 def fake_run(args, *a, **k):
     if args and args[0] == "gh":
+        if args[1:3] == ["issue", "list"] and "main-red" in args:  # the release hold's question: no open main-red issue
+            return subprocess.CompletedProcess(args, 0, "[]", "")
         calls.append(args[1:])
         if args[1:3] == ["issue", "list"]:
             items = OPEN if "open" in args else CLOSED

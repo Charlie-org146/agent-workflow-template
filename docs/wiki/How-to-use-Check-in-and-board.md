@@ -31,6 +31,13 @@ Each requirement and how it is delivered:
 
 - CHK-1: Live board. Example, from the waits-first test: given a live board, when the board page is opened, then it shows the live board. Also (was MCH-5): One email stream, answered by reply. Example, from the mailbox-two-mails test: given a mailed question, when the owner replies "1 recommended", then it is recorded as owner words with source owner and sent to the worker.
 
+**Reading lead time and missed steps**
+
+- **Lead card:** under each goal, `[lead] <goal> 2h02m in all` and its minutes per step (freeze 12m, plan 41m, ...), at most 60 columns a line, ending in `read from <source>, HH:MM`. Lead time is wall-clock, waiting included. Failed and stopped goals show one too.
+- **Shipped:** the last section lists each merged goal as `[shipped] <goal>` with its minutes per step; with nothing merged there is no Shipped section.
+- **Missed:** a step past its limit shows `tests: missed (was 41m, limit 5m): <cause>`, led by its step name; a line the loop worked out for an older goal starts `(derived)`. Limits are set by `step_report_limits` (see Delivery, Step report limits).
+- **ETA basis:** an ETA says who said it, when, and the history behind it, ending in how many finished goals the estimate was scored on, or `too few finished goals (N of 10)`.
+
 ### Command: checkin.py
 - **Command:** `python3 skills/workflow-monitoring/scripts/checkin.py [--since ISO]`
 - **Dry run:** none needed: it is read-only.

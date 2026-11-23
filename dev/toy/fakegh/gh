@@ -16,6 +16,7 @@ print("\n".join(json.dumps(r) for r in rows[:None if "--paginate" in os.environ[
 '
   exit 0
 fi
+if [ "$1 $2" = "issue list" ] && [[ "$*" == *"--label main-red"* ]]; then echo "[]"; exit 0; fi  # the release hold's question: no open main-red issue
 case "$1 $2" in
   "api "*) exec python3 "$here/fake.py" "$@";;
   "repo view") exec python3 "$here/fake.py" "$@";;

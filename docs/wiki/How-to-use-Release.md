@@ -59,6 +59,17 @@ With merge_queue on, the release is made in CI on push to main, not by merge.py.
 Each requirement and how it is delivered:
 
 
+**Main red**
+
+No local release door releases while main is known broken. Merges go on.
+
+- **What holds:** an open issue labelled `main-red`, by the same rule `.github/workflows/release.yml` applies. The repository is the github.com repository the origin names (its effective, push and configured addresses must agree); with none, or a disagreement, the hold is `MAIN_RED_UNREADABLE`.
+- **Doors:** `release.py cut`, the release step of `merge.py` (autorelease), and `review.py promote`.
+- **Refusal:** `REFUSED (MAIN_RED): issue 12 "..." is open. Nothing was released or changed. Fix: the owner, or the goal that filed it, resolves it once main is repaired and green; an automated session never does (hold=main-red:12). Then run release.py cut SLUG again.` `review.py promote` says to run `review.py promote` again. With autorelease the text starts `(MAIN_RED) the merge is done;` and the goal stays mergeable; run `merge.py SLUG` again after the fix and it releases that goal without merging twice.
+- **Unreadable list:** `REFUSED (MAIN_RED_UNREADABLE) cannot read main-red issues (<class>, gh exit code N). Nothing was released or changed. Fix: <fix for that class>.` The classes are auth, permission, timeout, bad reply, no GitHub origin, 200 or more open issues, and an unexpected error (rerun with `LOOP_DEBUG=1` for the trace). With autorelease the text starts `(MAIN_RED_UNREADABLE) the merge is done; the release is held` and the same rerun applies. gh's own text is never printed. The gate reads with gh only, 30 seconds a call, 70 seconds in all, two tries.
+- **After it is resolved:** each held goal is released by its own `merge.py SLUG` run, which keeps the notes and verify steps staged for that goal. A later goal's release lists only that goal's notes. A held goal's lead card shows one line saying its release is held.
+- **Not the known-red-rows refusal:** this hold (an open `main-red` issue) blocks any release; the known-red-rows refusal of DOC-28 is a separate rule.
+
 ### Command: review.py gate
 - **Command:** `python3 skills/workflow-release/scripts/review.py gate vX [--ref REF] [--no-suite] [--suite-from RUN]`
 - **Dry run:** the gate only reads, except that it saves its refusals to the git folder for the freeze; `--no-suite` skips the suite and health; `--suite-from RUN` reads the suite from that GitHub Actions run of the regression workflow instead of running it, and refuses "suite run does not cover the candidate" unless the run is on the candidate's commit, completed, fully reported with nothing UNRUN and logging every land or nightly row.

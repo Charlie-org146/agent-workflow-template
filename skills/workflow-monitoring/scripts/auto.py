@@ -23,6 +23,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import board_status as bs  # noqa: E402
 import graph  # noqa: E402
+import clock  # noqa: E402
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks
 
 KINDS = ("routine", "destructive", "money", "security", "owner")
@@ -245,7 +246,7 @@ def eta_new(root, slug, done, touches, budget, cfg=None):
         return {"minutes": budget or 240, "estimate": 0, "basis": "no estimate yet, so the time budget"}
     high, margin = int(found[2] // 60), eta_margin(cfg)
     return {"minutes": max(ETA_FLOOR, -(-int(high * margin) // 5) * 5), "estimate": high,
-            "basis": "estimate %dm plus a %d%% margin%s" % (high, round((margin - 1) * 100), ", rough" if found[3] else "")}
+            "basis": "estimate %dm plus a %d%% margin%s" % (high, round((margin - 1) * 100), ", rough" if found[3] else "") + clock.basis_suffix(runs, None, root)}
 
 
 def eta_seen(root, run):

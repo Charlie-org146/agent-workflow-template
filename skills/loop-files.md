@@ -1820,6 +1820,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `wiki_dir` | `docs/wiki` | The folder of wiki pages. |
 | `risky_paths` | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | Regexes for paths whose goals need extra care. |
 | `step_limit` | `0` | Seconds a flow step may run when the flow file sets none; 0 is built-in. |
+| `step_report_limits` | `(empty)` | Minutes a step may take before the board reports it, by size: build=45,code:tests=30; it reports, never stops. |
 | `goal_levels` | `land` | Row levels a goal lane plans from: land, or nightly (land and nightly rows). |
 | `regression_runs` | `(empty)` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. |
 | `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |

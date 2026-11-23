@@ -8,7 +8,7 @@ its fix in plain words; stopped goals grouped by cause by board_lines.py), Runni
 step flow with the current step in brackets, worker, depth, next step; [freezing] for a goal handed over before it was
 frozen; then the session pool line), Queued goals (held goals marked held, with their held time), Dependencies (board_lines.py's
 top-to-bottom graph) and one Finish time ("paused until ..." while every goal waits out one usage limit). Goal state comes
-from graph.py, pull request states from board_lines.py. Merged work, history and totals are left out. Health is
+from graph.py, pull request states from board_lines.py. Merged work shows only as the Shipped cards, history and totals are left out. Health is
 workflow-health's verdict, or "unknown"; LOOP_BOARD_HEALTH replaces it (tests). Printed by report, dashboard and the
 status question, never by a check-in (MON-4). Imported by board_status.py.
 """
@@ -27,6 +27,7 @@ import board_status as bs  # noqa: E402
 import graph  # noqa: E402
 import board_model as bm  # noqa: E402
 import board_page  # noqa: E402
+import clock  # noqa: E402
 from board_tasks import age, parse_at, task_lines  # noqa: E402,F401
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block (board_status sets the rest).
@@ -105,7 +106,7 @@ def flow_lines(run, over=0):
             lines.append(line)
             line = "    "
         line += piece if line == "    " else " " + piece
-    return lines + [line]
+    return lines + [line] + clock.lead_line(run)
 
 
 def fit(lines, width=WIDTH):
@@ -235,6 +236,7 @@ def render(root=None, at=None):
     root = root or bs.git("rev-parse", "--show-toplevel")
     at = at or datetime.datetime.now(datetime.timezone.utc)
     runs = load(root)
+    diag = clock.begin(root, at)
     pool, why = graph.read_pool(os.path.join(loop_dir(root), "session-pool.json"))
     taken = graph.assigned(pool)
     on_disk = run_files(root)
@@ -260,7 +262,8 @@ def render(root=None, at=None):
         out = [head, tail, "", "Issues"]
     else:
         out = [head, "", "Issues"]
-    out += issues([r for r in runs if r["slug"] not in shut], gone, root, at, taken, why, freezing) + ["", "Running goals"]
+    out += issues([r for r in runs if r["slug"] not in shut], gone, root, at, taken, why, freezing)
+    out += [x for r in runs if r.get("status") in ("failed", "stopped") and r["slug"] not in gone for x in clock.lead_line(r)] + ["", "Running goals"]
     most = max_tries(root)
     bar = lambda run, done, end="": "- %s  [%s%s] %d%%  %s%s%s" % (
         run["slug"], "#" * round(10 * done / len(FLOW)), "-" * (10 - round(10 * done / len(FLOW))), round(100 * done / len(FLOW)),
@@ -295,7 +298,8 @@ def render(root=None, at=None):
     missing = board_page.unknown(items) or any(i["partial"] for i in items) or held or freezing
     finish = "nothing left" if not items else "no estimate yet" if not seconds else "%sfinish about %s" % (
         "at least " if missing else "", graph.clock(at + datetime.timedelta(seconds=seconds)))
-    return fit(out + ["", "Finish", board_lines.paused(live) or finish, bs.accuracy_text(runs, at, root)])
+    shipped = clock.merged_lines(runs, gone)
+    return fit(diag + out + (["", "Shipped"] + shipped if shipped else []) + ["", "Finish", board_lines.paused(live) or finish, bs.accuracy_text(runs, at, root)])
 
 def pool_line(found, root):
     import pool as pl  # pool.py imports sessions.py; only the board's pool line needs it

@@ -38,6 +38,8 @@ tmp = tempfile.mkdtemp(prefix="review-hold-")
 origin, repo = os.path.join(tmp, "origin.git"), os.path.join(tmp, "repo")
 git("init", "-q", "--bare", "-b", "main", origin, cwd=tmp)
 git("clone", "-q", origin, repo, cwd=tmp)
+git("remote", "set-url", "origin", "https://github.com/toy/repo.git", cwd=repo)
+git("config", "url.%s.insteadOf" % origin, "https://github.com/toy/repo.git", cwd=repo)  # a github-looking origin that git rewrites to the local bare repository
 git("config", "user.name", "t"); git("config", "user.email", "t@t")  # repo-local: release.py commits in a subprocess that the -c options above do not reach (a runner has no global identity)
 os.makedirs(os.path.join(repo, ".loop"))
 config = os.path.join(repo, ".loop", "config.json")
@@ -62,6 +64,8 @@ real_run, merged, tip = subprocess.run, [], [head]
 
 def fake_run(args, *a, **k):
     if args and args[0] == "gh":
+        if args[1:3] == ["issue", "list"] and "main-red" in args:  # the release hold's question: no open main-red issue
+            return subprocess.CompletedProcess(args, 0, "[]", "")
         if args[1:3] == ["pr", "view"]:
             return subprocess.CompletedProcess(args, 0, json.dumps({"state": "OPEN", "headRefOid": tip[0]}), "")
         if args[1:3] == ["pr", "merge"]:

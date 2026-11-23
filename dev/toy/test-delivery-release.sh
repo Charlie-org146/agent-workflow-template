@@ -28,6 +28,7 @@ goal="python3 $here/skills/workflow-delivery/scripts/goal.py"
 docs="python3 $here/skills/workflow-docs/scripts/docs.py"
 wiki="python3 $here/skills/workflow-release/scripts/wiki.py"
 cd "$d/repo" || exit 1
+git remote set-url origin https://github.com/toy/repo.git; git config url."$d/origin.git".insteadOf https://github.com/toy/repo.git  # a github-looking origin that git rewrites to the local bare repo (the release hold reads the repository name)
 python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null
 git switch -q main; git merge -q --no-edit workflow-setup
 python3 - <<'PY'

@@ -567,6 +567,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 | [rel-update-asset](Tests#t-rel-update-asset) | requirement | DEL-17 | Given a release with a package asset, when update downloads it, then it uses the asset, and with no asset it falls back to the source archive. | not run |
 | [queue-use](Tests#t-queue-use) | requirement | DEL-17 | Given the last merges where one PR entered the merge queue 162 seconds after its checks passed, when health reads the queue use, then it FAILS naming that PR and prints PRs per merge and the longest wait. | not run |
 | [release-hold-red](Tests#t-release-hold-red) | requirement | DEL-17 | Given an open issue labeled main-red, when release.yml runs on a push to main, then it ends green printing held: main red (#N) and publishes nothing; given none open, it releases as before. | not run |
+| [clock-del17](Tests#t-clock-del17) | requirement | DEL-17 | Covers DEL-17.1 to 17.5, one case group each: step limits and their settings (17.1); lead cards per goal and the Shipped cards (17.2); missed lines with their cause, PR checks against its limit and the measured-usual marker (17.3); an ETA's who, when and history basis through auto.py and a failing backtest (17.4); the main-red hold on release cut, promote and autorelease, and a repo with no readable GitHub origin failing closed (17.5). (not yet Given/When/Then) | not run |
 | - | requirement | DEL-22 | no passing test | not enforced |
 | - | requirement | DEL-25 | no passing test | not enforced |
 | - | requirement | DEL-26 | no passing test | not enforced |

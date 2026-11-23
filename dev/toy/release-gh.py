@@ -14,6 +14,10 @@ if a[:1] == ["api"] and "/rules/branches/" in a[1]:
     log()
     if os.path.exists(os.path.join(d, "rules.json")): print(open(os.path.join(d, "rules.json")).read()); sys.exit(0)
     sys.exit(print("gh: Not Found (HTTP 404)", file=sys.stderr) or 1)
+if a[:2] == ["issue", "list"] and "main-red" in a:  # the release hold's query: open main-red issues, none unless a test sets TOY_MAIN_RED
+    log(); out([{"number": 77, "title": "toy main is red"}] if os.environ.get("TOY_MAIN_RED") else [])
+if a[:2] == ["pr", "list"] and "--search" in a:
+    log(); out([])
 prs = load("rpr.json")
 if a[:2] == ["pr", "create"] and (flag("--head") or "").startswith("release/"):
     log(); n = str(101 + len(prs))

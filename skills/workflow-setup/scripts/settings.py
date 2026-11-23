@@ -41,6 +41,7 @@ TABLE = [
     ("wiki_dir", REPO, "docs/wiki", "The folder of wiki pages."),
     ("risky_paths", REPO, RISKY, "Regexes for paths whose goals need extra care."),
     ("step_limit", REPO, 0, "Seconds a flow step may run when the flow file sets none; 0 is built-in."),
+    ("step_report_limits", REPO, "", "Minutes a step may take before the board reports it, by size: build=45,code:tests=30; it reports, never stops."),
     ("goal_levels", REPO, "land", "Row levels a goal lane plans from: land, or nightly (land and nightly rows)."),
     ("regression_runs", REPO, "", "Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it."),
     ("machine_setup", REPO, [], "Machine setup items (allow, routine, secret, connector) machine.py applies on adoption."),
@@ -276,6 +277,9 @@ def fill_repo(path):
     if isinstance(most, bool) or not isinstance(most, int) or not 1 <= most <= 50:
         sys.exit("REFUSED: criteria_max is %r in %s. Fix: a whole number from 1 to 50 (default 10)." % (most, path))
     check_depth(held, path)
+    clock = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "clock.py")
+    if held.get("step_report_limits") and subprocess.run([sys.executable, clock, "check", path]).returncode:
+        sys.exit(1)
     source = held.get("milestones_source", "")
     if source and not re.fullmatch(r"url:\S+|mcp:(?!notion:)\w[\w-]*:\S+|mcp:notion:[0-9a-f]{32}", str(source)):
         sys.exit("REFUSED: milestones_source is %r in %s. Fix: url:<link>, mcp:<server>:<id>, mcp:notion:<32 hex>." % (source, path))

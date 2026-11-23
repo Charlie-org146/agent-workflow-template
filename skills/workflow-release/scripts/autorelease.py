@@ -365,6 +365,9 @@ def finish(top, cfg, state):
   if cfg.get("merge_queue"):  # REL-15: release.yml tags on push to the base; no commit, no pull request
     print("RELEASE from CI: tags %s (part %s)" % (state["slug"], state.get("release_part")))
     return True
+  why = release.hold(top, state["slug"], 1)
+  if why:
+    fail(state, why)
   if not state.get("release_pushed"):
     stage_notes(top, state, cfg)
     stage_part(top, state)

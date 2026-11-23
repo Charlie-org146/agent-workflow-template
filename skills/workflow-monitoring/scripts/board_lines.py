@@ -19,6 +19,7 @@ import board_model as bm
 import board_page
 import board_status as bs
 import graph
+from clock import cache_path, lead_for
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
@@ -108,7 +109,7 @@ def bar(done, total):
 def bars(item, at):
     """A goal's lines: a bar per frozen done line, with done/total and the goal's ETA."""
     return ["      d%d %s %d/%d%s %s" % (n, bar(d, t), d, t, "" if rows else " by step", eta(at, item.get("left"), item["slug"] + " has no estimate"))
-            for n, (d, t, rows) in enumerate(item.get("bars") or [], 1)]
+            for n, (d, t, rows) in enumerate(item.get("bars") or [], 1)] + lead_for(item["slug"], at)
 
 
 def roll(items, at):
@@ -199,14 +200,6 @@ def paused(runs):
 
 TIMEOUT = float(os.environ.get("LOOP_PR_TIMEOUT", "3"))
 WORKERS = 16
-
-
-def cache_path(root):
-    try:
-        common = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, capture_output=True, text=True, timeout=5).stdout.strip()
-    except (OSError, subprocess.SubprocessError):
-        return ""
-    return os.path.join(os.path.abspath(os.path.join(root, common)), "loop", "pr-states.json") if common else ""
 
 
 def load(path):

@@ -16,6 +16,7 @@ import sys
 import tempfile
 import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from gate import hold, verify_steps  # noqa: E402
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
@@ -191,16 +192,6 @@ def bump(version, part):
     return ".".join(str(item) for item in numbers)
 
 
-def verify_steps(top, slug):
-    try:
-        text = open(os.path.join(top, ".loop", "goals", slug + ".md")).read()
-    except OSError:
-        return ""
-    part = text.partition("## Verify by hand")[2].split("\n## ", 1)[0]
-    part = re.sub(r"<!--.*?-->", "", part, flags=re.S).strip()
-    steps = re.split(r"^\s*\d+\.\s+(?=\S)", part, flags=re.M)[1:]
-    return part if steps and all(re.search(r"Expect:\s*\S", step) for step in steps) else ""
-
 
 def doc_rows(top):
     try:
@@ -311,6 +302,7 @@ def cmd_cut(args):
     finished(state)
     branch = state.get("branch") or "loop/" + slug
     cwd = toplevel(state)
+    hold(cwd, slug)
     current = git("branch", "--show-current", cwd=cwd)
     if current != branch:
         sys.exit("REFUSED: %s is on branch %r, not %s. Fix: switch to %s first." % (cwd, current, branch, branch))
