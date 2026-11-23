@@ -5,7 +5,7 @@
 # The wiki step's one commit (wiki-commit-front-files): wiki.py prepare --commit commits the README together with the wiki folder when
 # the README equals a clean render of the committed tree, leaves it dirty and named when it does not, never reads GitHub in the audit's
 # render, and never leaves its throwaway tree behind. Real chain, toy repo and toy origin only; temporary HOME; no network.
-# usage: test-wiki-front.sh [CASE[,CASE...]]   CASE: commit nothing foreign retry staged tree term private privname env stable note order (default: all)
+# usage: test-wiki-front.sh [CASE[,CASE...]]   CASE: commit nothing foreign retry staged tree term private privname hardening env stable note order (default: all)
 #        TOY_SKILLS=DIR runs the scripts of another checkout (the base export for a red run, or a mutated copy for a negative control).
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH TOY_PROTECT TOY_PR_MODE GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 set -u
@@ -156,6 +156,37 @@ if section privname; then fresh
   out=$(LOOP_PRIVATE_NAMES="$d/names$n.txt" commit_only); rc=$?
   # Value: protects=a private name in the copied wiki folder stops the step before the render and commits nothing; fails_when=the copied tree is rendered or committed without the private-name scan; why_new=the tree copies the working wiki folder; seam=none; no_claim=the real private-name list (a planted name stands in)
   want "a private name in the copied wiki folder is refused by name, nothing is committed (not even the folder) and the tree is removed" '[ "$rc" = 1 ] && echo "$out" | grep -q "^WIKI_FRONT_REFUSED: " && [ "$head" = "$(git rev-parse HEAD)" ] && [ "$(tmps)" = 0 ] && git status --porcelain | grep -q "docs/wiki/Toy-notes.md"'
+fi
+if section hardening; then
+  fresh  # a wiki_dir that points outside the checkout must never reach the tree's rmtree
+  mkdir -p "$d/decoy"; echo keep > "$d/decoy/file.txt"; printf '\nedit\n' >> README.md
+  out=$(python3 -c "import sys;sys.path.insert(0,sys.argv[1]);import sections;sys.exit(sections.commit_wiki(sys.argv[2],sys.argv[3],'toy','README.md'))" "$SK/workflow-docs/scripts" "$PWD" "$d/decoy" 2>&1); rc=$?
+  # Value: protects=an absolute or parent-relative wiki_dir is refused before anything is deleted or copied; fails_when=the folder is joined onto the tree path unchecked; why_new=wiki_dir comes from the branch's own config; seam=none; no_claim=a symlinked component inside the folder
+  want "a wiki_dir that points outside the checkout is refused by name and the real folder is left untouched" '[ "$rc" = 1 ] && echo "$out" | grep -q "^WIKI_FRONT_REFUSED: " && [ -f "$d/decoy/file.txt" ]'
+  fresh  # a private name in a subfolder of the wiki folder
+  printf 'zebracorn\n' > "$d/names$n.txt"; mkdir -p docs/wiki/sub; printf 'The zebracorn project.\n' > docs/wiki/sub/deep.md; printf '\nedit\n' >> README.md; head=$(git rev-parse HEAD)
+  out=$(LOOP_PRIVATE_NAMES="$d/names$n.txt" commit_only); rc=$?
+  want "a private name in a subfolder page is refused too, and nothing is committed" '[ "$rc" = 1 ] && echo "$out" | grep -q "^WIKI_FRONT_REFUSED: " && [ "$head" = "$(git rev-parse HEAD)" ]'
+  fresh  # a failing commit hook must not leave the README staged
+  printf '#!/bin/sh\nexit 1\n' > .git/hooks/pre-commit; chmod +x .git/hooks/pre-commit
+  python3 -c "import sys;sys.path.insert(0,sys.argv[1]);import render,argparse;render.render(argparse.Namespace(check=False,keep=True))" "$SK/workflow-docs/scripts" >/dev/null 2>&1
+  out=$(commit_only); rc=$?
+  want "a refused commit leaves nothing staged, so the rerun is not stuck on staged changes" '[ "$rc" = 1 ] && echo "$out" | grep -q "^REFUSED: the wiki commit failed" && [ -z "$(git diff --cached --name-only)" ]'
+  fresh  # the sweep tolerates an entry that vanished or dangles, and removes an old tree
+  mkdir -p "$TMPDIR/wikifront-old"; touch -t 202001010000 "$TMPDIR/wikifront-old"; ln -s "$d/nowhere" "$TMPDIR/wikifront-dangling"; printf '\nedit\n' >> README.md
+  out=$(commit_only); rc=$?
+  want "the sweep removes a tree older than an hour and survives a dangling entry" '[ ! -d "$TMPDIR/wikifront-old" ] && ! echo "$out" | grep -q Traceback'
+  rm -f "$TMPDIR/wikifront-dangling"
+  fresh  # a render that fails: the README stays dirty and is named
+  mkdir -p skills/workflow-docs/scripts; printf 'def render(args):\n    return 1\n' > skills/workflow-docs/scripts/render.py; git add -A; git commit -qm "failing render" >/dev/null 2>&1; printf '\nedit\n' >> README.md; head=$(git rev-parse HEAD)
+  out=$(commit_only); rc=$?
+  want "a render that fails leaves the README dirty and names it" '[ "$rc" = 1 ] && echo "$out" | grep -q "^WIKI_FRONT_DIRTY: README.md could not be rendered from the committed tree" && [ "$head" = "$(git rev-parse HEAD)" ]'
+  fresh  # an origin URL with a credential must not reach the tree
+  git remote set-url origin https://SECRETTOKEN@github.com/toy-owner/toy-repo.git
+  mkdir -p skills/workflow-docs/scripts
+  printf 'import os\nopen(os.environ["TOY_REPORT"], "w").write(open(".git/config").read())\ndef render(args):\n    return 0\n' > skills/workflow-docs/scripts/render.py; git add -A; git commit -qm "report render" >/dev/null 2>&1; printf '\nedit\n' >> README.md
+  export TOY_REPORT="$d/creds$n.txt"; commit_only >/dev/null 2>&1
+  want "a credential in the origin URL is not written into the tree" '! grep -q SECRETTOKEN "$TOY_REPORT" && grep -q "toy-owner/toy-repo" "$TOY_REPORT"'
 fi
 if section env; then fresh
   python3 -c "import sys;sys.path.insert(0,sys.argv[1]);import render,argparse;render.render(argparse.Namespace(check=False,keep=True))" "$SK/workflow-docs/scripts" >/dev/null 2>&1

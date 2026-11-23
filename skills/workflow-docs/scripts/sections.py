@@ -213,37 +213,50 @@ def commit_wiki(top, folder, slug, front=""):
     dirty = lambda path: git("status", "--porcelain", "--", path).stdout.strip()
 
     def differs():
+        top_real = os.path.realpath(top)
+        if os.path.isabs(folder) or not os.path.realpath(os.path.join(top, folder)).startswith(top_real + os.sep):
+            return None, "the wiki folder %r is not inside the checkout; nothing was committed" % folder
         if git("diff", "--cached", "--quiet", "--", front).returncode:
             return "has staged changes", ""
         for old in glob.glob(os.path.join(tempfile.gettempdir(), "wikifront-*")):
-            if time.time() - os.path.getmtime(old) > 3600:
-                shutil.rmtree(old, ignore_errors=True)  # a run that was killed
+            try:
+                if os.path.isdir(old) and not os.path.islink(old) and time.time() - os.lstat(old).st_mtime > 3600:
+                    shutil.rmtree(old, ignore_errors=True)  # a run that was killed
+            except OSError:
+                pass
         tmp, old = tempfile.mkdtemp(prefix="wikifront-"), signal.signal(signal.SIGTERM, lambda *a: sys.exit(143))
         try:
             tar = os.path.join(tmp, ".wiki-front.tar")
-            git("archive", "HEAD", "-o", tar)
-            subprocess.run(["tar", "-x", "-f", tar, "-C", tmp], env=env, check=True, capture_output=True)
+            git("archive", "HEAD", "-o", tar, timeout=300)
+            subprocess.run(["tar", "-x", "-f", tar, "-C", tmp], env=env, check=True, capture_output=True, timeout=300)
             os.remove(tar)
             shutil.rmtree(os.path.join(tmp, folder), ignore_errors=True)
-            shutil.copytree(os.path.join(top, folder), os.path.join(tmp, folder))
+            shutil.copytree(os.path.join(top, folder), os.path.join(tmp, folder), symlinks=True)
             wiki = os.path.join(tmp, folder)
-            texts = {"wiki:" + n[:-3]: open(os.path.join(wiki, n), encoding="utf-8", errors="replace").read() for n in sorted(os.listdir(wiki)) if n.endswith(".md")}
+            texts = {}
+            for dirpath, _, files in os.walk(wiki):
+                for n in sorted(files):
+                    f = os.path.join(dirpath, n)
+                    if not os.path.islink(f):
+                        texts["wiki:" + os.path.relpath(f, wiki)] = open(f, encoding="utf-8", errors="replace").read()
             rel = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-release", "scripts")
-            scan = subprocess.run([sys.executable, "-c", SCAN, rel, top], input=json.dumps(texts), env=env, capture_output=True, text=True)
+            scan = subprocess.run([sys.executable, "-c", SCAN, rel, top], input=json.dumps(texts), env=env, capture_output=True, text=True, timeout=300)
             if scan.returncode:
                 stop = json.loads(scan.stdout) if scan.stdout.strip() else None
                 return None, "%s. Fix: %s (%s)" % tuple(stop) if stop else "the private-name scan could not run on the copied wiki folder; nothing was committed"
-            url = git("remote", "get-url", "origin").stdout.strip()
+            url = re.sub(r"//[^/@]*@", "//", git("remote", "get-url", "origin").stdout.strip())
             pre = ["-c", "user.name=loop", "-c", "user.email=loop@localhost", "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false"]
             for step in (["init", "-q"], ["remote", "add", "origin", url] if "github.com" in url else [], ["add", "-A"], pre + ["commit", "-qm", "x"]):
-                step and git(*step, cwd=tmp)
+                step and git(*step, cwd=tmp, timeout=300)
             scripts = os.path.join(tmp, "skills", "workflow-docs", "scripts")
             done = subprocess.run([sys.executable, "-c", RENDER, scripts if os.path.isdir(scripts) else os.path.dirname(os.path.abspath(__file__))],
-                                  cwd=tmp, env=env, capture_output=True, text=True)
+                                  cwd=tmp, env=env, capture_output=True, text=True, timeout=600)
             if done.returncode:
                 return "could not be rendered from the committed tree", ""
             same = open(os.path.join(tmp, front), "rb").read() == open(os.path.join(top, front), "rb").read()
             return ("" if same else "differs from a render of the committed tree"), ""
+        except (OSError, subprocess.SubprocessError, ValueError):
+            return "could not be rendered from the committed tree", ""
         finally:
             signal.signal(signal.SIGTERM, old)
             shutil.rmtree(tmp, ignore_errors=True)
@@ -258,6 +271,7 @@ def commit_wiki(top, folder, slug, front=""):
         git("add", "--", *keep)
         done = git("commit", "-m", "Wiki: update pages for " + slug, "--", *keep)
         if done.returncode:
+            git("reset", "-q", "--", *keep)
             print("REFUSED: the wiki commit failed: " + (done.stderr or done.stdout).strip()[:300])
             return 1
         print("COMMITTED the wiki pages for %s%s" % (slug, " and %s (equal to a clean render, so an edit that matches it is its own text)" % front if front in keep else ""))
