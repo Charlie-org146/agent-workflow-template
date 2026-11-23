@@ -5,7 +5,7 @@
 # The wiki step's one commit (wiki-commit-front-files): wiki.py prepare --commit commits the README together with the wiki folder when
 # the README equals a clean render of the committed tree, leaves it dirty and named when it does not, never reads GitHub in the audit's
 # render, and never leaves its throwaway tree behind. Real chain, toy repo and toy origin only; temporary HOME; no network.
-# usage: test-wiki-front.sh [CASE[,CASE...]]   CASE: commit nothing foreign retry staged tree term private privname hardening env stable note order (default: all)
+# usage: test-wiki-front.sh [CASE[,CASE...]]   CASE: commit nothing foreign retry staged tree term private privname hardening tracked env stable note order (default: all)
 #        TOY_SKILLS=DIR runs the scripts of another checkout (the base export for a red run, or a mutated copy for a negative control).
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH TOY_PROTECT TOY_PR_MODE GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 set -u
@@ -187,6 +187,25 @@ if section hardening; then
   printf 'import os\nopen(os.environ["TOY_REPORT"], "w").write(open(".git/config").read())\ndef render(args):\n    return 0\n' > skills/workflow-docs/scripts/render.py; git add -A; git commit -qm "report render" >/dev/null 2>&1; printf '\nedit\n' >> README.md
   export TOY_REPORT="$d/creds$n.txt"; commit_only >/dev/null 2>&1
   want "a credential in the origin URL is not written into the tree" '! grep -q SECRETTOKEN "$TOY_REPORT" && grep -q "toy-owner/toy-repo" "$TOY_REPORT"'
+fi
+if section tracked; then
+  fresh  # a symlink inside the wiki folder (the scan cannot read through it)
+  printf 'The zebracorn project.\n' > "$d/outside$n.md"; ln -s "$d/outside$n.md" docs/wiki/Linked.md; printf 'zebracorn\n' > "$d/names$n.txt"; printf '\nedit\n' >> README.md
+  out=$(LOOP_PRIVATE_NAMES="$d/names$n.txt" commit_only); rc=$?
+  # Value: protects=the copy the scan reads is the copy the render reads; fails_when=a symlink in the wiki folder is skipped by the scan but followed by the render; why_new=review found it; seam=none; no_claim=symlinks outside the wiki folder
+  want "a symlink inside the wiki folder is refused by name and nothing is committed" '[ "$rc" = 1 ] && echo "$out" | grep -q "^WIKI_FRONT_REFUSED: " && [ -z "$(git log -1 --format=%s | grep "Wiki: update")" ]'
+  fresh  # a tracked parent symlink must not let the tree's rmtree reach the live checkout
+  mkdir -p "$d/real$n/wiki"; echo keep > "$d/real$n/wiki/Keep.md"; git rm -rq --cached docs/wiki >/dev/null 2>&1; mv docs/wiki "$d/moved$n"; ln -s "$d/real$n" docs-link; git add docs-link; git commit -qm link >/dev/null 2>&1; printf '\nedit\n' >> README.md
+  out=$(python3 -c "import sys;sys.path.insert(0,sys.argv[1]);import sections;sys.exit(sections.commit_wiki(sys.argv[2],'docs-link/wiki','toy','README.md'))" "$SK/workflow-docs/scripts" "$PWD" 2>&1); rc=$?
+  want "a tracked symlink in the wiki path never lets the tree delete the live folder" '[ -f "$d/real$n/wiki/Keep.md" ]'
+  fresh  # an ignored file is not part of the committed tree
+  printf 'Ignored.md\n' >> .gitignore; git add .gitignore; git commit -qm ign >/dev/null 2>&1; printf 'zebracorn\n' > "$d/names$n.txt"; printf 'The zebracorn project.\n' > docs/wiki/Ignored.md; printf '\nedit\n' >> README.md
+  out=$(LOOP_PRIVATE_NAMES="$d/names$n.txt" commit_only); rc=$?
+  want "an ignored wiki file is neither scanned nor rendered from (the tree is the committed one plus the folder's tracked and new files)" '! echo "$out" | grep -q zebracorn'
+  fresh  # a wiki edit staged before a failing commit stays staged
+  printf '#!/bin/sh\nexit 1\n' > .git/hooks/pre-commit; chmod +x .git/hooks/pre-commit; printf '\nmine\n' >> docs/wiki/Home.md; git add docs/wiki/Home.md
+  out=$(commit_only); rc=$?
+  want "a refused commit keeps what the owner had staged" '[ "$rc" = 1 ] && git diff --cached --name-only | grep -qx docs/wiki/Home.md'
 fi
 if section env; then fresh
   python3 -c "import sys;sys.path.insert(0,sys.argv[1]);import render,argparse;render.render(argparse.Namespace(check=False,keep=True))" "$SK/workflow-docs/scripts" >/dev/null 2>&1

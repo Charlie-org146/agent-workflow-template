@@ -230,9 +230,17 @@ def commit_wiki(top, folder, slug, front=""):
             git("archive", "HEAD", "-o", tar, timeout=300)
             subprocess.run(["tar", "-x", "-f", tar, "-C", tmp], env=env, check=True, capture_output=True, timeout=300)
             os.remove(tar)
-            shutil.rmtree(os.path.join(tmp, folder), ignore_errors=True)
-            shutil.copytree(os.path.join(top, folder), os.path.join(tmp, folder), symlinks=True)
             wiki = os.path.join(tmp, folder)
+            if not os.path.realpath(wiki).startswith(os.path.realpath(tmp) + os.sep):
+                return None, "the wiki folder %r reaches outside the committed tree through a symlink; nothing was committed" % folder
+            shutil.rmtree(wiki, ignore_errors=True)
+            for f in filter(None, git("ls-files", "-co", "--exclude-standard", "-z", "--", folder).stdout.split("\0")):
+                src, dst = os.path.join(top, f), os.path.join(tmp, f)
+                if os.path.islink(src):
+                    return None, "%s is a symlink, which the private-name scan cannot read; nothing was committed" % f
+                if os.path.isfile(src):
+                    os.makedirs(os.path.dirname(dst), exist_ok=True)
+                    shutil.copy2(src, dst)
             texts = {}
             for dirpath, _, files in os.walk(wiki):
                 for n in sorted(files):
@@ -268,10 +276,11 @@ def commit_wiki(top, folder, slug, front=""):
     keep = [folder] if dirty(folder) else []
     keep += [front] if front and dirty(front) and not why else []
     if keep:
+        staged = git("diff", "--cached", "--name-only", "--", *keep).stdout.strip()
         git("add", "--", *keep)
         done = git("commit", "-m", "Wiki: update pages for " + slug, "--", *keep)
         if done.returncode:
-            git("reset", "-q", "--", *keep)
+            staged or git("reset", "-q", "--", *keep)
             print("REFUSED: the wiki commit failed: " + (done.stderr or done.stdout).strip()[:300])
             return 1
         print("COMMITTED the wiki pages for %s%s" % (slug, " and %s (equal to a clean render, so an edit that matches it is its own text)" % front if front in keep else ""))

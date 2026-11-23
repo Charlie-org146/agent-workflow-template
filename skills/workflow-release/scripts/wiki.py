@@ -94,10 +94,9 @@ def cmd_prepare(args):
         print("NO WIKI: .loop/docs.tsv is not set up.")
         return 0
     cfg = read_config(top)
-    if args.commit:
-        commit(top, cfg, args.slug)
+    first = args.commit and commit(top, cfg, args.slug)
     stale = pending(top, cfg, fix=args.commit)
-    bad = args.commit and commit(top, cfg, args.slug, "README.md")  # the audit's mechanical fixes
+    bad = first or args.commit and commit(top, cfg, args.slug, "README.md")  # the audit's mechanical fixes
     for line in stale:
         print(line)
     if stale:
