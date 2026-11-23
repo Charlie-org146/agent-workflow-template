@@ -21,7 +21,7 @@ python3 scripts/wiki.py prepare <slug>
 ```
 
 It lists every page `docs.py check` calls stale, mapped to a touched path or not. Rewrite those pages from what the goal changed, then run
-`wiki.py prepare <slug> --commit`: it commits them on the goal's branch and pushes it. Then run `scripts/merge.py <slug>`
+`wiki.py prepare <slug> --commit`: it commits them on the goal's branch and pushes it. It also commits README.md when it matches a clean render, and stops with WIKI_FRONT_DIRTY when README.md has edits a render would not make (commit or revert them and run it again). Then run `scripts/merge.py <slug>`
 after `goal.py pr`. It asks nothing, and it publishes the release (no draft):
 
 1. It refuses while any page `docs.py check` calls stale, naming each; there is no bypass, so a page that cannot be
