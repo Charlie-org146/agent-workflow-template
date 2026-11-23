@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # windows: ok
 # reads: skills/workflow-monitoring/scripts/board_status.py skills/workflow-monitoring/scripts/auto.py skills/workflow-monitoring/scripts/layers.py skills/workflow-health/scripts/rules.py skills/workflow-health/scripts/controls.py skills/workflow-health/scripts/report.py
-"""eta-honesty (principle 8, DEL-17, HLT-4): every ETA a goal, the board or a STATUS states is recorded with who, when, basis and the time it
+"""eta-honesty (principle 2, DEL-17, HLT-4): every ETA a goal, the board or a STATUS states is recorded with who, when, basis and the time it
 names; when that time passes without the event it is marked missed with a cause and the board shows it; health prints each layer's hit rate and
 fails on an ETA over 15 minutes past that is neither met nor marked; a missed ETA or a statement marked wrong becomes a finding row.
 A throwaway git repo and stand-in ledger lines: no network. usage: test-eta-honesty.py [ledger|health]  (no argument: both)"""
