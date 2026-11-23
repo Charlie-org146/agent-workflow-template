@@ -88,6 +88,7 @@ c = json.load(open(".loop/config.json")); c["criteria"] = True; c["min_free_memo
 json.dump(c, open(".loop/config.json", "w"), indent=2)
 PY
 printf '\n## How to use\n\n### How to use Delivery\n\n| You say | What happens |\n|---|---|\n| "Give me the median" | The calculator prints it. |\n' >> README.md  # the DOC-5 front door
+python3 "$here/skills/workflow-docs/scripts/entry.py" write >/dev/null; git add -A .loop $(ls CLAUDE.md AGENTS.md 2>/dev/null)  # DEL-25.4: START.md is made before the tested commit
 git commit -qam "Front door"
 sub() { sed -i.bak "$1" docs/wiki/Delivery.md; rm docs/wiki/Delivery.md.bak; }
 one="- DEL-1: **Unreviewed** The calculator prints a median."

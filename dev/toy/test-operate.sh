@@ -74,6 +74,7 @@ c = json.load(open(".loop/config.json")); c["agent_command"] = ["bash", sys.argv
 json.dump(c, open(".loop/config.json", "w"), indent=2)
 PY
 printf 'Shared\tshared.py\n' > .loop/docs.tsv
+python3 "$here/skills/workflow-docs/scripts/entry.py" write >/dev/null  # DEL-25.4: START.md is made before the tested commit
 git add -A; git commit -qm "Agent"; git push -q origin main
 
 if [ "${TOY_GROUP:-all}" = all ]; then  # TOY_GROUP=timing runs only the polling sections: what a busy machine slows (issue 99)
