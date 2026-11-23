@@ -231,15 +231,70 @@ approved = [l.split("\t") for l in open(listed, encoding="utf-8").read().splitli
 ok = {a[0] for a in approved}
 check(all(len(a) == 3 and a[1].strip() and a[2].strip() for a in approved), "every approved row change names its record and its reason")
 check(unapproved(["-some-other-row\tland\tcommand"], ok) != [] and unapproved(["--- a/.loop/regression.tsv"], ok) == [], "negative control: a changed or removed row the list does not name still fails")
+ALLOWED = "skills/workflow-monitoring/scripts/board_tasks.py"  # owner o788: the one file v110-tasks may add under skills/
+PR = r"^Merge pull request #[0-9]* from .*/loop/v110-tasks$"
+
+
+def git_in(repo, *args):
+    return subprocess.run(["git", "-c", "user.email=t@example.test", "-c", "user.name=t", *args], cwd=repo, capture_output=True, text=True)
+
+
+def tasks_added(repo):
+    """The files under skills/ that v110-tasks' own merge added: the first-parent merge of its pull request on origin/main, found by
+    its message (TD1176; no sha is pinned), compared with that merge's first parent. (merge found, added files)."""
+    merge = git_in(repo, "log", "origin/main", "--first-parent", "--merges", "--format=%H", "-1", "--grep", PR).stdout.strip()
+    if not merge:
+        return "", []
+    out = git_in(repo, "diff", "--name-status", "--diff-filter=A", merge + "^1", merge, "--", "skills").stdout
+    return merge, [l.split("\t")[-1] for l in out.splitlines() if l.strip()]
+
+
+def fixture(extra):
+    """A repo whose origin/main has v110-tasks' pull request merged, adding board_tasks.py and the files in extra."""
+    repo = tempfile.mkdtemp()
+    git_in(repo, "init", "-q", "-b", "main", ".")
+    os.makedirs(os.path.join(repo, ".loop"))
+    with open(os.path.join(repo, ".loop", "regression.tsv"), "w") as f:
+        f.write("a\tland\ttrue\nb\tland\ttrue\n")
+    git_in(repo, "add", "-A")
+    git_in(repo, "commit", "-qm", "base")
+    git_in(repo, "checkout", "-q", "-b", "loop/v110-tasks")
+    for name in [ALLOWED] + extra:
+        os.makedirs(os.path.dirname(os.path.join(repo, name)), exist_ok=True)
+        open(os.path.join(repo, name), "w").write("x\n")
+    git_in(repo, "add", "-A")
+    git_in(repo, "commit", "-qm", "tasks")
+    git_in(repo, "checkout", "-q", "main")
+    git_in(repo, "merge", "-q", "--no-ff", "-m", "Merge pull request #1 from o/loop/v110-tasks", "loop/v110-tasks")
+    git_in(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+    return repo
+
+
+def row_changes(repo, change):
+    """Unapproved changed or removed rows when a PR branch of the fixture applies change to .loop/regression.tsv."""
+    git_in(repo, "checkout", "-q", "-b", "pr")
+    base = git_in(repo, "merge-base", "origin/main", "HEAD").stdout.strip()
+    path = os.path.join(repo, ".loop", "regression.tsv")
+    open(path, "w").write(change)
+    return unapproved(git_in(repo, "diff", base, "--", ".loop/regression.tsv").stdout.splitlines(), set())
+
+
+# negative controls: the skills-file half sees v110-tasks' merge adding another file, and the row half sees any PR change an existing row
+check(tasks_added(fixture([]))[1] == [ALLOWED], "a fixture of v110-tasks' merge adding only board_tasks.py reads as allowed")
+check([f for f in tasks_added(fixture(["skills/x/other.py"]))[1] if f != ALLOWED] == ["skills/x/other.py"],
+      "negative control: a fixture of v110-tasks' merge adding another skills file still fails")
+check(len(row_changes(fixture([]), "a\tland\tfalse\nb\tland\ttrue\n")) == 1, "negative control: a change to an existing row fails on any PR")
+check(len(row_changes(fixture([]), "a\tland\ttrue\n")) == 1, "negative control: removing an existing row fails on any PR")
+check(row_changes(fixture([]), "a\tland\ttrue\nb\tland\ttrue\nc\tland\ttrue\n") == [], "a row added by a PR is not a change to an existing row")
 base = git("merge-base", "origin/main", "HEAD")
-added = ""
+added = []
 if base.returncode:
     check(False, "origin/main is missing here, so skills/ and the regression rows cannot be compared")
 else:
     sha = base.stdout.strip()
-    rows = git("diff", sha, "--", ".loop/regression.tsv").stdout.splitlines()  # the working tree against the merge base
+    rows = git("diff", sha, "--", ".loop/regression.tsv").stdout.splitlines()  # the working tree against the merge base: every PR
     check(not unapproved(rows, ok), "no existing regression row is changed or removed except the rows an approved record names (%d listed)" % len(ok))
-    added = git("diff", "--name-status", "--diff-filter=A", sha, "HEAD", "--", "skills").stdout + git("ls-files", "-o", "--exclude-standard", "--", "skills").stdout
-ALLOWED = "skills/workflow-monitoring/scripts/board_tasks.py"  # owner o788: the one file this goal may add under skills/
-check(all(l.split("\t")[-1] == ALLOWED for l in added.splitlines() if l.strip()) and added.count(ALLOWED) <= 2, "no file is added under skills/ except board_tasks.py (o788)")
+    merge, added = tasks_added(top)
+    check(bool(merge), "v110-tasks' pull request merge is found on origin/main by its message")
+check(added == [ALLOWED], "no file is added under skills/ except board_tasks.py (o788), by v110-tasks' own merge: %s" % added)
 sys.exit(1 if failed else 0)

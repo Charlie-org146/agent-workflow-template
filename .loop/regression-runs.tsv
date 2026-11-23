@@ -78,6 +78,7 @@ config-lane-key-change	PASS	2026-11-15
 config-lane-unparseable	PASS	2026-11-15	
 cost-time-warn	PASS	2026-11-12	
 cut-draft	PASS	2026-11-09	
+cut-fails-checks	PASS	2026-11-22	
 defect-4496-checkin-goal-lines	PASS	2026-11-16	
 defect-categories	FAIL	2026-11-12	
 defect-flow-steps	PASS	2026-11-22	
@@ -419,6 +420,7 @@ settings-template-line	PASS	2026-11-12
 setup-both-halves	PASS	2026-11-12	
 setup-owner-words-up-front	PASS	2026-11-15	
 setup-refusal-writes-120	PASS	2026-11-18	
+shard-balance	PASS	2026-11-22	
 size-140	PASS	2026-11-12	
 size-budget	PASS	2026-11-11	
 skill-criteria-in-references	PASS	2026-11-14	

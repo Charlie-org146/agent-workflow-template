@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes_cli.py
+# reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes_cli.py skills/workflow-regression/scripts/cutgate.py
 """shard-balance (o643): PR CI shards split the selected rows by recorded time, longest first to the least-loaded shard.
 
 D1: each row lands in exactly one shard, the split is the same whatever order a shard sees the rows in, and the largest
@@ -95,7 +95,7 @@ budget = subprocess.run([sys.executable, REG, "run", "land", "--reuse", "--budge
                         capture_output=True, text=True)
 check("BUDGET" in budget.stdout and "LEFT" in budget.stdout and "FAIL slow" not in budget.stdout and "Traceback" not in budget.stdout + budget.stderr,
       "rows left under the shard's time budget are LEFT and not failed (exit %d)" % budget.returncode)
-check(code0 == 0 and "LEFT 1 over the 2 s row limit, not failed: slow" in out0 and "SPLIT 0/2: 1 of 3 rows" in out0,
+check(code0 == 0 and "LEFT 1 over the 2 s row limit: slow" in out0 and "SPLIT 0/2: 1 of 3 rows" in out0,
       "a PR shard names a row cut off by the per-row limit as LEFT and does not fail (exit %d)" % code0)
 check(code1 == 1 and "FAIL bad" in out1 and "PASS fast" in out1 and "LEFT" not in out1,
       "negative control: a row that exits non-zero inside the limit still fails its shard (exit %d)" % code1)
@@ -106,28 +106,19 @@ check("slow\t2\tLEFT" in open(stamp + ".0").read() and "fast\t" in open(stamp + 
 check(re.search(r"bad\t[\d.]+\tSEL", open(stamp + ".0").read()) and re.search(r"fast\t[\d.]+\tRAN", open(stamp + ".1").read()),
       "a shard marks the rows it ran RAN and the rest of the selection SEL")
 flow = lanes_cli.NARROW
-check("LOOP_ROW_TIMES" in flow and "actions/cache/save" in flow and 'awk \'$3 == "LEFT"' in flow and "upload-artifact" in flow,
-      "the PR workflow restores and saves the times file and its affected job lists the LEFT rows")
+check("LOOP_ROW_TIMES" in flow and "actions/cache/save" in flow and 'cutgate.py' in flow and "upload-artifact" in flow,
+      "the PR workflow restores and saves the times file and its affected job runs cutgate.py, which counts only RAN rows as run")
 # The affected job's coverage guard: run its script on fixtures where one row ran in no shard and one ran in two.
-script = [b for b in flow.split("      - run: |\n")[1:] if "ran.txt" in b][0].split("      - ")[0]
-script = "\n".join(x[10:] for x in script.splitlines())
+script = "python3 " + os.path.join(root, "skills", "workflow-regression", "scripts", "cutgate.py") + " 's/shard-[0-7]/t.tsv'"
 work = tempfile.mkdtemp(prefix="shard-balance-affected-")
 for name, body in (("shard-0", "a\t5\tRAN\nb\t1\tSEL\nc\t1\tSEL\nd\t2\tSEL\nold\t9\t\n"), ("shard-1", "a\t5\tSEL\nb\t3\tRAN\nc\t1\tRAN\nd\t0\tSEL\n"),
                    ("shard-2", "a\t5\tSEL\nb\t3\tSEL\nc\t2\tRAN\nd\t0\tSEL\ne\t7\tLEFT\n")):
     os.makedirs(os.path.join(work, "s", name))
     with open(os.path.join(work, "s", name, "t.tsv"), "w") as handle:
         handle.write(body)
-stub = os.path.join(work, "skills", "workflow-regression", "scripts")
-os.makedirs(stub)
-with open(os.path.join(stub, "regression.py"), "w") as handle:
-    handle.write("import sys\nopen('ran-here.txt', 'a').write(sys.argv[2] + '\\n')\nsys.exit(int(sys.argv[2] == 'd' and 'FAILD' in __import__('os').environ))\n")
-gate = subprocess.run(["bash", "-c", script], cwd=work, capture_output=True, text=True)
-sel = sorted(open(os.path.join(work, "ran-here.txt")).read().split()) if os.path.exists(os.path.join(work, "ran-here.txt")) else []
-check(gate.returncode == 0 and sel == ["d"] and "run twice: c" in gate.stdout and "not failed: e" in gate.stdout,
-      "affected runs the row no shard ran, names the row two shards ran and the LEFT row, and passes (ran %s, exit %d)" % (sel, gate.returncode))
-os.remove(os.path.join(work, "ran-here.txt"))
-bad = subprocess.run(["bash", "-c", script], cwd=work, capture_output=True, text=True, env=dict(os.environ, FAILD="1"))
-check(bad.returncode == 1, "negative control: a missing row that fails when affected runs it fails the job (exit %d)" % bad.returncode)
+gate = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script], cwd=work, capture_output=True, text=True)
+check(gate.returncode == 1 and "FAIL cut or not run: d not run" in gate.stdout and "run twice: c" in gate.stdout and "FAIL cut or not run: e" not in gate.stdout,
+      "affected fails the row no shard ran by name, names the row two shards ran, and leaves the LEFT row with no SEL alone (exit %d)" % gate.returncode)
 kept = open(os.path.join(work, "all.tsv")).read().split("\n")
 check("a\t5\tRAN" in kept and not any(x.endswith("SEL") for x in kept), "the saved times keep each row's own shard line and no SEL line")
 # D3 (pr-check-fast, fast-3min): 8 shards of 120 seconds; docs.py check runs once per merge, in the merge-queue job `small` on the merged

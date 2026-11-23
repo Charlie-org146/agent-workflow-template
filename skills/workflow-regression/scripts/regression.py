@@ -320,7 +320,7 @@ def cmd_run(args):
     late = [r["id"] for r in results if n > 1 and r["state"] == "FAIL" and r["rc"] == 124]
     results, cut = [r for r in results if r["id"] not in late], cut + late
     if late:
-        print("LEFT %d over the %d s row limit, not failed: %s" % (len(late), args.timeout, ", ".join(late)))
+        print("LEFT %d over the %d s row limit: %s" % (len(late), args.timeout, ", ".join(late)))
     if path:
         rows = merged(path, results, late, args.timeout)
         for key in every:  # RAN: this shard's, CUT: budget, SEL: others'
