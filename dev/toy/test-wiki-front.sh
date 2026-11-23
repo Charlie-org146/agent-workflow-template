@@ -5,17 +5,18 @@
 # The wiki step's one commit (wiki-commit-front-files): wiki.py prepare --commit commits the README together with the wiki folder when
 # the README equals a clean render of the committed tree, leaves it dirty and named when it does not, never reads GitHub in the audit's
 # render, and never leaves its throwaway tree behind. Real chain, toy repo and toy origin only; temporary HOME; no network.
-# usage: test-wiki-front.sh [CASE[,CASE...]]   CASE: commit nothing foreign retry staged tree term private env stable note order (default: all)
+# usage: test-wiki-front.sh [CASE[,CASE...]]   CASE: commit nothing foreign retry staged tree term private privname env stable note order (default: all)
 #        TOY_SKILLS=DIR runs the scripts of another checkout (the base export for a red run, or a mutated copy for a negative control).
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH TOY_PROTECT TOY_PR_MODE GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 set -u
 here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-all}
 . "$here/dev/toy/reap.sh"
-export LOOP_ROLE=worker LOOP_PRIVATE_NAMES=/dev/null
+export LOOP_ROLE=worker
 SK=${TOY_SKILLS:-$here/skills}
 export HOME=$(mktemp -d); export USERPROFILE="$HOME"
 mkdir -p "$HOME/.workflow-loop"; : > "$HOME/.workflow-loop/private-names"
 d=$(mktemp -d); export TMPDIR="$d/tmp"; mkdir -p "$TMPDIR"
+echo "# a toy: no private names" > "$d/names-empty.txt"; export LOOP_PRIVATE_NAMES="$d/names-empty.txt"  # an explicit empty list: the scan runs and finds nothing
 toy_on_exit 'rm -rf "$d" "$HOME"'
 fails=0
 ok() { echo "PASS: $1"; }
@@ -146,6 +147,15 @@ PY
   export TOY_REPORT="$d/report$n.txt"; commit_only >/dev/null 2>&1
   # Value: protects=the throwaway tree holds no private-name list, mail address or local path; fails_when=the tree copies the checkout's git config or home files; why_new=new temp state; seam=none; no_claim=a scan of every byte of a real repository's history
   want "the tree holds no mail address, no home path, no checkout path and no private-name list" '! grep -q "t@example.test" "$TOY_REPORT" && ! grep -qF "$HOME" "$TOY_REPORT" && ! grep -qF "$TOY_ROOT" "$TOY_REPORT" && ! grep -q "private-names" "$TOY_REPORT"'
+fi
+if section privname; then fresh
+  printf 'zebracorn\n' > "$d/names$n.txt"
+  printf '\nThe zebracorn project.\n' >> docs/wiki/Toy-notes.md
+  printf '\nedit\n' >> README.md
+  head=$(git rev-parse HEAD)
+  out=$(LOOP_PRIVATE_NAMES="$d/names$n.txt" commit_only); rc=$?
+  # Value: protects=a private name in the copied wiki folder stops the step before the render and commits nothing; fails_when=the copied tree is rendered or committed without the private-name scan; why_new=the tree copies the working wiki folder; seam=none; no_claim=the real private-name list (a planted name stands in)
+  want "a private name in the copied wiki folder is refused by name, nothing is committed (not even the folder) and the tree is removed" '[ "$rc" = 1 ] && echo "$out" | grep -q "^WIKI_FRONT_REFUSED: " && [ "$head" = "$(git rev-parse HEAD)" ] && [ "$(tmps)" = 0 ] && git status --porcelain | grep -q "docs/wiki/Toy-notes.md"'
 fi
 if section env; then fresh
   python3 -c "import sys;sys.path.insert(0,sys.argv[1]);import render,argparse;render.render(argparse.Namespace(check=False,keep=True))" "$SK/workflow-docs/scripts" >/dev/null 2>&1

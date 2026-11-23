@@ -199,13 +199,14 @@ def run(folder, readme, home, names):
     return out
 
 
+SCAN = "import sys,json;t=json.load(sys.stdin);sys.path.insert(0,sys.argv[1]);import autorelease;s=autorelease.private_check(sys.argv[2],None,t);print(json.dumps(s));sys.exit(1 if s else 0)"
 RENDER = "import argparse,sys;sys.path.insert(0,sys.argv[1]);import render;sys.exit(render.render(argparse.Namespace(check=False,keep=True)) or 0)"
 
 
 def commit_wiki(top, folder, slug, front=""):
     """The wiki step's one commit: the wiki folder, plus `front` (the README) when it equals a clean render of the committed tree with this folder.
     A modified `front` that differs from that render, or has staged changes, stays dirty: it is named on stdout and the exit is 1."""
-    import glob, shutil, signal, subprocess, sys, tempfile, time
+    import glob, json, shutil, signal, subprocess, sys, tempfile, time
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
     env["GIT_TERMINAL_PROMPT"] = "0"
     git = lambda *a, cwd=top, **kw: subprocess.run(["git", *a], cwd=cwd, env=env, capture_output=True, text=True, **kw)
@@ -213,7 +214,7 @@ def commit_wiki(top, folder, slug, front=""):
 
     def differs():
         if git("diff", "--cached", "--quiet", "--", front).returncode:
-            return "has staged changes"
+            return "has staged changes", ""
         for old in glob.glob(os.path.join(tempfile.gettempdir(), "wikifront-*")):
             if time.time() - os.path.getmtime(old) > 3600:
                 shutil.rmtree(old, ignore_errors=True)  # a run that was killed
@@ -225,6 +226,13 @@ def commit_wiki(top, folder, slug, front=""):
             os.remove(tar)
             shutil.rmtree(os.path.join(tmp, folder), ignore_errors=True)
             shutil.copytree(os.path.join(top, folder), os.path.join(tmp, folder))
+            wiki = os.path.join(tmp, folder)
+            texts = {"wiki:" + n[:-3]: open(os.path.join(wiki, n), encoding="utf-8", errors="replace").read() for n in sorted(os.listdir(wiki)) if n.endswith(".md")}
+            rel = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-release", "scripts")
+            scan = subprocess.run([sys.executable, "-c", SCAN, rel, top], input=json.dumps(texts), env=env, capture_output=True, text=True)
+            if scan.returncode:
+                stop = json.loads(scan.stdout) if scan.stdout.strip() else None
+                return None, "%s. Fix: %s (%s)" % tuple(stop) if stop else "the private-name scan could not run on the copied wiki folder; nothing was committed"
             url = git("remote", "get-url", "origin").stdout.strip()
             pre = ["-c", "user.name=loop", "-c", "user.email=loop@localhost", "-c", "core.hooksPath=/dev/null", "-c", "commit.gpgsign=false"]
             for step in (["init", "-q"], ["remote", "add", "origin", url] if "github.com" in url else [], ["add", "-A"], pre + ["commit", "-qm", "x"]):
@@ -233,15 +241,18 @@ def commit_wiki(top, folder, slug, front=""):
             done = subprocess.run([sys.executable, "-c", RENDER, scripts if os.path.isdir(scripts) else os.path.dirname(os.path.abspath(__file__))],
                                   cwd=tmp, env=env, capture_output=True, text=True)
             if done.returncode:
-                return "could not be rendered from the committed tree"
+                return "could not be rendered from the committed tree", ""
             same = open(os.path.join(tmp, front), "rb").read() == open(os.path.join(top, front), "rb").read()
-            return "" if same else "differs from a render of the committed tree"
+            return ("" if same else "differs from a render of the committed tree"), ""
         finally:
             signal.signal(signal.SIGTERM, old)
             shutil.rmtree(tmp, ignore_errors=True)
 
+    why, refused = differs() if front and dirty(front) else ("", "")
+    if refused:
+        print("WIKI_FRONT_REFUSED: " + refused)
+        return 1
     keep = [folder] if dirty(folder) else []
-    why = differs() if front and dirty(front) else ""
     keep += [front] if front and dirty(front) and not why else []
     if keep:
         git("add", "--", *keep)
