@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """DEL-25.4, shipped with the skills. check(): the generated files that are stale, as (name, needs an agent) pairs, writing nothing.
-regen(): at goal.py pr they are checked, never rewritten; a stale entry page is refused."""
+regen(): at goal.py pr they are checked, never rewritten."""
 import os
 import sys
 
@@ -22,8 +22,7 @@ def check(g, slug):
 
 
 def regen(g, slug):
-    """goal.py pr: a stale START.md (or CLAUDE.md, AGENTS.md) is refused, the head unchanged; a page that needs an agent is
-    named in a NOTE. Writes and commits nothing (DEL-25.4): the files are made before the tested commit."""
+    """goal.py pr: names the stale generated files with the ordered Fix. Writes and commits nothing (DEL-25.4): the files are made before the tested commit."""
     found = check(g, slug)
     fix = ("Fix, in order: 1. python3 skills/workflow-docs/scripts/entry.py write 2. python3 skills/workflow-release/scripts/wiki.py "
            "prepare %s --commit 3. git commit any change 4. re-run the lane at the new head, then goal.py pr" % slug)

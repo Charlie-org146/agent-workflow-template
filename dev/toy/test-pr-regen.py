@@ -119,7 +119,7 @@ check(done.returncode == 0 and got == fixed and "REGEN_STALE" not in said, "afte
 got2, said2 = regen()
 check(got2 == fixed and g.git("rev-parse", "HEAD") == fixed and tree_clean() and "REGEN_STALE" not in said2, "a second run changes nothing")
 
-# a page that needs an agent is named as such in a note (the wiki tool's line is stubbed)
+# a page that needs an agent is named as such (the wiki tool's line is stubbed)
 real_run = g.run
 g.run = lambda args, cwd=None, check=False: (subprocess.CompletedProcess(args, 1, "REWRITE Home: STALE (its sources changed)\nNEXT: update Home\n", "")
                                             if args[1:2] and args[1].endswith("wiki.py") else real_run(args, cwd, check))
