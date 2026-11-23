@@ -40,6 +40,7 @@ Measured on the local build (committed LF; main from origin/main 530bf4d6b, merg
 ## PR notes (stated, not hidden)
 
 - The whole `private.py` change is two lines at `private.py:317-318` (an early return in `pr_result` for `ok is None`); no scan pattern, path or exit code changes. It goes on the owner's merge list by name.
+- The check-run filtering in `skip.accepts` is done in Python, not in a jq expression: `gh api --paginate ... --jq` only projects each run to name, status and conclusion, and the toy feeds that projection (more than one page of lines) to the Python logic. The toy therefore does not run jq against real JSON; the gate order asked for that, and this is the stated difference, so the reviewer can judge it. Reason: jq is not guaranteed on every machine, and the required-name matching needs the workflow file anyway.
 - `.ok` is a tested pass only; a skip is recorded apart and `lane-wait` exits 3 for it. By the owner's word (o830) DEL-25.3 governs the test lane where it conflicts with DEL-17, whose text is not edited here.
 - The real-push case needs network (it skips with exit 77 when offline) and the pip install counts toward suite time; it runs on the Mac and Linux only.
 - The private-name scan runs as pre-commit's legacy hook, not as a framework hook (ruling 4); native Windows runs the stub alone; adopted repos get the quick checks through `quick.py install`.
