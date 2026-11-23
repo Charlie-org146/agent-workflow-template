@@ -91,7 +91,7 @@ os.chdir(here)
 runs = g.state_dir()
 
 # 1. freeze: an ETA from the estimate (or the time budget when there is none), shown in the goal file
-fields = fit.frozen_fields(g, SimpleNamespace(slug="x", goal="a toy goal"), ["1. one", "2. two"], [])
+fields = fit.frozen_fields(g, SimpleNamespace(slug="x", goal="a toy goal", task="t"), ["1. Given a repo, when it runs, then it holds.", "2. Given a repo, when it ends, then it is done."], [])
 eta = fields["eta"]
 check(isinstance(eta.get("minutes"), int) and eta["minutes"] >= 30 and eta["minutes"] % 5 == 0 and eta.get("basis"),
       "freezing a goal records a hard ETA in whole minutes (at least 30, to 5) with its basis: %s" % eta)

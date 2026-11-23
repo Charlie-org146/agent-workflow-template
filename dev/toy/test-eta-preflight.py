@@ -69,7 +69,7 @@ def config(**more):
 
 def freeze(**more):
     config(**more)
-    return fit.frozen_fields(g, SimpleNamespace(slug="x", goal="a toy goal"), ["1. one"], ["docs"])["preflight"]["items"]
+    return fit.frozen_fields(g, SimpleNamespace(slug="x", goal="a toy goal", task="t"), ["1. Given a repo, when it runs, then it holds."], ["docs"])["preflight"]["items"]
 
 
 here = tempfile.mkdtemp(prefix="eta-preflight-")

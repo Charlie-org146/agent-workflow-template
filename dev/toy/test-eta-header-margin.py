@@ -118,7 +118,7 @@ with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as home
     auto.bs.estimate_full = lambda *args, **more: (0, 0, 3600, False)  # a one-hour estimate
     try:
         make = lambda **cfg: fit.frozen_fields(SimpleNamespace(root=lambda: top, config=lambda: dict({"base": "main", "time_budget_minutes": 240}, **cfg)),
-                                               SimpleNamespace(slug="m", goal="a goal"), ["1. one"], [])["eta"]
+                                               SimpleNamespace(slug="m", goal="a goal", task="t"), ["1. Given a repo, when it runs, then it holds."], [])["eta"]
         default, wider = make(), make(eta_margin_percent=40)
     finally:
         auto.bs.estimate_full = real
