@@ -15,6 +15,12 @@ The build is the cherry-picked commit, so the build step has no code to write: i
 ## Test homes (no new rows)
 Line 1 is `lanes_cli.py check` exit 0, already asserted in dev/toy/test-tree.sh. Line 2 is the package check (`dev/package.py`), the size toys the lane runs and the per-file byte counts in the PR. No new case is needed: the existing cases keep passing unchanged, and a red one stops the goal and is reported.
 
+## Behavior changes (also listed under `## Behavior changes` in the PR body)
+One row command changes, under the ruling TD1217 (TD1103), with its one line in dev/toy/approved-row-changes.tsv. File: .loop/regression.tsv, row `defect-4375-toys-fake-machine`. Old command: the two `bash -c ". dev/toy/reap.sh; echo $LOOP_MACHINE" dev/toy/test-x.sh` calls; `dev/toy/test-x.sh` is a placeholder path that no toy has. New command: the same two calls with `dev/toy/test-govern.sh`, an existing toy that starts goals. Before: the command sourced reap.sh with a path that does not exist, so what it exercised was not the goal-start path it describes. After: it exercises that path through an existing toy. The two expected values (`64,64,10,0,0` with LOOP_MACHINE unset and `1,1,1,0,0` when set) and the row's Given/when/then text are unchanged word for word, so the assertion is not weakened; the row must stay green or the goal stops.
+
+## Where the other half of the old goal goes
+Line 1 of the static goal (selection counts for the three leaf scripts and the 307-row floor) is owned by the goal split-import-component, named in the release brief; this goal does not claim it and closing it does not deliver it.
+
 ## Not in this goal
 Line 1 of the static goal (selection counts per leaf script), the 307-row floor and its cause (the import component of the shipped scripts) go to split-import-component; the trace-proved work stays in v110-fast-reads-trace. The release brief names both.
 
