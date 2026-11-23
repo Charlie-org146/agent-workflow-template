@@ -5,6 +5,8 @@
 
 Turns any repo into a ready workspace for any agent without ever blocking, judged by health before and after, keeps it in step with the template, adopts several repos in one pass through `board.py repos adopt`, and lists, with the exact instruction, what the owner must still do on a new machine.
 
+`update.py` ships `steps.py` as a shared file, so an updated pack still has `shared/steps.py`.
+
 ### What's delivered
 
 | Component | Kind | What it is | How a user uses it |

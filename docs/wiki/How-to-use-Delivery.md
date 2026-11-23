@@ -5,6 +5,8 @@
 
 Takes one sentence and its done lines to a merged, released pull request (a draft release you publish when auto_merge is off), unattended, through your own skills or its built-in routine, on Linux, macOS and native Windows, with pull requests queued only behind goals that share files and ready ones merged in batches, and it refuses to merge only for a wiki page its own diff made stale.
 
+Every goal runs one list of steps: freeze, plan, build, quick checks, tests, merge, after the merge, release. Each step logs its start, end, active minutes, tokens and result in the goal's record; `python3 skills/workflow-docs/scripts/steps_page.py show SLUG` prints the table, `docs/wiki/Steps.md` is generated from the code, and the release text carries a `### Steps` block. A stop records its cause, previewed once with its fix (filing is off in v1.1.0).
+
 ### What's delivered
 
 | Component | Kind | What it is | How a user uses it |

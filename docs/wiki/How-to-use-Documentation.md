@@ -5,6 +5,8 @@
 
 Keeps the wiki and README in one enforced format (feature pages are PRDs with no Usage section;.
 
+`docs.py check` also fails a stale `docs/wiki/Steps.md`; regenerate it with `python3 skills/workflow-docs/scripts/steps_page.py render --write`.
+
 ### What's delivered
 
 | Component | Kind | What it is | How a user uses it |

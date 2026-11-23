@@ -62,6 +62,7 @@ None
 - No goal's test run in the loop takes over 15 minutes (REG-7's budget floor), and the nightly full suite runs green or every failure has its issue.
 - Every closed issue fixed by a goal has a passing defect test listed in its release note.
 - A GitHub run and a local run of the same rows end the same way.
+- The generated workflow's summary job has one added step that previews the recorded step causes; the workflow still comes only from `regression.py workflow`.
 
 ## Revisions
 

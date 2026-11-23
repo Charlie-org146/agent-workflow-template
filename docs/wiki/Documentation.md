@@ -203,6 +203,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 ### Non-functional
 
 None
+- `docs.py check` fails a Steps page that differs from `steps.py`; `steps_page.py render` writes it and `steps_page.py show SLUG` prints a goal's step table.
 
 ## Non-goals
 - It never writes or reviews the owner's PRD for them: only the owner marks a PRD or a requirement Reviewed.

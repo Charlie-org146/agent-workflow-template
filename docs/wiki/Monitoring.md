@@ -25,6 +25,7 @@ None
 
 ## Success metrics
 - Every earlier Monitoring ID still resolves, through its moved-to marker, to a live requirement.
+- Every saver of a goal's run record writes through the one save hook, so each step's start and end are logged once and a stop records its cause, previewed once with its fix (filing is off in v1.1.0).
 
 ## Revisions
 

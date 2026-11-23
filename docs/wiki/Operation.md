@@ -80,6 +80,7 @@ None
 
 - Every ready goal gets its own worker session within one check-in, and no goal waits on a goal it doesn't depend on.
 - With full auto on, a run needs me only for the safety-class decisions OPS-11 excludes.
+- A goal's start, end, minutes and cause per step come from the one save hook, whoever saves the record; a stop records its cause and `steps_page.py file` previews it (filing is off in v1.1.0).
 
 ## Revisions
 

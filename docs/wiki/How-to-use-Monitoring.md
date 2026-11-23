@@ -5,6 +5,8 @@
 
 One session governs many goals at once and shows a live board of what's running and what needs you, and each check-in draws live goals with their time left and waits, with this machine's status. New mail events share a send budget across machines; a deferred event retries on a later check-in.
 
+Whoever saves a goal's run record (the worker, the mender, the monitor, the watcher, a session report) saves through the one save hook, so each step's start and end are logged once; the board's handoff text shows the DEL-19 name beside the old step label.
+
 ### What's delivered
 
 | Component | Kind | What it is | How a user uses it |

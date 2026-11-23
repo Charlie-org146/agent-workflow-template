@@ -49,6 +49,7 @@ None
 
 - The board and every full check-in print in the same layout every time, at least every 30 minutes by default.
 - Every item under Needs you says what it holds up, and the board builds in under 10 seconds.
+- The check-in names and numbers each goal's step from the one step list (DEL-19); a goal whose pull request is open shows as merge, as in its step log.
 
 ## Revisions
 

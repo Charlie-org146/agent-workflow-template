@@ -5,6 +5,8 @@
 
 Shows what is running, stuck or waiting on the owner the same way every time: the live board, a check-in on a cadence in one layout, and a dependency map with this machine's status.
 
+The check-in shows each goal's step by its DEL-19 name and its place in the eight (for example `tests 5/8`); a goal whose pull request is open shows as `merge`.
+
 ### What's delivered
 
 | Component | Kind | What it is | How a user uses it |
