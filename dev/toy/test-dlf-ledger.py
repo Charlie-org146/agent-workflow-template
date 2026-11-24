@@ -128,4 +128,9 @@ try:
 except Exception as crash:
     said = "CRASH " + repr(crash)
 check(said and "CRASH" not in said and "converted: gm-break-1 waits for patch goal" in said, "M3: with no queue file the cut refuses cleanly and the declined line holds it: %s" % said.splitlines()[-1][:70])
+# review finding 5: a loop-written closed event on a declined line must not skip the patch goal's merge
+lid_n = file("gn", "n1")[0]
+as_("boss", "decline %s" % lid_n)
+as_("loopbot", "<!-- dlf-event key=gn|break|other|n1 state=closed -->\n%s closed" % lid_n)
+check("converted: %s waits for patch goal" % lid_n in dlf.cut(top, runs, "v1"), "finding 5: a loop-written closed on a declined line leaves it converted: the cut still waits for the patch goal to merge")
 sys.exit(1 if failed else 0)

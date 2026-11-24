@@ -329,7 +329,7 @@ def ledger(top, rel, owner, loop):
             notes += ["ignored %s of %s: no such id" % (verb, i) for i in ids if who == owner and i not in known]
         if event and event[1] in lines:
             l = lines[event[1]]
-            ok = who == loop and event[2] == "closed" and l["state"] in ("accepted", "converted")
+            ok = who == loop and event[2] == "closed" and l["state"] == "accepted"
             l["state"] = "closed" if ok else l["state"]
             notes += [] if ok or who == loop and event[2] in ("open", "filed") else ["ignored %s by %s on %s" % (event[2], who, l["id"])]
     return lines, notes, number
