@@ -74,6 +74,9 @@ nothing versioned: no file in the repo, no commit, no tag, no branch. The pull r
 
 ## 3. `cut <slug>`
 
+Before the cut, run `python3 scripts/cutcheck.py [--release V]`: it lists every check skipped or run light across goals, and
+`--require-full CHECK` runs that check's full form first (a FAIL line and a non-zero exit stop the cut; `release.py` itself is unchanged, so this is a procedure).
+
 When the user's answer is `cut <slug>`, run it from the repo or the goal's worktree:
 
 ```bash
