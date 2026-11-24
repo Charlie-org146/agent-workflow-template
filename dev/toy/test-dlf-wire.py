@@ -155,4 +155,10 @@ check(len([l for l in lines("go1") if "| choice |" in l]) == 2, "finding 3: the 
 fit.breaks(goal_mod, {"slug": "go2", "touches": ["skills/a/b.py"]}, [{"principle": 1, "text": "first break"}])
 fit.breaks(goal_mod, {"slug": "go2", "touches": ["skills/a/b.py"]}, [{"principle": 1, "text": "a different break"}])
 check(len([l for l in lines("go2") if "| break |" in l]) == 2, "finding 3: a fresh review's different break at the same index is a new line")
+# round 4, finding 4 (privacy): a secret-shaped value in a pending decision is never printed or stored: what goal.py holds and prints is redacted
+secret = "ghp_" + "Q7" * 18
+ask_text = goal_mod.held_ask("plan", ["rotate the key %s today" % secret], "")
+check(secret not in ask_text and "Q7Q7" not in ask_text and "rotate the key" in ask_text and ask_text.startswith("plan left this for you:"), "finding 4: the held ask names the decision and hides the secret-shaped value: %s" % ask_text)
+check(secret not in goal_mod.held_ask("plan", [], "STEP reason has %s" % secret), "finding 4: a secret in the step's pending reason is hidden too")
+check(goal_mod.held_ask("plan", ["pick a name"], "") == "plan left this for you: pick a name", "a benign ask is unchanged (negative control)")
 sys.exit(1 if failed else 0)

@@ -37,6 +37,7 @@ MUTATIONS = [  # (rule, file, the line to break, its broken form, the toy that g
     ("DLF-1.4 a queued line stays until filed", D, '    todo = mem(runs, slug)["queue"]\n', '    held = mem(runs, slug)\n    todo, held["queue"] = held["queue"], []\n    keep(runs, slug, held)\n', "ledger"),
     ("DLF-1.1 a failed second lookup queues", D, "    if lowest is None:\n        return None\n", "", "ledger"),
     ("DLF-1.1 a different choice at the same position is a new line", G, "hashlib.sha1(p.encode()).hexdigest()[:6]", '""', "wire"),
+    ("DLF-1.3 a secret in a pending decision is never held or printed", G, '    return redact("%s left this for you', '    return str("%s left this for you', "wire"),
     ("DLF-1.4 queued lines are re-filed", D, "    retry(top, runs, slug)\n    subject = classify(", "    subject = classify(", "ledger"),
     ("DLF-1.4 the debt gate fails closed", R, "    if not os.path.isfile(path):", "    if False:", "release"),
     ("DLF-1.5 the setting turns a scope off", D, "if isinstance((held.get(scope) or {}).get(ident), bool):", "if False:", "wire"),

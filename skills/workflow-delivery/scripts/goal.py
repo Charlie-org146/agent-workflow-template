@@ -295,7 +295,7 @@ def cmd_record(args):
     if ok or auto:
         fit.keep(ME, state, step, text)
     if auto:
-        took = "; ".join(pending) or why or "the step's pending gate"
+        took = redact("; ".join(pending) or why or "the step's pending gate")
         state["flow"][step] = "done: auto-approved: " + took[:200] + stamp
         state["step"] = role.after(step)
         state["note"] = {"text": "auto-approved at %s: %s" % (step, took[:240]), "at": now()}
@@ -306,7 +306,7 @@ def cmd_record(args):
         return 0
     if wait:
         state["flow"][step] = "pending"
-        ask = "%s left this for you: %s" % (step, "; ".join(pending) or why or "see its reply")
+        ask = held_ask(step, pending, why)
         guards.hold(state, ask[:600])
         save(state, "%s pending: %s" % (step, ask[:200]))
         print("WAITING %s: %s" % (slug, ask))
@@ -325,6 +325,15 @@ def cmd_record(args):
     failed_try(state, "%s %s" % (step, "failed: " + why[:200] if result else "gave no STEP line"), step,
                "fix the cause, then run flow.py %s %s again" % (slug, step))
     return 1
+
+
+def redact(text):
+    import dlf  # a secret-shaped value is never printed or stored
+    return re.sub(dlf.SECRET, "<secret>", text)
+
+
+def held_ask(step, pending, why):
+    return redact("%s left this for you: %s" % (step, "; ".join(pending) or why or "see its reply"))
 
 
 def choices(state, pending, step):
