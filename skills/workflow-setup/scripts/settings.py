@@ -45,6 +45,7 @@ TABLE = [
     ("regression_runs", REPO, "", "Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it."),
     ("machine_setup", REPO, [], "Machine setup items (allow, routine, secret, connector) machine.py applies on adoption."),
     ("automation", REPO, [], "Routines the Automation table lists: {name, does, cadence, runs}."),
+    ("deliver_first", REPO, {}, "Deliver first, default on: {goal|task|release: {id: false}} turns it off for a scope (most specific wins); set only with an owner reference: dlf.py set deliver_first off --scope S --id ID --owner-record R."),
     ("topics", REPO, {}, "Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column."),
     ("ci_levels", REPO, "nightly", "Target of scheduled and tag regression runs: nightly (every row) or land."),
     ("time_budget_minutes", REPO, 240, "Active minutes before no new step starts; 0 is none."),

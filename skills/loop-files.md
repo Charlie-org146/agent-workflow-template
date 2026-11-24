@@ -1825,6 +1825,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |
 | `automation` | `[]` | Routines the Automation table lists: {name, does, cadence, runs}. |
 | `topics` | `{}` | Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column. |
+| `deliver_first` | `{}` | Deliver first (on by default): {"goal": {ID: false}, "task": {...}, "release": {...}} turns it off for that scope, so its stops wait for the owner as before; the most specific scope wins. Changed only with an owner reference: `dlf.py set deliver_first on|off --scope goal|task|release --id ID --owner-record R`. |
 | `ci_levels` | `nightly` | Target of scheduled and tag regression runs: nightly (every row) or land. |
 | `time_budget_minutes` | `240` | Active minutes before no new step starts; 0 is none. |
 | `max_merge_rounds` | `8` | Merge rounds goal.py pr may take before it waits. |
