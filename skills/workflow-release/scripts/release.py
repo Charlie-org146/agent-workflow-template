@@ -302,6 +302,22 @@ def restore(cwd, files, sha_before, message):
     print("RESTORED: %s" % ", ".join(files))
 
 
+DELIVERY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts")
+
+
+def debt(cwd, slug, runs):
+    """DLF-1.4: '' when no deliver-first line stands between this release and its cut; else why not. Fails closed: no ledger reader, no cut."""
+    path = os.path.join(DELIVERY, "dlf.py")
+    if not os.path.isfile(path):
+        return "the deliver-first ledger can't be read: workflow-delivery is not beside workflow-release. Fix: install workflow-delivery"
+    import importlib.util
+    sys.path.insert(0, DELIVERY)
+    spec = importlib.util.spec_from_file_location("dlf", path)
+    dlf = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(dlf)
+    return dlf.cut(cwd, runs, dlf.brief(cwd, slug)[1])
+
+
 def cmd_cut(args):
     slug = args.slug
     state = load(slug)
@@ -329,15 +345,8 @@ def cmd_cut(args):
     unmet, left = criteria_trouble(cwd, cfg)
     if unmet:
         sys.exit("REFUSED: criteria without a passing regression row: %s." % ", ".join(unmet))
-    delivery = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts")
-    if os.path.isfile(os.path.join(delivery, "dlf.py")):  # DLF-1.4: the cut refuses while a deliver-first line is open
-        import importlib.util
-        sys.path.insert(0, delivery)
-        spec = importlib.util.spec_from_file_location("dlf", os.path.join(delivery, "dlf.py"))
-        dlf = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(dlf)
-        held = dlf.cut(cwd, os.path.dirname(state_path(slug)), dlf.brief(cwd, slug)[1])
-        held and sys.exit("REFUSED: deliver-first lines stand between this release and its cut:\n%s" % held)
+    held = debt(cwd, slug, os.path.dirname(state_path(slug)))
+    held and sys.exit("REFUSED: deliver-first lines stand between this release and its cut:\n%s" % held)
     import review  # review imports release
     print(review.left_text(left).strip() or "LEFT 0 rows: every row ran or had a PASS on this commit")
     version_file = cfg.get("version_file") or "VERSION"
