@@ -440,3 +440,12 @@ if __name__ == "__main__":
         sys.exit(0)
     print("usage: guards.py known   print the format rule ids a step starting now is held to")
     sys.exit(0 if sys.argv[1:] in ([], ["-h"], ["--help"]) else 2)
+
+
+def safe(top, text):
+    import dlf  # a secret or a private name in a pending decision is never held, printed or stored
+    return dlf.safe(top, text)
+
+
+def held_ask(top, step, pending, why):
+    return "%s left this for you: %s" % (step, safe(top, "; ".join(pending) or why or "see its reply"))

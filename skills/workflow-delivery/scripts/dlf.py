@@ -227,7 +227,6 @@ def setting(top, slug):
 
 
 def set_setting(top, scope, ident, value, rid, g=None):
-    """Set deliver_first on|off for a scope, only with an owner reference; returns the refusal or ''."""
     held = (cfg(top).get("deliver_first") or {}).get(scope, {}).get(ident)
     now, where = setting(top, ident) if scope == "goal" else (held is not False, scope)
     if not rid:
@@ -242,6 +241,11 @@ def set_setting(top, scope, ident, value, rid, g=None):
     return ""
 
 
+def safe(top, text):
+    """The text, or 'text withheld' when it holds a secret-shaped value or a configured private name."""
+    return "text withheld" if re.search(SECRET, text) or private.scan(top, None, texts={"w": text})["state"] not in ("clean", "off", "none") else text
+
+
 def settle(top, runs, slug, stop, occ, what, words, rec, **ctx):
     on, scope = setting(top, slug)
     retry(top, runs, slug)
@@ -250,7 +254,7 @@ def settle(top, runs, slug, stop, occ, what, words, rec, **ctx):
     if not on:
         return "wait", wait_line(slug, "setting off", "deliver-first is off for %s %s" % (scope, slug), ask)
     if subject in SAFETY or subject == "unclassifiable":
-        return "wait", wait_line(slug, subject, "text withheld" if subject == SAFETY[3] or re.search(SECRET, what) else what[:120], ask)
+        return "wait", wait_line(slug, subject, "text withheld" if subject == SAFETY[3] else safe(top, what[:120]), ask)
     lid, status = file_line(top, runs, slug, brief(top, slug)[1], stop, subject, occ, what, words, rec)
     if status == "local":
         return "wait", wait_line(slug, "private data", "the line failed the private-name scan", "remove the name, then " + ask)
@@ -306,7 +310,6 @@ def budget_stop(slug, state, runs, cfg_, at=None, save=None, top=""):
 
 
 def ledger(top, rel, owner, loop):
-    """(lines, notes, issue) from a complete read, None when a read fails; ({}, [], 0) is confirmed none."""
     number = find_issue(top, rel)
     rows = comments(top, number) if number else []
     if number is None or rows is None:
@@ -337,7 +340,6 @@ def ledger(top, rel, owner, loop):
 
 
 def cut(top, runs, rel, owner="", loop=""):
-    """'' when the cut may go on (accepted lines closed), else the one list that refuses it."""
     import glob
     if not os.path.isdir(runs):
         return "read failed: the run-record folder %s can't be read" % os.path.basename(runs)

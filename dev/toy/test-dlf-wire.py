@@ -155,12 +155,18 @@ check(len([l for l in lines("go1") if "| choice |" in l]) == 2, "finding 3: the 
 fit.breaks(goal_mod, {"slug": "go2", "touches": ["skills/a/b.py"]}, [{"principle": 1, "text": "first break"}])
 fit.breaks(goal_mod, {"slug": "go2", "touches": ["skills/a/b.py"]}, [{"principle": 1, "text": "a different break"}])
 check(len([l for l in lines("go2") if "| break |" in l]) == 2, "finding 3: a fresh review's different break at the same index is a new line")
-# round 4, finding 4 (privacy): a secret-shaped value in a pending decision is never printed or stored: what goal.py holds and prints is redacted
+# round 4/5 privacy: a secret-shaped value OR a configured private name in a pending decision is never held, printed or stored (withheld whole)
+import guards  # noqa: E402
 secret = "ghp_" + "Q7" * 18
-ask_text = goal_mod.held_ask("plan", ["rotate the key %s today" % secret], "")
-check(secret not in ask_text and "Q7Q7" not in ask_text and "rotate the key" in ask_text and ask_text.startswith("plan left this for you:"), "finding 4: the held ask names the decision and hides the secret-shaped value: %s" % ask_text)
-check(secret not in goal_mod.held_ask("plan", [], "STEP reason has %s" % secret), "finding 4: a secret in the step's pending reason is hidden too")
-check(goal_mod.held_ask("plan", ["pick a name"], "") == "plan left this for you: pick a name", "a benign ask is unchanged (negative control)")
-# round 4, note 2: a pending result with no decision text waits and files NO placeholder line (an orphan open line would block the cut)
-check(goal_mod.autoapprove({"slug": "gnb2", "touches": ["skills/a/b.py"]}, [], "plan", auto, "pending", "") is False and not lines("gnb2"), "note 2: no decision text: it waits and files no placeholder line")
+ask_text = guards.held_ask(tmp, "plan", ["rotate the key %s today" % secret], "")
+check(secret not in ask_text and "Q7Q7" not in ask_text and ask_text == "plan left this for you: text withheld", "finding 4: a secret-shaped value in a pending decision is withheld: %s" % ask_text)
+check(secret not in guards.held_ask(tmp, "plan", [], "STEP reason has %s" % secret), "finding 4: a secret in the step's pending reason is withheld too")
+named = guards.held_ask(tmp, "plan", ["approve the page about acmesecret"], "")
+check("acmesecret" not in named and named.endswith("text withheld"), "round 5: a configured private name in a pending decision is withheld: %s" % named)
+wait_text = dlf.settle(tmp, runs, "gpn", "break", "n1", "touch the sandbox for acmesecret", "words", "rec", paths=["skills/a/b.py"])
+check(wait_text[0] == "wait" and "acmesecret" not in wait_text[1], "round 5: a safety wait line never prints a configured private name: %s" % wait_text[1])
+check(guards.held_ask(tmp, "plan", ["pick a name"], "") == "plan left this for you: pick a name", "a benign ask is unchanged (negative control)")
+os.environ["LOOP_PRIVATE_NAMES"] = "/dev/null"
+check(guards.held_ask(tmp, "plan", ["about acmesecret"], "") == "plan left this for you: about acmesecret", "with an explicit empty private-name list there is nothing to withhold")
+os.environ["LOOP_PRIVATE_NAMES"] = home + "/names"
 sys.exit(1 if failed else 0)
