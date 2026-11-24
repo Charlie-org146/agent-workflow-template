@@ -64,7 +64,6 @@ None
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [sizing-asz-1-1](Tests#t-sizing-asz-1-1) | requirement | ASZ-1 | Given a plan touching 2 files and no gate, when the goal is sized, then it is small with its reason and its checks start with no question. | not run |
-| [sizing-asz-1-2](Tests#t-sizing-asz-1-2) | requirement | ASZ-1 | Given a small goal whose diff passes the small line, when review starts, then it is re-sized up, the added checks run before its PR, and the size never goes down. | not run |
-| [sizing-asz-1-3](Tests#t-sizing-asz-1-3) | requirement | ASZ-1 | Given the owner's line, when it sizes a goal up, then the board shows the new size with the owner's record, and a line without words is refused. | not run |
-| - | requirement | ASZ-1 | no passing test | not enforced |
+| [sizing-asz-1-1](Tests#t-sizing-asz-1-1) | requirement | ASZ-1 | Given a plan touching 2 files and no gate, when the goal is sized, then it is small with its reason and its checks start with no question. | PASS 2026-11-24 |
+| [sizing-asz-1-2](Tests#t-sizing-asz-1-2) | requirement | ASZ-1 | Given a small goal whose diff passes the small line, when review starts, then it is re-sized up, the added checks run before its PR, and the size never goes down. | PASS 2026-11-24 |
+| [sizing-asz-1-3](Tests#t-sizing-asz-1-3) | requirement | ASZ-1 | Given the owner's line, when it sizes a goal up, then the board shows the new size with the owner's record, and a line without words is refused. | PASS 2026-11-24 |
