@@ -41,6 +41,7 @@ MUTATIONS = [  # (rule, file, the line to break, its broken form, the toy that g
     ("DLF-1.3 a secret in a pending decision is never held or printed", G, '    return redact("%s left this for you', '    return str("%s left this for you', "wire"),
     ("DLF-1.3 the cut refuses while a refused text is held", D, '* bool(held.get("local"))', "* False", "ledger"),
     ("DLF-1.1 a failed read queues, a scan failure keeps local", D, 'len(mem(runs, slug)["local"]) > n0', 'mem(runs, slug)["local"]', "ledger"),
+    ("DLF-1.2 a raise logs the stored old budget", D, "stored[name] or held[name]", "held[name]", "budget"),
     ("DLF-1.4 queued lines are re-filed", D, "    retry(top, runs, slug)\n    subject = classify(", "    subject = classify(", "ledger"),
     ("DLF-1.4 the debt gate fails closed", R, "    if not os.path.isfile(path):", "    if False:", "release"),
     ("DLF-1.5 the setting turns a scope off", D, "if isinstance((held.get(scope) or {}).get(ident), bool):", "if False:", "wire"),

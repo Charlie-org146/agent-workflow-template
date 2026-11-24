@@ -261,7 +261,6 @@ SHARE = {"idea": .05, "plan": .15, "build": .40, "review": .15, "qa": .15, "ship
 
 
 def raise_budget(held, estimate, spent, done=0, finished=False):
-    """(new budget, cap line due): max(held, min(spend + left, 2 x estimate)); zero or no estimate is unlimited."""
     if not held or not estimate:
         return held, False
     left = max(0, estimate - done) or estimate / 4
@@ -269,13 +268,13 @@ def raise_budget(held, estimate, spent, done=0, finished=False):
 
 
 def budget_stop(slug, state, runs, cfg_, at=None, save=None, top=""):
-    """fit.budget_stop, moved whole: the rule raises a budget; setting off, it refuses as before."""
     import fit
     if save:
         import goal
         goal.SEEN[slug] = json.dumps(state)
     seen = fit.view(state, runs)
     held, source = fit.budget(seen, cfg_)
+    stored = dict(held)
     minutes, on = fit.active_minutes(state, at, cfg_), bool(top) and setting(top, slug)[0]
     on and retry(top, runs, slug)
     auto = fit.monitor("auto", True) if seen.get("eta") or seen.get("eta_extend") else None
@@ -292,12 +291,12 @@ def budget_stop(slug, state, runs, cfg_, at=None, save=None, top=""):
         if held[name] and spent >= held[name]:
             est = (seen.get("eta") or {}).get("estimate") if name == "minutes" else cfg_.get("token_budget")
             new, capped = raise_budget(held[name], est, spent, share * (est or 0))
-            raised, was = on and est and new > held[name], held[name]
+            raised, was = on and est and new > held[name], stored[name] or held[name]
             if raised:
                 import guards
-                guards.add_set(runs, slug, "budget", dict(held, **{name: new}), "raised the %s budget %d to %d (spent %d, estimate %d)" % (name, held[name], new, spent, est))
+                guards.add_set(runs, slug, "budget", dict(held, **{name: new}), "raised the %s budget %d to %d (spent %d, estimate %d)" % (name, was, new, spent, est))
                 name == "minutes" and guards.add_set(runs, slug, "dlf_budget", {"minutes": new}, "eta follows")
-                print("BUDGET %s: %s %d -> %d (spent %d, estimate %d)" % (slug, name, held[name], new, spent, est))
+                print("BUDGET %s: %s %d -> %d (spent %d, estimate %d)" % (slug, name, was, new, spent, est))
                 held[name] = new
             if on and est and capped:
                 cap_line(top, runs, slug, brief(top, slug)[1], spent, est, was, new)

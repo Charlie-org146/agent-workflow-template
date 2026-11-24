@@ -104,4 +104,13 @@ with contextlib.redirect_stdout(io.StringIO()):
     dlf.budget_stop("g5", {"slug": "g5", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {}, "tokens": {"idea": 1100}, "log": []}, runs3, {"token_budget": 1000}, top=tmp)
 both = fit.view({"slug": "g5"}, runs3)["budget"]
 check(both["minutes"] > 240 and both["tokens"] > 1000, "finding 4: with both limits reached both raises stay (%s)" % both)
+# round 5, done-line finding: on the ETA path the raise logs the STORED old budget (held 240, ETA 288, estimate 240, spend 300: 240 -> 480, not 288 -> 480)
+os.makedirs(os.path.join(tmp, "runs6"))
+runs6 = os.path.join(tmp, "runs6")
+guards.add_set(runs6, "g6", "budget", {"minutes": 240, "tokens": 0}, "set")
+fit.active_minutes = lambda state, at=None, cfg=None: 300
+out6 = io.StringIO()
+with contextlib.redirect_stdout(out6):
+    dlf.budget_stop("g6", {"slug": "g6", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {}, "log": []}, runs6, {}, top=tmp)
+check("minutes 240 -> 480" in out6.getvalue() and "raised the minutes budget 240 to 480" in json.dumps(guards.extra(runs6, "g6")["log"]), "round 5: the raise prints and logs the stored old budget (240), not the ETA that replaced it: %s" % out6.getvalue().strip())
 sys.exit(1 if failed else 0)
