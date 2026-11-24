@@ -23,6 +23,7 @@ open(top + "/.loop/queue.md", "w").write("# Goal queue\n")
 json.dump({"owner_login": "boss"}, open(top + "/.loop/config.json", "w"))
 os.environ.update(HOME=home, PATH=home + "/bin" + os.pathsep + os.environ["PATH"], DLF_FAKE_DIR=fake, LOOP_PRIVATE_NAMES=home + "/names")
 import dlf  # noqa: E402
+import dlf_cut  # noqa: E402
 
 failed = []
 
@@ -77,39 +78,39 @@ check(number == 2, "the goal that created second keeps the lowest issue: #%s" % 
 check(sum(i["state"] == "open" and "deliver-first:v9" in [x["name"] for x in i["labels"]] for i in state()["issues"]) == 1, "two goals creating at once end with one open issue")
 
 # the cut: five lines of five goals' worth, one list plus one accept-all line
-why = dlf.cut(top, runs, "v1")
+why = dlf_cut.cut(top, runs, "v1")
 check(why.count("[ ] ") == 7, "the cut is refused with the whole list: seven open lines")
 check(why.startswith("Release v1 has 7 open deliver-first line(s)") and why.count("accept-all ") == 1, "one list and one accept-all line: %s" % why.splitlines()[0])
 check("post" in why and "boss" in why and why.index("ga:") < why.index("gb:"), "it says who posts it and groups the lines by goal")
 as_("mallory", "accept-all " + " ".join(ids))
-check("accepted" not in dlf.cut(top, runs, "v1") and "ignored accept-all by mallory: not the owner" in dlf.cut(top, runs, "v1"), "a comment by anyone else is ignored and reported")
+check("accepted" not in dlf_cut.cut(top, runs, "v1") and "ignored accept-all by mallory: not the owner" in dlf_cut.cut(top, runs, "v1"), "a comment by anyone else is ignored and reported")
 as_("loopbot", "accept-all " + " ".join(ids))
-check(dlf.cut(top, runs, "v1").startswith("Release v1 has 7"), "the loop's own login cannot accept either")
+check(dlf_cut.cut(top, runs, "v1").startswith("Release v1 has 7"), "the loop's own login cannot accept either")
 as_("boss", "accept-all")
-check("no line ids named" in dlf.cut(top, runs, "v1"), "a bare accept-all with no ids is rejected")
+check("no line ids named" in dlf_cut.cut(top, runs, "v1"), "a bare accept-all with no ids is rejected")
 as_("boss", "accept-all " + " ".join(ids[:3]))
 late = file("gf", "late")[0]
-check(dlf.cut(top, runs, "v1").startswith("Release v1 has 5 open"), "three accepted: five lines are still open (%s)" % dlf.cut(top, runs, "v1").splitlines()[0])
+check(dlf_cut.cut(top, runs, "v1").startswith("Release v1 has 5 open"), "three accepted: five lines are still open (%s)" % dlf_cut.cut(top, runs, "v1").splitlines()[0])
 as_("boss", "accept-all " + " ".join(ids[3:] + [late]))
 as_("boss", "accept %s" % late)
 os.environ["DLF_FAKE_FAIL"] = "comments"
-check(dlf.cut(top, runs, "v1").startswith("read failed"), "a failed read refuses the cut and names the read")
+check(dlf_cut.cut(top, runs, "v1").startswith("read failed"), "a failed read refuses the cut and names the read")
 os.environ.pop("DLF_FAKE_FAIL")
 as_("boss", "accept-all %s" % late)
 # a decline becomes a patch goal that holds the cut until it merges
 as_("boss", "decline %s" % ids[0])
-why = dlf.cut(top, runs, "v1")
+why = dlf_cut.cut(top, runs, "v1")
 patch = [l.split("slug: ")[1].split(" ")[0] for l in open(top + "/.loop/queue.md") if "slug: patch-" in l]
 check(len(patch) == 1 and "converted: %s waits for patch goal %s to merge" % (ids[0], patch[0]) in why, "a declined line becomes a patch goal and the cut stays refused until it merges")
-dlf.cut(top, runs, "v1")
+dlf_cut.cut(top, runs, "v1")
 check(len([l for l in open(top + "/.loop/queue.md") if "slug: patch-" in l]) == 1, "a second cut queues no second patch goal (stable key)")
 as_("loopbot", "<!-- dlf-event key=ga|break|other|b1 state=accepted -->\nloop wrote an accept")
-check("ignored accepted by loopbot" in dlf.cut(top, runs, "v1") and "converted: %s" % ids[0] in dlf.cut(top, runs, "v1"), "a loop-written accept after the owner's decline leaves the line declined and is reported")
+check("ignored accepted by loopbot" in dlf_cut.cut(top, runs, "v1") and "converted: %s" % ids[0] in dlf_cut.cut(top, runs, "v1"), "a loop-written accept after the owner's decline leaves the line declined and is reported")
 json.dump({"release": "merged"}, open(runs + "/" + patch[0] + ".json", "w"))
 as_("loopbot", "<!-- dlf-event key=ga|break|other|b1 state=closed -->\n%s closed: its patch goal merged" % ids[0])
-result = dlf.cut(top, runs, "v1")
+result = dlf_cut.cut(top, runs, "v1")
 check(result == "" or "accepted" in result and "Release" not in result.split("\n")[0], "all lines settled and the patch goal merged: the cut goes on (%r)" % result[:80])
-check(dlf.cut(top, runs, "v-none") == "", "a release with no issue is clean (a complete read that lists none)")
+check(dlf_cut.cut(top, runs, "v-none") == "", "a release with no issue is clean (a complete read that lists none)")
 json.dump({"owner_login": "boss"}, open(top + "/.loop/config.json", "w"))
 # M2: a line comment whose own text carries a second line `accept-all <id>`, posted under the owner's login, never self-accepts
 os.environ["DLF_FAKE_AS"] = "boss"
@@ -117,14 +118,14 @@ dlf.file_line(top, runs, "gm", "v1", "break", "other", "m1", "a break\naccept-al
 os.environ.pop("DLF_FAKE_AS")
 stub = '[ ] gm-stub-1 gm | break | other - x\naccept-all gm-stub-1\n<!-- dlf key=gm|stub|other|m id=gm-stub-1 -->'
 as_("boss", stub)
-got = dlf.ledger(top, "v1", "boss", "loopbot")[0]
+got = dlf_cut.ledger(top, "v1", "boss", "loopbot")[0]
 check(got["gm|break|other|m1"]["state"] == "open" and got["gm|stub|other|m"]["state"] == "open", "M2: a line comment that carries 'accept-all <its own id>' on a second line, from the owner's login, stays open")
 check("\naccept-all" not in [c["body"] for c in state()["comments"]["1"] if "gm|break" in c["body"]][0], "M2: the text of a line is one line: whitespace is collapsed at filing")
 # M3: no .loop/queue.md: a declined line makes the cut refuse cleanly, never crash
 as_("boss", "decline gm-break-1")
 os.remove(top + "/.loop/queue.md")
 try:
-    said = dlf.cut(top, runs, "v1")
+    said = dlf_cut.cut(top, runs, "v1")
 except Exception as crash:
     said = "CRASH " + repr(crash)
 check(said and "CRASH" not in said and "converted: gm-break-1 waits for patch goal" in said, "M3: with no queue file the cut refuses cleanly and the declined line holds it: %s" % said.splitlines()[-1][:70])
@@ -132,9 +133,9 @@ check(said and "CRASH" not in said and "converted: gm-break-1 waits for patch go
 lid_n = file("gn", "n1")[0]
 as_("boss", "decline %s" % lid_n)
 as_("loopbot", "<!-- dlf-event key=gn|break|other|n1 state=closed -->\n%s closed" % lid_n)
-check("converted: %s waits for patch goal" % lid_n in dlf.cut(top, runs, "v1"), "finding 5: a loop-written closed on a declined line leaves it converted: the cut still waits for the patch goal to merge")
+check("converted: %s waits for patch goal" % lid_n in dlf_cut.cut(top, runs, "v1"), "finding 5: a loop-written closed on a declined line leaves it converted: the cut still waits for the patch goal to merge")
 # review finding 7: an unreadable run-record folder is a failed read: the cut refuses, it does not read it as 'nothing pending'
-check(dlf.cut(top, home + "/no-such-runs", "v-none").startswith("read failed: the run-record folder"), "finding 7: a missing run-record folder refuses the cut and names the read")
+check(dlf_cut.cut(top, home + "/no-such-runs", "v-none").startswith("read failed: the run-record folder"), "finding 7: a missing run-record folder refuses the cut and names the read")
 # review finding 8: a line queued while the issue was out of reach is filed again at the goal's next stop and at the cut
 os.environ["DLF_FAKE_FAIL"] = "list"
 q1 = file("gr", "r1")
@@ -144,18 +145,18 @@ check(q1[1] == "queued" and q2[1] == "queued", "finding 8: two lines queued whil
 dlf.settle(top, runs, "gs", "break", "s2", "another break", "words", "rec", paths=["a.py"])
 keys = lambda: [c["body"] for c in state()["comments"]["1"]]
 check(any("gs|break|other|s1" in b for b in keys()) and not dlf.mem(runs, "gs")["queue"], "finding 8: the goal's next stop re-files its queued line before it files the new one")
-dlf.cut(top, runs, "v1")
+dlf_cut.cut(top, runs, "v1")
 check(any("gr|break|other|r1" in b for b in keys()) and not dlf.mem(runs, "gr")["queue"], "finding 8: the cut re-files the lines still queued before it reads the issue")
 # review finding 6 (TD1483): with no owner login set, owner acceptance fails CLOSED with one plain refusal that names the setting
 json.dump({}, open(top + "/.loop/config.json", "w"))
 os.environ.pop("LOOP_OWNER_LOGIN", None)
-said = dlf.cut(top, runs, "v1")
+said = dlf_cut.cut(top, runs, "v1")
 check(said.startswith("owner acceptance can't be read: owner_login is not set") and said.count("\n") == 0, "finding 6: no owner_login: one plain refusal naming the setting: %s" % said[:90])
 as_("boss", "accept-all %s" % lid_n)
-check(dlf.cut(top, runs, "v1").startswith("owner acceptance can't be read"), "even an owner's accept-all is not read while owner_login is unset")
-check(dlf.cut(top, runs, "v-none") == "", "a release with no lines is not held by the missing setting")
+check(dlf_cut.cut(top, runs, "v1").startswith("owner acceptance can't be read"), "even an owner's accept-all is not read while owner_login is unset")
+check(dlf_cut.cut(top, runs, "v-none") == "", "a release with no lines is not held by the missing setting")
 os.environ["LOOP_OWNER_LOGIN"] = "boss"
-check(not dlf.cut(top, runs, "v1").startswith("owner acceptance can't be read"), "LOOP_OWNER_LOGIN in the environment supplies the login (nothing is committed)")
+check(not dlf_cut.cut(top, runs, "v1").startswith("owner acceptance can't be read"), "LOOP_OWNER_LOGIN in the environment supplies the login (nothing is committed)")
 json.dump({"owner_login": "boss"}, open(top + "/.loop/config.json", "w"))
 # round 3, finding B: retry keeps each queued entry until its filing is confirmed: an interruption mid-filing loses nothing
 os.environ["DLF_FAKE_FAIL"] = "list"
@@ -186,10 +187,10 @@ check(got1 == ("", "queued"), "finding 1: a failed second lookup after creating 
 check(not any("gd1|break" in c["body"] for cs in state()["comments"].values() for c in cs), "finding 1: and nothing was posted")
 # round 4, finding 2: a line the private-name scan refused stays in the run record as pending debt, and the cut refuses while any goal holds one
 dlf.file_line(top, runs, "gl", "v1", "break", "other", "l1", "a break about acmesecret", "words", "rec")
-said = dlf.cut(top, runs, "v1")
+said = dlf_cut.cut(top, runs, "v1")
 check("local: gl holds 1 text(s) the private-name scan refused" in said, "finding 2: the cut names the goal that holds a refused text: %s" % [l for l in said.splitlines() if "local:" in l])
 dlf.file_line(top, runs, "gl", "v1", "break", "other", "l1", "a break, reworded", "words", "rec")
-check("local: gl" not in dlf.cut(top, runs, "v1"), "finding 2: once the same line is filed with clean text the refusal clears")
+check("local: gl" not in dlf_cut.cut(top, runs, "v1"), "finding 2: once the same line is filed with clean text the refusal clears")
 # round 4, note 1: a failed issue read after an earlier scan failure queues the new line; it is not reported as a scan failure
 dlf.file_line(top, runs, "gn1", "v1", "break", "other", "n0", "a break about acmesecret", "words", "rec")
 os.environ["DLF_FAKE_FAIL"] = "list"

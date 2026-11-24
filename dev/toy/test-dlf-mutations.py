@@ -18,6 +18,7 @@ for name in os.listdir(os.path.join(root, "dev", "toy")):
     if name.startswith("test-dlf-") or name == "dlf-gh":
         shutil.copy2(os.path.join(root, "dev", "toy", name), os.path.join(copy, "dev", "toy", name))
 D, R = "skills/workflow-delivery/scripts/dlf.py", "skills/workflow-release/scripts/release.py"
+DC = "skills/workflow-delivery/scripts/dlf_cut.py"
 G = "skills/workflow-delivery/scripts/goal.py"
 MUTATIONS = [  # (rule, file, the line to break, its broken form, the toy that guards it)
     ("DLF-1.1 a stop becomes a line", D, 'return "continue", lid or status', 'return "wait", "broken"', "wire"),
@@ -32,13 +33,13 @@ MUTATIONS = [  # (rule, file, the line to break, its broken form, the toy that g
     ("DLF-1.3 auto_approve never skips the table", G, " if held is None else held", " if True else held", "wire"),
     ("DLF-1.3 no decision text files no placeholder line", G, '    if result == "pending" and not (pending or why) and', "    if False and", "wire"),
     ("DLF-1.3 a pending result with no PENDING line is classified", G, 'pending or [why] * (result == "pending")', "pending", "wire"),
-    ("DLF-1.4 the cut refuses while a line is open", D, 'if l["state"] == "open"), key=', "if False), key=", "ledger"),
-    ("DLF-1.4 only the owner accepts", D, 'elif who == owner and l["state"] in ("open", "accepted")', 'elif l["state"] in ("open", "accepted")', "ledger"),
-    ("DLF-1.4 no owner login fails closed", D, "if lines and not owner:", "if False:", "ledger"),
+    ("DLF-1.4 the cut refuses while a line is open", DC, 'if l["state"] == "open"), key=', "if False), key=", "ledger"),
+    ("DLF-1.4 only the owner accepts", DC, 'elif who == owner and l["state"] in ("open", "accepted")', 'elif l["state"] in ("open", "accepted")', "ledger"),
+    ("DLF-1.4 no owner login fails closed", DC, "if lines and not owner:", "if False:", "ledger"),
     ("DLF-1.4 a queued line stays until filed", D, '    todo = mem(runs, slug)["queue"]\n', '    held = mem(runs, slug)\n    todo, held["queue"] = held["queue"], []\n    keep(runs, slug, held)\n', "ledger"),
     ("DLF-1.1 a failed second lookup queues", D, "    if lowest is None:\n        return None\n", "", "ledger"),
     ("DLF-1.1 a different choice at the same position is a new line", G, "hashlib.sha1(p.encode()).hexdigest()[:6]", '""', "wire"),
-    ("DLF-1.3 the cut refuses while a refused text is held", D, '* bool(held.get("local"))', "* False", "ledger"),
+    ("DLF-1.3 the cut refuses while a refused text is held", DC, '* bool(held.get("local"))', "* False", "ledger"),
     ("DLF-1.1 a failed read queues, a scan failure keeps local", D, 'len(mem(runs, slug)["local"]) > n0', 'mem(runs, slug)["local"]', "ledger"),
     ("DLF-1.2 a raise logs the stored old budget", D, "stored[name] or held[name]", "held[name]", "budget"),
     ("DLF-1.3 a configured private name in a wait text is withheld", D, 'private.scan(top, None, texts={"w": text})["state"] not in ("clean", "off", "none")', "False", "wire"),

@@ -22,6 +22,7 @@ open(os.path.join(home, "names"), "w").write("# the planted list\nacmesecret\n")
 os.environ.update(HOME=home, PATH=os.path.join(home, "bin") + os.pathsep + os.environ["PATH"], DLF_FAKE_DIR=fake,
                   LOOP_PRIVATE_NAMES=os.path.join(home, "names"))
 import dlf  # noqa: E402
+import dlf_cut  # noqa: E402
 
 failed = []
 
@@ -50,9 +51,9 @@ open(os.path.join(top, ".loop", "queue.md"), "w").write("# Goal queue\n")
 
 PATHS = {
     "a line comment": lambda bad: dlf.file_line(top, runs, "g1", "v1", "break", "other", "b1", "a break %s" % bad, "accept", "keep"),
-    "an event comment": lambda bad: (dlf.ensure_issue(top, runs, "g1", "v1"), dlf.post_event(top, runs, "g1", "v1", "g1|break|other|b1", "closed", "g1-break-1 closed %s" % bad)) and "",
+    "an event comment": lambda bad: (dlf.ensure_issue(top, runs, "g1", "v1"), dlf_cut.post_event(top, runs, "g1", "v1", "g1|break|other|b1", "closed", "g1-break-1 closed %s" % bad)) and "",
     "the cap line": lambda bad: dlf.cap_line(top, runs, "g1" + bad, "v1", 480, 240, 240, 480),
-    "a patch-goal conversion": lambda bad: (dlf.convert(top, runs, "g1", "v1", "g1|break|other|b1", "g1-break-1", "fix %s" % bad, "settle"), ""),
+    "a patch-goal conversion": lambda bad: (dlf_cut.convert(top, runs, "g1", "v1", "g1|break|other|b1", "g1-break-1", "fix %s" % bad, "settle"), ""),
     "the release issue body": lambda bad: dlf.file_line(top, runs, "g1", "v1" + bad, "break", "other", "b2", "a break", "accept", "keep"),
 }
 for name, call in PATHS.items():

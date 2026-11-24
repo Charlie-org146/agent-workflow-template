@@ -315,7 +315,8 @@ def debt(cwd, slug, runs):
     spec = importlib.util.spec_from_file_location("dlf", path)
     dlf = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(dlf)
-    return dlf.cut(cwd, runs, dlf.brief(cwd, slug)[1])
+    import dlf_cut
+    return dlf_cut.cut(cwd, runs, dlf.brief(cwd, slug)[1])
 
 
 def cmd_cut(args):
