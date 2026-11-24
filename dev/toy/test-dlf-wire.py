@@ -146,4 +146,13 @@ with __import__("contextlib").redirect_stdout(__import__("io").StringIO()):
     dlf.budget_stop("gcc", {"slug": "gcc", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {}, "log": []}, runs, {}, top=tmp)
 check(fit.view({"slug": "gcc"}, runs)["budget"]["minutes"] == 480, "finding C: 500 spent against 240 held with a 240 estimate raises the budget to 480")
 check(len(lines("gcc")) == 1 and "reached its 2x cap at 500 of 240" in lines("gcc")[0], "finding C: and files exactly one cap line in the same check")
+# round 4, finding 3: a later DIFFERENT decision at the same position is a new line, never the earlier (maybe accepted) one
+goal_mod.choices({"slug": "go1", "touches": ["skills/a/b.py"]}, ["first question"], "plan")
+goal_mod.choices({"slug": "go1", "touches": ["skills/a/b.py"]}, ["a different question"], "plan")
+check(len([l for l in lines("go1") if "| choice |" in l]) == 2, "finding 3: two different choices at the same position of the same step are two lines")
+goal_mod.choices({"slug": "go1", "touches": ["skills/a/b.py"]}, ["first question"], "plan")
+check(len([l for l in lines("go1") if "| choice |" in l]) == 2, "finding 3: the same choice again is still one line")
+fit.breaks(goal_mod, {"slug": "go2", "touches": ["skills/a/b.py"]}, [{"principle": 1, "text": "first break"}])
+fit.breaks(goal_mod, {"slug": "go2", "touches": ["skills/a/b.py"]}, [{"principle": 1, "text": "a different break"}])
+check(len([l for l in lines("go2") if "| break |" in l]) == 2, "finding 3: a fresh review's different break at the same index is a new line")
 sys.exit(1 if failed else 0)

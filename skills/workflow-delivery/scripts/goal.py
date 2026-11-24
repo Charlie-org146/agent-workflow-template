@@ -331,7 +331,7 @@ def choices(state, pending, step):
     import dlf  # DLF-1.1: each PENDING decision is a line and the recommended answer is taken, unless the table says it waits
     if not pending or not dlf.setting(root(), state["slug"])[0]:
         return None  # nothing pending, or deliver-first is off: the old rule decides
-    return all(dlf.settle(root(), state_dir(), state["slug"], "plan" if re.search(r"review cap|past (its|the) cap", p, re.I) else "choice", "%s%d" % (step, i),
+    return all(dlf.settle(root(), state_dir(), state["slug"], "plan" if re.search(r"review cap|past (its|the) cap", p, re.I) else "choice", "%s%d%s" % (step, i, hashlib.sha1(p.encode()).hexdigest()[:6]),
                           "design choice at %s: %s" % (step, p[:200]), "answer: the recommended one, or name another", "take the recommended answer",
                           paths=state.get("touches") or ()
                           )[0] == "continue" for i, p in enumerate(pending, 1))

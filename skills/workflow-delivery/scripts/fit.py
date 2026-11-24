@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """What a goal decides at freeze and reads later (DEL-5 to DEL-8): size, depth, budget, set, queue, the PR body, owed."""
+import hashlib
 import importlib.util
 import json
 import os
@@ -159,7 +160,7 @@ def breaks(g, state, left):  # DLF-1.1: a red-team break becomes a line unless t
     import dlf
     slug = state["slug"]
     for i, b in enumerate(left):
-        got = dlf.settle(g.root(), g.state_dir(), slug, "break", "b%dp%s" % (i + 1, b["principle"]), "red-team break of principle %s: %s" % (b["principle"], b["text"][:200]),
+        got = dlf.settle(g.root(), g.state_dir(), slug, "break", "b%dp%s%s" % (i + 1, b["principle"], hashlib.sha1(b["text"].encode()).hexdigest()[:6]), "red-team break of principle %s: %s" % (b["principle"], b["text"][:200]),
                      "notify.py plan-accept %s %s --owner-record ID" % (slug, b["principle"]), "accept", paths=state.get("touches") or (), cls=b.get("class", ""))
         if got[0] == "wait":
             return got[1]
