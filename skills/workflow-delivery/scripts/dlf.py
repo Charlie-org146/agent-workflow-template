@@ -241,16 +241,6 @@ def set_setting(top, scope, ident, value, rid, g=None):
     return ""
 
 
-def breaks(g, state, left):
-    slug = state["slug"]
-    for i, b in enumerate(left):
-        got = settle(g.root(), g.state_dir(), slug, "break", "b%dp%s" % (i + 1, b["principle"]), "red-team break of principle %s: %s" % (b["principle"], b["text"][:200]),
-                     "notify.py plan-accept %s %s --owner-record ID" % (slug, b["principle"]), "accept", paths=state.get("touches") or (), cls=b.get("class", ""))
-        if got[0] == "wait":
-            return got[1]
-    return ""
-
-
 def settle(top, runs, slug, stop, occ, what, words, rec, **ctx):
     on, scope = setting(top, slug)
     subject = classify(stop, what, ctx.get("paths", ()), ctx.get("diff", ""), ctx.get("label", ""), ctx.get("cls", ""), ctx.get("template", False))

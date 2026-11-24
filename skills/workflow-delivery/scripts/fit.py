@@ -155,6 +155,17 @@ def budget_stop(slug, state, runs, cfg, at=None, save=None):
     return dlf.budget_stop(slug, state, runs, cfg, at, save, top)
 
 
+def breaks(g, state, left):  # DLF-1.1: a red-team break becomes a line unless the table says it waits; '' when none waits
+    import dlf
+    slug = state["slug"]
+    for i, b in enumerate(left):
+        got = dlf.settle(g.root(), g.state_dir(), slug, "break", "b%dp%s" % (i + 1, b["principle"]), "red-team break of principle %s: %s" % (b["principle"], b["text"][:200]),
+                     "notify.py plan-accept %s %s --owner-record ID" % (slug, b["principle"]), "accept", paths=state.get("touches") or (), cls=b.get("class", ""))
+        if got[0] == "wait":
+            return got[1]
+    return ""
+
+
 def run_saver(runs):
     def save(state, note):
         import goal
