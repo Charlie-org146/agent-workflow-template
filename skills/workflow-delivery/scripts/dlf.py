@@ -125,6 +125,8 @@ def file_line(top, runs, slug, rel, stop, subject, occ, what, words, rec):
 
 def retry(top, runs, slug):
     held = mem(runs, slug)
+    if not held["queue"]:
+        return []
     todo, held["queue"] = held["queue"], []
     keep(runs, slug, held)
     return [file_line(top, runs, slug, q["rel"], q["stop"], q["subject"], q["occ"], q["what"], q["words"], q["rec"]) for q in todo]
@@ -243,6 +245,7 @@ def set_setting(top, scope, ident, value, rid, g=None):
 
 def settle(top, runs, slug, stop, occ, what, words, rec, **ctx):
     on, scope = setting(top, slug)
+    retry(top, runs, slug)
     subject = classify(stop, what, ctx.get("paths", ()), ctx.get("diff", ""), ctx.get("label", ""), ctx.get("cls", ""), ctx.get("template", False))
     ask = "the operation answers it (goal.py answer %s)" % slug
     if not on:
@@ -276,6 +279,7 @@ def budget_stop(slug, state, runs, cfg_, at=None, save=None, top=""):
     seen = fit.view(state, runs)
     held, source = fit.budget(seen, cfg_)
     minutes, on = fit.active_minutes(state, at, cfg_), bool(top) and setting(top, slug)[0]
+    on and retry(top, runs, slug)
     auto = fit.monitor("auto", True) if seen.get("eta") or seen.get("eta_extend") else None
     eta = bool(auto) and auto.eta_over(seen, minutes)
     if eta and on:
@@ -343,6 +347,7 @@ def cut(top, runs, rel, owner="", loop=""):
     owner, loop, out = owner or cfg(top).get("owner_login", ""), loop or private.gh(top, "api", "user", "-q", ".login")[1].strip(), []
     for f in glob.glob(os.path.join(runs, "*.dlf.json")):
         goal = os.path.basename(f)[:-9]
+        retry(top, runs, goal)
         try:
             queued = [q for q in json.load(open(f)).get("queue", []) if q.get("rel") == rel]
         except (OSError, ValueError):

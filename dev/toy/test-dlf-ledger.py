@@ -135,4 +135,15 @@ as_("loopbot", "<!-- dlf-event key=gn|break|other|n1 state=closed -->\n%s closed
 check("converted: %s waits for patch goal" % lid_n in dlf.cut(top, runs, "v1"), "finding 5: a loop-written closed on a declined line leaves it converted: the cut still waits for the patch goal to merge")
 # review finding 7: an unreadable run-record folder is a failed read: the cut refuses, it does not read it as 'nothing pending'
 check(dlf.cut(top, home + "/no-such-runs", "v-none").startswith("read failed: the run-record folder"), "finding 7: a missing run-record folder refuses the cut and names the read")
+# review finding 8: a line queued while the issue was out of reach is filed again at the goal's next stop and at the cut
+os.environ["DLF_FAKE_FAIL"] = "list"
+q1 = file("gr", "r1")
+q2 = file("gs", "s1")
+os.environ.pop("DLF_FAKE_FAIL")
+check(q1[1] == "queued" and q2[1] == "queued", "finding 8: two lines queued while the issue was unreachable")
+dlf.settle(top, runs, "gs", "break", "s2", "another break", "words", "rec", paths=["a.py"])
+keys = lambda: [c["body"] for c in state()["comments"]["1"]]
+check(any("gs|break|other|s1" in b for b in keys()) and not dlf.mem(runs, "gs")["queue"], "finding 8: the goal's next stop re-files its queued line before it files the new one")
+dlf.cut(top, runs, "v1")
+check(any("gr|break|other|r1" in b for b in keys()) and not dlf.mem(runs, "gr")["queue"], "finding 8: the cut re-files the lines still queued before it reads the issue")
 sys.exit(1 if failed else 0)
