@@ -42,6 +42,8 @@ for subject, text in zip(S, ("we must force-push the branch", "refund the paymen
     check(c("break", text, paths=["x.py"]) == subject, "the word scan: %r in a stop labelled other waits as %s" % (text, subject))
 check(c("break", "a break", paths=["x.py"], label=S[1]) == S[1], "the agent's label raises a stop to a safety subject")
 check(c("break", "a break", paths=[".claude/settings.json"], label="other") == S[2], "the agent's label never lowers what the rule found")
+check(c("break", "a break", cls="made-up class") == "unclassifiable", "finding 3: an unknown recorded class is unclassifiable: it waits")
+check(c("break", "a plain break", cls="other") == "other", "a recorded class of other is a line (negative control)")
 check(c("break", "a break") == "unclassifiable", "a break with no class, no touches and no diff is unclassifiable: it waits")
 check(c("test", "x") == "unclassifiable", "a failing test with no diff is unclassifiable: it waits")
 check(c("nonsense", "x", paths=["a.py"]) == "unclassifiable", "an unknown stop is unclassifiable: it waits")
