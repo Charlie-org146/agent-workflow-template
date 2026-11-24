@@ -24,6 +24,14 @@
 | <a id="t-health-register-no-launchd"></a>health-register-no-launchd | requirement | AUT-1 | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
 | <a id="t-perms-docs-check"></a>perms-docs-check | requirement | AUT-1 | not run | - | local | 2026-11-14 |
 
+## Autonomous sizing
+
+| Test | Kind | Guards | Result | Date | Run | Seen failing |
+|---|---|---|---|---|---|---|
+| <a id="t-sizing-asz-1-1"></a>sizing-asz-1-1 | requirement | ASZ-1 | not run | - | local | 2026-11-24 |
+| <a id="t-sizing-asz-1-2"></a>sizing-asz-1-2 | requirement | ASZ-1 | not run | - | local | 2026-11-24 |
+| <a id="t-sizing-asz-1-3"></a>sizing-asz-1-3 | requirement | ASZ-1 | not run | - | local | 2026-11-24 |
+
 ## Check-in and board
 
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
@@ -73,6 +81,15 @@
 | <a id="t-queue-view-blocks"></a>queue-view-blocks | requirement | CHK-1 | not run | - | local | 2026-11-20 |
 | <a id="t-board-tz-mixed-stamps"></a>board-tz-mixed-stamps | requirement | CHK-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-20 |
 | <a id="t-release-progress-bars"></a>release-progress-bars | requirement | CHK-1 | not run | - | local | 2026-11-20 |
+
+## Checks by size
+
+| Test | Kind | Guards | Result | Date | Run | Seen failing |
+|---|---|---|---|---|---|---|
+| <a id="t-sizing-cbs-1-1"></a>sizing-cbs-1-1 | requirement | CBS-1 | not run | - | local | 2026-11-24 |
+| <a id="t-sizing-cbs-1-2"></a>sizing-cbs-1-2 | requirement | CBS-1 | not run | - | local | 2026-11-24 |
+| <a id="t-sizing-cbs-1-3"></a>sizing-cbs-1-3 | requirement | CBS-1 | not run | - | local | 2026-11-24 |
+| <a id="t-sizing-cbs-1-4"></a>sizing-cbs-1-4 | requirement | CBS-1 | not run | - | local | 2026-11-24 |
 
 ## Delivery
 
@@ -772,3 +789,7 @@
 | <a id="t-tasks-rows-only-added"></a>tasks-rows-only-added | requirement | done line v110-tasks:5 | not run | - | local | 2026-11-21 |
 | <a id="t-defect-5727-smoke-private-list"></a>defect-5727-smoke-private-list | defect | [#5727](https://github.com/Charlie-org146/agent-workflow-template/issues/5727) closed (2026-11-22) | not run | - | local | 2026-11-21 |
 | <a id="t-lane-once-5734"></a>lane-once-5734 | defect | [#5734](https://github.com/Charlie-org146/agent-workflow-template/issues/5734) closed (2026-11-21) | not run | - | local | 2026-11-21 |
+| <a id="t-sizing-done-1-cases-linked"></a>sizing-done-1-cases-linked | requirement | done line v110-cbs-asz:1 | not run | - | local | 2026-11-24 |
+| <a id="t-sizing-done-2-sized-at-freeze"></a>sizing-done-2-sized-at-freeze | requirement | done line v110-cbs-asz:2 | not run | - | local | 2026-11-24 |
+| <a id="t-sizing-done-3-resized-up"></a>sizing-done-3-resized-up | requirement | done line v110-cbs-asz:3 | not run | - | local | 2026-11-24 |
+| <a id="t-sizing-done-4-sizes"></a>sizing-done-4-sizes | requirement | done line v110-cbs-asz:4 | not run | - | local | 2026-11-24 |
