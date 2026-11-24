@@ -139,4 +139,11 @@ check(goal_mod.autoapprove({"slug": "gpa", "touches": ["skills/a/b.py"]}, [], "p
 check(goal_mod.autoapprove({"slug": "gpb", "touches": ["skills/a/b.py"]}, [], "plan", auto, "pending", "") is False, "finding A: a pending result with no decision context at all fails closed: it waits")
 check(goal_mod.autoapprove({"slug": "gpc", "touches": ["skills/a/b.py"]}, [], "plan", auto, "pending", "pick a name") is True and len([l for l in lines("gpc") if "| choice |" in l]) == 1, "finding A: a benign pending result files its line and goes on (negative control)")
 check(goal_mod.autoapprove({"slug": "gpd", "touches": ["skills/a/b.py"]}, [], "plan", auto, "done", "") is True, "a done step with nothing pending still follows the old rule")
+# round 3, finding C: a raise and the cap line are independent: estimate 240, held 240, spend 500 raises to 480 AND files one cap line
+guards.add_set(runs, "gcc", "budget", {"minutes": 240, "tokens": 0}, "set")
+fit.active_minutes = lambda state, at=None, cfg=None: 500
+with __import__("contextlib").redirect_stdout(__import__("io").StringIO()):
+    dlf.budget_stop("gcc", {"slug": "gcc", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {}, "log": []}, runs, {}, top=tmp)
+check(fit.view({"slug": "gcc"}, runs)["budget"]["minutes"] == 480, "finding C: 500 spent against 240 held with a 240 estimate raises the budget to 480")
+check(len(lines("gcc")) == 1 and "reached its 2x cap at 500 of 240" in lines("gcc")[0], "finding C: and files exactly one cap line in the same check")
 sys.exit(1 if failed else 0)

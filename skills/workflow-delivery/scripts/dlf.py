@@ -30,7 +30,7 @@ def keep(runs, slug, held):
 
 
 def write(top, runs, slug, kind, text, do):
-    """The one door out: scan, then do(text); a failed scan keeps the text in the run record."""
+    """The one door out: scan first; a failed scan keeps the text local."""
     got = private.scan(top, None, texts={kind: text})
     if got["state"] not in ("clean", "off"):
         held = mem(runs, slug)
@@ -41,7 +41,7 @@ def write(top, runs, slug, kind, text, do):
 
 
 def pages(top, path):
-    """Every page of a list, or None when a read fails (never an empty list)."""
+    """Every page, or None when a read fails."""
     code, out = private.gh(top, "api", "--paginate", "--slurp", path)
     try:
         got = None if code else json.loads(out)
@@ -292,15 +292,16 @@ def budget_stop(slug, state, runs, cfg_, at=None, save=None, top=""):
         if held[name] and spent >= held[name]:
             est = (seen.get("eta") or {}).get("estimate") if name == "minutes" else cfg_.get("token_budget")
             new, capped = raise_budget(held[name], est, spent, share * (est or 0))
-            if on and est and new > held[name]:
+            raised, was = on and est and new > held[name], held[name]
+            if raised:
                 import guards
                 guards.add_set(runs, slug, "budget", dict(held, **{name: new}), "raised the %s budget %d to %d (spent %d, estimate %d)" % (name, held[name], new, spent, est))
                 name == "minutes" and guards.add_set(runs, slug, "dlf_budget", {"minutes": new}, "eta follows")
                 print("BUDGET %s: %s %d -> %d (spent %d, estimate %d)" % (slug, name, held[name], new, spent, est))
                 held[name] = new
-            elif on and est and capped:
-                cap_line(top, runs, slug, brief(top, slug)[1], spent, est, held[name], new)
-            else:
+            if on and est and capped:
+                cap_line(top, runs, slug, brief(top, slug)[1], spent, est, was, new)
+            elif not raised:
                 sys.exit("REFUSED: %d %s spent, at the %s budget of %d (%s); no new step starts. Fix: goal.py set %s --budget-%s N "
                          "--why ... from the operation session (BUDGET_%s)" % (spent, name, name.rstrip("s"), held[name], source, slug, name, name.upper()))
 
