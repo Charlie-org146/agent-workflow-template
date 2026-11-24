@@ -197,4 +197,11 @@ fit.branch_diff = real_branch_diff
 straddle = "x" * 115 + "acmesecret and more"
 cut_wait = dlf.settle(tmp, runs, "gst", "break", "s1", straddle, "words", "rec", paths=[".claude/settings.json"])
 check(cut_wait[0] == "wait" and "acmes" not in cut_wait[1] and "text withheld" in cut_wait[1], "re-review: a private name straddling character 120 is withheld whole, not half printed: %s" % cut_wait[1][:90])
+# final re-review, privacy: callers must not cut the free text before the scan sees it (a private name starting near character 196 leaked its first letters into the posted line)
+git_t("update-ref", "refs/remotes/origin/main", "HEAD")
+tail_name = "y" * 195 + "acmesecret and more"
+st_x = {"slug": "gcx", "touches": ["skills/a/b.py"]}
+git_t("reset", "-q", "--hard", "origin/main")
+check(goal_mod.choices(st_x, [tail_name], "plan") is False and not any("acmes" in b for b in [c["body"] for cs in json.load(open(fake + "/state.json"))["comments"].values() for c in cs]), "final: a choice whose private name straddles the old 200-character cut waits and posts no prefix of it")
+check(fit.breaks(goal_mod, {"slug": "gcy", "touches": ["skills/a/b.py"]}, [{"principle": 1, "text": tail_name}]).startswith("WAITING gcy: private data") and not any("acmes" in b for b in [c["body"] for cs in json.load(open(fake + "/state.json"))["comments"].values() for c in cs]), "final: a break whose private name straddles the old 200-character cut waits and posts no prefix of it")
 sys.exit(1 if failed else 0)

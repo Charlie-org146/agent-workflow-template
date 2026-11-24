@@ -249,13 +249,13 @@ def safe(top, text):
 def settle(top, runs, slug, stop, occ, what, words, rec, **ctx):
     on, scope = setting(top, slug)
     retry(top, runs, slug)
-    subject = classify(stop, what, ctx.get("paths", ()), ctx.get("diff", ""), ctx.get("label", ""), ctx.get("cls", ""), ctx.get("template", False))
+    subject = SAFETY[3] if safe(top, what) != what else classify(stop, what, ctx.get("paths", ()), ctx.get("diff", ""), ctx.get("label", ""), ctx.get("cls", ""), ctx.get("template", False))
     ask = "the operation answers it (goal.py answer %s)" % slug
     if not on:
         return "wait", wait_line(slug, "setting off", "deliver-first is off for %s %s" % (scope, slug), ask)
     if subject in SAFETY or subject == "unclassifiable":
         return "wait", wait_line(slug, subject, "text withheld" if subject == SAFETY[3] else safe(top, what)[:120], ask)
-    lid, status = file_line(top, runs, slug, brief(top, slug)[1], stop, subject, occ, what, words, rec)
+    lid, status = file_line(top, runs, slug, brief(top, slug)[1], stop, subject, occ, what[:200], words, rec)
     if status == "local":
         return "wait", wait_line(slug, "private data", "the line failed the private-name scan", "remove the name, then " + ask)
     return "continue", lid or status

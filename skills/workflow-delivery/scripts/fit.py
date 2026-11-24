@@ -168,7 +168,7 @@ def breaks(g, state, left):
     import dlf
     slug = state["slug"]
     for i, b in enumerate(left):
-        got = dlf.settle(g.root(), g.state_dir(), slug, "break", "b%dp%s%s" % (i + 1, b["principle"], hashlib.sha1(b["text"].encode()).hexdigest()[:6]), "red-team break of principle %s: %s" % (b["principle"], b["text"][:200]),
+        got = dlf.settle(g.root(), g.state_dir(), slug, "break", "b%dp%s%s" % (i + 1, b["principle"], hashlib.sha1(b["text"].encode()).hexdigest()[:6]), "red-team break of principle %s: %s" % (b["principle"], b["text"]),
                      "notify.py plan-accept %s %s --owner-record ID" % (slug, b["principle"]), "accept", paths=state.get("touches") or (), cls=b.get("class", ""), diff=branch_diff(g))
         if got[0] == "wait":
             return got[1]
