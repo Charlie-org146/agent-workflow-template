@@ -57,4 +57,7 @@ json.dump({}, open(_t + "/.loop/config.json", "w"))
 fake_key = "ghp_" + "Z9" * 18
 said = dlf.settle(_t, _t, "gs", "break", "x", "the plan embeds a key %s in a page" % fake_key, "accept", "keep", paths=["a.py"])
 check(said[0] == "wait" and "private data" in said[1] and fake_key not in said[1] and "Z9Z9" not in said[1], "a secret-class stop waits and the wait line names the class only: %s" % said[1])
+for kw, stop in ((dict(cls="money", paths=["a.py"]), "break"), (dict(), "test"), (dict(label="money", paths=["a.py"]), "break")):
+    said = dlf.settle(_t, _t, "gs2", stop, "z", "spent %s on a thing" % fake_key, "accept", "keep", **kw)
+    check(said[0] == "wait" and fake_key not in said[1] and "Z9Z9" not in said[1], "a secret in the text of a %s stop (%s) never reaches the wait line whatever its class: %s" % (stop, sorted(kw)[0] if kw else "unclassifiable", said[1][:70]))
 sys.exit(1 if failed else 0)
