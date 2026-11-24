@@ -49,7 +49,7 @@ MUTATIONS = [  # (rule, file, the line to break, its broken form, the toy that g
     ("DLF-1.3 a live break is classified with the branch diff", "skills/workflow-delivery/scripts/fit.py", ", diff=branch_diff(g))", ")", "wire"),
     ("DLF-1.3 the whole text is scanned before any cut", D, "SAFETY[3] if safe(top, what) != what else ", "", "wire"),
     ("DLF-1.4 queued lines are re-filed", D, "    retry(top, runs, slug)\n    subject = ", "    subject = ", "ledger"),
-    ("DLF-1.4 the debt gate fails closed", R, "    if not os.path.isfile(path):", "    if False:", "release"),
+    ("DLF-1.4 the debt gate fails closed", R, "    if not all(os.path.isfile(path) for path in paths):", "    if False:", "release"),
     ("DLF-1.5 the setting turns a scope off", D, "if isinstance((held.get(scope) or {}).get(ident), bool):", "if False:", "wire"),
 ]
 

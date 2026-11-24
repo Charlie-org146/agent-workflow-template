@@ -32,13 +32,14 @@ def docs_lines(top, cfg, base):
 
 def debt(cwd, slug, runs):
     """DLF-1.4: '' when no deliver-first line stands between this release and its cut; else why not. Fails closed: no ledger reader, no cut."""
-    path = os.path.join(DELIVERY, "dlf.py")
-    if not os.path.isfile(path):
+    paths = [os.path.join(DELIVERY, name + ".py") for name in ("dlf", "dlf_cut")]
+    if not all(os.path.isfile(path) for path in paths):
         return "the deliver-first ledger can't be read: workflow-delivery is not beside workflow-release. Fix: install workflow-delivery"
     import importlib.util
     sys.path.insert(0, DELIVERY)
-    spec = importlib.util.spec_from_file_location("dlf", path)
-    dlf = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(dlf)
-    import dlf_cut
-    return dlf_cut.cut(cwd, runs, dlf.brief(cwd, slug)[1])
+    mods = []
+    for name, path in zip(("dlf", "dlf_cut"), paths):
+        spec = importlib.util.spec_from_file_location(name, path)
+        mods.append(importlib.util.module_from_spec(spec))
+        spec.loader.exec_module(mods[-1])
+    return mods[1].cut(cwd, runs, mods[0].brief(cwd, slug)[1])
