@@ -161,16 +161,16 @@ check(len([l for l in lines("go2") if "| break |" in l]) == 2, "finding 3: a fre
 # round 4/5 privacy: a secret-shaped value OR a configured private name in a pending decision is never held, printed or stored (withheld whole)
 import guards  # noqa: E402
 secret = "ghp_" + "Q7" * 18
-ask_text = guards.held_ask(tmp, "plan", ["rotate the key %s today" % secret], "")
+ask_text = dlf.held_ask(tmp, "plan", ["rotate the key %s today" % secret], "")
 check(secret not in ask_text and "Q7Q7" not in ask_text and ask_text == "plan left this for you: text withheld", "finding 4: a secret-shaped value in a pending decision is withheld: %s" % ask_text)
-check(secret not in guards.held_ask(tmp, "plan", [], "STEP reason has %s" % secret), "finding 4: a secret in the step's pending reason is withheld too")
-named = guards.held_ask(tmp, "plan", ["approve the page about acmesecret"], "")
+check(secret not in dlf.held_ask(tmp, "plan", [], "STEP reason has %s" % secret), "finding 4: a secret in the step's pending reason is withheld too")
+named = dlf.held_ask(tmp, "plan", ["approve the page about acmesecret"], "")
 check("acmesecret" not in named and named.endswith("text withheld"), "round 5: a configured private name in a pending decision is withheld: %s" % named)
 wait_text = dlf.settle(tmp, runs, "gpn", "break", "n1", "touch the sandbox for acmesecret", "words", "rec", paths=["skills/a/b.py"])
 check(wait_text[0] == "wait" and "acmesecret" not in wait_text[1], "round 5: a safety wait line never prints a configured private name: %s" % wait_text[1])
-check(guards.held_ask(tmp, "plan", ["pick a name"], "") == "plan left this for you: pick a name", "a benign ask is unchanged (negative control)")
+check(dlf.held_ask(tmp, "plan", ["pick a name"], "") == "plan left this for you: pick a name", "a benign ask is unchanged (negative control)")
 os.environ["LOOP_PRIVATE_NAMES"] = "/dev/null"
-check(guards.held_ask(tmp, "plan", ["about acmesecret"], "") == "plan left this for you: about acmesecret", "with an explicit empty private-name list there is nothing to withhold")
+check(dlf.held_ask(tmp, "plan", ["about acmesecret"], "") == "plan left this for you: about acmesecret", "with an explicit empty private-name list there is nothing to withhold")
 os.environ["LOOP_PRIVATE_NAMES"] = home + "/names"
 # round 5, safety finding: a live stop is classified with the branch's REAL diff, so a weakened assertion is found; an unreadable diff fails closed
 subprocess.run(["git", "-C", tmp, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "base"], capture_output=True)

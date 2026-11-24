@@ -43,7 +43,7 @@ MUTATIONS = [  # (rule, file, the line to break, its broken form, the toy that g
     ("DLF-1.1 a failed read queues, a scan failure keeps local", D, 'len(mem(runs, slug)["local"]) > n0', 'mem(runs, slug)["local"]', "ledger"),
     ("DLF-1.2 a raise logs the stored old budget", D, "stored[name] or held[name]", "held[name]", "budget"),
     ("DLF-1.3 a configured private name in a wait text is withheld", D, 'private.scan(top, None, texts={"w": text})["state"] not in ("clean", "off", "none")', "False", "wire"),
-    ("DLF-1.3 a held ask goes through the withhold check", "skills/workflow-delivery/scripts/guards.py", 'safe(top, "; ".join(pending) or why or "see its reply")', '"; ".join(pending) or why or "see its reply"', "wire"),
+    ("DLF-1.3 a held ask goes through the withhold check", D, 'safe(top, "; ".join(pending) or why or "see its reply")', '"; ".join(pending) or why or "see its reply"', "wire"),
     ("DLF-1.3 a live choice is classified with the branch diff", D, ", diff=g.fit.branch_diff(g)", "", "wire"),
     ("DLF-1.3 an unreadable diff fails closed", D, "    if diff is None or stop not in STOPS", "    if stop not in STOPS", "wire"),
     ("DLF-1.3 a live break is classified with the branch diff", "skills/workflow-delivery/scripts/fit.py", ", diff=branch_diff(g))", ")", "wire"),

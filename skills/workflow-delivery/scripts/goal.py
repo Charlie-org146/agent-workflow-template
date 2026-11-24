@@ -295,7 +295,7 @@ def cmd_record(args):
     if ok or auto:
         fit.keep(ME, state, step, text)
     if auto:
-        took = guards.safe(root(), "; ".join(pending) or why or "the step's pending gate")
+        took = dlf.safe(root(), "; ".join(pending) or why or "the step's pending gate")
         state["flow"][step] = "done: auto-approved: " + took[:200] + stamp
         state["step"] = role.after(step)
         state["note"] = {"text": "auto-approved at %s: %s" % (step, took[:240]), "at": now()}
@@ -306,7 +306,7 @@ def cmd_record(args):
         return 0
     if wait:
         state["flow"][step] = "pending"
-        ask = guards.held_ask(root(), step, pending, why)
+        ask = dlf.held_ask(root(), step, pending, why)
         guards.hold(state, ask[:600])
         save(state, "%s pending: %s" % (step, ask[:200]))
         print("WAITING %s: %s" % (slug, ask))

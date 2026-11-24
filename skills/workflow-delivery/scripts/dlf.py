@@ -227,6 +227,9 @@ def safe(top, text):
     return "text withheld" if re.search(SECRET, text) or private.scan(top, None, texts={"w": text})["state"] not in ("clean", "off", "none") else text
 
 
+def held_ask(top, step, pending, why):
+    return "%s left this for you: %s" % (step, safe(top, "; ".join(pending) or why or "see its reply"))
+
 def settle(top, runs, slug, stop, occ, what, words, rec, **ctx):
     on, scope = setting(top, slug)
     retry(top, runs, slug)
