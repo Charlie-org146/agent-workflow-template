@@ -324,8 +324,8 @@ def check(state, step, text):
     found = re.search(r"^\W*STEP:\s*(done|skipped|pending|failed)\b", text, re.M | re.I)
     result, rows = found.group(1).lower() if found else "", re.findall(r"^\W*CHECK:(.*)$", text, re.M)
     fix, seen = "run sizing.py rule %s and write each CHECK line it prints, then record again" % state["slug"], {}
-    if rows and result != "done":
-        return "a CHECK line on a step that is %s" % (result or "unfinished"), fix, "SIZING_CHECK_STEP sizing"
+    if rows and result in ("skipped", "failed"):
+        return "a CHECK line on a step that is %s" % result, fix, "SIZING_CHECK_STEP sizing"
     for row in rows:
         part, stored = row.split(), sized["checks"].get((row.split() or [""])[0])
         miss = [m for m in forms[part[0]][part[1]].get("markers") or [] if m.lower() not in text.lower()] if stored and part[1:2] == [stored["form"]] else []
@@ -335,7 +335,7 @@ def check(state, step, text):
         if why:
             return why, fix, "SIZING_LINE sizing"
         seen[part[0]] = part[1]
-    gone = [c for c in CHECKS_AT.get(step, ()) if c not in seen and result == "done"]
+    gone = [c for c in CHECKS_AT.get(step, ()) if c not in seen and result not in ("skipped", "failed")]
     if gone:
         return "the %s reply has no CHECK line for %s" % (step, gone[0]), fix, "SIZING_MISSING sizing"
     new = {c: f for c, f in seen.items() if sized["evidence"].get(c) != f}

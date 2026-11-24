@@ -130,6 +130,8 @@ check "CBS-1.3 a CHECK line on a skipped step is refused" 'echo "$out" | grep -q
 f=$(reply bud $'CHECK: plan-review full 3\nDEPTH: full'); $H stage a2 '{"budget_hits":[{"step":"plan","kind":"step"}]}' >/dev/null 2>&1
 out=$($H check a2 plan $f 2>&1)
 check "CBS-1.3 a reply stopped at its budget still has to carry the lines" 'echo "$out" | grep -q "REFUSED SIZING_MISSING"'
+printf 'DEPTH: full\nPENDING: ask\nSTEP: pending\n' > "$T/pe.txt"; out=$($H check a2 plan "$T/pe.txt" 2>&1)
+check "CBS-1.3 a pending plan reply with no CHECK lines is refused (fails closed)" 'echo "$out" | grep -q "REFUSED SIZING_MISSING"'
 new nosize "docs/a.md" 10 none none
 python3 - "$RUNS" <<'PY'
 import json, sys
