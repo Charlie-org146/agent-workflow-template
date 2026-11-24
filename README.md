@@ -185,6 +185,30 @@ Every requirement with its complete text, grouped by topic and feature (read fro
 |---|---|
 | [CHK-1 One live board and one check-in layout show where everything stands](https://github.com/Charlie-org146/agent-workflow-template/wiki/Check-in-and-board) | **The board** has these sections, in order, each collapsible: Your move (only my items); Red team (bottlenecks now, planning suggestions with taken or why not, the biggest risk, a verdict per principle); Release goals (short: one line, one bar, an ETA, at most five steps, each step with its own progress bar and ETA, and whose ETA it is); Merge queue (a card per pull request in columns: Building, PR checks, In the queue, Merged today, Held, read from GitHub); Task queue (every open task by expected time on main, with a state and whose ETA it is); Workers; Shipped. [CHK-1]<br>**Every item is a card;** no tables and no plain lists. [CHK-1]<br>**The check-in** follows the same order and opens with what slipped; a hook blocks a check-in reply in any other layout. [CHK-1]<br>Text is plain and reads on a phone. [CHK-1]<br>Every claim carries what it was read from and its clock time. [CHK-1]<br>One email stream, which I answer by reply. [CHK-1] |
 
+#### Deliver first
+
+[How to use Deliver first](https://github.com/Charlie-org146/agent-workflow-template/wiki/How-to-use-Deliver-first)
+
+| Requirement | Complete text |
+|---|---|
+| [DLF-1 Deliver first: a goal never waits for me, unless it's a safety class (not built)](https://github.com/Charlie-org146/agent-workflow-template/wiki/Deliver-first) | A goal goes from plan to merge without waiting for me. A red-team break, a plan past its review cap, a budget it has outgrown, a test failing outside the goal's own rows, or an open design choice does not stop it. Each one becomes a line on one tracked issue for the goal's release, with the exact words that settle it, and the goal moves on. [DLF-1]<br>Budgets raise themselves and say so. When a goal reaches its time or token budget, the budget rises to measured spend plus the estimate of what's left, up to a cap of 2× the goal's estimate. Each raise is logged with the old and new figures. Past the cap, it asks me, as one line on the release issue, and keeps working at the cap meanwhile. [DLF-1]<br>Only safety waits. These still stop a goal, and nothing else does: [DLF-1]<br>the safety classes: deleting what can't be restored, money, security and sandbox settings, private data, steward merges; [DLF-1]<br>a change to what a feature promises; [DLF-1]<br>a test loosened or deleted; [DLF-1]<br>the leak read before any push; [DLF-1]<br>the full test run on GitHub before a merge. [DLF-1]<br>Every other stop in the loop is removed or turned into DLF-1.1's issue line. [DLF-1]<br>The release pays the debt. A release can't be cut while its deliver-first issue has an open line. At the cut I get the whole list once, grouped by goal, each line with a recommendation, plus one line that accepts them all. A line I don't accept becomes a patch goal before the cut. [DLF-1]<br>I can turn it off. One setting, changed only by my words, turns deliver-first off for a goal, a task or a release. Then that scope waits for my word as today. [DLF-1] |
+
+#### Checks by size
+
+[How to use Checks by size](https://github.com/Charlie-org146/agent-workflow-template/wiki/How-to-use-Checks-by-size)
+
+| Requirement | Complete text |
+|---|---|
+| [CBS-1 Checks by goal size: one table says which checks each size runs (not built)](https://github.com/Charlie-org146/agent-workflow-template/wiki/Checks-by-size) | One settings table lists, for small, medium and large goals, which checks run and in which named form. The template ships defaults, and only my words change the table. [CBS-1]<br>Some checks are in every row and can't be lightened: the build gate, the full test run before merge, two leak readers on hand-written text before any push, and every safety class. [CBS-1]<br>Each lighter form is defined in advance and says what it still covers, such as one review round, or one red-team pass with no reruns. A goal never improvises a lighter check. [CBS-1]<br>Every check a goal skipped or ran light is listed on its release. The cut shows the list and can require a full run of any of them first. [CBS-1] |
+
+#### Autonomous sizing
+
+[How to use Autonomous sizing](https://github.com/Charlie-org146/agent-workflow-template/wiki/How-to-use-Autonomous-sizing)
+
+| Requirement | Complete text |
+|---|---|
+| [ASZ-1 Autonomous sizing: the loop sizes each goal and picks its checks itself (not built)](https://github.com/Charlie-org146/agent-workflow-template/wiki/Autonomous-sizing) | The loop sizes each goal at freeze from its plan: files touched, lines, gates, and whether it touches a safety class. It records the size with its reason and picks the checks from CBS-1's table. It doesn't wait for me. The size lines: small is 3 files or fewer, 150 lines or fewer, no gate and no safety class; medium is 10 files or fewer and no safety class; large is everything else. [ASZ-1]<br>A goal's size only goes up on its own. If the build grows past its size, it's re-sized and the added checks run. It's never sized down mid-goal. A goal touching a safety class is always large. [ASZ-1]<br>The board shows each goal's size, reason and checks. One line from me changes a goal's size, and the change is logged with my words. [ASZ-1] |
+
 ### Quality
 
 #### Regression
@@ -215,6 +239,22 @@ Every requirement with its complete text, grouped by topic and feature (read fro
 | [GRD-6 Base branch and hooks cannot be bypassed](https://github.com/Charlie-org146/agent-workflow-template/wiki/Guardrails) | The base branch refuses direct and force pushes and merges only through the merge queue on required checks, with no bypass. [GRD-6]<br>Hook-skipping commits are refused and flagged. [GRD-6] |
 | [GRD-20 Sizes are one table, enforced on main, never met by reformatting](https://github.com/Charlie-org146/agent-workflow-template/wiki/Guardrails) | One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB); pages, requirements per page, test rows and file count. [GRD-20]<br>No script on main is over its fail line. [GRD-20]<br>Reformatting a whole file only to fit is refused. [GRD-20] |
 
+#### Fast checks
+
+[How to use Fast checks](https://github.com/Charlie-org146/agent-workflow-template/wiki/How-to-use-Fast-checks)
+
+| Requirement | Complete text |
+|---|---|
+| [SKP-1 Fast checks: skip what a later check covers, and time-limit the rest (not built)](https://github.com/Charlie-org146/agent-workflow-template/wiki/Fast-checks) | Each check names the later check that covers the same risk. When that later check is certain to run on the same change, the earlier one is skipped, and the record names the cover. One example: the local test run, when the PR's full GitHub run is the merge evidence. [SKP-1]<br>Generated files are regenerated once, from committed data only, right before the leak read. They're never regenerated in a loop. [SKP-1]<br>Each check has a time limit at each level: a goal step, a PR, a merge and a release. A check over its limit shows "missed: <cause>", and the next step starts at once. [SKP-1] |
+
+#### Cheap checks
+
+[How to use Cheap checks](https://github.com/Charlie-org146/agent-workflow-template/wiki/How-to-use-Cheap-checks)
+
+| Requirement | Complete text |
+|---|---|
+| [CHP-1 Cheap checks: the cheapest form that does the job, and retire checks that find nothing (not built)](https://github.com/Charlie-org146/agent-workflow-template/wiki/Cheap-checks) | Every check records its time, tokens and findings on each run. The board shows each check's cost per finding. [CHP-1]<br>A light form uses the cheapest means that still covers its risk. For example, a mechanical shape check for generated files instead of two readers, or a smaller model for one-pass reviews. Each form says what it gives up. [CHP-1]<br>A check whose last 10 runs, for a kind of change, found nothing but process choices is flagged with its total cost. One line from me removes it or keeps it. [CHP-1] |
+
 ### Operations
 
 #### Automation
@@ -243,6 +283,14 @@ Every requirement with its complete text, grouped by topic and feature (read fro
 | Requirement | Complete text |
 |---|---|
 | [MCH-1 Any machine sets up identically, and work moves between them safely](https://github.com/Charlie-org146/agent-workflow-template/wiki/Machines) | A fresh clone, the checklist, a dry run and an apply reach a working operation session on a Mac or on Windows. [MCH-1]<br>Each goal has one owning machine; handover and adoption move it safely. [MCH-1]<br>Failed steps retry three times and then stop with a reason; crashed goals resume. [MCH-1]<br>Backup and restore move state, never secrets. [MCH-1]<br>**A restart loses nothing:** committed and in-progress work survives, each machine's timers, sessions and folder trust come back on their own, and the only step left to me is reopening the app. **Cloud sessions** add capacity for read-only and test work, and never push (DEL-9). [MCH-1] |
+
+#### Task first
+
+[How to use Task first](https://github.com/Charlie-org146/agent-workflow-template/wiki/How-to-use-Task-first)
+
+| Requirement | Complete text |
+|---|---|
+| [TSK-1 Task first: the operation schedules my tasks ahead of fixes to its own tools (not built)](https://github.com/Charlie-org146/agent-workflow-template/wiki/Task-first) | The schedule puts my tasks first. When the operation picks the next goal for a worker or the heavy slot, a goal from a task in my release brief comes before a fix, patch or tool goal, unless DLF-1.3's safety list says otherwise. Ties go by the brief's priority, then by the goal closest to merging. [TSK-1]<br>A fix only goes first when it truly blocks. A fix goal may go ahead of a task goal only when that task goal can't reach its merge without it, and there's no workaround the loop already has. The operation names the blocked goal and why no workaround fits. A fix that only makes things cleaner or faster waits. [TSK-1]<br>A workaround is the default, and the fix follows. When a tool bug hits a task goal, the operation uses a recorded workaround for that goal at once, opens one issue, and queues the real fix after the current task goals. The workaround never skips anything on DLF-1.3's list. [TSK-1]<br>A red main doesn't stop my tasks by itself. When main's own test run is red only on rows that pass on PR runs, task goals keep merging on their own green PR runs with no new reds. A red that reaches PR runs or a safety class still stops merges. [TSK-1]<br>I can see and change the order. The board shows the schedule in order, each goal marked task or fix, with the reason any fix is ahead of a task. One line from me reorders it. [TSK-1] |
 
 ### Docs
 
