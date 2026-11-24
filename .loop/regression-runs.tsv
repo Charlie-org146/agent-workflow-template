@@ -3,6 +3,7 @@ adopt-record-qa	PASS	2026-11-16		c2d9ae715ff3
 adopt-set-1	FAIL	2026-11-12	
 adopt-set-3	FAIL	2026-11-19	
 adopt-set-5	FAIL	2026-11-19	
+adopt-stamps-version	PASS	2026-11-24	
 adoption-golden	PASS	2026-11-13	
 affected-deleted-root-runner	PASS	2026-11-24	
 agents-wire	PASS	2026-11-24	
@@ -49,7 +50,7 @@ aut-secret-name	PASS	2026-11-12
 aut-setup-health-only-with-skill	PASS	2026-11-12	
 aut7-budget-agrees	PASS	2026-11-22	
 auto-approved	PASS	2026-11-09	
-auto-owner-words-wait	PASS	2026-11-17	
+auto-owner-words-wait	PASS	2026-11-24	
 auto-release	PASS	2026-11-22	
 automation-missing-workflow	PASS	2026-11-12	
 backlog-adoption-warns	PASS	2026-11-19	
@@ -65,12 +66,12 @@ breaking-asks	PASS	2026-11-09
 budget-fair-base-moved	PASS	2026-11-15	
 budget-fair-failed-stays	PASS	2026-11-15	
 budgets-agree	PASS	2026-11-22	
-builtin-flow	PASS	2026-11-22	
+builtin-flow	PASS	2026-11-24	
 capture-row-ci	FAIL	2026-11-13	
 changelog-bracket-no-gh	PASS	2026-11-17	
 changelog-no-heading-gh	PASS	2026-11-17	
 ci-issue-backlog	PASS	2026-11-10	
-ci-summary	PASS	2026-11-20	
+ci-summary	PASS	2026-11-24	
 ci-target-input	PASS	2026-11-10	
 config-holds-topics	PASS	2026-11-14	
 config-lane-duplicate-key	PASS	2026-11-15	
@@ -78,11 +79,13 @@ config-lane-duplicate-same	PASS	2026-11-15
 config-lane-key-change	PASS	2026-11-15	
 config-lane-unparseable	PASS	2026-11-15	
 cost-time-warn	PASS	2026-11-12	
+cut-complete	PASS	2026-11-24	
 cut-draft	PASS	2026-11-09	
-cut-fails-checks	PASS	2026-11-22	
+cut-fails-checks	PASS	2026-11-24	
 defect-4496-checkin-goal-lines	PASS	2026-11-16	
-defect-categories	FAIL	2026-11-12	
-defect-flow-steps	PASS	2026-11-22	
+defect-categories	PASS	2026-11-24	
+defect-closing-keywords	PASS	2026-11-24	
+defect-flow-steps	PASS	2026-11-24	
 defect-health	PASS	2026-11-24	
 defect-owed-branch-proved	PASS	2026-11-10	
 defect-wording	PASS	2026-11-24	
@@ -145,7 +148,9 @@ est-area	PASS	2026-11-22
 est-big-goal	PASS	2026-11-22	
 est-pace	PASS	2026-11-22	
 est-stalled	PASS	2026-11-22	
-every-row-described	PASS	2026-11-19	
+eta-freeze	PASS	2026-11-24	
+eta-health-missing	PASS	2026-11-24	
+every-row-described	PASS	2026-11-24	
 failed-waits-mender	PASS	2026-11-09	
 flaky-marked	PASS	2026-11-10	
 format-frontdoor	PASS	2026-11-19	
@@ -218,18 +223,22 @@ issues-one-open-ci	PASS	2026-11-15
 judge-section-format	PASS	2026-11-19	
 known-no-block	PASS	2026-11-20	
 known-recorded	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+lane-affected-memory	PASS	2026-11-24	
+lane-env-states	PASS	2026-11-24	
 lane-last-152	PASS	2026-11-22	
 lane-limit-150	PASS	2026-11-22	
 lane-messages-table	PASS	2026-11-11	
+lane-order	PASS	2026-11-24	
 lane-over-minutes	PASS	2026-11-11	
 lane-ports-tmpdir	PASS	2026-11-16		b8a343107016
 lane-start-mark-once	PASS	2026-11-11	
-lane-walk-skips-node-modules	PASS	2026-11-14	
+lane-walk-skips-git	PASS	2026-11-24	
+lane-walk-skips-node-modules	PASS	2026-11-24	
 lanes-abs-not-walked	PASS	2026-11-14	
 lanes-declared	PASS	2026-11-22	
 lanes-headers	FAIL	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-lanes-pr-affected	PASS	2026-11-22	
-lanes-reuse	PASS	2026-11-22	
+lanes-pr-affected	PASS	2026-11-24	
+lanes-reuse	PASS	2026-11-24	
 lanes-trace	FAIL	2026-11-10	
 lanes-trace-check	PASS	2026-11-10	
 lanes-trace-hook-173	PASS	2026-11-10	
@@ -284,13 +293,15 @@ main-reds-4858	PASS	2026-11-17
 main-reds-4865	PASS	2026-11-17	
 main-reds-4896	PASS	2026-11-17	
 main-reds-4901	PASS	2026-11-17	
-matrix-health-rule	PASS	2026-11-13	
+matrix-health-rule	PASS	2026-11-24	
+merge-batch-split	PASS	2026-11-24	
 merge-guard-base-head	PASS	2026-11-11	
 merge-reach-fail-closed	PASS	2026-11-22	
 merge-refuses-worktree	PASS	2026-11-14	
 merged-frees-175	PASS	2026-11-10	
 migration-base-config	PASS	2026-11-22	
 migration-clean	PASS	2026-11-22	
+migration-runs	PASS	2026-11-24	
 migration-v1	PASS	2026-11-16	
 milestone-links	PASS	2026-11-12	
 milestone-rows-seen-red	PASS	2026-11-24	
@@ -298,7 +309,7 @@ milestone-sync-no-source	PASS	2026-11-20
 milestone-wording-unreviewed	PASS	2026-11-24	
 milestones-once	PASS	2026-11-20	
 mon-stray-runs	PASS	2026-11-14	
-mon11-full-auto	PASS	2026-11-19	
+mon11-full-auto	PASS	2026-11-24	
 mon12-pool	PASS	2026-11-10	
 mon13-two-layers	PASS	2026-11-12	
 mon14-map-finish	PASS	2026-11-20	
@@ -314,7 +325,7 @@ mon6-merged-frees	PASS	2026-11-10
 mon7-govern-blocks	PASS	2026-11-10	
 mon9-board-fast	PASS	2026-11-10	
 monitor-stray-runs-3862	PASS	2026-11-14	
-narrow-root-172	PASS	2026-11-10	
+narrow-root-172	PASS	2026-11-24	
 new-binds-app-session-4257	PASS	2026-11-15	
 no-done-line-refused	PASS	2026-11-20	
 no-line-in-governor	PASS	2026-11-20	
@@ -322,7 +333,7 @@ no-token-would	PASS	2026-11-20
 notify-new-events	PASS	2026-11-18	
 one-failure	PASS	2026-11-09	
 one-link	PASS	2026-11-20	
-one-way-to-run	PASS	2026-11-22	
+one-way-to-run	PASS	2026-11-24	
 operate-10-under-load	PASS	2026-11-11	
 operate-all	PASS	2026-11-09	
 operate-toy-no-check	PASS	2026-11-13	
@@ -363,7 +374,7 @@ pr-head-audit-passes-4208	PASS	2026-11-15
 pr-in-milestone	PASS	2026-11-12	
 pr-moved-uncounted	PASS	2026-11-15	
 pr-real-fail-costs-try	PASS	2026-11-13	
-pr-statuses-only-lane-3840	PASS	2026-11-14	
+pr-statuses-only-lane-3840	PASS	2026-11-24	
 pr-waits-owed	PASS	2026-11-13	
 prd-audit-ignores-changed	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 prd-copy-no-reader	PASS	2026-11-24	
@@ -375,11 +386,13 @@ prd-scenarios	PASS	2026-11-19
 prd-section-order	PASS	2026-11-18	
 prd-usage-changed	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 preview-writes-nothing	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+private-checks-run-local	PASS	2026-11-24	
 private-names-scoped	PASS	2026-11-19	
 ptb-mend	PASS	2026-11-22	
 publish-tables-handwritten	PASS	2026-11-13	
 publish-tables-regen	PASS	2026-11-13	
 pull-ff-only-passes	PASS	2026-11-24	
+queue-use	PASS	2026-11-24	
 readme-commands-in-command-map	PASS	2026-11-24	
 record-in-session	PASS	2026-11-12	
 red-race-135	PASS	2026-11-22	
@@ -388,22 +401,31 @@ refused-unmet	PASS	2026-11-20
 reg-defect-label	PASS	2026-11-22	
 reg-local-relabel	PASS	2026-11-12	
 reg-same-env	PASS	2026-11-22	
-reg2-wording	PASS	2026-11-22	
+reg2-wording	PASS	2026-11-24	
+reg7-unmapped-tier	PASS	2026-11-24	
+reg7-unrun-warn-cost	PASS	2026-11-24	
 regression-issue-no-milestone	PASS	2026-11-12	
+rel-ci-release	PASS	2026-11-24	
+rel-update-asset	PASS	2026-11-24	
+release-hold-red	PASS	2026-11-24	
 release-lists-fixes	PASS	2026-11-22	
 reopened-shows-failing	PASS	2026-11-11	
-repeat-no-second	PASS	2026-11-20	
+repeat-no-second	PASS	2026-11-24	
 reply-hook-blocks	PASS	2026-11-10	
 reply-hook-checkin-123	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-reply-hook-mon5-wording	PASS	2026-11-19	
-reply-hook-scope	PASS	2026-11-22	
+reply-hook-mon5-wording	PASS	2026-11-24	
+reply-hook-scope	PASS	2026-11-24	
 repo-full-suite-limit	PASS	2026-11-11	
 repo-narrow-178	PASS	2026-11-12	
+repo-rules-setup	PASS	2026-11-24	
 report-done-final	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 report-header	PASS	2026-11-19	
+rerun-both-touched	PASS	2026-11-24	
 retired-leaves-waiting	PASS	2026-11-09	
 review-dated	FAIL	2026-11-20	
 review-findings-skill-lines	PASS	2026-11-17	
+review-help-runs-alone	PASS	2026-11-24	
+review-hold-blocks	PASS	2026-11-24	
 roadmap-closed-drops	PASS	2026-11-15	
 row-timeout-holds	PASS	2026-11-11	
 runs-sha	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -411,7 +433,7 @@ same-lines	PASS	2026-11-20
 schedule-setting	PASS	2026-11-20	
 scripts-a-monitoring-under-19000	PASS	2026-11-15	
 scripts-a-under-19000	PASS	2026-11-15	
-scripts-no-hang	PASS	2026-11-22	
+scripts-no-hang	PASS	2026-11-24	
 session-assign	PASS	2026-11-20	
 session-board-issue98	PASS	2026-11-12	
 session-ended-waiting	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -422,6 +444,8 @@ session-rename	PASS	2026-11-12
 session-reuse	PASS	2026-11-12	
 session-tool-helper	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 session-tool-timeout	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+set1-docs-format	PASS	2026-11-24	
+set1-health-bracket	PASS	2026-11-24	
 set13-hooks-once	PASS	2026-11-19	
 set13-hooks-once-bullet	PASS	2026-11-19	
 set8-hooks	PASS	2026-11-19	
@@ -436,16 +460,19 @@ settings-render-fresh	FAIL	2026-11-17
 settings-start-fresh	PASS	2026-11-16	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
-setup-owner-words-up-front	PASS	2026-11-15	
+setup-owner-words-up-front	PASS	2026-11-24	
 setup-refusal-writes-120	PASS	2026-11-18	
+setup-zero-tests-119	PASS	2026-11-24	
 shard-balance	PASS	2026-11-22	
+shard-fits-budget	PASS	2026-11-24	
 size-140	PASS	2026-11-12	
-size-budget	PASS	2026-11-11	
+size-budget	PASS	2026-11-24	
 skill-criteria-in-references	PASS	2026-11-14	
 skill-kept	PASS	2026-11-24	
 skill-refusals-in-references	PASS	2026-11-14	
 skill-size-116	PASS	2026-11-24	
 skill-workflow-in-references	PASS	2026-11-14	
+skip-list-approved	PASS	2026-11-24	
 slot-pool-112	PASS	2026-11-10	
 spec-decisions-log	PASS	2026-11-13	
 spec-decisions-wording	PASS	2026-11-12	
@@ -454,7 +481,7 @@ stale-found	PASS	2026-11-20
 stale-groups-defect	PASS	2026-11-12	
 stale-own-finding	PASS	2026-11-15	
 stale-own-main-reported	PASS	2026-11-15	
-status-graph-board	PASS	2026-11-22	
+status-graph-board	PASS	2026-11-24	
 status-graph-levels	PASS	2026-11-12	
 status-graph-marks	PASS	2026-11-12	
 status-graph-order	PASS	2026-11-12	
@@ -464,7 +491,7 @@ step-label-live	PASS	2026-11-12
 steps-in-session	PASS	2026-11-12	
 stop-after-3-tries	PASS	2026-11-09	
 stop-takes-tree	PASS	2026-11-12	
-stuck-stays-top	PASS	2026-11-22	
+stuck-stays-top	PASS	2026-11-24	
 suite-time-recorded	PASS	2026-11-10	
 summary-escapes	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-fallback	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -478,6 +505,7 @@ summary-render-guard	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-step	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-unknown-row	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 sync-both-sides	PASS	2026-11-18	
+sync-check-preview	PASS	2026-11-24	
 sync-dry-run-drift	PASS	2026-11-18	
 sync-first-adopts	PASS	2026-11-18	
 sync-not-connected	PASS	2026-11-20	
@@ -485,12 +513,12 @@ sync-repo-delta	PASS	2026-11-18
 sync-source-delta	PASS	2026-11-18	
 tasks-list-states	FAIL	2026-11-22	
 template-sheet	PASS	2026-11-12	
-test-caps-consolidate-allowed	PASS	2026-11-16	
+test-caps-consolidate-allowed	PASS	2026-11-24	
 test-caps-controls	PASS	2026-11-16	
 test-caps-health	PASS	2026-11-16	
 test-caps-own-cap	PASS	2026-11-16	
 test-caps-qa-refused	PASS	2026-11-16	
-test-caps-settings	PASS	2026-11-16	
+test-caps-settings	PASS	2026-11-24	
 tests-links-workflow-3839	PASS	2026-11-14	
 tests-own-folder	PASS	2026-11-13	
 tests-page-stale	PASS	2026-11-24	
@@ -498,10 +526,12 @@ tests-py-missing	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 tiers-unmapped-qa-pr	PASS	2026-11-10	
 topics-in-reference	PASS	2026-11-13	
 toy-no-leftovers	PASS	2026-11-12	
-tree-once-lock	PASS	2026-11-22	
+tree-once-lock	PASS	2026-11-24	
 trim-package-98	PASS	2026-11-16	
 trim-setup-under-19000	PASS	2026-11-16	
 two-lanes-toy-435	PASS	2026-11-10	
+unattended-checkin-line	PASS	2026-11-24	
+unattended-loop-recreate	PASS	2026-11-24	
 unattended-sends-warn	PASS	2026-11-19	
 unproven-blocks	PASS	2026-11-20	
 untested-listed	PASS	2026-11-19	
@@ -521,6 +551,6 @@ wiki-release	PASS	2026-11-20
 wiki-release-pycache	PASS	2026-11-19	
 win-posix-calls-gone	PASS	2026-11-15	
 worker-per-goal	PASS	2026-11-20	
-worker-refuses	PASS	2026-11-22	
+worker-refuses	PASS	2026-11-24	
 workflow-goal-to-release	PASS	2026-11-10	
 workflow-kind-shown	PASS	2026-11-10	
