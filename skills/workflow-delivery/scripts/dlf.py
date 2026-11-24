@@ -294,8 +294,8 @@ def budget_stop(slug, state, runs, cfg_, at=None, save=None, top=""):
                 import guards
                 guards.add_set(runs, slug, "budget", dict(held, **{name: new}), "raised the %s budget %d to %d (spent %d, estimate %d)" % (name, held[name], new, spent, est))
                 name == "minutes" and guards.add_set(runs, slug, "dlf_budget", {"minutes": new}, "eta follows")
-                held[name] = new
                 print("BUDGET %s: %s %d -> %d (spent %d, estimate %d)" % (slug, name, held[name], new, spent, est))
+                held[name] = new
             elif on and est and capped:
                 cap_line(top, runs, slug, brief(top, slug)[1], spent, est, held[name], new)
             else:
