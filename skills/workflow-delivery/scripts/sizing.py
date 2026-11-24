@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """CBS-1 and ASZ-1: sizing.py size|rule|show SLUG [STEP]. A goal is sized from its plan, the size picks its checks from the table
 checks_by_size (read from origin/<base>; sizing is off without it), a size only goes up. Imported by guards, role and flow."""
-import hashlib
 import json
 import os
 import re
@@ -18,7 +17,7 @@ FIXED = ("build-gate", "full-test-run", "leak-readers", "safety-classes")
 VARIABLE = ("plan-review", "red-team", "review")
 CHECKS_AT = {"plan": ("plan-review", "red-team"), "review": ("review",)}
 DEPTH_AT = {"plan": "plan-review", "review": "review"}
-GRAMMAR = "Reply grammar, one line per check before the STEP line: CHECK: <check> <form> <passes>"
+GRAMMAR = "One line per check before STEP: CHECK: <check> <form> <passes>"
 FIX_SIZE = "python3 skills/workflow-delivery/scripts/sizing.py size "
 
 
@@ -28,12 +27,12 @@ def _f(passes, covers, run=""):
 
 FORMS = {
     "build-gate": {"full": _f(1, "the build gate passes")},
-    "full-test-run": {"full": _f(1, "the full test run passes before merge", "python3 skills/workflow-regression/scripts/regression.py run")},
-    "leak-readers": {"full": _f(2, "two readers check for leaks before any push")},
-    "safety-classes": {"full": _f(1, "every safety class goes to the owner")},
-    "plan-review": {"one-round": _f(1, "one round of plan review"), "full": _f(3, "CEO, design and engineering review")},
-    "red-team": {"one-pass-no-rerun": _f(1, "one red-team pass, no rerun"), "full": _f(2, "red team and a rerun")},
-    "review": {"normal": _f(1, "one review pass"), "full": _f(2, "review and adversarial pass")},
+    "full-test-run": {"full": _f(1, "the full test run passes", "python3 skills/workflow-regression/scripts/regression.py run")},
+    "leak-readers": {"full": _f(2, "two leak readers before any push")},
+    "safety-classes": {"full": _f(1, "safety classes ask the owner")},
+    "plan-review": {"one-round": _f(1, "one round of plan review"), "full": _f(3, "CEO, design, engineering review")},
+    "red-team": {"one-pass-no-rerun": _f(1, "one pass, no rerun"), "full": _f(2, "red team and a rerun")},
+    "review": {"normal": _f(1, "one review pass"), "full": _f(2, "review and adversarial")},
 }
 DEFAULTS = {"forms": FORMS}
 for _s, _p in (("small", ("one-round", "one-pass-no-rerun", "normal")), ("medium", ("full", "one-pass-no-rerun", "normal")),
@@ -67,7 +66,7 @@ def grow(old, new):
 
 
 def base_cfg():
-    head = git("symbolic-ref", "--short", "refs/remotes/origin/HEAD").stdout.strip()  # never the worktree's config
+    head = git("symbolic-ref", "--short", "refs/remotes/origin/HEAD").stdout.strip()
     base = head.split("/", 1)[1] if "/" in head else "main"
     for ref in ("origin/" + base, base):
         done = git("show", "%s:.loop/config.json" % ref)
@@ -119,10 +118,10 @@ def _validate(raw):
 def read_table():
     base, cfg, ok = base_cfg()
     if not ok:
-        refuse("the base branch's .loop/config.json can't be read", "rerun after the read works, then run sizing.py size SLUG", "SIZING_READ_FAILED")
+        refuse("the base config can't be read", "rerun after the read works, then run sizing.py size SLUG", "SIZING_READ_FAILED")
     table, why = validate(cfg.get("checks_by_size", DEFAULTS))
     if not table:
-        refuse("the checks table is refused: " + why, "edit the row on %s with the owner's words, then run sizing.py size SLUG" % base, "SIZING_BAD_TABLE")
+        refuse("the checks table is refused: " + why, "edit the row on %s with the owner's words, then sizing.py size SLUG" % base, "SIZING_BAD_TABLE")
     return table, base, cfg
 
 
@@ -132,9 +131,9 @@ def parse(text):
         return (found.group(1).strip() or None) if found else None
     got = {n: field(n) for n in ("Files", "Lines", "Gates", "Classes")}
     none = lambda s: not s or re.match(r"(none|n/?a|no\b)", s, re.I)
-    num = re.search(r"\d+", got["Lines"] or "")
+    nums = re.findall(r"\d+", (got["Lines"] or "").replace(",", ""))
     return {"files": [x.strip() for x in re.sub(r"\([^)]*\)", "", got["Files"]).split(",") if x.strip()] if got["Files"] else [],
-            "lines": int(num.group(0)) if num else None, "gates": [] if none(got["Gates"]) else [g.strip() for g in got["Gates"].split(",")],
+            "lines": max(map(int, nums)) if nums else None, "gates": [] if none(got["Gates"]) else [g.strip() for g in got["Gates"].split(",")],
             "classes": "" if none(got["Classes"]) else got["Classes"], "missing": [n for n, v in got.items() if v is None]}
 
 
@@ -267,8 +266,7 @@ def cmd_size(slug):
     text, (table, base, cfg) = open(plan, encoding="utf-8").read(), read_table()
     got = need_diff(base, slug)
     size, reason, parsed = size_of(text, got[0], cfg)
-    kinds = classes_of(cfg, text_of(parsed), [])
-    extra = {"plan_sha": hashlib.sha1(text.encode("utf-8")).hexdigest(), "gates": parsed["gates"], "classes": kinds}
+    extra = {"gates": parsed["gates"], "classes": classes_of(cfg, text_of(parsed), [])}
     new = update(slug, lambda old: build(old, size, reason, table, extra))
     print("SIZE %s: %s\n%s" % (new["size"], new["reason"], block(new, table)))
 
@@ -323,12 +321,18 @@ def check(state, step, text):
         forms = read_table()[0]["forms"]
     except Refusal as err:
         return err.args[0], err.args[1], err.args[2] + " sizing"
+    if step == "review":
+        try:
+            regrow(state)
+        except Refusal as err:
+            return err.args[0], err.args[1], err.args[2] + " sizing"
+        sized = state["sized"]
     gone = [c for c, v in sized["checks"].items() if v["form"] not in forms.get(c, {})]
     if gone:
         return "form %s of %s left the table" % (sized["checks"][gone[0]]["form"], gone[0]), "restore the row on the base branch, then run sizing.py size " + state["slug"], "SIZING_BAD_TABLE sizing"
-    found = re.search(r"^\W*STEP:\s*(done|skipped|pending|failed)\b", text, re.M | re.I)
-    result, rows = found.group(1).lower() if found else "", re.findall(r"^\W*CHECK:(.*)$", text, re.M)
-    fix, seen = "run sizing.py rule %s and write each CHECK line it prints, then record again" % state["slug"], {}
+    found = re.findall(r"^\W*STEP:\s*(done|skipped|pending|failed)\b", text, re.M | re.I)
+    result, rows = found[-1].lower() if found else "", re.findall(r"^\W*CHECK:(.*)$", text, re.M)
+    fix, seen = "run sizing.py rule %s, write the CHECK lines it prints, record again" % state["slug"], {}
     no = lambda why, code: (why, fix, "SIZING_" + code + " sizing")
     if rows and result in ("skipped", "failed"):
         return no("a CHECK line on a step that is " + result, "CHECK_STEP")
@@ -367,6 +371,9 @@ def prompted(fn):
 
 
 def depth(state, step):
+    import fit
+    if fit.view(state, runs()).get("depth_override"):
+        return ""
     got = (state.get("sized") or {}).get("checks", {}).get(DEPTH_AT.get(step, ""))
     return ("full" if got["passes"] > 1 else "condensed") if got else ""
 
@@ -383,7 +390,7 @@ def light(state, step):
 
 def main(argv):
     if len(argv) < 3 or argv[1] not in ("size", "rule", "show"):
-        print("usage: sizing.py size|rule|show SLUG [STEP]")
+        print("usage: sizing.py size|rule|show SLUG")
         return 1
     cmd, slug = argv[1], argv[2]
     try:
@@ -396,7 +403,7 @@ def main(argv):
     except Refusal as err:
         stop(err)
     except (OSError, ValueError):
-        print("REFUSED (no try used): no goal named %s. Fix: start it with goal.py new (SIZING_NO_GOAL)" % slug)
+        print("REFUSED (no try used): no goal %s. Fix: goal.py new (SIZING_NO_GOAL)" % slug)
         return 2
     return 0
 

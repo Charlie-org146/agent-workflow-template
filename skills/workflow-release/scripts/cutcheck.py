@@ -78,6 +78,9 @@ def main(argv):
     full = max(forms.values(), key=lambda f: f["passes"])
     bad = 0
     for state in found:
+        if not state.get("sized"):
+            print("NOT SIZED %s" % state["slug"])
+            bad += 1
         if args.require_full not in ((state.get("sized") or {}).get("checks") or {}):
             continue
         slug, cwd, run = state["slug"], state.get("worktree") or ".", full["run"].replace("SLUG", state["slug"])

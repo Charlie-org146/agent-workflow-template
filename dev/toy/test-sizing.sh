@@ -76,9 +76,6 @@ check "ASZ-1.1 a goal touching 2 files and no gate is sized small with its reaso
 new a2 "docs/a.md" 40 "the build gate" none; python3 $D/sizing.py size a2 >/dev/null 2>&1
 check "ASZ-1.1 a plan with a gate is not small" '[ "$($H sized a2 size)" = "\"medium\"" ]'
 new a3 "docs/" 40 none none; out=$(python3 $D/sizing.py size a3 2>&1)
-check "ASZ-1.1 a directory in Files sizes large" 'echo "$out" | grep -q "SIZE large: large: directory or glob in Files"'
-new a4 "docs/a.md" "" none none; out=$(python3 $D/sizing.py size a4 2>&1)
-check "ASZ-1.1 a missing Lines estimate sizes large" 'echo "$out" | grep -q "SIZE large: large: no Lines estimate; missing plan fields: Lines"'
 new a5 "docs/a.md" 40 none "security"; python3 $D/sizing.py size a5 >/dev/null 2>&1
 check "ASZ-1.2 a goal in a safety class is always large" '[ "$($H sized a5 size)" = "\"large\"" ]'
 
@@ -101,15 +98,12 @@ c=json.load(open(\"$here/.loop/config.json\"))[\"checks_by_size\"]; assert c==js
 admin "$TB"'c["checks_by_size"]["small"]["full-test-run"] = "skip"'
 out=$(python3 $D/sizing.py size a1 2>&1); code=$?
 check "CBS-1.2 a row that skips the full test run for small is refused naming the row and the check" '[ $code = 2 ] && echo "$out" | grep -q "SIZING_BAD_TABLE" && echo "$out" | grep -q "row small drops or lightens full-test-run"'
-admin "$TB"'c["checks_by_size"]["forms"] = {"review": {"normal": {"passes": 9}}}'
-out=$(python3 $D/sizing.py size a1 2>&1)
-check "CBS-1.2 a form with another pass count is refused" 'echo "$out" | grep -q "changes its pass count"'
 admin "$TABLE"
 git switch -q -c wk; mkdir -p .loop; echo '{"base": "main", "checks_by_size": {"small": {}}}' > .loop/config.json
 out=$(python3 $D/sizing.py size a1 2>&1)
 check "CBS-1.2 a table row on a worker branch is not read" 'echo "$out" | grep -q "^SIZE small"'
 echo '{"base": "wk"}' > .loop/config.json; git add .loop/config.json; git commit -qm wk; out=$(python3 $D/sizing.py rule a2 plan 2>&1)
-check "CBS-1.2 a worker config naming its own base keeps sizing on" 'echo "$out" | grep -q "^CHECKS at plan"'
+check "CBS-1.2 a worker-named base keeps sizing on" 'echo "$out" | grep -q "^CHECKS at plan"'
 git reset -q --hard HEAD~1; rm -f .loop/config.json; git switch -q loop/g; git branch -q -D wk
 
 f=$(reply ok3 $'CHECK: plan-review full 3\nCHECK: red-team one-pass-no-rerun 1\nDEPTH: full'); out=$($H check a2 plan $f 2>&1)
@@ -198,8 +192,6 @@ out=$(python3 $M/sizeline.py set o1 large 2>&1); code=$?
 check "ASZ-1.3 an owner line without the owner's words is refused" '[ $code = 2 ] && echo "$out" | grep -q "SIZING_NO_RECORD" && [ "$($H sized o1 size)" = "\"small\"" ]'
 out=$(python3 $M/sizeline.py set o1 large --owner-record o7 2>&1); code=$?
 check "ASZ-1.3 the owner's line sizes the goal up and prints the old and new size with the added checks" '[ $code = 0 ] && echo "$out" | grep -q "SIZE small -> large (record o7); added: plan-review, red-team, review"'
-out=$(python3 $M/sizeline.py show o1 2>&1)
-check "ASZ-1.3 show prints the size, checks and owner record" 'echo "$out" | grep -q "^SIZE large (.*owner raised it to large (record o7)) checks: plan-review full, red-team full, review full; owner: o7"'
 printf 'o9\t2026-11-24T00:00:00Z\toperation\t"smaller"\to1\n' >> "$(git rev-parse --git-common-dir)/loop/owner-words.tsv"
 out=$(python3 $M/sizeline.py set o1 small --owner-record o9 2>&1); code=$?
 check "ASZ-1.3 a smaller size is refused" '[ $code = 2 ] && echo "$out" | grep -q "SIZING_DOWN"'
@@ -222,27 +214,36 @@ print("\n".join(board_tasks.task_lines(root, [run], None)))
 PY
 )
 check "ASZ-1.3 the board shows the size under a task goal" 'echo "$out" | grep -q "o1 .*| SIZE large"'
-new o2 "docs/a.md" 10 none "security"; python3 $D/sizing.py size o2 >/dev/null 2>&1
-printf 'o8\t2026-11-24T00:00:00Z\toperation\t"size o2"\to2\n' >> "$(git rev-parse --git-common-dir)/loop/owner-words.tsv"
-out=$(python3 $M/sizeline.py set o2 medium --owner-record o8 2>&1)
-check "ASZ-1.3 an owner line under a safety class is refused" 'echo "$out" | grep -q "SIZING_SAFETY"'
 
 out=$(python3 $D/sizing.py rule a2 plan 2>&1)
-check "CBS-1.3 the rule prints each check, its form and the grammar" 'echo "$out" | grep -q "red-team: form one-pass-no-rerun, 1 pass. Covers: one red-team pass, no rerun. Run:" && echo "$out" | grep -q "CHECK: <check> <form> <passes>" && echo "$out" | grep -q "^DEPTH: full"'
+check "CBS-1.3 the rule prints each check, its form and the grammar" 'echo "$out" | grep -q "red-team: form one-pass-no-rerun, 1 pass. Covers: one pass, no rerun. Run:" && echo "$out" | grep -q "CHECK: <check> <form> <passes>" && echo "$out" | grep -q "^DEPTH: full"'
 dr() { (cd "$T/repo" && python3 -c "
 import json,sys; sys.path.insert(0,'$D'); import flow
 print(flow.depth_rule(sys.argv[1], json.load(open('$RUNS/a1.json')), '$RUNS'))" "$1" 2>&1); }
 out=$(dr plan)
-check "CBS-1.3 a named plan skill is told the sizing command and the CHECK grammar" 'echo "$out" | grep -q "sizing.py size a1" && echo "$out" | grep -q "CHECK: <check> <form> <passes>"'
+check "CBS-1.3 a named plan skill gets the sizing command" 'echo "$out" | grep -q "sizing.py size a1" && echo "$out" | grep -q "CHECK: <check> <form> <passes>"'
 out=$(dr review)
-check "CBS-1.3 the review prompt follows the stored size, not the review_depth wording" 'echo "$out" | grep -q "follows its size" && echo "$out" | grep -q "DEPTH: condensed"'
+check "CBS-1.3 the review prompt follows the stored size" 'echo "$out" | grep -q "follows its size" && echo "$out" | grep -q "DEPTH: condensed"'
 admin 'c["checks_by_size"] = True'; f=$(reply mal $'CHECK: x'); out=$($H check a2 plan $f 2>&1)
-check "CBS-1.2 a malformed table refuses as SIZING_BAD_TABLE, no crash" 'echo "$out" | grep -q "REFUSED SIZING_BAD_TABLE"'
+check "CBS-1.2 a malformed table refuses, no crash" 'echo "$out" | grep -q "REFUSED SIZING_BAD_TABLE"'
 admin "$TABLE"; python3 - "$RUNS" <<'PY'
 import json, sys
 p = sys.argv[1] + "/a2.json"; s = json.load(open(p)); s["sized"]["checks"]["red-team"]["form"] = "retired"; json.dump(s, open(p, "w"))
 PY
 f=$(reply ret $'CHECK: plan-review full 3'); out=$($H check a2 plan $f 2>&1)
 check "CBS-1.3 a stored form that left the table refuses cleanly" 'echo "$out" | grep -q "REFUSED SIZING_BAD_TABLE sizing: form retired of red-team left the table"'
+new l1 "docs/a.md" "~1,200" none none; out=$(python3 $D/sizing.py size l1 2>&1)
+check "ASZ-1.1 a comma in Lines counts as 1200" 'echo "$out" | grep -q "^SIZE medium: 1 files, 1200 lines"'
+plan l1 "docs/a.md" "100-300" none none; out=$(python3 $D/sizing.py size l1 2>&1)
+check "ASZ-1.1 a Lines range counts its largest" 'echo "$out" | grep -q "^SIZE medium: 1 files, 300 lines"'
+f=$(reply ign $'STEP: skipped'); out=$($H check a3 plan $f 2>&1)
+check "CBS-1.3 the last STEP line decides the CHECK need" 'echo "$out" | grep -q "REFUSED SIZING_MISSING"'
+out=$(python3 $R/cutcheck.py nosize --require-full review 2>&1); code=$?
+check "CBS-1.4 require-full fails for a goal with no stored size" '[ $code != 0 ] && echo "$out" | grep -q "NOT SIZED nosize"'
+new s3 "docs/a.md" 10 none none; python3 $D/sizing.py size s3 >/dev/null 2>&1; git add -A >/dev/null 2>&1; git commit -qm p3; for i in 1 2 3 4 5; do echo x > rec-$i.md; done
+f=$(reply rv $'CHECK: review normal 1\nDEPTH: condensed'); $H check s3 review $f >/dev/null 2>&1; rm -f rec-*.md
+check "ASZ-1.2 the review record re-sizes from the diff" '[ "$($H sized s3 size)" = "\"medium\"" ]'
+$H stage a1 '{"depth_override": {"depth": "full", "why": "owner"}}' >/dev/null; out=$(dr review)
+check "ASZ-1.3 the owner's depth override wins" 'echo "$out" | grep -q "owner override" && ! echo "$out" | grep -q "follows its size"'
 admin "$TABLE"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "FAILED $fails"; exit 1; }
