@@ -101,19 +101,19 @@ import goal as goal_mod  # noqa: E402
 os.chdir(tmp)
 json.dump(dict(config), open(tmp + "/.loop/config.json", "w"))
 ask = ["approve the plan wording", "pick the first of two names"]
-check(goal_mod.choices({"slug": "gq", "touches": ["skills/a/b.py"]}, ask, "plan") is True and len(lines("gq")) == 2, "two PENDING choices on a goal with declared touches become two lines and the goal goes on")
-check(goal_mod.choices({"slug": "gq", "touches": ["skills/a/b.py"]}, ask, "plan") is True and len(lines("gq")) == 2, "the same choices again file no second line")
-check(goal_mod.choices({"slug": "gp", "touches": ["skills/a/b.py"]}, ["the plan is past its review cap: approve one more round"], "plan") is True
+check(dlf.choices(goal_mod, {"slug": "gq", "touches": ["skills/a/b.py"]}, ask, "plan") is True and len(lines("gq")) == 2, "two PENDING choices on a goal with declared touches become two lines and the goal goes on")
+check(dlf.choices(goal_mod, {"slug": "gq", "touches": ["skills/a/b.py"]}, ask, "plan") is True and len(lines("gq")) == 2, "the same choices again file no second line")
+check(dlf.choices(goal_mod, {"slug": "gp", "touches": ["skills/a/b.py"]}, ["the plan is past its review cap: approve one more round"], "plan") is True
       and len([l for l in lines("gp") if "| plan |" in l]) == 1, "a plan past its review cap is its own stop, one line, and the goal goes on")
-check(goal_mod.choices({"slug": "gr", "touches": []}, ask, "plan") is False and not lines("gr"), "a choice on a goal with no touches is unclassifiable: it waits")
-check(goal_mod.choices({"slug": "gs", "touches": [".claude/settings.json"]}, ask, "plan") is False, "a choice on a goal touching a settings file waits")
-check(goal_mod.choices({"slug": "gt", "touches": ["docs/wiki/Deliver-first.md"]}, ask, "plan") is False, "a choice on a goal touching a requirement page changes what a feature promises: it waits")
-check(goal_mod.choices({"slug": "gu", "touches": ["skills/a/b.py"]}, [], "plan") is None, "no PENDING items: nothing to settle")
+check(dlf.choices(goal_mod, {"slug": "gr", "touches": []}, ask, "plan") is False and not lines("gr"), "a choice on a goal with no touches is unclassifiable: it waits")
+check(dlf.choices(goal_mod, {"slug": "gs", "touches": [".claude/settings.json"]}, ask, "plan") is False, "a choice on a goal touching a settings file waits")
+check(dlf.choices(goal_mod, {"slug": "gt", "touches": ["docs/wiki/Deliver-first.md"]}, ask, "plan") is False, "a choice on a goal touching a requirement page changes what a feature promises: it waits")
+check(dlf.choices(goal_mod, {"slug": "gu", "touches": ["skills/a/b.py"]}, [], "plan") is None, "no PENDING items: nothing to settle")
 # DLF-1.1's own test: three red-team breaks, a plan past its cap and a budget past the cap: the goal goes on and the release has ONE issue listing all five
 import fit  # noqa: E402
 import guards  # noqa: E402
 code, said = build("gx", ["skills/a/b.py"], ["break one", "break two", "break three"])
-goal_mod.choices({"slug": "gx", "touches": ["skills/a/b.py"]}, ["the plan is past its review cap: one more round?"], "plan")
+dlf.choices(goal_mod, {"slug": "gx", "touches": ["skills/a/b.py"]}, ["the plan is past its review cap: one more round?"], "plan")
 runs = tmp + "/.git/loop/runs"
 guards.add_set(runs, "gx", "budget", {"minutes": 480, "tokens": 0}, "set")
 fit.active_minutes = lambda state, at=None, cfg=None: 480
@@ -130,18 +130,18 @@ for _ in range(2):
 check(len(lines("gk")) == 1 and "reached its 2x cap at 2000 of 1000" in lines("gk")[0], "2000 tokens against a 1000 estimate: one cap line, the goal keeps working, and a second check files none")
 # review finding 1: with auto_approve on, a pending decision is still settled: a safety one waits, a benign one becomes a line
 auto = {"auto_approve": True}
-check(goal_mod.autoapprove({"slug": "ga1", "touches": [".claude/settings.json"]}, ["approve the new sandbox setting"], "plan", auto) is False, "finding 1: with auto_approve on, a pending decision on a security setting still waits")
-check(goal_mod.autoapprove({"slug": "ga2", "touches": ["skills/a/b.py"]}, ["pick a name"], "plan", auto) is True and len([l for l in lines("ga2") if "| choice |" in l]) == 1, "finding 1: with auto_approve on, a benign pending decision files its line and the goal goes on")
-check(goal_mod.autoapprove({"slug": "ga3", "touches": ["skills/a/b.py"]}, [], "plan", auto) is True and not lines("ga3"), "with auto_approve on and nothing pending the old rule holds")
+check(dlf.autoapprove(goal_mod, {"slug": "ga1", "touches": [".claude/settings.json"]}, ["approve the new sandbox setting"], "plan", auto) is False, "finding 1: with auto_approve on, a pending decision on a security setting still waits")
+check(dlf.autoapprove(goal_mod, {"slug": "ga2", "touches": ["skills/a/b.py"]}, ["pick a name"], "plan", auto) is True and len([l for l in lines("ga2") if "| choice |" in l]) == 1, "finding 1: with auto_approve on, a benign pending decision files its line and the goal goes on")
+check(dlf.autoapprove(goal_mod, {"slug": "ga3", "touches": ["skills/a/b.py"]}, [], "plan", auto) is True and not lines("ga3"), "with auto_approve on and nothing pending the old rule holds")
 json.dump(dict(config, deliver_first={"goal": {"ga4": False}}), open(tmp + "/.loop/config.json", "w"))
-check(goal_mod.autoapprove({"slug": "ga4", "touches": [".claude/settings.json"]}, ["approve it"], "plan", auto) is True and not lines("ga4"), "with deliver-first off for the goal auto_approve works as it always did")
+check(dlf.autoapprove(goal_mod, {"slug": "ga4", "touches": [".claude/settings.json"]}, ["approve it"], "plan", auto) is True and not lines("ga4"), "with deliver-first off for the goal auto_approve works as it always did")
 # round 3, finding A: `STEP: pending <reason>` with NO PENDING line is a pending decision too: with auto_approve on, a sandbox one never auto-approves
 reply = "STEP: pending approve the sandbox permission change"
 why_a = reply.split("pending ", 1)[1]
-check(goal_mod.autoapprove({"slug": "gpa", "touches": ["skills/a/b.py"]}, [], "plan", auto, "pending", why_a) is False, "finding A: a pending result naming a sandbox permission change, with no PENDING line, waits under auto_approve")
-check(goal_mod.autoapprove({"slug": "gpb", "touches": ["skills/a/b.py"]}, [], "plan", auto, "pending", "") is False, "finding A: a pending result with no decision context at all fails closed: it waits")
-check(goal_mod.autoapprove({"slug": "gpc", "touches": ["skills/a/b.py"]}, [], "plan", auto, "pending", "pick a name") is True and len([l for l in lines("gpc") if "| choice |" in l]) == 1, "finding A: a benign pending result files its line and goes on (negative control)")
-check(goal_mod.autoapprove({"slug": "gpd", "touches": ["skills/a/b.py"]}, [], "plan", auto, "done", "") is True, "a done step with nothing pending still follows the old rule")
+check(dlf.autoapprove(goal_mod, {"slug": "gpa", "touches": ["skills/a/b.py"]}, [], "plan", auto, "pending", why_a) is False, "finding A: a pending result naming a sandbox permission change, with no PENDING line, waits under auto_approve")
+check(dlf.autoapprove(goal_mod, {"slug": "gpb", "touches": ["skills/a/b.py"]}, [], "plan", auto, "pending", "") is False, "finding A: a pending result with no decision context at all fails closed: it waits")
+check(dlf.autoapprove(goal_mod, {"slug": "gpc", "touches": ["skills/a/b.py"]}, [], "plan", auto, "pending", "pick a name") is True and len([l for l in lines("gpc") if "| choice |" in l]) == 1, "finding A: a benign pending result files its line and goes on (negative control)")
+check(dlf.autoapprove(goal_mod, {"slug": "gpd", "touches": ["skills/a/b.py"]}, [], "plan", auto, "done", "") is True, "a done step with nothing pending still follows the old rule")
 # round 3, finding C: a raise and the cap line are independent: estimate 240, held 240, spend 500 raises to 480 AND files one cap line
 guards.add_set(runs, "gcc", "budget", {"minutes": 240, "tokens": 0}, "set")
 fit.active_minutes = lambda state, at=None, cfg=None: 500
@@ -150,10 +150,10 @@ with __import__("contextlib").redirect_stdout(__import__("io").StringIO()):
 check(fit.view({"slug": "gcc"}, runs)["budget"]["minutes"] == 480, "finding C: 500 spent against 240 held with a 240 estimate raises the budget to 480")
 check(len(lines("gcc")) == 1 and "reached its 2x cap at 500 of 240" in lines("gcc")[0], "finding C: and files exactly one cap line in the same check")
 # round 4, finding 3: a later DIFFERENT decision at the same position is a new line, never the earlier (maybe accepted) one
-goal_mod.choices({"slug": "go1", "touches": ["skills/a/b.py"]}, ["first question"], "plan")
-goal_mod.choices({"slug": "go1", "touches": ["skills/a/b.py"]}, ["a different question"], "plan")
+dlf.choices(goal_mod, {"slug": "go1", "touches": ["skills/a/b.py"]}, ["first question"], "plan")
+dlf.choices(goal_mod, {"slug": "go1", "touches": ["skills/a/b.py"]}, ["a different question"], "plan")
 check(len([l for l in lines("go1") if "| choice |" in l]) == 2, "finding 3: two different choices at the same position of the same step are two lines")
-goal_mod.choices({"slug": "go1", "touches": ["skills/a/b.py"]}, ["first question"], "plan")
+dlf.choices(goal_mod, {"slug": "go1", "touches": ["skills/a/b.py"]}, ["first question"], "plan")
 check(len([l for l in lines("go1") if "| choice |" in l]) == 2, "finding 3: the same choice again is still one line")
 fit.breaks(goal_mod, {"slug": "go2", "touches": ["skills/a/b.py"]}, [{"principle": 1, "text": "first break"}])
 fit.breaks(goal_mod, {"slug": "go2", "touches": ["skills/a/b.py"]}, [{"principle": 1, "text": "a different break"}])
@@ -182,16 +182,16 @@ subprocess.run(["git", "-C", tmp, "add", "tests"], capture_output=True)
 subprocess.run(["git", "-C", tmp, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "test"], capture_output=True)
 subprocess.run(["git", "-C", tmp, "update-ref", "refs/remotes/origin/main", "HEAD"], capture_output=True)
 st_n = {"slug": "gw3", "touches": ["skills/a/b.py"]}
-check(goal_mod.choices(st_n, ["pick a name"], "plan") is True, "negative control: with only benign changes on the branch a choice becomes a line (the diff is read and clean)")
+check(dlf.choices(goal_mod, st_n, ["pick a name"], "plan") is True, "negative control: with only benign changes on the branch a choice becomes a line (the diff is read and clean)")
 open(tmp + "/tests/test_a.py", "w").write("def test():\n    assert total >= 0\n")
 subprocess.run(["git", "-C", tmp, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-am", "revise the expected value"], capture_output=True)
 st_w = {"slug": "gw1", "touches": ["tests/test_a.py"]}
-check(goal_mod.choices(st_w, ["approve the revised expected value"], "plan") is False and not lines("gw1"), "round 5: a pending decision after a weakened assertion in a test file waits (the branch diff is read)")
+check(dlf.choices(goal_mod, st_w, ["approve the revised expected value"], "plan") is False and not lines("gw1"), "round 5: a pending decision after a weakened assertion in a test file waits (the branch diff is read)")
 check(fit.breaks(goal_mod, {"slug": "gw2", "touches": ["tests/test_a.py"]}, [{"principle": 1, "text": "approve the revised expected value"}]).startswith("WAITING gw2: a test loosened or deleted"), "round 5: a red-team break after a weakened assertion waits and names the class")
 st_n = {"slug": "gw3", "touches": ["skills/a/b.py"]}
 real_branch_diff = fit.branch_diff
 fit.branch_diff = lambda g: None
-check(goal_mod.choices(st_n, ["pick another name"], "plan") is False, "round 5: a diff that cannot be read fails closed: unclassifiable, it waits")
+check(dlf.choices(goal_mod, st_n, ["pick another name"], "plan") is False, "round 5: a diff that cannot be read fails closed: unclassifiable, it waits")
 fit.branch_diff = real_branch_diff
 # round 5 re-review, privacy (low): the scan covers the WHOLE text before the wait line is cut to 120 characters (a configured private name straddling the cut is not half printed)
 straddle = "x" * 115 + "acmesecret and more"
@@ -202,6 +202,6 @@ git_t("update-ref", "refs/remotes/origin/main", "HEAD")
 tail_name = "y" * 195 + "acmesecret and more"
 st_x = {"slug": "gcx", "touches": ["skills/a/b.py"]}
 git_t("reset", "-q", "--hard", "origin/main")
-check(goal_mod.choices(st_x, [tail_name], "plan") is False and not any("acmes" in b for b in [c["body"] for cs in json.load(open(fake + "/state.json"))["comments"].values() for c in cs]), "final: a choice whose private name straddles the old 200-character cut waits and posts no prefix of it")
+check(dlf.choices(goal_mod, st_x, [tail_name], "plan") is False and not any("acmes" in b for b in [c["body"] for cs in json.load(open(fake + "/state.json"))["comments"].values() for c in cs]), "final: a choice whose private name straddles the old 200-character cut waits and posts no prefix of it")
 check(fit.breaks(goal_mod, {"slug": "gcy", "touches": ["skills/a/b.py"]}, [{"principle": 1, "text": tail_name}]).startswith("WAITING gcy: private data") and not any("acmes" in b for b in [c["body"] for cs in json.load(open(fake + "/state.json"))["comments"].values() for c in cs]), "final: a break whose private name straddles the old 200-character cut waits and posts no prefix of it")
 sys.exit(1 if failed else 0)

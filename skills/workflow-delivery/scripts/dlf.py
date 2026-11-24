@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Deliver first (DLF-1): stop table, filing and ledger, budget rule, release cut, setting. Every outside write goes through write()."""
+import hashlib
 import json
 import os
 import re
@@ -287,6 +288,37 @@ def budget_stop(slug, state, runs, cfg_, at=None, save=None, top=""):
             elif not raised:
                 sys.exit("REFUSED: %d %s spent, at the %s budget of %d (%s); no new step starts. Fix: goal.py set %s --budget-%s N "
                          "--why ... from the operation session (BUDGET_%s)" % (spent, name, name.rstrip("s"), held[name], source, slug, name, name.upper()))
+
+
+def choices(g, state, pending, step):
+    """DLF-1.1: each PENDING decision is a line and the recommended answer is taken, unless the table says it waits."""
+    if not pending or not setting(g.root(), state["slug"])[0]:
+        return None  # nothing pending, or deliver-first is off: the old rule decides
+    return all(settle(g.root(), g.state_dir(), state["slug"], "plan" if re.search(r"review cap|past (its|the) cap", p, re.I) else "choice", "%s%d%s" % (step, i, hashlib.sha1(p.encode()).hexdigest()[:6]),
+                      "design choice at %s: %s" % (step, p), "answer: the recommended one, or name another", "take the recommended answer",
+                      paths=state.get("touches") or (), diff=g.fit.branch_diff(g)
+                      )[0] == "continue" for i, p in enumerate(pending, 1))
+
+
+def autoapprove(g, state, pending, step, cfg, result="", why=""):
+    if result == "pending" and not (pending or why) and setting(g.root(), state["slug"])[0]:
+        return False  # no decision text: fails closed, files no placeholder line
+    held = choices(g, state, pending or [why] * (result == "pending"), step)
+    return cfg.get("auto_approve") is True or g.fit.plan_ahead(state, g.state_dir(), step) if held is None else held
+
+
+def round_stop(g, state, what):
+    import guards
+    limit, count = g.config().get("max_merge_rounds"), state.get("merge_rounds", 0) + 1
+    limit = limit if isinstance(limit, int) and not isinstance(limit, bool) and limit > 0 else 8
+    if what not in ("merged", "conflict"):
+        return
+    over = count > limit
+    state["merge_rounds"] = 0 if over else count
+    ask = "merge round %d would pass max_merge_rounds (%d). Fix: land it when main is quiet or raise it, then goal.py answer %s (MERGE_ROUNDS)" % (count, limit, state["slug"])
+    over and guards.hold(state, ask)
+    g.save(state, ask if over else None)
+    over and g.no(ask)
 
 
 def main(argv):

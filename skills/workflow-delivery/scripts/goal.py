@@ -28,7 +28,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import lanekit, guards, fit, private, routing  # noqa: E402,E401
+import lanekit, guards, fit, private, routing, dlf  # noqa: E402,E401
 fcntl = lanekit.fcntl
 import role
 from proctree import FLOW, NO_FLOW, TEMPLATE, flow_set, outcap  # noqa: E402,F401
@@ -277,7 +277,7 @@ def cmd_record(args):
                              "STEP: done|skipped|pending|failed line, then record again", guards.NO_STEP_LINE, save)
     stamp, cfg = "", config()
     wait = pending or result == "pending"
-    auto, ok = wait and (autoapprove(state, pending, step, cfg, result, why)), result in ("done", "skipped")
+    auto, ok = wait and (dlf.autoapprove(ME, state, pending, step, cfg, result, why)), result in ("done", "skipped")
     if ok or auto:
         stamp, refusal, ask, skipped = guards.check_record(state, step, text, cfg, result)
         for line in skipped:
@@ -327,22 +327,8 @@ def cmd_record(args):
     return 1
 
 
-def choices(state, pending, step):
-    import dlf  # DLF-1.1: each PENDING decision is a line and the recommended answer is taken, unless the table says it waits
-    if not pending or not dlf.setting(root(), state["slug"])[0]:
-        return None  # nothing pending, or deliver-first is off: the old rule decides
-    return all(dlf.settle(root(), state_dir(), state["slug"], "plan" if re.search(r"review cap|past (its|the) cap", p, re.I) else "choice", "%s%d%s" % (step, i, hashlib.sha1(p.encode()).hexdigest()[:6]),
-                          "design choice at %s: %s" % (step, p), "answer: the recommended one, or name another", "take the recommended answer",
-                          paths=state.get("touches") or (), diff=fit.branch_diff(ME)
-                          )[0] == "continue" for i, p in enumerate(pending, 1))
-
-
-def autoapprove(state, pending, step, cfg, result="", why=""):
-    import dlf
-    if result == "pending" and not (pending or why) and dlf.setting(root(), state["slug"])[0]:
-        return False  # no decision text: fails closed, files no placeholder line
-    held = choices(state, pending or [why] * (result == "pending"), step)
-    return cfg.get("auto_approve") is True or fit.plan_ahead(state, state_dir(), step) if held is None else held
+def round_stop(g, state, what):
+    return dlf.round_stop(g, state, what)
 
 
 def queue(op, *args):
@@ -461,19 +447,6 @@ def main():
 
 
 add_tokens = routing.add_tokens
-
-
-def round_stop(g, state, what):
-    limit, count = g.config().get("max_merge_rounds"), state.get("merge_rounds", 0) + 1
-    limit = limit if isinstance(limit, int) and not isinstance(limit, bool) and limit > 0 else 8
-    if what not in ("merged", "conflict"):
-        return
-    over = count > limit
-    state["merge_rounds"] = 0 if over else count
-    ask = "merge round %d would pass max_merge_rounds (%d). Fix: land it when main is quiet or raise it, then goal.py answer %s (MERGE_ROUNDS)" % (count, limit, state["slug"])
-    over and guards.hold(state, ask)
-    g.save(state, ask if over else None)
-    over and g.no(ask)
 
 
 if __name__ == "__main__":
