@@ -32,6 +32,19 @@ def alone(runs, attached):
     return ["- %s: %s" % (r["slug"], line(r)) for r in runs if line(r) and r["slug"] not in attached]
 
 
+def override(sizing, state, size, record):
+    old, slug = state.get("sized"), state["slug"]
+    for bad, why, fix, code in ((not old, "goal %s has no size yet" % slug, sizing.FIX_SIZE + slug, "NOT_SIZED"),
+                                (not record, "a size change needs the owner's words", "record the owner's words, rerun with --owner-record ID", "NO_RECORD"),
+                                (old and old.get("classes"), "goal %s has a safety class: always large" % slug, "leave the size", "SAFETY"),
+                                (size not in sizing.ORDER or old and sizing.ORDER.index(size) < sizing.ORDER.index(old["size"]), "sizes only go up (now %s, asked %s)" % (old and old["size"], size), "sizeline.py set %s SIZE --owner-record ID" % slug, "DOWN")):
+        if bad:
+            sizing.refuse(why, fix, "SIZING_" + code)
+    table, mark = sizing.read_table()[0], {"record": record, "from": old["size"], "to": size}
+    sizing.adopt(state, sizing.update(slug, lambda was: sizing.build(was, size, "%s; owner raised it to %s (record %s)" % (was["reason"], size, record), table, {"owner": mark})))
+    return state["sized"]
+
+
 def main(argv):
     if argv[:1] not in (["show"], ["set"]):
         print(USAGE)
@@ -61,7 +74,7 @@ def main(argv):
             goal.fit.monitor("auto", True).eta_record(goal, record, slug, "a size change")
         old = (sized or {}).get("size")
         had = {a["check"] for a in (sized or {}).get("added") or []}
-        new = sizing.override(state, rest[1], record)
+        new = override(sizing, state, rest[1], record)
         goal.guards.add_set(goal.state_dir(), slug, "size_owner", {"record": record, "from": old, "to": rest[1]},
                             "size raised %s to %s (record %s)" % (old, rest[1], record))
     except sizing.Refusal as err:

@@ -11,6 +11,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import lanekit  # noqa: E402
 fcntl = lanekit.fcntl
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks (DEL-10)
 
 ORDER = ("small", "medium", "large")
 FIXED = ("build-gate", "full-test-run", "leak-readers", "safety-classes")
@@ -297,19 +298,6 @@ def at_pr(g, state):
             refuse("added checks lack evidence: " + ", ".join(unmet(state["sized"])), "run sizing.py rule %s, run each added check, record its CHECK line" % state["slug"], "SIZING_ADDED_UNMET")
     except Refusal as err:
         g.guards.refuse_no_try(state, err.args[0], err.args[1], err.args[2], g.save)
-
-
-def override(state, size, record):
-    old, slug = state.get("sized"), state["slug"]
-    for bad, why, fix, code in ((not old, "goal %s has no size yet" % slug, FIX_SIZE + slug, "NOT_SIZED"),
-                                (not record, "a size change needs the owner's words", "record the owner's words, rerun with --owner-record ID", "NO_RECORD"),
-                                (old and old.get("classes"), "goal %s has a safety class: always large" % slug, "leave the size", "SAFETY"),
-                                (size not in ORDER or old and ORDER.index(size) < ORDER.index(old["size"]), "sizes only go up (now %s, asked %s)" % (old and old["size"], size), "sizeline.py set %s SIZE --owner-record ID" % slug, "DOWN")):
-        if bad:
-            refuse(why, fix, "SIZING_" + code)
-    table, mark = read_table()[0], {"record": record, "from": old["size"], "to": size}
-    adopt(state, update(slug, lambda was: build(was, size, "%s; owner raised it to %s (record %s)" % (was["reason"], size, record), table, {"owner": mark})))
-    return state["sized"]
 
 
 def check(state, step, text):

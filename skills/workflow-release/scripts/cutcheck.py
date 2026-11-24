@@ -15,6 +15,7 @@ import subprocess
 import sys
 
 sizing = None
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks (DEL-10)
 
 
 def need():

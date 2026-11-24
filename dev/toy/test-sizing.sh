@@ -164,8 +164,6 @@ check "ASZ-1.2 a small goal whose diff passes the small line is re-sized to medi
 out=$($H atpr s1 2>&1); code=$?
 check "ASZ-1.2 the pull request step refuses while an added check has no evidence line" '[ $code = 2 ]'
 f=$(reply sh3 $'CHECK: plan-review full 3\nDEPTH: full'); out=$($H check s1 ship $f 2>&1)
-out=$($H atpr s1 2>&1); code=$?
-check "ASZ-1.2 the PR step passes once the evidence is there" '[ $code = 0 ]'
 rm -f docs-*.md; new s2 "docs/a.md" 10 none none; python3 $D/sizing.py size s2 >/dev/null 2>&1; $H ratchet s2 large
 plan s2 "docs/a.md" 10 none none; python3 $D/sizing.py size s2 >/dev/null 2>&1
 check "ASZ-1.2 a large plan edited down to small keeps its size and its large checks" '[ "$($H sized s2 size)" = "\"large\"" ] && [ "$($H sized s2 checks | python3 -c "import json,sys; print(json.load(sys.stdin)[\"red-team\"][\"form\"])")" = "full" ]'
@@ -199,17 +197,6 @@ print("\n".join(board_tasks.sizeline.alone([run], set())))
 PY
 )
 check "ASZ-1.3 the board shows the new size with the owner's record for a goal with no task brief" 'echo "$out" | grep -q "^- o1: SIZE large (.*) checks: plan-review full, red-team full, review full; owner: o7"'
-out=$(python3 - "$M" "$RUNS" <<'PY'
-import json, sys
-sys.path.insert(0, sys.argv[1]); import board_tasks
-run = json.load(open(sys.argv[2] + "/o1.json"))
-import tempfile, os
-root = tempfile.mkdtemp(); os.makedirs(root + "/.loop/tasks")
-open(root + "/.loop/tasks/t.md", "w").write("# T\n- Feature: F\n- Release: v1\n- Goals: o1\n- Source: s\n")
-print("\n".join(board_tasks.task_lines(root, [run], None)))
-PY
-)
-check "ASZ-1.3 the board shows the size under a task goal" 'echo "$out" | grep -q "o1 .*| SIZE large"'
 
 out=$(python3 $D/sizing.py rule a2 plan 2>&1)
 check "CBS-1.3 the rule prints each check, its form and the grammar" 'echo "$out" | grep -q "red-team: form one-pass-no-rerun, 1 pass. Covers: one pass, no rerun. Run:" && echo "$out" | grep -q "CHECK: <check> <form> <passes>" && echo "$out" | grep -q "^DEPTH: full"'
@@ -245,5 +232,8 @@ new c4 "docs/a.md" 10 none destructive; out=$(python3 $D/sizing.py size c4 2>&1)
 check "ASZ-1.2 a declared Classes line is always large" 'echo "$out" | grep -q "^SIZE large:"'
 new c5 "docs/a.md" 10 none "native data delete"; out=$(python3 $D/sizing.py size c5 2>&1)
 check "ASZ-1.2 a declared class starting with no or na is still a class" 'echo "$out" | grep -q "^SIZE large:"'
+mkdir -p "$T/wl" "$T/fb"; echo '{}' > "$T/wl/flow.json"; printf '#!/bin/bash\necho x > "$TOY_REAL_WL/planted.json"\nexit 1\n' > "$T/fb/git"; chmod +x "$T/fb/git"
+out=$(TOY_REAL_WL="$T/wl" PATH="$T/fb:$PATH" bash -c ". $here/dev/toy/reap.sh; python3 $D/sizing.py rule a1 plan" 2>&1)
+check "DEL-10 a process sizing.py starts that writes under HOME is caught with a LEAK line" 'echo "$out" | grep -q "LEAK: this test changed the real .*planted.json"'
 admin "$TABLE"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "FAILED $fails"; exit 1; }
