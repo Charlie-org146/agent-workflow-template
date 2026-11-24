@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+"""TSK-1: the schedule command line. Run from a repo (or a worker's worktree):
+  schedule.py show                                   the queue in schedule order, each goal marked task or fix, with the reasons
+  schedule.py order SLUG [SLUG ...] --by RECORD      the owner line: these goals first (the operation session only); --clear removes it
+  schedule.py workaround add KEY --fix SLUG --applies A,B --kind tool|dependency --feature PAGE --found REF [--owner-record ID] [--live] "words"
+  schedule.py workaround use KEY --goal SLUG | fail KEY --goal SLUG --reason TEXT | close KEY --reason TEXT | reconcile KEY [--live] | list
+Exit 0 done, 2 refused, 3 the schedule could not be read in full (every board prints why). A GitHub write is only a preview without --live.
+Codes: SCHED-E01 worker refused, E02 not the worker's own goal, E03 bad arguments, E04 lock held, E05 secret-shaped words, E06 outside
+text refused, E07 issue not confirmed, E08 not the owner's record, E09 duplicate key or unknown record, E10-E14 unreadable input, E99 unexpected."""
+import argparse
+import datetime
+import os
+import subprocess
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import schedule_load as sl  # noqa: E402
+import schedule_state as ss  # noqa: E402
+
+KINDS = ("tool", "dependency")
+
+
+def top():
+    out = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, timeout=20).stdout.strip()
+    if not out:
+        raise ss.Refused("SCHED-E03", "not inside a git repository", "run it from the repo")
+    return out
+
+
+def owner_record(paths, record):
+    try:
+        known = {x.split("\t")[0] for x in open(os.path.join(paths["folder"], "owner-words.tsv"), encoding="utf-8").read().splitlines()}
+    except OSError:
+        known = set()
+    if not record or record not in known:
+        raise ss.Refused("SCHED-E08", "%s is not a record of the owner's words" % (sl.clean(record, 30) or "no record"), "record them (sessions.py owner-words), then pass --by ID")
+
+
+def show(root):
+    result = sl.load(root)
+    print(*result["banner"], sep="\n")
+    if result["release"]:
+        print("release: %s (source: brief)" % result["release"])
+    for n, g in enumerate(result["goals"], 1):
+        print("  %d. %s" % (n, " | ".join([g["slug"]] + g["marks"] + ["waits for: " + (", ".join(g["depends"]) or "-")])))
+    for note in result["notes"]:
+        print("note: " + note)
+    for item, cause in result["incomplete"]:
+        print("%s: %s unreadable (%s)" % (sl.CODES[item], item, sl.clean(cause, 80)), file=sys.stderr)
+    return 3 if result["incomplete"] else 0
+
+
+def order(root, args):
+    ss.guard_worker("order")
+    paths = sl.paths(root)
+    if args.clear:
+        ss.clear_order(paths)
+        print("order cleared")
+        return 0
+    queued = [g["slug"] for g in sl.load(root)["goals"]]
+    bad = [s for s in args.slugs if s not in queued]
+    owner_record(paths, args.by)
+    if not args.slugs or bad:
+        raise ss.Refused("SCHED-E03", "unknown goal %s" % (sl.clean(bad[0], 40) if bad else "(none given)"), "queued goals: " + ", ".join(queued))
+    ss.set_order(paths, args.slugs, args.by)
+    print("order set: %s (%s)" % (", ".join(args.slugs), args.by))
+    return 0
+
+
+def find(recs, key):
+    hit = [r for r in recs if r["key"] == key]
+    if not hit:
+        raise ss.Refused("SCHED-E09", "no workaround record %s" % sl.clean(key, 40), "keys: " + (", ".join(r["key"] for r in recs) or "none; use `workaround add`"))
+    return hit[0]
+
+
+def workaround(root, args):
+    paths, verb = sl.paths(root), args.verb
+    recs, cause = sl.read_json_lines(paths["workaround"])
+    if cause:
+        raise ss.Refused("SCHED-E11", "the workaround record is " + cause, "inspect or move %s" % paths["workaround"])
+    if verb == "list":
+        for r in recs:
+            print("%s | fix %s | goals %s | %s | %s%s" % (r["key"], r["fix"], ",".join(r["applies"]), r["kind"], r["state"], " | issue #%s" % r["issue"] if r.get("issue") else ""))
+        return 0
+    if verb == "add":
+        ss.guard_worker("workaround add")
+        live = sl.load(root)
+        known = {g["slug"] for g in live["goals"]} | {n[:-5] for n in os.listdir(os.path.join(paths["folder"], "runs")) if n.endswith(".json")} if os.path.isdir(os.path.join(paths["folder"], "runs")) else {g["slug"] for g in live["goals"]}
+        applies = [x for x in args.applies.split(",") if x]
+        if any(r["key"] == args.key for r in recs):
+            raise ss.Refused("SCHED-E09", "workaround %s already exists" % sl.clean(args.key, 40), "reuse it with `workaround use %s --goal SLUG`" % sl.clean(args.key, 40))
+        if args.fix not in known or not applies or not args.kind or not args.feature or not args.found:
+            raise ss.Refused("SCHED-E03", "add needs a queued or running --fix, --applies, --kind, --feature and --found", "see `schedule.py --help`")
+        if ss.SECRET.search(args.words):
+            raise ss.Refused("SCHED-E05", "the words hold a secret-shaped value (class: credential)", "reword without it")
+        rec = {"key": args.key, "fix": args.fix, "applies": applies, "kind": args.kind, "words": args.words, "feature": args.feature, "found": args.found,
+               "goal": applies[0], "state": "pending", "attempts": 0, "issue": 0, "uses": {}, "review": datetime.date.today().isoformat(), "owner": args.owner_record}
+        if not args.live:
+            ss.file_issue(root, rec, False)
+            print("nothing recorded (preview); add --live to record and file")
+            return 0
+        with ss.Lock(paths):
+            ss.save_records(paths, recs + [rec])
+            rec["issue"] = ss.file_issue(root, rec, True)
+            rec["state"] = "done"
+            ss.save_records(paths, recs + [rec])
+        print("recorded %s, issue #%d" % (args.key, rec["issue"]))
+        return 0
+    rec = find(recs, args.key)
+    ss.guard_worker("workaround " + verb, None if verb == "use" else rec.get("goal", ""))
+    if verb == "reconcile":
+        found = ss.lookup(rec["key"], rec["fix"])
+        if found is None:
+            raise ss.Refused("SCHED-E07", "the issue lookup failed", "rerun later; nothing was created", "unknown")
+        with ss.Lock(paths):
+            if found:
+                rec.update(issue=found, state="done")
+            else:
+                ss.file_issue(root, rec, args.live) if args.live else print("PREVIEW: none found; --live would file one issue")
+            ss.save_records(paths, recs)
+        print("reconciled %s: %s" % (rec["key"], "issue #%d" % found if found else "none found"))
+        return 0
+    if verb == "use":
+        if args.goal not in rec["applies"] or rec["kind"] != "tool" or rec["state"] != "done":
+            raise ss.Refused("SCHED-E03", "%s does not apply to %s (it must be a done `tool` record for a listed goal)" % (sl.clean(rec["key"], 30), sl.clean(args.goal, 30)), "see `workaround list`")
+        if not ss.say(root, rec["words"]):
+            raise ss.Refused("SCHED-E06", "the stored words cannot be shown", "fix the record; no activation was written")
+        with ss.Lock(paths):
+            rec["uses"][args.goal] = "active"
+            ss.save_records(paths, recs)
+        print("activated %s for %s" % (rec["key"], args.goal))
+        return 0
+    with ss.Lock(paths):
+        if verb == "fail":
+            rec["uses"][args.goal] = "failed"
+        else:
+            rec["state"] = "closed"
+        ss.save_records(paths, recs)
+    print("%s %s: the wait is restored" % (verb, rec["key"]))
+    return 0
+
+
+def main(argv):
+    ap = argparse.ArgumentParser(prog="schedule.py", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("show")
+    item = sub.add_parser("order")
+    item.add_argument("slugs", nargs="*")
+    item.add_argument("--by", default="")
+    item.add_argument("--clear", action="store_true")
+    wk = sub.add_parser("workaround").add_subparsers(dest="verb", required=True)
+    for name in ("add", "use", "fail", "close", "reconcile", "list"):
+        p = wk.add_parser(name)
+        if name != "list":
+            p.add_argument("key")
+        if name == "add":
+            p.add_argument("words")
+            for flag in ("--fix", "--applies", "--feature", "--found", "--owner-record"):
+                p.add_argument(flag, default="")
+            p.add_argument("--kind", default="", choices=("",) + KINDS)
+        if name in ("use", "fail"):
+            p.add_argument("--goal", required=True)
+        if name in ("fail", "close"):
+            p.add_argument("--reason", default="")
+        if name in ("add", "reconcile"):
+            p.add_argument("--live", action="store_true")
+    args = ap.parse_args(argv)
+    try:
+        root = top()
+        return show(root) if args.cmd == "show" else order(root, args) if args.cmd == "order" else workaround(root, args)
+    except ss.Refused as err:
+        print(err.line(), file=sys.stderr)
+        return 2
+    except Exception as err:  # SCHED-E99: never a bare trace
+        print("FAILED SCHED-E99: %s in %s. Side effects: unknown. Fix: rerun `schedule.py show` before retrying; nothing is retried automatically." % (type(err).__name__, args.cmd), file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
