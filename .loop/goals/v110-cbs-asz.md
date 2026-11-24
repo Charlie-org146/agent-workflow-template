@@ -1,7 +1,7 @@
 # Implement CBS-1 and ASZ-1 (v1.1.0 Task 14, priority 1; owner o907): one table says which checks each goal size runs, and the loop sizes each goal itself
 
 - Slug: v110-cbs-asz
-- Touches: skills/workflow-delivery, skills/workflow-monitoring, .loop/config.json, dev/toy, .loop/regression.tsv
+- Touches: skills/workflow-delivery, skills/workflow-monitoring, .loop/config.json, dev/toy, .loop/regression.tsv, skills/workflow-release
 - ETA: 420 active minutes (estimate 335m plus a 25% margin)
 
 ## Done lines
