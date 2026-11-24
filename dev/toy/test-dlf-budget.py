@@ -71,4 +71,16 @@ check(auto.eta_over(fit.view(state2, runs), 300), "a goal at 300 minutes is past
 with contextlib.redirect_stdout(io.StringIO()):
     dlf.budget_stop("g2", state2, runs, {}, top=tmp)
 check(not auto.eta_over(fit.view(state2, runs), 300), "after the raise the ETA stop no longer fires, and the goal keeps working")
+# the ON-scope case of the token refusal: a goal past its token budget keeps working, the budget rises by the same rule, both figures logged
+os.makedirs(os.path.join(tmp, "runs3"))
+runs3 = os.path.join(tmp, "runs3")
+st3 = {"slug": "g3", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {}, "tokens": {"idea": 1100}, "log": []}
+guards.add_set(runs3, "g3", "budget", {"minutes": 0, "tokens": 1000}, "set")
+fit.active_minutes = lambda state, at=None, cfg=None: 5
+out3 = io.StringIO()
+with contextlib.redirect_stdout(out3):
+    dlf.budget_stop("g3", st3, runs3, {"token_budget": 1000}, top=tmp)
+seen3 = fit.view(st3, runs3)
+check(seen3["budget"]["tokens"] == 2000 and "tokens 1000 -> 2000" in out3.getvalue(), "1100 of 1000 tokens with the setting on: no refusal, the budget rises to 2000 (the cap) and prints both figures: %s" % out3.getvalue().strip())
+check("raised the tokens budget 1000 to 2000" in json.dumps(guards.extra(runs3, "g3")["log"]), "the token raise is logged with the old and new figures")
 sys.exit(1 if failed else 0)

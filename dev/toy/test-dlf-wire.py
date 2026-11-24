@@ -119,4 +119,10 @@ five = lines("gx")
 check(code == 0 and len(five) == 5 and len(json.load(open(fake + "/state.json"))["issues"]) == 1, "three breaks, a plan past its cap and a budget past the cap: one issue, five lines (%d)" % len(five))
 check(sorted(l.split("|")[1].strip() for l in five) == ["break", "break", "break", "cap", "plan"] and all("settle with:" in l for l in five), "the five are three breaks, one plan, one cap, each with its settle line")
 check("reached its 2x cap at 480 of 240" in "".join(five) and "keep working at the cap" in "".join(five), "the cap line says the goal reached its 2x cap and keeps working")
+# the ON-scope token case past the cap: one cap line, the goal keeps working (no refusal), and a second check files no second line
+guards.add_set(runs, "gk", "budget", {"minutes": 0, "tokens": 2000}, "set")
+fit.active_minutes = lambda state, at=None, cfg=None: 5
+for _ in range(2):
+    dlf.budget_stop("gk", {"slug": "gk", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {}, "tokens": {"idea": 2000}, "log": []}, runs, {"token_budget": 1000}, top=tmp)
+check(len(lines("gk")) == 1 and "reached its 2x cap at 2000 of 1000" in lines("gk")[0], "2000 tokens against a 1000 estimate: one cap line, the goal keeps working, and a second check files none")
 sys.exit(1 if failed else 0)
