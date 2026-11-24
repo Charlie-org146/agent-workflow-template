@@ -146,17 +146,23 @@
       "Delivery",
       "Monitoring",
       "Operation",
-      "Check-in-and-board"
+      "Check-in-and-board",
+      "Deliver-first",
+      "Checks-by-size",
+      "Autonomous-sizing"
     ],
     "Quality": [
       "Regression",
       "Health",
-      "Guardrails"
+      "Guardrails",
+      "Fast-checks",
+      "Cheap-checks"
     ],
     "Operations": [
       "Automation",
       "Setup",
-      "Machines"
+      "Machines",
+      "Task-first"
     ],
     "Docs": [
       "Documentation"

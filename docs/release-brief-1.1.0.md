@@ -1,4 +1,4 @@
-# v1.1.0 brief (minor, revision 2)
+# v1.1.0 brief (minor, revision 3)
 
 - What it's about: finish every task already started in the v1.1.0 cut, with the Fast builds first (o800, o811).
 
@@ -9,9 +9,17 @@
 3. migrate-features-2 The template feature migration (done).
 4. v110-impl The implementation.
 5. v110-fast Fast and the principle-3 split: renumber, fast-text-2, fast-clock (DEL-17), fast-checks (DEL-25), fast-reads, fast-ci-2 (DEL-26/27) with fast-cut, fast-steps-2 (DEL-19), v110-del22 (DEL-22).
+12. v110-tsk12 Deliver first (DLF-1).
+13. v110-tsk13 Task first (TSK-1).
+14. v110-tsk14 Right-sized checks (CBS-1, SKP-1, CHP-1, ASZ-1).
+
+- Priority: Tasks 12, 13 and 14 are priority 1, with Task 1. The owner's words: "Priority 1, with Task 1" (o907, top o909). Ties go to the original fast goals first (TD1374).
 
 - Patches alongside: auto-approve-off (o806), approve-ahead-owner-only.
 - Approval: DEL-22.4's fallback, once (o807).
 - Not in it: SET-1, DEL-3, DOC-29 and the front pages, and the confidence fix (all v1.2.0).
+- Exception to the not-in-it line above: the README and Home rows for DLF-1, TSK-1, CBS-1, SKP-1, CHP-1 and ASZ-1 (o908).
 - Done when: every goal above is merged green, and v1.1.0 is tagged through the minor path.
-Frozen: 94d43de2653454c64e4f5e74604018602296e3d058c751de185bd41b573714dd o819 2026-11-22
+- Done when, added in revision 3: the goals v110-tsk12-14-text, v110-dlf-1, v110-tsk-1, v110-cbs-asz, v110-skp-1 and v110-chp-1 are merged green.
+- Lifetimes: the six feature pages stay; the availability line on each expires when its feature is built; only the six How-to pages are temporary.
+Frozen: 637507fb45069cc7f63c5eeaa90aeec390b9b68dbba5da916fdab2bf693852a4 o907 2026-11-23
