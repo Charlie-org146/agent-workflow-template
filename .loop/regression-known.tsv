@@ -32,6 +32,8 @@ plan-cache-key	fails on main since v1.0.107; fixed by kept-reds-5; see #5372
 format-frontdoor	fails on main since v1.0.109; fixed by principle-8-readme; see #5382
 apply-rerender-blocks	fails on main since v1.0.96; fixed by kept-reds-2; see #4993
 defect-categories	fails on main (order-dependent: runs after a row writes regression-runs.tsv); known until its fix right after the v1.1.0 cut, see #5774 (owner o760)
+builtin-flow	local-lane only; green on main 45110588623; #5860; removed by lane-home-isolation
+del5-patch-default	local-lane only; green on main 45110588623; #5860; removed by lane-home-isolation
 guards-rule-start	local-lane only; green on main 45110588623 and on 45232018029; lane-home-isolation
 guards-worker-role	local-lane only; green on main 45110588623 and on 45232018029; lane-home-isolation
 del6-depth-by-size	local-lane only; green on main 45110588623 and on 45232018029; lane-home-isolation
@@ -39,10 +41,8 @@ del7-kill-resume	local-lane only; green on main 45110588623 and on 45232018029; 
 del9-pr-refuses	local-lane only; green on main 45110588623 and on 45232018029; lane-home-isolation
 issue-38-verdicts	local-lane only; green on main 45110588623 and on 45232018029; lane-home-isolation
 stuck-stays-top	local-lane only; green on main 45110588623 and on 45232018029; lane-home-isolation
-del5-patch-default	local-lane only; green on main 45110588623; lane-home-isolation
 del9-merge-refuses	local-lane only; green on main 45110588623; lane-home-isolation
 issue-129-docs-published	local-lane only; green on main 45110588623; lane-home-isolation
-builtin-flow	local-lane only; green on main 45110588623; lane-home-isolation
 del8-floor-step	local-lane only; green on main 45110588623; lane-home-isolation
 grd2-step-budget	local-lane only; green on main 45110588623; lane-home-isolation
 lanes-pr-affected	local-lane only; green on main 45110588623; lane-home-isolation

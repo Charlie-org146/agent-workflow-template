@@ -74,7 +74,7 @@ def render(args):
     if clash:
         sys.exit("REFUSED: two rows would share one Tests anchor: %s. Fix: rename one row id." % "; ".join(clash))
     # blocks first: a Tests rewrite keeps them
-    stale = ["%s (%s block)" % x for x in (refresh(root, args.check) if config_of(root).get("criteria") and not getattr(args, "tables", False) else [])]
+    stale = ["%s (%s block)" % x for x in (refresh(root, args.check, keep=getattr(args, "keep", False)) if config_of(root).get("criteria") and not getattr(args, "tables", False) else [])]
     out, idsof = [], lambda ls: [(m.group(1), m.group(4)) for _, m in cr.criteria_of(ls) if m]
     for rel in cr.pages(root):
         slug = os.path.basename(rel)[:-3]
@@ -86,7 +86,7 @@ def render(args):
         base = text
         if url:
             import prdcopy
-            body, _ = prdcopy.read(root, slug, url)
+            body, _ = prdcopy.read(root, slug, url, getattr(args, "keep", False))
             if body is None or not parts or parts[-1][0] != "Tests":
                 continue
             ids = [x for n, ls in cr.sections(body) if n == rules["sections"][1] for x in idsof(ls)]
@@ -311,7 +311,7 @@ def front_files(root, insert=False):
     return out + sections.targets(root, cr.folder_of(root), read, block_re, both) + sections.pages(root, cr.folder_of(root), out)
 
 
-def refresh(root, check=False, insert=False):
+def refresh(root, check=False, insert=False, keep=False):
     """Write the blocks (check: only list): [(rel, name)] stale."""
     stale = []
     for rel, blocks in front_files(root, insert):
@@ -321,7 +321,7 @@ def refresh(root, check=False, insert=False):
             if (found and found.group(0) != block) or (insert and not found):
                 stale.append((rel, name))
         fresh = with_blocks(held, blocks, insert)
-        done = sections.fresh(fresh, os.path.join(root, cr.folder_of(root)), read, counting.repo_slug(root), check)
+        done = sections.fresh(fresh, os.path.join(root, cr.folder_of(root)), read, counting.repo_slug(root), check or keep)
         if done != fresh:
             stale.append((rel, "format"))
             fresh = done
