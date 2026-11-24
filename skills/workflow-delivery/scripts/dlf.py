@@ -338,6 +338,8 @@ def ledger(top, rel, owner, loop):
 def cut(top, runs, rel, owner="", loop=""):
     """'' when the cut may go on (accepted lines closed), else the one list that refuses it."""
     import glob
+    if not os.path.isdir(runs):
+        return "read failed: the run-record folder %s can't be read" % os.path.basename(runs)
     owner, loop, out = owner or cfg(top).get("owner_login", ""), loop or private.gh(top, "api", "user", "-q", ".login")[1].strip(), []
     for f in glob.glob(os.path.join(runs, "*.dlf.json")):
         goal = os.path.basename(f)[:-9]

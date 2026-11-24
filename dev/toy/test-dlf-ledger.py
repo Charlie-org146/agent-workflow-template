@@ -133,4 +133,6 @@ lid_n = file("gn", "n1")[0]
 as_("boss", "decline %s" % lid_n)
 as_("loopbot", "<!-- dlf-event key=gn|break|other|n1 state=closed -->\n%s closed" % lid_n)
 check("converted: %s waits for patch goal" % lid_n in dlf.cut(top, runs, "v1"), "finding 5: a loop-written closed on a declined line leaves it converted: the cut still waits for the patch goal to merge")
+# review finding 7: an unreadable run-record folder is a failed read: the cut refuses, it does not read it as 'nothing pending'
+check(dlf.cut(top, home + "/no-such-runs", "v-none").startswith("read failed: the run-record folder"), "finding 7: a missing run-record folder refuses the cut and names the read")
 sys.exit(1 if failed else 0)
