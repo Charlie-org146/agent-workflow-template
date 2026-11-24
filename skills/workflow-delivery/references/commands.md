@@ -549,7 +549,7 @@ only goes up: it is re-sized from the diff when review, qa and ship start and at
 `sized.added`, and ship and `pr` refuse (`SIZING_ADDED_UNMET`) until each has a `CHECK:` line. A failed diff or config read
 refuses with `SIZING_READ_FAILED`. The owner raises a size with `sizeline.py set SLUG SIZE --owner-record ID` (never down, never
 under a safety class). At the cut, `cutcheck.py` lists the skipped or light checks; with `--require-full CHECK` it runs that
-check's full `run` command, taken only from the base branch's table (`origin/<base>`, then `<base>`; never a goal branch or
+check's full `run` command (only a real test command: an empty `run` or a flow step prints `NO COMMAND` and fails, and a run that is still RUNNING is a FAIL), taken only from the base branch's table (`origin/<base>`, then `<base>`; never a goal branch or
 the worktree), in each listed goal's worktree, and exits non-zero on a FAIL. `release.py` is not edited: run `cutcheck.py`, then cut.
 
 ## Moved from SKILL.md

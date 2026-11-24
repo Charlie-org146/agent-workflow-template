@@ -227,13 +227,13 @@
         "one-round": {
           "passes": 1,
           "covers": "one round of plan review",
-          "run": "python3 skills/workflow-delivery/scripts/flow.py SLUG plan --again",
+          "run": "",
           "markers": []
         },
         "full": {
           "passes": 3,
           "covers": "CEO, design and engineering review",
-          "run": "python3 skills/workflow-delivery/scripts/flow.py SLUG plan --again",
+          "run": "",
           "markers": []
         }
       },
@@ -241,13 +241,13 @@
         "one-pass-no-rerun": {
           "passes": 1,
           "covers": "one red-team pass, no rerun",
-          "run": "python3 skills/workflow-delivery/scripts/flow.py SLUG plan --again",
+          "run": "",
           "markers": []
         },
         "full": {
           "passes": 2,
           "covers": "red team and a rerun",
-          "run": "python3 skills/workflow-delivery/scripts/flow.py SLUG plan --again",
+          "run": "",
           "markers": []
         }
       },
@@ -255,13 +255,13 @@
         "normal": {
           "passes": 1,
           "covers": "one review pass",
-          "run": "python3 skills/workflow-delivery/scripts/flow.py SLUG review --again",
+          "run": "",
           "markers": []
         },
         "full": {
           "passes": 2,
           "covers": "review and adversarial pass",
-          "run": "python3 skills/workflow-delivery/scripts/flow.py SLUG review --again",
+          "run": "",
           "markers": []
         }
       }

@@ -26,18 +26,14 @@ def _f(passes, covers, run=""):
     return {"passes": passes, "covers": covers, "run": run, "markers": []}
 
 
-def _r(step):
-    return "python3 skills/workflow-delivery/scripts/flow.py SLUG %s --again" % step
-
-
 FORMS = {
     "build-gate": {"full": _f(1, "the build gate passes")},
     "full-test-run": {"full": _f(1, "the full test run passes before merge", "python3 skills/workflow-regression/scripts/regression.py run")},
     "leak-readers": {"full": _f(2, "two readers check for leaks before any push")},
     "safety-classes": {"full": _f(1, "every safety class goes to the owner")},
-    "plan-review": {"one-round": _f(1, "one round of plan review", _r("plan")), "full": _f(3, "CEO, design and engineering review", _r("plan"))},
-    "red-team": {"one-pass-no-rerun": _f(1, "one red-team pass, no rerun", _r("plan")), "full": _f(2, "red team and a rerun", _r("plan"))},
-    "review": {"normal": _f(1, "one review pass", _r("review")), "full": _f(2, "review and adversarial pass", _r("review"))},
+    "plan-review": {"one-round": _f(1, "one round of plan review"), "full": _f(3, "CEO, design and engineering review")},
+    "red-team": {"one-pass-no-rerun": _f(1, "one red-team pass, no rerun"), "full": _f(2, "red team and a rerun")},
+    "review": {"normal": _f(1, "one review pass"), "full": _f(2, "review and adversarial pass")},
 }
 DEFAULTS = {"forms": FORMS}
 for _s, _p in (("small", ("one-round", "one-pass-no-rerun", "normal")), ("medium", ("full", "one-pass-no-rerun", "normal")),

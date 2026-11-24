@@ -2,12 +2,13 @@
 """CBS-1.4: run before a cut. `cutcheck.py [SLUG ...] [--release V]` prints one list across goals of every check skipped or run
 light, with its form. `--require-full CHECK` also runs that check's full-form `run` command (from the base branch's checks
 table only: origin/<base>, then <base>, never a goal branch or the worktree) in the worktree of each listed goal that lists
-it, prints `PASS` or `FAIL <check> <slug>` per goal and exits 1 on any FAIL; an unknown name prints the table's check names and
+it, prints `PASS`, `FAIL` or `NO COMMAND` (a check whose run is empty or a flow step, not a real test command) per goal and exits 1 on any; an unknown name prints the table's check names and
 exits 2. release.py is not edited: the cut test is a procedure (run this, then cut), not a refusal inside the cut."""
 import argparse
 import glob
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -70,12 +71,16 @@ def main(argv):
     for state in found:
         if args.require_full not in ((state.get("sized") or {}).get("checks") or {}):
             continue
-        slug, cwd = state["slug"], state.get("worktree") or "."
+        slug, cwd, run = state["slug"], state.get("worktree") or ".", full["run"].replace("SLUG", state["slug"])
+        if not run or "flow.py" in run:  # a flow step starts work and returns; only a real test command gives a result
+            print("NO COMMAND %s %s" % (args.require_full, slug))
+            bad += 1
+            continue
         try:
-            done = subprocess.run(shlex.split(full["run"].replace("SLUG", slug)), cwd=cwd, capture_output=True, text=True) if full["run"] else None
+            done = subprocess.run(shlex.split(run), cwd=cwd, capture_output=True, text=True)
         except (OSError, ValueError):
             done = None
-        if done is not None and done.returncode == 0:
+        if done is not None and done.returncode == 0 and not re.search(r"^RUNNING", done.stdout, re.M):
             print("PASS %s %s" % (args.require_full, slug))
         else:
             bad += 1

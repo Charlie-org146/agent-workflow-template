@@ -167,6 +167,10 @@ import json; json.dump({"base": "main", "checks_by_size": {"forms": {"red-team":
 PY
 out=$(python3 $R/cutcheck.py c1 --require-full red-team 2>&1); code=$?; rm -f .loop/config.json
 check "CBS-1.4 the run command is read from the base only" '[ $code = 1 ]'
+admin "$TABLE"; out=$(python3 $R/cutcheck.py c1 --require-full red-team 2>&1); code=$?
+check "CBS-1.4 a check with no real test command prints NO COMMAND and exits non-zero" '[ $code != 0 ] && echo "$out" | grep -q "^NO COMMAND red-team" && ! echo "$out" | grep -q "^PASS"'
+admin "$TB"'c["checks_by_size"]["forms"] = {"red-team": {"full": {"run": "echo RUNNING"}}}'; out=$(python3 $R/cutcheck.py c1 --require-full red-team 2>&1); code=$?
+check "CBS-1.4 a run that is still RUNNING is never a PASS" '[ $code = 1 ] && echo "$out" | grep -q "^FAIL red-team c1"'
 admin "$TABLE"
 
 # --- ASZ-1.2
