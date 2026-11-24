@@ -183,7 +183,7 @@ def loosened(diff):
 
 def classify(stop, text="", paths=(), diff="", label="", cls="", template=False):
     """A stop's subject; a label only raises it; unclassifiable waits."""
-    if stop not in STOPS or cls and cls not in SAFETY + ("other",) or stop in ("break", "plan", "choice") and not (cls or paths or diff) or stop == "test" and not diff:
+    if diff is None or stop not in STOPS or cls and cls not in SAFETY + ("other",) or stop in ("break", "plan", "choice") and not (cls or paths or diff) or stop == "test" and not diff:
         return "unclassifiable"
     if cls in SAFETY or label in SAFETY:
         return cls if cls in SAFETY else label

@@ -333,7 +333,7 @@ def choices(state, pending, step):
         return None  # nothing pending, or deliver-first is off: the old rule decides
     return all(dlf.settle(root(), state_dir(), state["slug"], "plan" if re.search(r"review cap|past (its|the) cap", p, re.I) else "choice", "%s%d%s" % (step, i, hashlib.sha1(p.encode()).hexdigest()[:6]),
                           "design choice at %s: %s" % (step, p[:200]), "answer: the recommended one, or name another", "take the recommended answer",
-                          paths=state.get("touches") or ()
+                          paths=state.get("touches") or (), diff=fit.branch_diff(ME)
                           )[0] == "continue" for i, p in enumerate(pending, 1))
 
 

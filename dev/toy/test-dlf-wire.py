@@ -35,6 +35,9 @@ def check(ok, text):
 
 
 subprocess.run(["git", "init", "-q", tmp], check=True)
+git_t = lambda *a: subprocess.run(["git", "-C", tmp, "-c", "user.name=t", "-c", "user.email=t@t"] + list(a), capture_output=True)
+git_t("commit", "-q", "--allow-empty", "-m", "base")
+git_t("update-ref", "refs/remotes/origin/main", "HEAD")  # the base a live stop's branch diff is read against
 for sub in (".loop/goals", ".loop/tasks", ".git/loop/runs", "docs/wiki"):
     os.makedirs(os.path.join(tmp, sub))
 open(tmp + "/docs/wiki/Principles.md", "w").write("## 1. Documentation-driven\nfirst\n## 2. The loop\nsecond\n## 3. The docs are true\nthird\n")
@@ -169,4 +172,25 @@ check(guards.held_ask(tmp, "plan", ["pick a name"], "") == "plan left this for y
 os.environ["LOOP_PRIVATE_NAMES"] = "/dev/null"
 check(guards.held_ask(tmp, "plan", ["about acmesecret"], "") == "plan left this for you: about acmesecret", "with an explicit empty private-name list there is nothing to withhold")
 os.environ["LOOP_PRIVATE_NAMES"] = home + "/names"
+# round 5, safety finding: a live stop is classified with the branch's REAL diff, so a weakened assertion is found; an unreadable diff fails closed
+subprocess.run(["git", "-C", tmp, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "base"], capture_output=True)
+subprocess.run(["git", "-C", tmp, "branch", "-f", "main"], capture_output=True)
+subprocess.run(["git", "-C", tmp, "update-ref", "refs/remotes/origin/main", "HEAD"], capture_output=True)
+os.makedirs(tmp + "/tests", exist_ok=True)
+open(tmp + "/tests/test_a.py", "w").write("def test():\n    assert total == 3\n")
+subprocess.run(["git", "-C", tmp, "add", "tests"], capture_output=True)
+subprocess.run(["git", "-C", tmp, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "test"], capture_output=True)
+subprocess.run(["git", "-C", tmp, "update-ref", "refs/remotes/origin/main", "HEAD"], capture_output=True)
+st_n = {"slug": "gw3", "touches": ["skills/a/b.py"]}
+check(goal_mod.choices(st_n, ["pick a name"], "plan") is True, "negative control: with only benign changes on the branch a choice becomes a line (the diff is read and clean)")
+open(tmp + "/tests/test_a.py", "w").write("def test():\n    assert total >= 0\n")
+subprocess.run(["git", "-C", tmp, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-am", "revise the expected value"], capture_output=True)
+st_w = {"slug": "gw1", "touches": ["tests/test_a.py"]}
+check(goal_mod.choices(st_w, ["approve the revised expected value"], "plan") is False and not lines("gw1"), "round 5: a pending decision after a weakened assertion in a test file waits (the branch diff is read)")
+check(fit.breaks(goal_mod, {"slug": "gw2", "touches": ["tests/test_a.py"]}, [{"principle": 1, "text": "approve the revised expected value"}]).startswith("WAITING gw2: a test loosened or deleted"), "round 5: a red-team break after a weakened assertion waits and names the class")
+st_n = {"slug": "gw3", "touches": ["skills/a/b.py"]}
+real_branch_diff = fit.branch_diff
+fit.branch_diff = lambda g: None
+check(goal_mod.choices(st_n, ["pick another name"], "plan") is False, "round 5: a diff that cannot be read fails closed: unclassifiable, it waits")
+fit.branch_diff = real_branch_diff
 sys.exit(1 if failed else 0)

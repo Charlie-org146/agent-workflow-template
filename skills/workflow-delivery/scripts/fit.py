@@ -156,12 +156,20 @@ def budget_stop(slug, state, runs, cfg, at=None, save=None):
     return dlf.budget_stop(slug, state, runs, cfg, at, save, top)
 
 
-def breaks(g, state, left):  # DLF-1.1: a red-team break becomes a line unless the table says it waits; '' when none waits
+def branch_diff(g):
+    try:
+        done = subprocess.run(["git", "diff", "origin/%s...HEAD" % (g.config().get("base") or "main")], cwd=g.root(), capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired, SystemExit):
+        return None
+    return None if done.returncode else done.stdout
+
+
+def breaks(g, state, left):
     import dlf
     slug = state["slug"]
     for i, b in enumerate(left):
         got = dlf.settle(g.root(), g.state_dir(), slug, "break", "b%dp%s%s" % (i + 1, b["principle"], hashlib.sha1(b["text"].encode()).hexdigest()[:6]), "red-team break of principle %s: %s" % (b["principle"], b["text"][:200]),
-                     "notify.py plan-accept %s %s --owner-record ID" % (slug, b["principle"]), "accept", paths=state.get("touches") or (), cls=b.get("class", ""))
+                     "notify.py plan-accept %s %s --owner-record ID" % (slug, b["principle"]), "accept", paths=state.get("touches") or (), cls=b.get("class", ""), diff=branch_diff(g))
         if got[0] == "wait":
             return got[1]
     return ""
