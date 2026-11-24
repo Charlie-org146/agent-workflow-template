@@ -33,7 +33,7 @@ MUTATIONS = [  # (rule, file, the line to break, its broken form, the toy that g
     ("DLF-1.4 the cut refuses while a line is open", D, 'if l["state"] == "open"), key=', "if False), key=", "ledger"),
     ("DLF-1.4 only the owner accepts", D, 'elif who == owner and l["state"] in ("open", "accepted")', 'elif l["state"] in ("open", "accepted")', "ledger"),
     ("DLF-1.4 no owner login fails closed", D, "if lines and not owner:", "if False:", "ledger"),
-    ("DLF-1.4 a queued line stays until filed", D, '    held["queue"] = [q for q in held["queue"] if q != item]\n', "    held[\"queue\"] = []\n", "ledger"),
+    ("DLF-1.4 a queued line stays until filed", D, '    todo = mem(runs, slug)["queue"]\n', '    held = mem(runs, slug)\n    todo, held["queue"] = held["queue"], []\n    keep(runs, slug, held)\n', "ledger"),
     ("DLF-1.4 queued lines are re-filed", D, "    retry(top, runs, slug)\n    subject = classify(", "    subject = classify(", "ledger"),
     ("DLF-1.4 the debt gate fails closed", R, "    if not os.path.isfile(path):", "    if False:", "release"),
     ("DLF-1.5 the setting turns a scope off", D, "if isinstance((held.get(scope) or {}).get(ident), bool):", "if False:", "wire"),
