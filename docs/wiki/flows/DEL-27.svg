@@ -35,7 +35,7 @@
 <rect x="12.0" y="147" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
 <text x="220.0" y="166" text-anchor="middle" class="f-s">27.2 A green PR enters the merge queue at once</text>
 <rect x="12.0" y="192" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
-<text x="220.0" y="211" text-anchor="middle" class="f-s">27.3 The full test set runs once, on the merged result</text>
+<text x="220.0" y="211" text-anchor="middle" class="f-s">27.3 The full test set never blocks a merge</text>
 <rect x="12.0" y="237" width="416.0" height="31" rx="8" class="f-step" stroke-width="1.2"/>
 <text x="220.0" y="256" text-anchor="middle" class="f-s">27.4 From green to main within its limit</text>
 <text x="12" y="290" class="f-x">Delivery</text>
