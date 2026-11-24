@@ -505,7 +505,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [no-done-line-refused](Tests#t-no-done-line-refused) | requirement | DEL-1 | Given DEL-1, when test-rows.sh runs its 4 cases, then each passes: it is refused; it never waits on a terminal prompt; it does not start; it is refused. | PASS 2026-11-20 |
+| [no-done-line-refused](Tests#t-no-done-line-refused) | requirement | DEL-1 | Given DEL-1, when test-rows.sh runs its 4 cases, then each passes: it is refused; it never waits on a terminal prompt; it does not start; it is refused. | PASS 2026-11-24 |
 | [stop-after-3-tries](Tests#t-stop-after-3-tries) | requirement | DEL-1 | Given DEL-1, when test-goal.sh runs its 5 cases, then each passes: the goal stops and files a finding; nothing is merged; it is refused; it starts at the idea step; it is accepted only if the flow ran that step. | PASS 2026-11-09 |
 | [wiki-release](Tests#t-wiki-release) | requirement | DEL-1 | Given DEL-1, when test-wiki.sh runs its 2 cases, then each passes: its wiki pages are published, even when python lea; it lists the page as a finding and does not refuse. | PASS 2026-11-20 |
 | [auto-release](Tests#t-auto-release) | requirement | DEL-1 | Given DEL-1, when test-autorelease.sh runs its 2 cases, then each passes: it is released automatically; it prints REFUSED with its fix on stderr, exits no. | PASS 2026-11-22 |
