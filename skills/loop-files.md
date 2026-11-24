@@ -1824,8 +1824,8 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `regression_runs` | `(empty)` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. |
 | `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |
 | `automation` | `[]` | Routines the Automation table lists: {name, does, cadence, runs}. |
+| `deliver_first` | `{}` | Deliver first, default on: {goal|task|release: {id: false}} turns it off for a scope (most specific wins); set only with an owner reference: dlf.py set deliver_first off --scope S --id ID --owner-record R. |
 | `topics` | `{}` | Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column. |
-| `deliver_first` | `{}` | Deliver first (on by default): {"goal": {ID: false}, "task": {...}, "release": {...}} turns it off for that scope, so its stops wait for the owner as before; the most specific scope wins. Changed only with an owner reference: `dlf.py set deliver_first on|off --scope goal|task|release --id ID --owner-record R`. |
 | `ci_levels` | `nightly` | Target of scheduled and tag regression runs: nightly (every row) or land. |
 | `time_budget_minutes` | `240` | Active minutes before no new step starts; 0 is none. |
 | `max_merge_rounds` | `8` | Merge rounds goal.py pr may take before it waits. |
