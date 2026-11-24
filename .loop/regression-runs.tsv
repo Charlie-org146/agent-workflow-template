@@ -4,6 +4,7 @@ adopt-set-1	FAIL	2026-11-12
 adopt-set-3	FAIL	2026-11-19	
 adopt-set-5	FAIL	2026-11-19	
 adoption-golden	PASS	2026-11-13	
+affected-deleted-root-runner	PASS	2026-11-24	
 agents-wire	PASS	2026-11-24	
 app-refuses-headless-4184	PASS	2026-11-14	
 aut-backlog-milestone	PASS	2026-11-12	
@@ -22,9 +23,9 @@ aut-digest-org	PASS	2026-11-12
 aut-digest-pin-fails	PASS	2026-11-12	
 aut-digest-rerun	PASS	2026-11-12	
 aut-digest-rounds	PASS	2026-11-12	
-aut-email-file	PASS	2026-11-12	
-aut-email-mail	PASS	2026-11-12	
-aut-email-rounds	PASS	2026-11-12	
+aut-email-file	PASS	2026-11-24	
+aut-email-mail	PASS	2026-11-24	
+aut-email-rounds	PASS	2026-11-24	
 aut-email-secrets	PASS	2026-11-22	
 aut-email-upgrade	PASS	2026-11-12	
 aut-foreign-workflow	PASS	2026-11-12	
@@ -82,9 +83,9 @@ cut-fails-checks	PASS	2026-11-22
 defect-4496-checkin-goal-lines	PASS	2026-11-16	
 defect-categories	FAIL	2026-11-12	
 defect-flow-steps	PASS	2026-11-22	
-defect-health	PASS	2026-11-22	
+defect-health	PASS	2026-11-24	
 defect-owed-branch-proved	PASS	2026-11-10	
-defect-wording	PASS	2026-11-22	
+defect-wording	PASS	2026-11-24	
 del-16-on-page	PASS	2026-11-19	
 del1-new-here-main-refused	PASS	2026-11-14	
 del5-docs-bump-minor	PASS	2026-11-15	
@@ -199,7 +200,8 @@ hlt6-refused	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 hlt7-fast-check	PASS	2026-11-12	
 home-guard-catches-leak	PASS	2026-11-24	
 home-header-both	PASS	2026-11-14	
-home-topic-live	PASS	2026-11-19	
+home-sandbox-4859	PASS	2026-11-24	
+home-topic-live	PASS	2026-11-24	
 hook-count	PASS	2026-11-19	
 hook-stub-mark-foreign	PASS	2026-11-17	
 hook-stub-mark-own	PASS	2026-11-17	
@@ -251,13 +253,24 @@ ls-private-no-workflow	PASS	2026-11-24
 ls-private-tick	PASS	2026-11-24	
 ls-usage-steps	PASS	2026-11-22	
 mac-rows-skip-77	PASS	2026-11-13	
-machine-done-12	PASS	2026-11-16	
-machine-done-5	PASS	2026-11-16	
-machine-done-7	PASS	2026-11-17		5f5595078446
-machine-hook-state	PASS	2026-11-18	
-machine-no-private	PASS	2026-11-17		90197cb446bf
+machine-apply-installs	PASS	2026-11-24	
+machine-done-10	PASS	2026-11-24	
+machine-done-11	PASS	2026-11-24	
+machine-done-12	PASS	2026-11-24	
+machine-done-3	PASS	2026-11-24	
+machine-done-4	PASS	2026-11-24	
+machine-done-5	PASS	2026-11-24	
+machine-done-6	PASS	2026-11-24	
+machine-done-7	PASS	2026-11-24	
+machine-done-8	PASS	2026-11-24	
+machine-done-9	PASS	2026-11-24	
+machine-guide-monitoring	PASS	2026-11-24	
+machine-health-rule	PASS	2026-11-24	
+machine-hook-state	PASS	2026-11-24	
+machine-no-private	PASS	2026-11-24	
+machine-no-prompt-mode	PASS	2026-11-24	
 machine-status-live-workers	PASS	2026-11-20	
-machine-task-layout	PASS	2026-11-17		c58079f2bd05
+machine-task-layout	PASS	2026-11-24	
 machines-handover	PASS	2026-11-18	
 machines-handover-4787	PASS	2026-11-18	
 mailbox-two-mails	PASS	2026-11-18	
@@ -323,7 +336,8 @@ package-hang-stdin	PASS	2026-11-12
 package-headroom-held	FAIL	2026-11-15	
 package-passes	SKIPPED	2026-11-16	
 package-rows-tracked	FAIL	2026-11-15	
-package-win-parity-1397	PASS	2026-11-17	
+package-win-parity-1397	PASS	2026-11-24	
+package-win-stdin-1397	PASS	2026-11-24	
 page-relock	PASS	2026-11-14	
 page-shape	FAIL	2026-11-20	
 pending-none-goes-on	PASS	2026-11-12	
@@ -428,9 +442,9 @@ shard-balance	PASS	2026-11-22
 size-140	PASS	2026-11-12	
 size-budget	PASS	2026-11-11	
 skill-criteria-in-references	PASS	2026-11-14	
-skill-kept	PASS	2026-11-22	
+skill-kept	PASS	2026-11-24	
 skill-refusals-in-references	PASS	2026-11-14	
-skill-size-116	PASS	2026-11-22	
+skill-size-116	PASS	2026-11-24	
 skill-workflow-in-references	PASS	2026-11-14	
 slot-pool-112	PASS	2026-11-10	
 spec-decisions-log	PASS	2026-11-13	

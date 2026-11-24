@@ -15,3 +15,9 @@ Setup	skills/workflow-setup,dev/install-local.sh,:(exclude)skills/workflow-setup
 Release	skills/workflow-release/scripts/review.py,dev/toy/test-release-gate.py
 Integrations	skills/workflow-docs/scripts/milestones.py,skills/workflow-docs/scripts/prdcopy.py
 Principles	skills/workflow-health/references/commands.md,README.md
+Deliver-first	skills/workflow-delivery,skills/workflow-monitoring,skills/workflow-release
+Task-first	skills/workflow-monitoring,skills/workflow-release
+Checks-by-size	skills/workflow-delivery,skills/workflow-monitoring,.loop/config.json
+Fast-checks	skills/workflow-delivery,skills/workflow-regression,skills/workflow-release
+Cheap-checks	skills/workflow-monitoring,skills/workflow-delivery
+Autonomous-sizing	skills/workflow-delivery,skills/workflow-monitoring,.loop/config.json
