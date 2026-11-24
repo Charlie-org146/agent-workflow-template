@@ -650,6 +650,18 @@ When sizing is on, first run `python3 skills/workflow-delivery/scripts/sizing.py
 prints and write its `CHECK: <check> <form> <passes>` lines before the STEP line, as the plan section says; a check the size
 added since the plan needs its line before ship.
 
+## sizing plan
+Sizing is on for this repo (CBS-1, ASZ-1). Write `Files:` (one path per file, no directory or glob), `Lines:` (an estimate), `Gates:` and `Classes:` lines in the plan (`none` where there are none). Once the plan file is written and before any review phase, run `python3 {path} size {slug}`, then `python3 {path} rule {slug} plan` and run each check in the form it prints. The DEPTH line it prints replaces any depth wording above. Before the STEP line write one line per check it printed, `CHECK: <check> <form> <passes>` (for example `CHECK: red-team one-pass-no-rerun 1`), in its order; a skipped check is still written with its form, and a reply stopped at its budget carries the same lines.
+
+## sizing check
+Sizing is on for this repo. First run `python3 {path} rule {slug} {step}`, run each check in the form it prints and write its `CHECK: <check> <form> <passes>` lines before the STEP line; a check the size added since the plan needs its line before ship.
+
+## sizing depth full
+This goal's depth follows its size (its stored forms): run the skill's full pipeline, every phase, reviewer and pass it has, and say so with DEPTH: full. Never condense it on your own.
+
+## sizing depth condensed
+This goal's depth follows its size (its stored forms): run a condensed pass of this step, one spec-review round, a lighter plan review and one review pass, and say so with DEPTH: condensed.
+
 ## Exact command entries (as of main, 2026-11-13, when the Usage section was retired)
 
 - Every skill holds the same `proctree.py` copy, which also holds the lane and goal helpers.

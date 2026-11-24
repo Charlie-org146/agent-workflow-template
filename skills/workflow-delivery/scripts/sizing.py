@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""CBS-1 and ASZ-1: a goal is sized small, medium or large from its plan, the size picks its checks from one table, a size only
-goes up, and the checks it adds run before the PR. Commands: sizing.py size|rule|show SLUG [STEP]. Active only when the base
-branch's .loop/config.json has checks_by_size (read from origin/<base>, never the goal's branch). Imported by guards and role."""
+"""CBS-1 and ASZ-1: sizing.py size|rule|show SLUG [STEP]. A goal is sized from its plan, the size picks its checks from the table
+checks_by_size (read from origin/<base>; sizing is off without it), a size only goes up. Imported by guards, role and flow."""
 import hashlib
 import json
 import os
@@ -9,7 +8,8 @@ import re
 import subprocess
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
 import lanekit  # noqa: E402
 fcntl = lanekit.fcntl
 
@@ -86,6 +86,13 @@ def on(base=None):
 
 
 def validate(raw):
+    try:
+        return _validate(raw)
+    except (AttributeError, TypeError):
+        return None, "checks_by_size is malformed"
+
+
+def _validate(raw):
     forms = {c: {f: dict(d) for f, d in fs.items()} for c, fs in FORMS.items()}
     for c, fs in (raw.get("forms") or {}).items():
         for f, d in (fs or {}).items():
@@ -143,7 +150,6 @@ def classes_of(cfg, text, paths):
 
 
 def judge(files, lines, gates, safety):
-    """Small: 3 files or fewer, 150 lines or fewer, no gate, no safety class. Medium: 10 files or fewer, no safety class."""
     nums = "%d files, %d lines, %d gates" % (files, lines, len(gates))
     if safety:
         return "large", "%s; safety class %s" % (nums, ", ".join(safety))
@@ -153,15 +159,17 @@ def judge(files, lines, gates, safety):
     return ("medium", "%s; crossed the small line (%s)" % (nums, "; ".join(over))) if files <= 10 else ("large", "%s; files %d > 10" % (nums, files))
 
 
+def text_of(got):
+    return " ".join(got["files"] + got["gates"] + [got["classes"]])
+
+
 def size_of(text, changed, cfg):
-    """(size, reason, parsed); a directory, glob or missing Files list or Lines estimate is large with that reason."""
     got = parse(text)
     tail = "; missing plan fields: " + ", ".join(got["missing"]) if got["missing"] else ""
     odd = [f for f in got["files"] if re.search(r"[*?\[]", f) or f.endswith("/") or os.path.isdir(f)]
     if not got["files"] or odd or got["lines"] is None:
         return "large", "large: " + ("no Files list" if not got["files"] else "directory or glob in Files: " + ", ".join(odd[:3]) if odd else "no Lines estimate") + tail, got
-    text = " ".join(got["files"] + got["gates"] + [got["classes"]])
-    size, why = judge(len(got["files"]), got["lines"], got["gates"], classes_of(cfg, text, sorted(set(got["files"]) | set(changed))))
+    size, why = judge(len(got["files"]), got["lines"], got["gates"], classes_of(cfg, text_of(got), sorted(set(got["files"]) | set(changed))))
     return size, why + tail, got
 
 
@@ -201,8 +209,7 @@ def adopt(state, new):
 
 def diff(base):
     ref = "origin/" + base if git("rev-parse", "--verify", "--quiet", "origin/" + base).returncode == 0 else base
-    mb = git("merge-base", ref, "HEAD")
-    got = git("diff", "--numstat", mb.stdout.strip()) if mb.returncode == 0 else mb
+    got = git("diff", "--numstat", git("merge-base", ref, "HEAD").stdout.strip())
     if got.returncode:
         return None
     paths, lines = [], 0
@@ -214,6 +221,13 @@ def diff(base):
         paths.append(path)
         lines += len(open(path, errors="replace").read().splitlines()) if os.path.isfile(path) else 0
     return [p for p in paths if not p.startswith((".loop/goals/", ".loop/designs/"))], lines
+
+
+def need_diff(base, slug):
+    got = diff(base)
+    if got is None:
+        refuse("the diff against %s can't be read" % base, "rerun after git diff against the base works, then run sizing.py size " + slug, "SIZING_READ_FAILED")
+    return got
 
 
 def unmet(sized):
@@ -242,6 +256,8 @@ def rule(step, state):
         return "CHECKS at %s (size %s):\n%s" % (step or "every step", state["sized"]["size"], block(state["sized"], read_table()[0], step))
     except Refusal as err:
         return "REFUSED: %s (%s)" % (err.args[0], err.args[2])
+    except KeyError:
+        return "REFUSED: a stored form left the table (SIZING_BAD_TABLE)"
 
 
 def cmd_size(slug):
@@ -249,11 +265,9 @@ def cmd_size(slug):
     if not os.path.exists(plan):
         refuse("there is no plan file for " + slug, "write .loop/goals/%s.plan.md, then run sizing.py size %s" % (slug, slug), "SIZING_NO_PLAN")
     text, (table, base, cfg) = open(plan, encoding="utf-8").read(), read_table()
-    got = diff(base)
-    if got is None:
-        refuse("the diff against %s can't be read" % base, "rerun after git diff against the base works, then run sizing.py size " + slug, "SIZING_READ_FAILED")
+    got = need_diff(base, slug)
     size, reason, parsed = size_of(text, got[0], cfg)
-    kinds = classes_of(cfg, " ".join(parsed["files"] + parsed["gates"] + [parsed["classes"]]), [])
+    kinds = classes_of(cfg, text_of(parsed), [])
     extra = {"plan_sha": hashlib.sha1(text.encode("utf-8")).hexdigest(), "gates": parsed["gates"], "classes": kinds}
     new = update(slug, lambda old: build(old, size, reason, table, extra))
     print("SIZE %s: %s\n%s" % (new["size"], new["reason"], block(new, table)))
@@ -264,9 +278,7 @@ def regrow(state):
     if not old or (base_cfg()[2] and not on()):
         return
     table, base, cfg = read_table()
-    got = diff(base)
-    if got is None:
-        refuse("the diff against %s can't be read" % base, "rerun after git diff against the base works, then run sizing.py size " + state["slug"], "SIZING_READ_FAILED")
+    got = need_diff(base, state["slug"])
     size, reason = judge(len(got[0]), got[1], old.get("gates") or [], list(old.get("classes") or []) + classes_of(cfg, "", got[0]))
     adopt(state, update(state["slug"], lambda was: build(was, size, "diff: " + reason, table, {})))
 
@@ -289,37 +301,37 @@ def at_pr(g, state):
 
 
 def override(state, size, record):
-    """The owner's line: up only, never under a safety-class goal, only with a record id (the caller checked the id)."""
     old, slug = state.get("sized"), state["slug"]
-    if not old:
-        refuse("goal %s has no size yet" % slug, FIX_SIZE + slug, "SIZING_NOT_SIZED")
-    if not record:
-        refuse("a size change needs the owner's words", "record the owner's words first, then rerun with --owner-record ID", "SIZING_NO_RECORD")
-    if old.get("classes"):
-        refuse("goal %s touches a safety class, so it is always large" % slug, "leave the size as it is", "SIZING_SAFETY")
-    if size not in ORDER or ORDER.index(size) < ORDER.index(old["size"]):
-        refuse("sizes only go up (now %s, asked %s)" % (old["size"], size), "raise with sizeline.py set %s SIZE --owner-record ID" % slug, "SIZING_DOWN")
+    for bad, why, fix, code in ((not old, "goal %s has no size yet" % slug, FIX_SIZE + slug, "NOT_SIZED"),
+                                (not record, "a size change needs the owner's words", "record the owner's words, then rerun with --owner-record ID", "NO_RECORD"),
+                                (old and old.get("classes"), "goal %s touches a safety class, so it is always large" % slug, "leave the size as it is", "SAFETY"),
+                                (size not in ORDER or old and ORDER.index(size) < ORDER.index(old["size"]), "sizes only go up (now %s, asked %s)" % (old and old["size"], size), "sizeline.py set %s SIZE --owner-record ID" % slug, "DOWN")):
+        if bad:
+            refuse(why, fix, "SIZING_" + code)
     table, mark = read_table()[0], {"record": record, "from": old["size"], "to": size}
     adopt(state, update(slug, lambda was: build(was, size, "%s; owner raised it to %s (record %s)" % (was["reason"], size, record), table, {"owner": mark})))
     return state["sized"]
 
 
 def check(state, step, text):
-    """Record-time refusal (why, fix, code) or None: sized field, CHECK lines, the added checks at ship."""
     sized, ok = state.get("sized"), base_cfg()[2]
     if not on():
-        return None if ok or not sized else ("the base config can't be read, so the stored size can't be checked", "rerun after the read works, then record again", "SIZING_READ_FAILED sizing")
+        return None if ok or not sized else ("the base config can't be read", "rerun after the read works, then record again", "SIZING_READ_FAILED sizing")
     if not sized:
         return ("%s refused: this goal has no size" % step, FIX_SIZE + state["slug"], "SIZING_NOT_SIZED sizing") if step == "plan" else None
     try:
         forms = read_table()[0]["forms"]
     except Refusal as err:
         return err.args[0], err.args[1], err.args[2] + " sizing"
+    gone = [c for c, v in sized["checks"].items() if v["form"] not in forms.get(c, {})]
+    if gone:
+        return "form %s of %s left the table" % (sized["checks"][gone[0]]["form"], gone[0]), "restore the row on the base branch, then run sizing.py size " + state["slug"], "SIZING_BAD_TABLE sizing"
     found = re.search(r"^\W*STEP:\s*(done|skipped|pending|failed)\b", text, re.M | re.I)
     result, rows = found.group(1).lower() if found else "", re.findall(r"^\W*CHECK:(.*)$", text, re.M)
     fix, seen = "run sizing.py rule %s and write each CHECK line it prints, then record again" % state["slug"], {}
+    no = lambda why, code: (why, fix, "SIZING_" + code + " sizing")
     if rows and result in ("skipped", "failed"):
-        return "a CHECK line on a step that is %s" % result, fix, "SIZING_CHECK_STEP sizing"
+        return no("a CHECK line on a step that is " + result, "CHECK_STEP")
     for row in rows:
         part, stored = row.split(), sized["checks"].get((row.split() or [""])[0])
         miss = [m for m in forms[part[0]][part[1]].get("markers") or [] if m.lower() not in text.lower()] if stored and part[1:2] == [stored["form"]] else []
@@ -327,16 +339,31 @@ def check(state, step, text):
             else "%s names %s passes, its form has %d" % (part[0], part[2:3], stored["passes"]) if part[2:] != [str(stored["passes"])] \
             else "%s lacks the phase %s its form needs" % (part[0], miss[0]) if miss else ""
         if why:
-            return why, fix, "SIZING_LINE sizing"
+            return no(why, "LINE")
         seen[part[0]] = part[1]
     gone = [c for c in CHECKS_AT.get(step, ()) if c not in seen and result not in ("skipped", "failed")]
     if gone:
-        return "the %s reply has no CHECK line for %s" % (step, gone[0]), fix, "SIZING_MISSING sizing"
+        return no("the %s reply has no CHECK line for %s" % (step, gone[0]), "MISSING")
     new = {c: f for c, f in seen.items() if sized["evidence"].get(c) != f}
     if new:
         adopt(state, update(state["slug"], lambda was: dict(was, evidence=dict(was["evidence"], **new))))
     if step == "ship" and result == "done" and unmet(state["sized"]):
-        return "ship refused: added checks have no evidence line: " + ", ".join(unmet(state["sized"])), fix, "SIZING_ADDED_UNMET sizing"
+        return no("ship refused: added checks have no evidence line: " + ", ".join(unmet(state["sized"])), "ADDED_UNMET")
+
+
+def prompted(fn):
+    def wrapped(step, state=None, runs=None):
+        text = fn(step, state, runs)
+        if state is None or not on():
+            return text
+        doc = open(os.path.join(HERE, os.pardir, "references", "commands.md"), newline="").read().replace("\r\n", "\n")
+
+        def part(name):
+            found = re.search(r"^## sizing %s\n(.*?)(?=^## |\Z)" % name, doc, re.M | re.S)
+            return found.group(1).strip().format(path=os.path.join(HERE, "sizing.py"), slug=state["slug"], step=step) if found else ""
+        d = depth(state, step)
+        return "\n".join(x for x in (part("depth " + d) if d else text, part("plan" if step == "plan" else "check") if step in ("plan", "review", "qa", "ship") else "") if x)
+    return wrapped
 
 
 def depth(state, step):
@@ -344,19 +371,14 @@ def depth(state, step):
     return ("full" if got["passes"] > 1 else "condensed") if got else ""
 
 
+def lite(c, v):
+    return c in FORMS and v["passes"] < max(d["passes"] for d in FORMS[c].values())
+
+
 def light(state, step):
     have = (state.get("sized") or {}).get("checks") or {}
-    bits = ["%s %s" % (c, have[c]["form"]) for c in CHECKS_AT.get(step, ()) if c in have and have[c]["passes"] < max(d["passes"] for d in FORMS[c].values())]
+    bits = ["%s %s" % (c, have[c]["form"]) for c in CHECKS_AT.get(step, ()) if c in have and lite(c, have[c])]
     return " (light: %s)" % ", ".join(bits) if bits else ""
-
-
-def skipped(states):
-    out = []
-    for s in states:
-        out += ["%s: %s ran light (%s)" % (s.get("slug"), c, v["form"]) for c, v in ((s.get("sized") or {}).get("checks") or {}).items()
-                if c in FORMS and v["passes"] < max(d["passes"] for d in FORMS[c].values())]
-        out += ["%s: %s was skipped" % (s.get("slug"), st) for st in CHECKS_AT if str((s.get("flow") or {}).get(st, "")).startswith("skipped")]
-    return out
 
 
 def main(argv):

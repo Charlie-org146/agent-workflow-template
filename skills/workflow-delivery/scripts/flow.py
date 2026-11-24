@@ -22,6 +22,7 @@ import sys
 import time
 
 import fit
+import sizing
 import lanekit
 import proctree
 import role
@@ -175,6 +176,7 @@ def step_command(spec, step):
         + (["--model=" + model] if model else [])
 
 
+@sizing.prompted
 def depth_rule(step, state=None, runs=None):
     """The depth rule for this step: the goal's decided depth (fit.depth_for over review_depth, its size and the owner's
     override). A full goal under review_depth full keeps the old wording."""

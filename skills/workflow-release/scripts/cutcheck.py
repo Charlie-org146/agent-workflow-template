@@ -34,6 +34,15 @@ def base_table():
     return None, "the base branch's config can't be read"
 
 
+def skipped(states):
+    out = []
+    for s in states:
+        out += ["%s: %s ran light (%s)" % (s.get("slug"), c, v["form"]) for c, v in ((s.get("sized") or {}).get("checks") or {}).items()
+                if sizing.lite(c, v)]
+        out += ["%s: %s was skipped" % (s.get("slug"), st) for st in sizing.CHECKS_AT if str((s.get("flow") or {}).get(st, "")).startswith("skipped")]
+    return out
+
+
 def states(slugs, release):
     runs = os.path.join(os.path.abspath(git("rev-parse", "--git-common-dir").stdout.strip()), "loop", "runs")
     out = []
@@ -54,7 +63,7 @@ def main(argv):
     ap.add_argument("--require-full", metavar="CHECK", default="")
     args = ap.parse_args(argv)
     found = states(args.slugs, args.release)
-    lines = sizing.skipped(found)
+    lines = skipped(found)
     print("\n".join(lines) if lines else "no check was skipped or run light")
     if not args.require_full:
         return 0
