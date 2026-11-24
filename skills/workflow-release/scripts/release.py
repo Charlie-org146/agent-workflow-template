@@ -330,9 +330,12 @@ def cmd_cut(args):
     if unmet:
         sys.exit("REFUSED: criteria without a passing regression row: %s." % ", ".join(unmet))
     delivery = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts")
-    if os.path.isdir(delivery):  # DLF-1.4: the cut refuses while a deliver-first line is open
+    if os.path.isfile(os.path.join(delivery, "dlf.py")):  # DLF-1.4: the cut refuses while a deliver-first line is open
+        import importlib.util
         sys.path.insert(0, delivery)
-        import dlf
+        spec = importlib.util.spec_from_file_location("dlf", os.path.join(delivery, "dlf.py"))
+        dlf = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(dlf)
         held = dlf.cut(cwd, os.path.dirname(state_path(slug)), dlf.brief(cwd, slug)[1])
         held and sys.exit("REFUSED: deliver-first lines stand between this release and its cut:\n%s" % held)
     import review  # review imports release
