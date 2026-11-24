@@ -537,6 +537,21 @@ goal deletes; it may write it back`. A worker session binds itself with `session
 | `BUDGET_TOKENS` | `flow.py` | `goal.py set SLUG --budget-tokens N` from the operation |
 | `BIND_SELF_UNSET` | `sessions.py bind SLUG self` | `sessions.py bind SLUG <ID>` |
 
+### Checks by size (CBS-1, ASZ-1)
+
+`scripts/sizing.py` sizes a goal from its plan (`Files:`, `Lines:`, `Gates:`, `Classes:`): small is 3 files or fewer, 150 lines or
+fewer, no gate and no safety class; medium is 10 files or fewer and no safety class; large is everything else, and always large
+under a safety class. The reason is stored with the size (`sized` in the goal's run record, separate from DEL-5's `size`). The
+checks come from the table `checks_by_size` in the base branch's `.loop/config.json`, read from `origin/<base>` so a goal's own
+branch can't lighten it; a row that drops or lightens a fixed check (build gate, full test run, two leak readers, every safety
+class) is refused (`SIZING_BAD_TABLE`). Sizing is off, and nothing here applies, until the base config carries the key. A size
+only goes up: it is re-sized from the diff when review, qa and ship start and at `pr`, the checks the size adds are stored in
+`sized.added`, and ship and `pr` refuse (`SIZING_ADDED_UNMET`) until each has a `CHECK:` line. A failed diff or config read
+refuses with `SIZING_READ_FAILED`. The owner raises a size with `sizeline.py set SLUG SIZE --owner-record ID` (never down, never
+under a safety class). At the cut, `cutcheck.py` lists the skipped or light checks; with `--require-full CHECK` it runs that
+check's full `run` command (only a real test command: an empty `run` or a flow step prints `NO COMMAND` and fails, and a run that is still RUNNING is a FAIL), taken only from the base branch's table (`origin/<base>`, then `<base>`; never a goal branch or
+the worktree), in each listed goal's worktree, and exits non-zero on a FAIL. `release.py` is not edited: run `cutcheck.py`, then cut.
+
 ## Moved from SKILL.md
 
 Detail the skill's SKILL.md points to, kept word for word so no instruction is lost.
@@ -601,16 +616,29 @@ Read the design. Check each claim against the code: name the files and functions
 Write `.loop/goals/<slug>.plan.md`: the ordered build steps, the test for each done line (a regression row seen
 failing before the change and passing after), what could break, and what is out of scope. Commit it. List anything only
 the owner can decide as a PENDING line.
+When sizing is on (the base branch's `.loop/config.json` has `checks_by_size`, CBS-1 and ASZ-1): write `Files:` (one path
+per file, no directory or glob), `Lines:` (an estimate), `Gates:` and `Classes:` lines in the plan (`none` where there are
+none). Once the plan file is written and before any review phase, run `python3 skills/workflow-delivery/scripts/sizing.py size <slug>`
+and run each check in the form it prints; the stored forms set the DEPTH line, which it prints too. Before the STEP line write one line
+per check it printed, `CHECK: <check> <form> <passes>` (for example `CHECK: red-team one-pass-no-rerun 1`), in its order;
+a skipped check is still written with its form, and a reply stopped at its budget carries the same lines. The goal's size only
+goes up: a check the size adds must have its CHECK line before ship.
 
 ## review
 Read `git diff <base>...HEAD`. For each change, check it does what the plan says, handles errors and empty input,
 keeps every script under 20 KB, adds no private value, name or machine path, and has a test. Fix what is clearly wrong
 and commit; list the rest as findings, one line each, in your reply.
+When sizing is on, first run `python3 skills/workflow-delivery/scripts/sizing.py rule <slug>`, run each check in the form it
+prints and write its `CHECK: <check> <form> <passes>` lines before the STEP line, as the plan section says; a check the size
+added since the plan needs its line before ship.
 
 ## qa
 The regression lane has already run on this commit. Run the repo's check commands from `.loop/config.json` and try
 each done line the way a person would, from the goal's Verify by hand steps. If a step needs a browser or a tool this
 machine doesn't have, end with STEP: skipped and say what was missing.
+When sizing is on, first run `python3 skills/workflow-delivery/scripts/sizing.py rule <slug>`, run each check in the form it
+prints and write its `CHECK: <check> <form> <passes>` lines before the STEP line, as the plan section says; a check the size
+added since the plan needs its line before ship.
 
 ## ship
 Check the branch is ready for a pull request: the version and changelog follow the repo's habit, the docs that
@@ -618,6 +646,21 @@ describe the changed paths are updated, and the tree is clean. Commit what is mi
 pull request: delivery does that. File what you found and did not fix, one line each, in your reply:
 `FILE defect <Feature>: text` for a break of a Reviewed requirement outside this goal's touches, `FILE backlog <Feature>: text` for an
 improvement, idea or saving (`Other` when no feature fits). A break inside the touches is fixed, not filed. Record files them once.
+When sizing is on, first run `python3 skills/workflow-delivery/scripts/sizing.py rule <slug>`, run each check in the form it
+prints and write its `CHECK: <check> <form> <passes>` lines before the STEP line, as the plan section says; a check the size
+added since the plan needs its line before ship.
+
+## sizing plan
+Sizing is on for this repo (CBS-1, ASZ-1). Write `Files:` (one path per file, no directory or glob), `Lines:` (an estimate), `Gates:` and `Classes:` lines in the plan (`none` where there are none). Once the plan file is written and before any review phase, run `python3 {path} size {slug}`, then `python3 {path} rule {slug} plan` and run each check in the form it prints. The DEPTH line it prints replaces any depth wording above. Before the STEP line write one line per check it printed, `CHECK: <check> <form> <passes>` (for example `CHECK: red-team one-pass-no-rerun 1`), in its order; a skipped check is still written with its form, and a reply stopped at its budget carries the same lines.
+
+## sizing check
+Sizing is on for this repo. First run `python3 {path} rule {slug} {step}`, run each check in the form it prints and write its `CHECK: <check> <form> <passes>` lines before the STEP line; a check the size added since the plan needs its line before ship.
+
+## sizing depth full
+This goal's depth follows its size (its stored forms): run the skill's full pipeline, every phase, reviewer and pass it has, and say so with DEPTH: full. Never condense it on your own.
+
+## sizing depth condensed
+This goal's depth follows its size (its stored forms): run a condensed pass of this step, one spec-review round, a lighter plan review and one review pass, and say so with DEPTH: condensed.
 
 ## Exact command entries (as of main, 2026-11-13, when the Usage section was retired)
 

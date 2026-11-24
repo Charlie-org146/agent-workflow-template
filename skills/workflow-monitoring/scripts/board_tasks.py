@@ -13,6 +13,7 @@ import board_lines  # noqa: E402
 import board_page  # noqa: E402
 import board_status as bs  # noqa: E402
 import graph  # noqa: E402
+import sizeline  # noqa: E402
 
 FLOW, current = bs.FLOW, bs.current
 
@@ -70,7 +71,9 @@ def task_lines(root, runs, at, gone=()):  # DEL-23: each task by name with state
             left = [bs.left_time(r, runs, at, root) for r in live]
             eta = "-" if not live else "awaiting merge" if all(r.get("status") == "done" for r in live) else "?" if None in left else board_page.span(max(left))
             out.append(f"- {t['name']}: {t['state']}{t['note'] and ' (%s)' % t['note']}, {sum(f for _, f, _ in t['goals'])} of {len(t['goals'])} goals finished, ETA {eta}")
-            out += ["    %s %s" % (s, "finished" if f else "not started" if not r else "awaiting merge" if r.get("status") == "done" else FLOW[current(r)]) for s, f, r in t["goals"]]
+            out += ["    %s %s" % (s, "finished" if f else "not started" if not r else "awaiting merge" if r.get("status") == "done" else FLOW[current(r)]) + sizeline.tail(r) for s, f, r in t["goals"]]
+        alone = sizeline.alone(runs, {s for t in tasks(root, runs, gone) for s, _, _ in t["goals"]})
+        out += ["", "Goal sizes"] + alone if alone else []
     except Exception as e:  # never stop the check-in or the board
         return ["", "Tasks", "- tasks unavailable: " + type(e).__name__]
     return out if len(out) > 2 else []

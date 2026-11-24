@@ -379,6 +379,8 @@ def record(state, base):
 
 
 def bump_version(g, state, head):
+    import sizing
+    sizing.at_pr(g, state)
     cfg = g.config()
     name = cfg.get("version_file") or "VERSION"
     path = os.path.join(g.root(), name)
