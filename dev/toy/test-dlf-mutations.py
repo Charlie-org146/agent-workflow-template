@@ -28,7 +28,7 @@ MUTATIONS = [  # (rule, file, the line to break, its broken form, the toy that g
     ("DLF-1.3 a loosened test waits", D, "            return True\n    return False", "            pass\n    return False", "stops"),
     ("DLF-1.3 an unknown class waits", D, ' or cls and cls not in SAFETY + ("other",)', "", "stops"),
     ("DLF-1.3 every outside write is scanned", D, 'if got["state"] not in ("clean", "off"):', "if False:", "scan"),
-    ("DLF-1.3 auto_approve never skips the table", G, "held = choices(state, pending, step)", "held = None", "wire"),
+    ("DLF-1.3 auto_approve never skips the table", G, "    if held is not None:\n        return held and", "    if False:\n        return held and", "wire"),
     ("DLF-1.3 a pending result with no PENDING line is classified", G, 'pending or [why or "a pending decision with no context"] * (result == "pending")', "pending", "wire"),
     ("DLF-1.4 the cut refuses while a line is open", D, 'if l["state"] == "open"), key=', "if False), key=", "ledger"),
     ("DLF-1.4 only the owner accepts", D, 'elif who == owner and l["state"] in ("open", "accepted")', 'elif l["state"] in ("open", "accepted")', "ledger"),
