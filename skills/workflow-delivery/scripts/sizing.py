@@ -71,10 +71,8 @@ def grow(old, new):
 
 
 def base_cfg():
-    try:
-        base = json.load(open(".loop/config.json")).get("base") or "main"
-    except (OSError, ValueError, AttributeError):
-        base = "main"
+    head = git("symbolic-ref", "--short", "refs/remotes/origin/HEAD").stdout.strip()  # never the worktree's config
+    base = head.split("/", 1)[1] if "/" in head else "main"
     for ref in ("origin/" + base, base):
         done = git("show", "%s:.loop/config.json" % ref)
         if done.returncode == 0:

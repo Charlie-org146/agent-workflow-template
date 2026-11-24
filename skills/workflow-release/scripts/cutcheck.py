@@ -22,8 +22,7 @@ def git(*args):
 
 def base_table():
     """(table, why) from the base branch's .loop/config.json only; the key missing takes the shipped defaults."""
-    head = git("symbolic-ref", "--short", "refs/remotes/origin/HEAD").stdout.strip()
-    base = head.split("/", 1)[1] if "/" in head else "main"
+    base = sizing.base_cfg()[0]
     for ref in ("origin/" + base, base):
         done = git("show", "%s:.loop/config.json" % ref)
         if done.returncode == 0:
