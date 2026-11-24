@@ -77,6 +77,8 @@ def ensure_issue(top, runs, slug, rel):
     if not ok:
         return None
     mine, lowest = json.loads(out)["number"], find_issue(top, rel)
+    if lowest is None:
+        return None
     if lowest and lowest != mine:
         private.gh(top, "api", "-X", "PATCH", "%s/%d" % (ISSUE, mine), "-f", "state=closed")
         return lowest

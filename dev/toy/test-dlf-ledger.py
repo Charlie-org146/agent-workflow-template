@@ -176,4 +176,12 @@ dlf.post = real_post
 check(len(dlf.mem(runs, "gi")["queue"]) == 2, "finding B: after an interruption mid-filing both entries are still queued")
 check(all(s == "" for _, s in dlf.retry(top, runs, "gi")) and not dlf.mem(runs, "gi")["queue"], "finding B: the next retry files them and only then empties the queue")
 check(len([c for c in state()["comments"]["1"] if "gi|break|other|i" in c["body"]]) == 2, "and each was filed exactly once")
+# round 4, finding 1: after creating, a failed second lookup must not leave the debt on an unconfirmed (possibly duplicate) issue: the line is queued
+real_find, seq = dlf.find_issue, [0, None]
+dlf.find_issue = lambda t, r: seq.pop(0) if seq else real_find(t, r)
+issues_before = len(state()["issues"])
+got1 = dlf.file_line(top, runs, "gd1", "v-dup", "break", "other", "d1", "a break", "words", "rec")
+dlf.find_issue = real_find
+check(got1 == ("", "queued"), "finding 1: a failed second lookup after creating queues the line instead of posting to an unconfirmed issue: %s" % (got1,))
+check(not any("gd1|break" in c["body"] for cs in state()["comments"].values() for c in cs), "finding 1: and nothing was posted")
 sys.exit(1 if failed else 0)
