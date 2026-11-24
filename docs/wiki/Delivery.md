@@ -158,7 +158,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - [actions/cache](https://github.com/actions/cache).
   - adapted
   - [test impact analysis](https://martinfowler.com/articles/rise-test-impact-analysis.html).
-- DEL-27: **Unreviewed** Fast merge: the full tests run once, on the merged result, through the merge queue
+- DEL-27: **Reviewed 2026-11-24** Fast merge: the full tests run once, on the merged result, through the merge queue <!-- reviewed 737bf6b9 -->
   - Principle 3, Fast · Topic: Delivery
   - ### Problem
   - Tests ran on the PR and again in the merge queue, and PRs could open only one at a time.
