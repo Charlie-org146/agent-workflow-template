@@ -1,7 +1,7 @@
 # Text (v1.1.0 Tasks 12-14, priority 1; owner o907): the six reviewed features DLF-1, TSK-1, CBS-1, SKP-1, CHP-1 and ASZ-1 written into their pages word for word, and a re-frozen v1.1.0 brief that adds Tasks 12, 13 and 14
 
 - Slug: v110-tsk12-14-text
-- Touches: docs/wiki, docs, README.md, .loop/regression.tsv
+- Touches: docs/wiki, docs, README.md, .loop/regression.tsv, .loop/docs.tsv, .loop/config.json, .loop/START.md, .loop/sources, .loop/tasks
 - ETA: 300 active minutes (estimate 238m plus a 25% margin)
 
 ## Done lines
