@@ -254,7 +254,7 @@ def settle(top, runs, slug, stop, occ, what, words, rec, **ctx):
     if not on:
         return "wait", wait_line(slug, "setting off", "deliver-first is off for %s %s" % (scope, slug), ask)
     if subject in SAFETY or subject == "unclassifiable":
-        return "wait", wait_line(slug, subject, "text withheld" if subject == SAFETY[3] else safe(top, what[:120]), ask)
+        return "wait", wait_line(slug, subject, "text withheld" if subject == SAFETY[3] else safe(top, what)[:120], ask)
     lid, status = file_line(top, runs, slug, brief(top, slug)[1], stop, subject, occ, what, words, rec)
     if status == "local":
         return "wait", wait_line(slug, "private data", "the line failed the private-name scan", "remove the name, then " + ask)
