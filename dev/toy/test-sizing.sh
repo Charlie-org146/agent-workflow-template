@@ -1,8 +1,6 @@
 #!/bin/bash
-# reads: skills/workflow-delivery/scripts/ skills/workflow-monitoring/scripts/ skills/workflow-release/scripts/
-# reads: skills/workflow-delivery/references/commands.md
-# Proves CBS-1.1 to CBS-1.4 and ASZ-1.1 to ASZ-1.3, each with a fixture that breaks only its rule. A toy repo, a bare origin
-# and a second clone that plays the base branch; no network, no model. usage: test-sizing.sh [DIR]
+# reads: skills/workflow-delivery/scripts/ skills/workflow-monitoring/scripts/ skills/workflow-release/scripts/ skills/workflow-delivery/references/commands.md
+# CBS-1.1 to 1.4, ASZ-1.1 to 1.3, each with a fixture that breaks only its rule. No network, no model. usage: test-sizing.sh [DIR]
 set -u
 unset LOOP_BATCH LOOP_SESSION_TOOL LOOP_OPERATION_SESSION GH_TOKEN GITHUB_TOKEN _LOOP_LANE_HELD LOOP_LANE_LIMIT
 export LOOP_ROLE=worker
@@ -19,8 +17,8 @@ RUNS="$(git rev-parse --git-common-dir)/loop/runs"; mkdir -p "$RUNS"; RUNS=$(cd 
 fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
-check() { if eval "$2" 2>/dev/null; then ok "$1"; else bad "$1"; [ -z "${out:-}" ] || head -3 <<<"$out" | sed "s/^/    out: /"; fi; }
-# admin 'PYTHON' edits the base config dict c from a second clone, commits and pushes
+check() { if eval "$2" 2>/dev/null; then ok "$1"; else bad "$1"; echo "${out:-}" | head -3; fi; }
+# admin 'PY' edits the base config dict c from a second clone
 admin() { (cd "$T/admin" && git pull -q origin main 2>/dev/null; python3 - "$D" "$1" <<'PY'
 import json, os, sys
 sys.path.insert(0, sys.argv[1]); import sizing
@@ -33,7 +31,6 @@ PY
 git add -A; git commit -qm cfg >/dev/null; git push -q origin HEAD:main) >/dev/null 2>&1; git fetch -q origin; }
 TB='c["checks_by_size"] = json.loads(json.dumps(sizing.DEFAULTS)); '; TABLE=${TB%; }
 cat > "$T/h.py" <<'PY'
-# A harness over the real functions. usage: h.py sized|check|resize|ratchet|atpr|stage SLUG ARG...
 import json, os, sys
 sys.path.insert(0, sys.argv[1]); import guards, sizing
 cmd, slug, arg = sys.argv[2], sys.argv[3], (sys.argv[4:] or [""])
@@ -52,17 +49,13 @@ elif cmd == "ratchet":
     table = sizing.read_table()[0]
     sizing.update(slug, lambda old: sizing.build(old, arg[0], "owner", table, {}))
 elif cmd == "atpr":
-    class G:
-        class guards:
-            refuse_no_try = staticmethod(lambda *a: sys.exit(2))
-        save = None
-    sizing.at_pr(G, state)
+    sizing.at_pr(type("G", (), {"guards": type("g", (), {"refuse_no_try": staticmethod(lambda *a: sys.exit(2))}), "save": None}), state)
 elif cmd == "stage":
     state.update(json.loads(arg[0])); json.dump(state, open(path, "w"))
 PY
 H="python3 $T/h.py $D"
 plan() { mkdir -p .loop/goals; printf '# Plan\nFiles: %s\nLines: %s\nGates: %s\nClasses: %s\n' "$2" "$3" "$4" "$5" > .loop/goals/$1.plan.md; }
-new() { plan "$@"  # new SLUG FILES LINES GATES CLASSES: a goal state and its plan file
+new() { plan "$@"
   python3 - "$RUNS" "$1" "$PWD" <<'PY'
 import json, sys
 json.dump({"slug": sys.argv[2], "step": "plan", "flow": {}, "worktree": sys.argv[3], "release": "v1.1.0", "rules_at": {}}, open("%s/%s.json" % (sys.argv[1], sys.argv[2]), "w"))
@@ -152,7 +145,7 @@ PY
 out=$(python3 $R/cutcheck.py c1 --require-full red-team 2>&1); code=$?; rm -f .loop/config.json
 check "CBS-1.4 the run command is read from the base only" '[ $code = 1 ]'
 admin "$TABLE"; out=$(python3 $R/cutcheck.py c1 --require-full red-team 2>&1); code=$?
-check "CBS-1.4 a check with no real test command prints NO COMMAND and exits non-zero" '[ $code != 0 ] && echo "$out" | grep -q "^NO COMMAND red-team" && ! echo "$out" | grep -q "^PASS"'
+check "CBS-1.4 a check with no real test command is NO COMMAND" '[ $code != 0 ] && echo "$out" | grep -q "^NO COMMAND red-team" && ! echo "$out" | grep -q "^PASS"'
 admin "$TB"'c["checks_by_size"]["forms"] = {"red-team": {"full": {"run": "echo RUNNING"}}}'; out=$(python3 $R/cutcheck.py c1 --require-full red-team 2>&1); code=$?
 check "CBS-1.4 a run that is still RUNNING is never a PASS" '[ $code = 1 ] && echo "$out" | grep -q "^FAIL red-team c1"'
 admin "$TABLE"
@@ -163,6 +156,8 @@ out=$($H resize s1 review 2>&1)
 check "ASZ-1.2 a small goal whose diff passes the small line is re-sized to medium at review" '[ "$out" = "medium" ]'
 out=$($H atpr s1 2>&1); code=$?
 check "ASZ-1.2 the pull request step refuses while an added check has no evidence line" '[ $code = 2 ]'
+f=$(reply sh3 $'CHECK: plan-review full 3\nDEPTH: full'); $H check s1 ship $f >/dev/null 2>&1; out=$($H atpr s1 2>&1); code=$?
+check "ASZ-1.2 the PR step passes with the evidence" '[ $code = 0 ]'
 f=$(reply sh3 $'CHECK: plan-review full 3\nDEPTH: full'); out=$($H check s1 ship $f 2>&1)
 rm -f docs-*.md; new s2 "docs/a.md" 10 none none; python3 $D/sizing.py size s2 >/dev/null 2>&1; $H ratchet s2 large
 plan s2 "docs/a.md" 10 none none; python3 $D/sizing.py size s2 >/dev/null 2>&1
@@ -196,7 +191,16 @@ run = json.load(open(sys.argv[2] + "/o1.json"))
 print("\n".join(board_tasks.sizeline.alone([run], set())))
 PY
 )
-check "ASZ-1.3 the board shows the new size with the owner's record for a goal with no task brief" 'echo "$out" | grep -q "^- o1: SIZE large (.*) checks: plan-review full, red-team full, review full; owner: o7"'
+check "ASZ-1.3 the board shows the new size with the owner's record" 'echo "$out" | grep -q "^- o1: SIZE large (.*) checks: plan-review full, red-team full, review full; owner: o7"'
+out=$(python3 - "$M" "$RUNS" <<'PY'
+import json, sys, tempfile, os
+sys.path.insert(0, sys.argv[1]); import board_tasks
+root = tempfile.mkdtemp(); os.makedirs(root + "/.loop/tasks")
+open(root + "/.loop/tasks/t.md", "w").write("# T\n- Feature: F\n- Release: v1\n- Goals: o1\n- Source: s\n")
+print("\n".join(board_tasks.task_lines(root, [json.load(open(sys.argv[2] + "/o1.json"))], None)))
+PY
+)
+check "ASZ-1.3 the board shows the size under a task goal" 'echo "$out" | grep -q "o1 .*| SIZE large"'
 
 out=$(python3 $D/sizing.py rule a2 plan 2>&1)
 check "CBS-1.3 the rule prints each check, its form and the grammar" 'echo "$out" | grep -q "red-team: form one-pass-no-rerun, 1 pass. Covers: one pass, no rerun. Run:" && echo "$out" | grep -q "CHECK: <check> <form> <passes>" && echo "$out" | grep -q "^DEPTH: full"'
@@ -204,9 +208,9 @@ dr() { (cd "$T/repo" && python3 -c "
 import json,sys; sys.path.insert(0,'$D'); import flow
 print(flow.depth_rule(sys.argv[1], json.load(open('$RUNS/a1.json')), '$RUNS'))" "$1" 2>&1); }
 out=$(dr plan)
-check "CBS-1.3 a named skill gets the sizing command" 'echo "$out" | grep -q "sizing.py size a1" && echo "$out" | grep -q "CHECK: <check> <form> <passes>"'
+check "CBS-1.3 a named skill gets the sizing text" 'echo "$out" | grep -q "sizing.py size a1" && echo "$out" | grep -q "CHECK: <check> <form> <passes>"'
 out=$(dr review)
-check "CBS-1.3 the review prompt follows the stored size" 'echo "$out" | grep -q "follows its size" && echo "$out" | grep -q "DEPTH: condensed"'
+check "CBS-1.3 the review prompt follows the size" 'echo "$out" | grep -q "follows its size" && echo "$out" | grep -q "DEPTH: condensed"'
 admin 'c["checks_by_size"] = True'; f=$(reply mal $'CHECK: x'); out=$($H check a2 plan $f 2>&1)
 check "CBS-1.2 a malformed table refuses, no crash" 'echo "$out" | grep -q "REFUSED SIZING_BAD_TABLE"'
 admin "$TABLE"; python3 - "$RUNS" <<'PY'
@@ -234,6 +238,6 @@ new c5 "docs/a.md" 10 none "native data delete"; out=$(python3 $D/sizing.py size
 check "ASZ-1.2 a declared class starting with no or na is still a class" 'echo "$out" | grep -q "^SIZE large:"'
 mkdir -p "$T/wl" "$T/fb"; echo '{}' > "$T/wl/flow.json"; printf '#!/bin/bash\necho x > "$TOY_REAL_WL/planted.json"\nexit 1\n' > "$T/fb/git"; chmod +x "$T/fb/git"
 out=$(TOY_REAL_WL="$T/wl" PATH="$T/fb:$PATH" bash -c ". $here/dev/toy/reap.sh; python3 $D/sizing.py rule a1 plan" 2>&1)
-check "DEL-10 a process sizing.py starts that writes under HOME is caught with a LEAK line" 'echo "$out" | grep -q "LEAK: this test changed the real .*planted.json"'
+check "DEL-10 a sizing.py process writing under HOME is caught as LEAK" 'echo "$out" | grep -q "LEAK: this test changed the real .*planted.json"'
 admin "$TABLE"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "FAILED $fails"; exit 1; }
