@@ -74,6 +74,18 @@
 | <a id="t-board-tz-mixed-stamps"></a>board-tz-mixed-stamps | requirement | CHK-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-20 |
 | <a id="t-release-progress-bars"></a>release-progress-bars | requirement | CHK-1 | not run | - | local | 2026-11-20 |
 
+## Deliver first
+
+| Test | Kind | Guards | Result | Date | Run | Seen failing |
+|---|---|---|---|---|---|---|
+| <a id="t-dlf-lines-not-waits"></a>dlf-lines-not-waits | requirement | DLF-1 | not run | - | local | 2026-11-24 |
+| <a id="t-dlf-budget-raises"></a>dlf-budget-raises | requirement | DLF-1 | not run | - | local | 2026-11-24 |
+| <a id="t-dlf-only-safety-waits"></a>dlf-only-safety-waits | requirement | DLF-1 | not run | - | local | 2026-11-24 |
+| <a id="t-dlf-scan-every-path"></a>dlf-scan-every-path | requirement | DLF-1 | not run | - | local | 2026-11-24 |
+| <a id="t-dlf-cut-refuses-open"></a>dlf-cut-refuses-open | requirement | DLF-1 | not run | - | local | 2026-11-24 |
+| <a id="t-dlf-setting-off-waits"></a>dlf-setting-off-waits | requirement | DLF-1 | not run | - | local | 2026-11-24 |
+| <a id="t-dlf-merge-on-green"></a>dlf-merge-on-green | requirement | DLF-1 | not run | - | local | 2026-11-24 |
+
 ## Delivery
 
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
@@ -772,3 +784,7 @@
 | <a id="t-tasks-rows-only-added"></a>tasks-rows-only-added | requirement | done line v110-tasks:5 | not run | - | local | 2026-11-21 |
 | <a id="t-defect-5727-smoke-private-list"></a>defect-5727-smoke-private-list | defect | [#5727](https://github.com/Charlie-org146/agent-workflow-template/issues/5727) closed (2026-11-22) | not run | - | local | 2026-11-21 |
 | <a id="t-lane-once-5734"></a>lane-once-5734 | defect | [#5734](https://github.com/Charlie-org146/agent-workflow-template/issues/5734) closed (2026-11-21) | not run | - | local | 2026-11-21 |
+| <a id="t-dlf-done-2-budget"></a>dlf-done-2-budget | requirement | done line v110-dlf-1:2 | not run | - | local | 2026-11-24 |
+| <a id="t-dlf-done-3-sizes"></a>dlf-done-3-sizes | requirement | done line v110-dlf-1:3 | not run | - | local | 2026-11-24 |
+| <a id="t-dlf-done-1-cases-linked"></a>dlf-done-1-cases-linked | requirement | done line v110-dlf-1:1 | not run | - | local | 2026-11-24 |
+| <a id="t-dlf-mutation-controls"></a>dlf-mutation-controls | requirement | done line v110-dlf-1:1 | not run | - | local | 2026-11-24 |
