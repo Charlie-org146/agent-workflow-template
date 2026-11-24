@@ -97,4 +97,11 @@ except Exception as crash:
     said = "CRASH " + repr(crash)
 fit.monitor = real_monitor
 check("BUDGET_MINUTES" in said, "M1: a budget check with no ETA and no monitoring skill refuses as before and does not crash: %s" % said[:60])
+# review finding 4: both limits reached in one check: the token raise must not undo the minute raise
+guards.add_set(runs3, "g5", "budget", {"minutes": 240, "tokens": 1000}, "set")
+fit.active_minutes = lambda state, at=None, cfg=None: 240
+with contextlib.redirect_stdout(io.StringIO()):
+    dlf.budget_stop("g5", {"slug": "g5", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {}, "tokens": {"idea": 1100}, "log": []}, runs3, {"token_budget": 1000}, top=tmp)
+both = fit.view({"slug": "g5"}, runs3)["budget"]
+check(both["minutes"] > 240 and both["tokens"] > 1000, "finding 4: with both limits reached both raises stay (%s)" % both)
 sys.exit(1 if failed else 0)
