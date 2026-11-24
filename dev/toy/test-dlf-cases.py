@@ -9,7 +9,7 @@ import sys
 
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 rows = [line.split("\t") for line in open(os.path.join(root, ".loop", "regression.tsv")) if line.count("\t") >= 5]
-linked = {c[5].split(":")[0] for c in rows if c[3] == "DLF-1"}
+linked = {m for c in rows if c[3] == "DLF-1" for m in __import__("re").findall(r"\((DLF-1\.\d)\)", c[5])}
 missing = [n for n in ("DLF-1.1", "DLF-1.2", "DLF-1.3", "DLF-1.4", "DLF-1.5") if n not in linked]
 if missing:
     sys.exit("FAIL: no regression row linked to %s" % ", ".join(missing))
