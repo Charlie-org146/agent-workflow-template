@@ -130,7 +130,7 @@ def parse(text):
         found = re.search(r"^[ \t>*-]*%s[ \t]*:[ \t]*(.+)$" % name, text, re.M | re.I)
         return (found.group(1).strip() or None) if found else None
     got = {n: field(n) for n in ("Files", "Lines", "Gates", "Classes")}
-    none = lambda s: not s or re.match(r"(none|n/?a|no\b)", s, re.I)
+    none = lambda s: not s or re.fullmatch(r"(none|n/?a|no)\W*", s, re.I)
     nums = re.findall(r"\d+", (got["Lines"] or "").replace(",", ""))
     return {"files": [x.strip() for x in re.sub(r"\([^)]*\)", "", got["Files"]).split(",") if x.strip()] if got["Files"] else [],
             "lines": max(map(int, nums)) if nums else None, "gates": [] if none(got["Gates"]) else [g.strip() for g in got["Gates"].split(",")],

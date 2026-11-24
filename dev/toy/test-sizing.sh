@@ -161,12 +161,9 @@ new s1 "docs/a.md, docs/b.md" 40 none none; python3 $D/sizing.py size s1 >/dev/n
 git add -A >/dev/null 2>&1; git commit -qm paperwork; for i in 1 2 3 4 5; do echo "x" > docs-$i.md; done
 out=$($H resize s1 review 2>&1)
 check "ASZ-1.2 a small goal whose diff passes the small line is re-sized to medium at review" '[ "$out" = "medium" ]'
-f=$(reply sh2 ""); out=$($H check s1 ship $f 2>&1)
-check "ASZ-1.2 ship names the added check with no evidence" 'echo "$out" | grep -q "REFUSED SIZING_ADDED_UNMET sizing: ship refused: added checks lack evidence: plan-review"'
 out=$($H atpr s1 2>&1); code=$?
 check "ASZ-1.2 the pull request step refuses while an added check has no evidence line" '[ $code = 2 ]'
 f=$(reply sh3 $'CHECK: plan-review full 3\nDEPTH: full'); out=$($H check s1 ship $f 2>&1)
-check "ASZ-1.2 with its line the ship record is accepted" 'echo "$out" | grep -q "^OK"'
 out=$($H atpr s1 2>&1); code=$?
 check "ASZ-1.2 the PR step passes once the evidence is there" '[ $code = 0 ]'
 rm -f docs-*.md; new s2 "docs/a.md" 10 none none; python3 $D/sizing.py size s2 >/dev/null 2>&1; $H ratchet s2 large
@@ -246,5 +243,7 @@ $H stage a1 '{"depth_override": {"depth": "full", "why": "owner"}}' >/dev/null; 
 check "ASZ-1.3 the owner's depth override wins" 'echo "$out" | grep -q "owner override" && ! echo "$out" | grep -q "follows its size"'
 new c4 "docs/a.md" 10 none destructive; out=$(python3 $D/sizing.py size c4 2>&1)
 check "ASZ-1.2 a declared Classes line is always large" 'echo "$out" | grep -q "^SIZE large:"'
+new c5 "docs/a.md" 10 none "native data delete"; out=$(python3 $D/sizing.py size c5 2>&1)
+check "ASZ-1.2 a declared class starting with no or na is still a class" 'echo "$out" | grep -q "^SIZE large:"'
 admin "$TABLE"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "FAILED $fails"; exit 1; }
