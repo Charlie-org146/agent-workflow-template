@@ -187,6 +187,5 @@
       "cadence": "with each health round",
       "runs": "mac:agent-workflow-template-health-regression"
     }
-  ],
-  "deliver_first": {}
+  ]
 }
