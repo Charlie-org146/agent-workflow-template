@@ -158,7 +158,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - [actions/cache](https://github.com/actions/cache).
   - adapted
   - [test impact analysis](https://martinfowler.com/articles/rise-test-impact-analysis.html).
-- DEL-27: **Reviewed 2026-11-22** Fast merge: the full tests run once, on the merged result, through the merge queue <!-- reviewed 2b87aa0a -->
+- DEL-27: **Unreviewed** Fast merge: the full tests run once, on the merged result, through the merge queue
   - Principle 3, Fast · Topic: Delivery
   - ### Problem
   - Tests ran on the PR and again in the merge queue, and PRs could open only one at a time.
@@ -169,9 +169,9 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
   - DEL-27.2 **A green PR enters the merge queue at once,** and the queue tests several PRs together on the merged result.
   - **Metric.** Green PRs waiting outside the queue past 2 minutes. Target 0.
   - **Test.** A green PR is in the queue within 2 minutes.
-  - DEL-27.3 **The full test set runs once, on the merged result;** the PR itself runs only the quick set and the reached tests.
-  - **Metric.** Full test runs per merged change. Target 1.
-  - **Test.** A merged PR shows one full run, in the queue.
+  - DEL-27.3 **The full test set never blocks a merge;** the PR runs the quick set and the tests its change reaches, and only those block. The full set runs on main after merges, and a red full run opens one issue.
+  - **Metric.** Merges held by a full-set run. Target 0.
+  - **Test.** A PR whose reached tests pass merges before the full set runs; a red full run on main opens one issue.
   - DEL-27.4 **From green to main within its limit,** default 10 minutes, and a merge never makes another ready PR re-test.
   - **Metric.** Green-to-main time over its limit. Target 0.
   - **Test.** A green PR in a quiet queue reaches main within the default limit.
@@ -492,6 +492,7 @@ How to use: [How-to-use-Delivery](How-to-use-Delivery)
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r2 | 2026-11-24 | Fast merge: the full tests run once, on the merged result, through the merge queue <br> Principle 3, Fast · Topic: Delivery <br> ### Problem <br> Tests ran on the PR and again in the merge queue, and PRs could open only one at a time. <br> ### Requirements <br> DEL-27.1 **A PR opens within its limit**, default 1 minute, and any number of goals can open PRs at once. <br> **Metric.** PR openings over their limit or waiting in line. Target 0. <br> **Test.** Two goals open PRs at the same moment; both open. <br> DEL-27.2 **A green PR enters the merge queue at once,** and the queue tests several PRs together on the merged result. <br> **Metric.** Green PRs waiting outside the queue past 2 minutes. Target 0. <br> **Test.** A green PR is in the queue within 2 minutes. <br> DEL-27.3 **The full test set never blocks a merge;** the PR runs the quick set and the tests its change reaches, and only those block. The full set runs on main after merges, and a red full run opens one issue. <br> **Metric.** Merges held by a full-set run. Target 0. <br> **Test.** A PR whose reached tests pass merges before the full set runs; a red full run on main opens one issue. <br> DEL-27.4 **From green to main within its limit,** default 10 minutes, and a merge never makes another ready PR re-test. <br> **Metric.** Green-to-main time over its limit. Target 0. <br> **Test.** A green PR in a quiet queue reaches main within the default limit. <br> ### Reference <br> adopted <br> [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue), with merge groups. | DEL-27.3 revised: the full test set never blocks a merge; the PR's reached tests do (the owner's choice, TD1427) | o917: "I would change this. I would remove this requirement. This is not" |
 | r1 | 2026-11-22 | Fast merge: the full tests run once, on the merged result, through the merge queue <br> Principle 3, Fast · Topic: Delivery <br> ### Problem <br> Tests ran on the PR and again in the merge queue, and PRs could open only one at a time. <br> ### Requirements <br> DEL-27.1 **A PR opens within its limit**, default 1 minute, and any number of goals can open PRs at once. <br> **Metric.** PR openings over their limit or waiting in line. Target 0. <br> **Test.** Two goals open PRs at the same moment; both open. <br> DEL-27.2 **A green PR enters the merge queue at once,** and the queue tests several PRs together on the merged result. <br> **Metric.** Green PRs waiting outside the queue past 2 minutes. Target 0. <br> **Test.** A green PR is in the queue within 2 minutes. <br> DEL-27.3 **The full test set runs once, on the merged result;** the PR itself runs only the quick set and the reached tests. <br> **Metric.** Full test runs per merged change. Target 1. <br> **Test.** A merged PR shows one full run, in the queue. <br> DEL-27.4 **From green to main within its limit,** default 10 minutes, and a merge never makes another ready PR re-test. <br> **Metric.** Green-to-main time over its limit. Target 0. <br> **Test.** A green PR in a quiet queue reaches main within the default limit. <br> ### Reference <br> adopted <br> [GitHub merge queue](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-a-merge-queue), with merge groups. | the owner's 17:42 pin, scope line o797 | o797: "v110-fast-text-2 may revise DEL-17 (without its Tokens line, as o756) and DEL-19," |
 
 ### DEL-28
