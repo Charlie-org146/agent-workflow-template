@@ -8,7 +8,7 @@ How to use: [How-to-use-Checks-by-size](How-to-use-Checks-by-size)
 ## Problem
 
 - Status: written, not built. Built by goal v110-cbs-asz. Reviewed approves the wording; availability is shown separately.
-- Every goal of mine runs the full set of checks, whether it's a 20-line fix or a new gate. On 11-22 to 11-23, plan review took 32 to 144 minutes a goal, whatever its size.
+- Every one of my goals runs the full set of checks, whether it's a 20-line fix or a new gate. On 11-22 to 11-23, plan review took 32 to 144 minutes a goal, whatever its size.
 - Planning already sizes goals (DEL-22). The checks should follow the same size, from one place.
 
 ## Requirements
@@ -18,7 +18,7 @@ How to use: [How-to-use-Checks-by-size](How-to-use-Checks-by-size)
 - CBS-1: **Unreviewed** Checks by goal size: one table says which checks each size runs
   - Goal routine (the standard every goal follows), beside DEL-22's plan levels. Page: docs/wiki/Checks-by-size.md.
   - ### Problem
-  - Every goal of mine runs the full set of checks, whether it's a 20-line fix or a new gate. On 11-22 to 11-23, plan review took 32 to 144 minutes a goal, whatever its size.
+  - Every one of my goals runs the full set of checks, whether it's a 20-line fix or a new gate. On 11-22 to 11-23, plan review took 32 to 144 minutes a goal, whatever its size.
   - Planning already sizes goals (DEL-22). The checks should follow the same size, from one place.
   - ### Requirements
   - CBS-1.1 One settings table lists, for small, medium and large goals, which checks run and in which named form. The template ships defaults, and only my words change the table.
