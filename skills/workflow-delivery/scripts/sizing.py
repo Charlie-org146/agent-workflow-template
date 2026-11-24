@@ -168,7 +168,8 @@ def size_of(text, changed, cfg):
     odd = [f for f in got["files"] if re.search(r"[*?\[]", f) or f.endswith("/") or os.path.isdir(f)]
     if not got["files"] or odd or got["lines"] is None:
         return "large", "large: " + ("no Files list" if not got["files"] else "directory or glob in Files: " + ", ".join(odd[:3]) if odd else "no Lines estimate") + tail, got
-    size, why = judge(len(got["files"]), got["lines"], got["gates"], classes_of(cfg, text_of(got), sorted(set(got["files"]) | set(changed))))
+    got["kinds"] = classes_of(cfg, text_of(got), sorted(set(got["files"]) | set(changed))) + [got["classes"]] * bool(got["classes"])
+    size, why = judge(len(got["files"]), got["lines"], got["gates"], got["kinds"])
     return size, why + tail, got
 
 
@@ -225,7 +226,7 @@ def diff(base):
 def need_diff(base, slug):
     got = diff(base)
     if got is None:
-        refuse("the diff against %s can't be read" % base, "rerun after git diff against the base works, then run sizing.py size " + slug, "SIZING_READ_FAILED")
+        refuse("the diff against %s is unreadable" % base, "rerun after git diff against the base works, then run sizing.py size " + slug, "SIZING_READ_FAILED")
     return got
 
 
@@ -240,7 +241,7 @@ def block(sized, table, step=None):
         v = sized["checks"].get(c)
         f = table["forms"][c][v["form"]] if v else {}
         out += ["  %s: form %s, %d pass%s. Covers: %s. Run: %s" % (c, v["form"], v["passes"], "" if v["passes"] == 1 else "es", f["covers"], f["run"] or "-")] * bool(v)
-    out += ["  ADDED, no evidence yet: " + ", ".join(unmet(sized))] * bool(unmet(sized))
+    out += ["  ADDED, no evidence: " + ", ".join(unmet(sized))] * bool(unmet(sized))
     if DEPTH_AT.get(step) in sized["checks"]:
         out.append("DEPTH: " + depth({"sized": sized}, step))
     return "\n".join(out + [GRAMMAR])
@@ -266,7 +267,7 @@ def cmd_size(slug):
     text, (table, base, cfg) = open(plan, encoding="utf-8").read(), read_table()
     got = need_diff(base, slug)
     size, reason, parsed = size_of(text, got[0], cfg)
-    extra = {"gates": parsed["gates"], "classes": classes_of(cfg, text_of(parsed), [])}
+    extra = {"gates": parsed["gates"], "classes": parsed.get("kinds", [])}
     new = update(slug, lambda old: build(old, size, reason, table, extra))
     print("SIZE %s: %s\n%s" % (new["size"], new["reason"], block(new, table)))
 
@@ -293,7 +294,7 @@ def at_pr(g, state):
     try:
         regrow(state)
         if on() and unmet(state.get("sized")):
-            refuse("added checks have no evidence line: " + ", ".join(unmet(state["sized"])), "run sizing.py rule %s, run each added check, record its CHECK line" % state["slug"], "SIZING_ADDED_UNMET")
+            refuse("added checks lack evidence: " + ", ".join(unmet(state["sized"])), "run sizing.py rule %s, run each added check, record its CHECK line" % state["slug"], "SIZING_ADDED_UNMET")
     except Refusal as err:
         g.guards.refuse_no_try(state, err.args[0], err.args[1], err.args[2], g.save)
 
@@ -301,8 +302,8 @@ def at_pr(g, state):
 def override(state, size, record):
     old, slug = state.get("sized"), state["slug"]
     for bad, why, fix, code in ((not old, "goal %s has no size yet" % slug, FIX_SIZE + slug, "NOT_SIZED"),
-                                (not record, "a size change needs the owner's words", "record the owner's words, then rerun with --owner-record ID", "NO_RECORD"),
-                                (old and old.get("classes"), "goal %s touches a safety class, so it is always large" % slug, "leave the size as it is", "SAFETY"),
+                                (not record, "a size change needs the owner's words", "record the owner's words, rerun with --owner-record ID", "NO_RECORD"),
+                                (old and old.get("classes"), "goal %s has a safety class: always large" % slug, "leave the size", "SAFETY"),
                                 (size not in ORDER or old and ORDER.index(size) < ORDER.index(old["size"]), "sizes only go up (now %s, asked %s)" % (old and old["size"], size), "sizeline.py set %s SIZE --owner-record ID" % slug, "DOWN")):
         if bad:
             refuse(why, fix, "SIZING_" + code)
@@ -335,7 +336,7 @@ def check(state, step, text):
     fix, seen = "run sizing.py rule %s, write the CHECK lines it prints, record again" % state["slug"], {}
     no = lambda why, code: (why, fix, "SIZING_" + code + " sizing")
     if rows and result in ("skipped", "failed"):
-        return no("a CHECK line on a step that is " + result, "CHECK_STEP")
+        return no("a CHECK line on a " + result, "CHECK_STEP")
     for row in rows:
         part, stored = row.split(), sized["checks"].get((row.split() or [""])[0])
         miss = [m for m in forms[part[0]][part[1]].get("markers") or [] if m.lower() not in text.lower()] if stored and part[1:2] == [stored["form"]] else []
@@ -352,7 +353,7 @@ def check(state, step, text):
     if new:
         adopt(state, update(state["slug"], lambda was: dict(was, evidence=dict(was["evidence"], **new))))
     if step == "ship" and result == "done" and unmet(state["sized"]):
-        return no("ship refused: added checks have no evidence line: " + ", ".join(unmet(state["sized"])), "ADDED_UNMET")
+        return no("ship refused: added checks lack evidence: " + ", ".join(unmet(state["sized"])), "ADDED_UNMET")
 
 
 def prompted(fn):

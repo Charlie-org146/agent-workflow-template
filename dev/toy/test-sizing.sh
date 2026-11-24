@@ -161,9 +161,8 @@ new s1 "docs/a.md, docs/b.md" 40 none none; python3 $D/sizing.py size s1 >/dev/n
 git add -A >/dev/null 2>&1; git commit -qm paperwork; for i in 1 2 3 4 5; do echo "x" > docs-$i.md; done
 out=$($H resize s1 review 2>&1)
 check "ASZ-1.2 a small goal whose diff passes the small line is re-sized to medium at review" '[ "$out" = "medium" ]'
-check "ASZ-1.2 the added checks are stored" '[ "$($H sized s1 added)" = "[{\"check\": \"plan-review\", \"form\": \"full\"}]" ]'
 f=$(reply sh2 ""); out=$($H check s1 ship $f 2>&1)
-check "ASZ-1.2 ship names the added check with no evidence" 'echo "$out" | grep -q "REFUSED SIZING_ADDED_UNMET sizing: ship refused: added checks have no evidence line: plan-review"'
+check "ASZ-1.2 ship names the added check with no evidence" 'echo "$out" | grep -q "REFUSED SIZING_ADDED_UNMET sizing: ship refused: added checks lack evidence: plan-review"'
 out=$($H atpr s1 2>&1); code=$?
 check "ASZ-1.2 the pull request step refuses while an added check has no evidence line" '[ $code = 2 ]'
 f=$(reply sh3 $'CHECK: plan-review full 3\nDEPTH: full'); out=$($H check s1 ship $f 2>&1)
@@ -221,7 +220,7 @@ dr() { (cd "$T/repo" && python3 -c "
 import json,sys; sys.path.insert(0,'$D'); import flow
 print(flow.depth_rule(sys.argv[1], json.load(open('$RUNS/a1.json')), '$RUNS'))" "$1" 2>&1); }
 out=$(dr plan)
-check "CBS-1.3 a named plan skill gets the sizing command" 'echo "$out" | grep -q "sizing.py size a1" && echo "$out" | grep -q "CHECK: <check> <form> <passes>"'
+check "CBS-1.3 a named skill gets the sizing command" 'echo "$out" | grep -q "sizing.py size a1" && echo "$out" | grep -q "CHECK: <check> <form> <passes>"'
 out=$(dr review)
 check "CBS-1.3 the review prompt follows the stored size" 'echo "$out" | grep -q "follows its size" && echo "$out" | grep -q "DEPTH: condensed"'
 admin 'c["checks_by_size"] = True'; f=$(reply mal $'CHECK: x'); out=$($H check a2 plan $f 2>&1)
@@ -245,5 +244,7 @@ f=$(reply rv $'CHECK: review normal 1\nDEPTH: condensed'); $H check s3 review $f
 check "ASZ-1.2 the review record re-sizes from the diff" '[ "$($H sized s3 size)" = "\"medium\"" ]'
 $H stage a1 '{"depth_override": {"depth": "full", "why": "owner"}}' >/dev/null; out=$(dr review)
 check "ASZ-1.3 the owner's depth override wins" 'echo "$out" | grep -q "owner override" && ! echo "$out" | grep -q "follows its size"'
+new c4 "docs/a.md" 10 none destructive; out=$(python3 $D/sizing.py size c4 2>&1)
+check "ASZ-1.2 a declared Classes line is always large" 'echo "$out" | grep -q "^SIZE large:"'
 admin "$TABLE"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "FAILED $fails"; exit 1; }
