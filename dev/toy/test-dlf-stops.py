@@ -29,6 +29,8 @@ c = dlf.classify
 check(c("test", "a test failed", diff=TEST_DIFF) == S[6], "a changed assertion in a test file is a loosened test: it waits")
 check(c("test", "a test failed", diff=SKIP_DIFF) == S[6], "an added skip marker is a loosened test: it waits")
 check(c("test", "a test failed", diff=ROWS_DIFF) == S[6], "an edited row in the regression rows file is a loosened test: it waits")
+DEL_DIFF = "--- a/tests/test_a.py\n+++ /dev/null\n@@ -1,2 +0,0 @@\n-def test():\n-    assert 1\n"
+check(c("test", "a test failed", diff=DEL_DIFF) == S[6], "finding 2: a whole test file deleted (+++ /dev/null) is a loosened or deleted test: it waits")
 check(c("test", "a test failed", diff=ADD_DIFF) == "other", "a test only added is not loosened: it becomes a line (negative control)")
 check(c("break", "a break", paths=[".claude/settings.json"]) == S[2], "a goal touching a settings file is a security subject: it waits")
 check(c("break", "a break", paths=["skills/a/b.py"]) == "other", "a goal touching only code is other: it becomes a line")

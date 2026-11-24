@@ -173,7 +173,7 @@ SKIP = r"\b(skip|xfail)\b|expectedFailure|\|\| true"
 def loosened(diff):
     path = ""
     for line in diff.splitlines():
-        if line.startswith("+++ "):
+        if line.startswith("--- ") or line.startswith("+++ ") and "/dev/null" not in line:
             path = line[4:].strip()
         elif re.search(TESTS, path) and (line.startswith("-") and not line.startswith("---") or line.startswith("+") and re.search(SKIP, line)):
             return True
