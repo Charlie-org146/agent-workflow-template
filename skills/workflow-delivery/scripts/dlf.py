@@ -157,7 +157,7 @@ def convert(top, runs, slug, rel, key, lid, what, words):
 # stop table (DLF-1.1, DLF-1.3)
 SAFETY = ("deleting what cannot be restored", "money", "security and sandbox settings", "private data", "steward merges",
           "a change to what a feature promises", "a test loosened or deleted")
-STOPS = ("break", "cap", "budget", "test", "choice")
+STOPS = ("break", "plan", "cap", "budget", "test", "choice")
 WORDS = dict(zip(SAFETY, (r"force[- ]push|rm -rf|drop (table|database)|delete (the |a )?(repo|branch|backup|release|history)|hard reset",
                           r"\b(payment|refund|invoice|billing|purchase)s?\b|\$\d",
                           r"\bsandbox|permission mode|bypass ?permissions|settings\.json|allowlist|credential|api[_ -]?key|secret|password",
@@ -182,7 +182,7 @@ def loosened(diff):
 
 def classify(stop, text="", paths=(), diff="", label="", cls="", template=False):
     """A stop's subject; a label only raises it; unclassifiable waits."""
-    if stop not in STOPS or stop in ("break", "choice") and not (cls or paths or diff) or stop == "test" and not diff:
+    if stop not in STOPS or stop in ("break", "plan", "choice") and not (cls or paths or diff) or stop == "test" and not diff:
         return "unclassifiable"
     if cls in SAFETY or label in SAFETY:
         return cls if cls in SAFETY else label

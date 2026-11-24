@@ -100,8 +100,23 @@ json.dump(dict(config), open(tmp + "/.loop/config.json", "w"))
 ask = ["approve the plan wording", "pick the first of two names"]
 check(goal_mod.choices({"slug": "gq", "touches": ["skills/a/b.py"]}, ask, "plan") is True and len(lines("gq")) == 2, "two PENDING choices on a goal with declared touches become two lines and the goal goes on")
 check(goal_mod.choices({"slug": "gq", "touches": ["skills/a/b.py"]}, ask, "plan") is True and len(lines("gq")) == 2, "the same choices again file no second line")
+check(goal_mod.choices({"slug": "gp", "touches": ["skills/a/b.py"]}, ["the plan is past its review cap: approve one more round"], "plan") is True
+      and len([l for l in lines("gp") if "| plan |" in l]) == 1, "a plan past its review cap is its own stop, one line, and the goal goes on")
 check(goal_mod.choices({"slug": "gr", "touches": []}, ask, "plan") is False and not lines("gr"), "a choice on a goal with no touches is unclassifiable: it waits")
 check(goal_mod.choices({"slug": "gs", "touches": [".claude/settings.json"]}, ask, "plan") is False, "a choice on a goal touching a settings file waits")
 check(goal_mod.choices({"slug": "gt", "touches": ["docs/wiki/Deliver-first.md"]}, ask, "plan") is False, "a choice on a goal touching a requirement page changes what a feature promises: it waits")
 check(goal_mod.choices({"slug": "gu", "touches": ["skills/a/b.py"]}, [], "plan") is False, "no PENDING items: nothing to settle")
+# DLF-1.1's own test: three red-team breaks, a plan past its cap and a budget past the cap: the goal goes on and the release has ONE issue listing all five
+import fit  # noqa: E402
+import guards  # noqa: E402
+code, said = build("gx", ["skills/a/b.py"], ["break one", "break two", "break three"])
+goal_mod.choices({"slug": "gx", "touches": ["skills/a/b.py"]}, ["the plan is past its review cap: one more round?"], "plan")
+runs = tmp + "/.git/loop/runs"
+guards.add_set(runs, "gx", "budget", {"minutes": 480, "tokens": 0}, "set")
+fit.active_minutes = lambda state, at=None, cfg=None: 480
+dlf.budget_stop("gx", {"slug": "gx", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {}, "log": []}, runs, {}, top=tmp)
+five = lines("gx")
+check(code == 0 and len(five) == 5 and len(json.load(open(fake + "/state.json"))["issues"]) == 1, "three breaks, a plan past its cap and a budget past the cap: one issue, five lines (%d)" % len(five))
+check(sorted(l.split("|")[1].strip() for l in five) == ["break", "break", "break", "cap", "plan"] and all("settle with:" in l for l in five), "the five are three breaks, one plan, one cap, each with its settle line")
+check("reached its 2x cap at 480 of 240" in "".join(five) and "keep working at the cap" in "".join(five), "the cap line says the goal reached its 2x cap and keeps working")
 sys.exit(1 if failed else 0)

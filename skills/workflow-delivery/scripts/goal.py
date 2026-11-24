@@ -329,7 +329,7 @@ def cmd_record(args):
 
 def choices(state, pending, step):
     import dlf  # DLF-1.1: each PENDING decision is a line and the recommended answer is taken, unless the table says it waits
-    return bool(pending) and all(dlf.settle(root(), state_dir(), state["slug"], "choice", "%s%d" % (step, i), "design choice at %s: %s" % (step, p[:200]),
+    return bool(pending) and all(dlf.settle(root(), state_dir(), state["slug"], "plan" if re.search(r"review cap|past (its|the) cap", p, re.I) else "choice", "%s%d" % (step, i), "design choice at %s: %s" % (step, p[:200]),
                                             "answer: the recommended one, or name another", "take the recommended answer", paths=state.get("touches") or ())[0] == "continue"
                                  for i, p in enumerate(pending, 1))
 
