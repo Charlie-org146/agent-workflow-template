@@ -1,25 +1,27 @@
-# v1.1.0 brief (minor, revision 3)
+# v1.1.0 brief (minor, revision 4)
 
-- What it's about: finish every task already started in the v1.1.0 cut, with the Fast builds first (o800, o811).
+- What it's about: v1.1.0 implements the spec approved on 2026-11-24, as the 16 tasks of the plan.
 
 ## Tasks
 
-1. v110-text The three features' text (done).
-2. v110-tasks Today's work as tasks (done).
-3. migrate-features-2 The template feature migration (done).
-4. v110-impl The implementation.
-5. v110-fast Fast and the principle-3 split: renumber, fast-text-2, fast-clock (DEL-17), fast-checks (DEL-25), fast-reads, fast-ci-2 (DEL-26/27) with fast-cut, fast-steps-2 (DEL-19), v110-del22 (DEL-22).
-12. v110-tsk12 Deliver first (DLF-1).
-13. v110-tsk13 Task first (TSK-1).
-14. v110-tsk14 Right-sized checks (CBS-1, SKP-1, CHP-1, ASZ-1).
+1. Fast routine: deliver first, task first and checks by size (DELIVER, SIZE, FIRST, SAFETY; GOAL-2, GOAL-8, BUDGET-5, QUICK-3).
+2. The spec is in: the 33 approved pages become the spec; old pages point at the new IDs; test rows keep their links; release on every merge turned off (FEAT, PRIN, RLS-1).
+3. Side by side: memory lines on the Mac (MACHINE-5, MACHINE-6).
+4. Quick checks (QUICK, SCAN, LIMIT, HEALTH-4, GOAL-9, GUARD-3).
+5. On GitHub: goals, tasks and releases as issues and milestones (GOAL, TASK-1 to 5, RLS-2, RLS-3, FIND-1 to 4).
+6. Settings (CONFIG).
+7. Timed and costed (CLOCK, COST, BUDGET-1 to 4, MEANS, GOAL-6, GOAL-7).
+8. Pull request tests and the queue (PRTEST, QUEUE).
+9. Identity and guards (ACCESS, GUARD-1, GUARD-2, GUARD-4, FEAT-4).
+10. Tests on pytest (TEST, FEAT-6).
+11. Health, reviewer and red team (HEALTH, REVIEW, RED, FIND-5, PRIN-4 to 6, FEAT-7).
+12. Board and questions (BOARD, ASK, OPER, TASK-6, TASK-7).
+13. Machines and the package (MACHINE-1 to 4, PACK).
+14. Adapters (ADAPT).
+15. Adoption (ADOPT).
+16. Staging, production and the cut (RLS-4 to 7).
 
-- Priority: Tasks 12, 13 and 14 are priority 1, with Task 1. The owner's words: "Priority 1, with Task 1" (o907, top o909). Ties go to the original fast goals first (TD1374).
-
-- Patches alongside: auto-approve-off (o806), approve-ahead-owner-only.
-- Approval: DEL-22.4's fallback, once (o807).
-- Not in it: SET-1, DEL-3, DOC-29 and the front pages, and the confidence fix (all v1.2.0).
-- Exception to the not-in-it line above: the README and Home rows for DLF-1, TSK-1, CBS-1, SKP-1, CHP-1 and ASZ-1 (o908).
-- Done when: every goal above is merged green, and v1.1.0 is tagged through the minor path.
-- Done when, added in revision 3: the goals v110-tsk12-14-text, v110-dlf-1, v110-tsk-1, v110-cbs-asz, v110-skp-1 and v110-chp-1 are merged green.
-- Lifetimes: the six feature pages stay; the availability line on each expires when its feature is built; only the six How-to pages are temporary.
-Frozen: 637507fb45069cc7f63c5eeaa90aeec390b9b68dbba5da916fdab2bf693852a4 o907 2026-11-23
+- Work in flight: the deliver-first, task-first and checks-by-size goals are task 1's first goals; the quick-checks goal joins task 4 and the clock goal task 7; the rest of revision 2's tasks are done or carried as issues.
+- Not in it: rewriting the 315 test scripts one by one.
+- Done when: every requirement's tests pass on the reached-test run, the full set is green on main, and v1.1.0 is tagged through the cut (RLS-4).
+Frozen: df28acaab5f014ccb646b8ce0abe364370112fc02592d2c29d6b138837cdaf78 o924 o928 2026-11-24

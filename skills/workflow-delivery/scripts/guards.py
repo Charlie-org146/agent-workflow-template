@@ -14,10 +14,11 @@ import private  # noqa: E402
 import lanekit  # noqa: E402
 fcntl = lanekit.fcntl
 import role  # noqa: E402
+import sizing  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-RULES = {"depth-line": "0.12.1", "depth-condensed": "0.12.1", "full-markers": "0.12.1"}
+RULES = {"depth-line": "0.12.1", "depth-condensed": "0.12.1", "full-markers": "0.12.1", "sizing": "1.1.0"}
 NOTE_AT, WAIT_AT = 5, 10
 FORMAT_RULE, NO_STEP_LINE, NOT_RUN_BY_FLOW = "FORMAT_RULE", "NO_STEP_LINE", "NOT_RUN_BY_FLOW"
 WORKER_SELF_REPAIR, RESUME_STATUS, RESUME_NO_SESSION = "WORKER_SELF_REPAIR", "RESUME_STATUS", "RESUME_NO_SESSION"
@@ -38,6 +39,7 @@ def stamp(state, step):
     if not isinstance(state.get("rules_at"), dict):
         state["rules_at"] = {}
     state["rules_at"][step] = known()
+    sizing.resize(state, step)
 
 
 def applies(state, step, rule):
@@ -50,6 +52,14 @@ def named(rule):
 
 
 def check_record(state, step, text, cfg, result):
+    bad = applies(state, step, "sizing") and sizing.check(state, step, text)
+    if bad:
+        return "", bad, None, []
+    got = _record(state, step, text, cfg, result)
+    return (got[0] + sizing.light(state, step),) + got[1:]
+
+
+def _record(state, step, text, cfg, result):
     skipped = []
 
     def held(rule):
@@ -62,7 +72,7 @@ def check_record(state, step, text, cfg, result):
         state.setdefault("depth", {})[step] = "condensed"
         return " (stopped at its step budget)", None, None, skipped
     common = role.git("rev-parse", "--git-common-dir").stdout.strip()
-    setting = role.depth_of(cfg, state, os.path.join(os.path.abspath(common), "loop", "runs") if common else None)
+    setting = sizing.depth(state, step) or role.depth_of(cfg, state, os.path.join(os.path.abspath(common), "loop", "runs") if common else None)
     ends = list(role.STEP.finditer(text))
     body = text[:ends[-1].start()] if ends else text
     found = role.DEPTH.findall(body)
