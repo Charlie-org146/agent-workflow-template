@@ -105,7 +105,7 @@ check(goal_mod.choices({"slug": "gp", "touches": ["skills/a/b.py"]}, ["the plan 
 check(goal_mod.choices({"slug": "gr", "touches": []}, ask, "plan") is False and not lines("gr"), "a choice on a goal with no touches is unclassifiable: it waits")
 check(goal_mod.choices({"slug": "gs", "touches": [".claude/settings.json"]}, ask, "plan") is False, "a choice on a goal touching a settings file waits")
 check(goal_mod.choices({"slug": "gt", "touches": ["docs/wiki/Deliver-first.md"]}, ask, "plan") is False, "a choice on a goal touching a requirement page changes what a feature promises: it waits")
-check(goal_mod.choices({"slug": "gu", "touches": ["skills/a/b.py"]}, [], "plan") is False, "no PENDING items: nothing to settle")
+check(goal_mod.choices({"slug": "gu", "touches": ["skills/a/b.py"]}, [], "plan") is None, "no PENDING items: nothing to settle")
 # DLF-1.1's own test: three red-team breaks, a plan past its cap and a budget past the cap: the goal goes on and the release has ONE issue listing all five
 import fit  # noqa: E402
 import guards  # noqa: E402
@@ -125,4 +125,11 @@ fit.active_minutes = lambda state, at=None, cfg=None: 5
 for _ in range(2):
     dlf.budget_stop("gk", {"slug": "gk", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {}, "tokens": {"idea": 2000}, "log": []}, runs, {"token_budget": 1000}, top=tmp)
 check(len(lines("gk")) == 1 and "reached its 2x cap at 2000 of 1000" in lines("gk")[0], "2000 tokens against a 1000 estimate: one cap line, the goal keeps working, and a second check files none")
+# review finding 1: with auto_approve on, a pending decision is still settled: a safety one waits, a benign one becomes a line
+auto = {"auto_approve": True}
+check(goal_mod.autoapprove({"slug": "ga1", "touches": [".claude/settings.json"]}, ["approve the new sandbox setting"], "plan", auto) is False, "finding 1: with auto_approve on, a pending decision on a security setting still waits")
+check(goal_mod.autoapprove({"slug": "ga2", "touches": ["skills/a/b.py"]}, ["pick a name"], "plan", auto) is True and len([l for l in lines("ga2") if "| choice |" in l]) == 1, "finding 1: with auto_approve on, a benign pending decision files its line and the goal goes on")
+check(goal_mod.autoapprove({"slug": "ga3", "touches": ["skills/a/b.py"]}, [], "plan", auto) is True and not lines("ga3"), "with auto_approve on and nothing pending the old rule holds")
+json.dump(dict(config, deliver_first={"goal": {"ga4": False}}), open(tmp + "/.loop/config.json", "w"))
+check(goal_mod.autoapprove({"slug": "ga4", "touches": [".claude/settings.json"]}, ["approve it"], "plan", auto) is True and not lines("ga4"), "with deliver-first off for the goal auto_approve works as it always did")
 sys.exit(1 if failed else 0)

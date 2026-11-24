@@ -277,7 +277,7 @@ def cmd_record(args):
                              "STEP: done|skipped|pending|failed line, then record again", guards.NO_STEP_LINE, save)
     stamp, cfg = "", config()
     wait = pending or result == "pending"
-    auto, ok = wait and (cfg.get("auto_approve") is True or fit.plan_ahead(state, state_dir(), step) or choices(state, pending, step)), result in ("done", "skipped")
+    auto, ok = wait and (autoapprove(state, pending, step, cfg)), result in ("done", "skipped")
     if ok or auto:
         stamp, refusal, ask, skipped = guards.check_record(state, step, text, cfg, result)
         for line in skipped:
@@ -329,9 +329,17 @@ def cmd_record(args):
 
 def choices(state, pending, step):
     import dlf  # DLF-1.1: each PENDING decision is a line and the recommended answer is taken, unless the table says it waits
-    return bool(pending) and all(dlf.settle(root(), state_dir(), state["slug"], "plan" if re.search(r"review cap|past (its|the) cap", p, re.I) else "choice", "%s%d" % (step, i), "design choice at %s: %s" % (step, p[:200]),
-                                            "answer: the recommended one, or name another", "take the recommended answer", paths=state.get("touches") or ())[0] == "continue"
-                                 for i, p in enumerate(pending, 1))
+    if not pending or not dlf.setting(root(), state["slug"])[0]:
+        return None  # nothing pending, or deliver-first is off: the old rule decides
+    return all(dlf.settle(root(), state_dir(), state["slug"], "plan" if re.search(r"review cap|past (its|the) cap", p, re.I) else "choice", "%s%d" % (step, i),
+                          "design choice at %s: %s" % (step, p[:200]), "answer: the recommended one, or name another", "take the recommended answer",
+                          paths=state.get("touches") or ()
+                          )[0] == "continue" for i, p in enumerate(pending, 1))
+
+
+def autoapprove(state, pending, step, cfg):
+    held = choices(state, pending, step)  # settled first, so auto_approve never skips the safety table
+    return held if held is not None else cfg.get("auto_approve") is True or fit.plan_ahead(state, state_dir(), step)
 
 
 def queue(op, *args):
