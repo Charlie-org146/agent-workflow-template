@@ -17,7 +17,7 @@ os.makedirs(os.path.join(copy, "dev", "toy"))
 for name in os.listdir(os.path.join(root, "dev", "toy")):
     if name.startswith("test-dlf-") or name == "dlf-gh":
         shutil.copy2(os.path.join(root, "dev", "toy", name), os.path.join(copy, "dev", "toy", name))
-D, R = "skills/workflow-delivery/scripts/dlf.py", "skills/workflow-release/scripts/release.py"
+D, R = "skills/workflow-delivery/scripts/dlf.py", "skills/workflow-release/scripts/release_docs.py"
 DC = "skills/workflow-delivery/scripts/dlf_cut.py"
 G = "skills/workflow-delivery/scripts/goal.py"
 MUTATIONS = [  # (rule, file, the line to break, its broken form, the toy that guards it)

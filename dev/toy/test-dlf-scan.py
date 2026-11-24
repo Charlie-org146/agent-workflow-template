@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-delivery/scripts/dlf.py skills/workflow-delivery/scripts/private.py
+# reads: skills/workflow-delivery/scripts/dlf.py skills/workflow-delivery/scripts/private.py skills/workflow-delivery/scripts/dlf_cut.py
 """DLF-1.3 (the privacy rule it keeps): every text deliver-first writes outside the run record goes through the one filing
 routine's private-name scan. One case per outside write path (a line comment, an event comment, the cap line, a patch-goal
 conversion, the release issue body) with a planted name: nothing is written, the text stays in the run record, and the

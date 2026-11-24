@@ -115,10 +115,11 @@ def cmd_ask(args):
     print("PR: %s" % state.get("pr"))
     cfg = read_config(top)
     base = base_of(top, cfg)
-    print("\n".join(docs_lines(top, cfg, base)))
+    import release_docs
+    print("\n".join(release_docs.docs_lines(top, cfg, base)))
     for line in docs_trouble(top, base, whole=True):
         print("DOCS, which cut will refuse: " + line)
-    print("How to verify:\n%s" % (verify_steps(top, args.slug) or "NONE YET, which cut will refuse."))
+    print("How to verify:\n%s" % (release_docs.verify_steps(top, args.slug) or "NONE YET, which cut will refuse."))
     print("Type exactly one of:\n  " + "\n  ".join(words))
     return 0
 
@@ -191,17 +192,6 @@ def bump(version, part):
     return ".".join(str(item) for item in numbers)
 
 
-def verify_steps(top, slug):
-    try:
-        text = open(os.path.join(top, ".loop", "goals", slug + ".md")).read()
-    except OSError:
-        return ""
-    part = text.partition("## Verify by hand")[2].split("\n## ", 1)[0]
-    part = re.sub(r"<!--.*?-->", "", part, flags=re.S).strip()
-    steps = re.split(r"^\s*\d+\.\s+(?=\S)", part, flags=re.M)[1:]
-    return part if steps and all(re.search(r"Expect:\s*\S", step) for step in steps) else ""
-
-
 def doc_rows(top):
     try:
         lines = [line.rstrip("\n").partition("\t") for line in open(os.path.join(top, ".loop", "docs.tsv")) if line.strip() and line[0] != "#"]
@@ -260,15 +250,6 @@ def base_of(top, cfg):
     return "origin/" + base if run(["git", "rev-parse", "--verify", "--quiet", "origin/" + base], cwd=top).returncode == 0 else base
 
 
-def docs_lines(top, cfg, base):
-    if not doc_rows(top):
-        return ["Documentation: not set up (run workflow-docs init)."]
-    out = git("diff", "--name-only", base + "...HEAD", "--", cfg.get("wiki_dir") or "docs/wiki", cwd=top, check=False)
-    changed = [os.path.basename(name)[:-3] for name in out.splitlines() if name.endswith(".md")]
-    link = wiki_link(top)
-    return ["Documentation changed: %s." % (", ".join(changed) or "none")] + (["Wiki: " + link] if link else [])
-
-
 def subjects(base, cwd):
     lines = []
     for line in git("log", "--reverse", "--format=%H %s", base + "..HEAD", cwd=cwd).splitlines():
@@ -302,23 +283,6 @@ def restore(cwd, files, sha_before, message):
     print("RESTORED: %s" % ", ".join(files))
 
 
-DELIVERY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts")
-
-
-def debt(cwd, slug, runs):
-    """DLF-1.4: '' when no deliver-first line stands between this release and its cut; else why not. Fails closed: no ledger reader, no cut."""
-    path = os.path.join(DELIVERY, "dlf.py")
-    if not os.path.isfile(path):
-        return "the deliver-first ledger can't be read: workflow-delivery is not beside workflow-release. Fix: install workflow-delivery"
-    import importlib.util
-    sys.path.insert(0, DELIVERY)
-    spec = importlib.util.spec_from_file_location("dlf", path)
-    dlf = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(dlf)
-    import dlf_cut
-    return dlf_cut.cut(cwd, runs, dlf.brief(cwd, slug)[1])
-
-
 def cmd_cut(args):
     slug = args.slug
     state = load(slug)
@@ -335,7 +299,8 @@ def cmd_cut(args):
         sys.exit("REFUSED: uncommitted changes in %s. Fix: commit or set them aside first." % cwd)
     cfg = read_config(cwd)
     base = base_of(cwd, cfg)
-    steps = verify_steps(cwd, slug)
+    import release_docs
+    steps = release_docs.verify_steps(cwd, slug)
     if not steps:
         sys.exit("REFUSED: %s has no complete steps under ## Verify by hand. Fix: give every numbered step an Expect: "
                  "line in .loop/goals/%s.md, and commit it." % (slug, slug))
@@ -346,7 +311,7 @@ def cmd_cut(args):
     unmet, left = criteria_trouble(cwd, cfg)
     if unmet:
         sys.exit("REFUSED: criteria without a passing regression row: %s." % ", ".join(unmet))
-    held = debt(cwd, slug, os.path.dirname(state_path(slug)))
+    held = release_docs.debt(cwd, slug, os.path.dirname(state_path(slug)))
     held and sys.exit("REFUSED: deliver-first lines stand between this release and its cut:\n%s" % held)
     import review  # review imports release
     print(review.left_text(left).strip() or "LEFT 0 rows: every row ran or had a PASS on this commit")
@@ -373,7 +338,7 @@ def cmd_cut(args):
         restore(cwd, files, before, message)
         sys.exit("REFUSED: could not commit the release files.")
     text = "\n".join("- " + item for item in bullets) + "\n\n## How to verify\n\n%s\n\n## Documentation\n\n%s\n\nPull request: %s\n" % (
-        steps, "\n\n".join(docs_lines(cwd, cfg, base)), state.get("pr", "")) + review.left_text(left)
+        steps, "\n\n".join(release_docs.docs_lines(cwd, cfg, base)), state.get("pr", "")) + review.left_text(left)
     import autorelease
     stop = autorelease.private_check(cwd, base, {"release notes": text}, bool(git("ls-remote", "origin", branch, cwd=cwd, check=False)))
     if stop:

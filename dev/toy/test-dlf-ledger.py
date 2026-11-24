@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-delivery/scripts/dlf.py
+# reads: skills/workflow-delivery/scripts/dlf.py skills/workflow-delivery/scripts/dlf_cut.py
 """DLF-1.1 and DLF-1.4: the ledger and the release cut, against a fake gh with paged lists, authors and faults (temp home, no network).
 Five lines of three goals land on ONE issue, filing is found-or-created by key (concurrent, resumed, after a timeout), an unreachable
 issue queues the line, the cut refuses with one list of five plus one accept-all line, only the owner's comment accepts or declines,
