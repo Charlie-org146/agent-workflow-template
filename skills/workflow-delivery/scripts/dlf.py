@@ -51,7 +51,6 @@ def pages(top, path):
 
 
 def find_issue(top, rel):
-    """The release issue's lowest number, 0 when a complete read lists none, None when the read fails."""
     rows = pages(top, "%s?state=all&per_page=100&labels=%s" % (ISSUE, urllib.parse.quote("%s:%s" % (LABEL, rel))))
     return None if rows is None else min([r["number"] for r in rows if "pull_request" not in r], default=0)
 
@@ -67,7 +66,6 @@ def post(top, path, field, text, *more):
 
 
 def ensure_issue(top, runs, slug, rel):
-    """Find the release issue or create it once; keep the lowest number and close our duplicate."""
     number = find_issue(top, rel)
     if number != 0:
         return number
@@ -95,22 +93,22 @@ def later(runs, slug, item):
 def filed(runs, slug, held, key, lid, item):
     held["lines"][key] = lid
     held["queue"] = [q for q in held["queue"] if q != item]
+    held["local"] = [x for x in held["local"] if "key=%s " % key not in x["text"]]
     keep(runs, slug, held)
     return lid, ""
 
 
 def file_line(top, runs, slug, rel, stop, subject, occ, what, words, rec):
-    """Found-or-create a line by key: (id, '' | queued | local)."""
     key = "|".join((slug, stop, subject, re.sub(r"[^A-Za-z0-9_.:-]", "-", str(occ))[:40]))
     what, words, rec = (" ".join(str(x).split()) for x in (what, words, rec))
     held = mem(runs, slug)
     item = dict(rel=rel, stop=stop, subject=subject, occ=occ, what=what, words=words, rec=rec)
     if key in held["lines"]:
         return filed(runs, slug, held, key, held["lines"][key], item)
-    number = ensure_issue(top, runs, slug, rel)
+    n0, number = len(held["local"]), ensure_issue(top, runs, slug, rel)
     rows = comments(top, number) if number else None
     if rows is None:
-        if not number and mem(runs, slug)["local"]:
+        if not number and len(mem(runs, slug)["local"]) > n0:
             return "", "local"
         return later(runs, slug, item)
     for row in rows:
@@ -350,11 +348,13 @@ def cut(top, runs, rel, owner="", loop=""):
         goal = os.path.basename(f)[:-9]
         retry(top, runs, goal)
         try:
-            queued = [q for q in json.load(open(f)).get("queue", []) if q.get("rel") == rel]
+            held = json.load(open(f))
         except (OSError, ValueError):
-            out.append("read failed: %s is not readable; fix or remove it" % os.path.basename(f))
+            out.append("read failed: %s" % os.path.basename(f))
             continue
+        queued = [q for q in held.get("queue", []) if q.get("rel") == rel]
         out += ["unfiled: %d line(s) of %s never reached the issue" % (len(queued), goal)] * bool(queued)
+        out += ["local: %s holds %d text(s) the private-name scan refused" % (goal, len(held.get("local", [])))] * bool(held.get("local"))
     got = ledger(top, rel, owner, loop)
     if got is None:
         return "\n".join(["read failed: release %s's issue can't be read completely" % rel] + out)

@@ -184,4 +184,16 @@ got1 = dlf.file_line(top, runs, "gd1", "v-dup", "break", "other", "d1", "a break
 dlf.find_issue = real_find
 check(got1 == ("", "queued"), "finding 1: a failed second lookup after creating queues the line instead of posting to an unconfirmed issue: %s" % (got1,))
 check(not any("gd1|break" in c["body"] for cs in state()["comments"].values() for c in cs), "finding 1: and nothing was posted")
+# round 4, finding 2: a line the private-name scan refused stays in the run record as pending debt, and the cut refuses while any goal holds one
+dlf.file_line(top, runs, "gl", "v1", "break", "other", "l1", "a break about acmesecret", "words", "rec")
+said = dlf.cut(top, runs, "v1")
+check("local: gl holds 1 text(s) the private-name scan refused" in said, "finding 2: the cut names the goal that holds a refused text: %s" % [l for l in said.splitlines() if "local:" in l])
+dlf.file_line(top, runs, "gl", "v1", "break", "other", "l1", "a break, reworded", "words", "rec")
+check("local: gl" not in dlf.cut(top, runs, "v1"), "finding 2: once the same line is filed with clean text the refusal clears")
+# round 4, note 1: a failed issue read after an earlier scan failure queues the new line; it is not reported as a scan failure
+dlf.file_line(top, runs, "gn1", "v1", "break", "other", "n0", "a break about acmesecret", "words", "rec")
+os.environ["DLF_FAKE_FAIL"] = "list"
+got_n = dlf.file_line(top, runs, "gn1", "v1", "break", "other", "n1", "a clean break", "words", "rec")
+os.environ.pop("DLF_FAKE_FAIL")
+check(got_n[1] == "queued", "note 1: a failed issue read queues the line even when an earlier text failed the scan: %s" % (got_n,))
 sys.exit(1 if failed else 0)
