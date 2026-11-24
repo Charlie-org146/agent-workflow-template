@@ -141,7 +141,7 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [ci-summary](Tests#t-ci-summary) | requirement | AUT-1 | Given the nightly run, when it ends, then it writes a results table to the job summary. | PASS 2026-11-20 |
+| [ci-summary](Tests#t-ci-summary) | requirement | AUT-1 | Given the nightly run, when it ends, then it writes a results table to the job summary. | PASS 2026-11-24 |
 | [schedule-setting](Tests#t-schedule-setting) | requirement | AUT-1 | Given a changed schedule setting, when the workflow is rewritten, then the Actions schedule changes. | PASS 2026-11-20 |
 | [aut-defect-issue](Tests#t-aut-defect-issue) | requirement | AUT-1 | Given AUT-1, when test-automation.sh runs its 2 cases, then each passes: it prints every PASS line the 3 merged rows checke; the issue gains the defect label. | PASS 2026-11-22 |
 | [ls-private-tick](Tests#t-ls-private-tick) | requirement | AUT-1 | Given AUT-1, when test-local-schedule.sh runs its 3 cases, then each passes: health runs, the regression runs live, one issue i; health runs, no regression runs the tick says REGR; it says Last ran and MISSED, a recent last run say. | PASS 2026-11-24 |
