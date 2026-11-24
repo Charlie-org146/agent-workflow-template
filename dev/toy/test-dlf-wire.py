@@ -193,8 +193,8 @@ real_branch_diff = fit.branch_diff
 fit.branch_diff = lambda g: None
 check(goal_mod.choices(st_n, ["pick another name"], "plan") is False, "round 5: a diff that cannot be read fails closed: unclassifiable, it waits")
 fit.branch_diff = real_branch_diff
-# round 5 re-review, privacy (low): the scan covers the WHOLE text before the wait line is cut to 120 characters (a secret straddling the cut is not half printed)
-straddle = "x" * 110 + "sk-" + "A" * 30
+# round 5 re-review, privacy (low): the scan covers the WHOLE text before the wait line is cut to 120 characters (a configured private name straddling the cut is not half printed)
+straddle = "x" * 115 + "acmesecret and more"
 cut_wait = dlf.settle(tmp, runs, "gst", "break", "s1", straddle, "words", "rec", paths=[".claude/settings.json"])
-check(cut_wait[0] == "wait" and "sk-" not in cut_wait[1] and "text withheld" in cut_wait[1], "re-review: a secret straddling character 120 is withheld whole, not half printed: %s" % cut_wait[1][:90])
+check(cut_wait[0] == "wait" and "acmes" not in cut_wait[1] and "text withheld" in cut_wait[1], "re-review: a private name straddling character 120 is withheld whole, not half printed: %s" % cut_wait[1][:90])
 sys.exit(1 if failed else 0)
