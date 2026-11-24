@@ -132,4 +132,11 @@ check(goal_mod.autoapprove({"slug": "ga2", "touches": ["skills/a/b.py"]}, ["pick
 check(goal_mod.autoapprove({"slug": "ga3", "touches": ["skills/a/b.py"]}, [], "plan", auto) is True and not lines("ga3"), "with auto_approve on and nothing pending the old rule holds")
 json.dump(dict(config, deliver_first={"goal": {"ga4": False}}), open(tmp + "/.loop/config.json", "w"))
 check(goal_mod.autoapprove({"slug": "ga4", "touches": [".claude/settings.json"]}, ["approve it"], "plan", auto) is True and not lines("ga4"), "with deliver-first off for the goal auto_approve works as it always did")
+# round 3, finding A: `STEP: pending <reason>` with NO PENDING line is a pending decision too: with auto_approve on, a sandbox one never auto-approves
+reply = "STEP: pending approve the sandbox permission change"
+why_a = reply.split("pending ", 1)[1]
+check(goal_mod.autoapprove({"slug": "gpa", "touches": ["skills/a/b.py"]}, [], "plan", auto, "pending", why_a) is False, "finding A: a pending result naming a sandbox permission change, with no PENDING line, waits under auto_approve")
+check(goal_mod.autoapprove({"slug": "gpb", "touches": ["skills/a/b.py"]}, [], "plan", auto, "pending", "") is False, "finding A: a pending result with no decision context at all fails closed: it waits")
+check(goal_mod.autoapprove({"slug": "gpc", "touches": ["skills/a/b.py"]}, [], "plan", auto, "pending", "pick a name") is True and len([l for l in lines("gpc") if "| choice |" in l]) == 1, "finding A: a benign pending result files its line and goes on (negative control)")
+check(goal_mod.autoapprove({"slug": "gpd", "touches": ["skills/a/b.py"]}, [], "plan", auto, "done", "") is True, "a done step with nothing pending still follows the old rule")
 sys.exit(1 if failed else 0)

@@ -277,7 +277,7 @@ def cmd_record(args):
                              "STEP: done|skipped|pending|failed line, then record again", guards.NO_STEP_LINE, save)
     stamp, cfg = "", config()
     wait = pending or result == "pending"
-    auto, ok = wait and (autoapprove(state, pending, step, cfg)), result in ("done", "skipped")
+    auto, ok = wait and (autoapprove(state, pending, step, cfg, result, why)), result in ("done", "skipped")
     if ok or auto:
         stamp, refusal, ask, skipped = guards.check_record(state, step, text, cfg, result)
         for line in skipped:
@@ -337,9 +337,11 @@ def choices(state, pending, step):
                           )[0] == "continue" for i, p in enumerate(pending, 1))
 
 
-def autoapprove(state, pending, step, cfg):
-    held = choices(state, pending, step)  # settled first, so auto_approve never skips the safety table
-    return held if held is not None else cfg.get("auto_approve") is True or fit.plan_ahead(state, state_dir(), step)
+def autoapprove(state, pending, step, cfg, result="", why=""):
+    held = choices(state, pending or [why or "a pending decision with no context"] * (result == "pending"), step)  # settled first: auto_approve never skips the safety table
+    if held is not None:
+        return held and bool(pending or why)  # a pending result with no decision text fails closed
+    return cfg.get("auto_approve") is True or fit.plan_ahead(state, state_dir(), step)
 
 
 def queue(op, *args):
