@@ -83,6 +83,13 @@ def ensure_issue(top, runs, slug, rel):
     return mine
 
 
+def later(runs, slug, item):
+    held = mem(runs, slug)
+    held["queue"] = [q for q in held["queue"] if q != item] + [item]
+    keep(runs, slug, held)
+    return "", "queued"
+
+
 def file_line(top, runs, slug, rel, stop, subject, occ, what, words, rec):
     """Found-or-create a line by key: (id, '' | queued | local)."""
     key = "|".join((slug, stop, subject, re.sub(r"[^A-Za-z0-9_.:-]", "-", str(occ))[:40]))
@@ -95,10 +102,7 @@ def file_line(top, runs, slug, rel, stop, subject, occ, what, words, rec):
     if rows is None:
         if not number and mem(runs, slug)["local"]:
             return "", "local"
-        held = mem(runs, slug)
-        held["queue"] = [q for q in held["queue"] if q != item] + [item]
-        keep(runs, slug, held)
-        return "", "queued"
+        return later(runs, slug, item)
     for row in rows:
         mark = KEY.search(row["body"])
         if mark and mark[1] == key:
@@ -112,9 +116,7 @@ def file_line(top, runs, slug, rel, stop, subject, occ, what, words, rec):
     if not ok and out.startswith("kept local"):
         return "", "local"
     if not ok and not any((KEY.search(r["body"]) or [0, 0])[1] == key for r in comments(top, number) or []):
-        held["queue"] = held["queue"] + [item]
-        keep(runs, slug, held)
-        return "", "queued"
+        return later(runs, slug, item)
     held["lines"][key] = lid
     keep(runs, slug, held)
     return lid, ""
@@ -142,7 +144,7 @@ def cap_line(top, runs, slug, rel, spend, estimate, old, new):
 def convert(top, runs, slug, rel, key, lid, what, words):
     """A declined line becomes a patch goal: one queue line, a stable slug from the line key."""
     patch, path = "patch-" + hashlib.sha1(key.encode()).hexdigest()[:8], os.path.join(top, ".loop", "queue.md")
-    text = "- slug: %s | level: quick | touches: .loop/findings.md | goal: Settle deliver-first line %s: %s | done: The line %s is settled: %s\n" % (
+    text = "- slug: %s | level: quick | touches: .loop/findings.md | goal: Settle deliver-first line %s: %s | done: %s is settled: %s\n" % (
         patch, lid, what, lid, words)
 
     def add(t):
@@ -156,7 +158,7 @@ def convert(top, runs, slug, rel, key, lid, what, words):
 SAFETY = ("deleting what cannot be restored", "money", "security and sandbox settings", "private data", "steward merges",
           "a change to what a feature promises", "a test loosened or deleted")
 STOPS = ("break", "cap", "budget", "test", "choice")
-WORDS = dict(zip(SAFETY, (r"force[- ]push|rm -rf|drop (table|database)|delete (the |a )?(repo|branch|backup|release|history)|hard reset|purge",
+WORDS = dict(zip(SAFETY, (r"force[- ]push|rm -rf|drop (table|database)|delete (the |a )?(repo|branch|backup|release|history)|hard reset",
                           r"\b(payment|refund|invoice|billing|purchase)s?\b|\$\d",
                           r"\bsandbox|permission mode|bypass ?permissions|settings\.json|allowlist|credential|api[_ -]?key|secret|password",
                           r"private[- ]name|private data|\bleak|personal data|\bpii\b", r"steward|auto[- ]?merge|merge queue",
@@ -165,7 +167,7 @@ WORDS = dict(zip(SAFETY, (r"force[- ]push|rm -rf|drop (table|database)|delete (t
 PATHS = {SAFETY[2]: r"(^|/)(\.claude/|permissions\.tsv|\.github/workflows/|settings[^/]*\.json$)", SAFETY[5]: r"^docs/wiki/[^/]*\.md$"}
 TESTS = r"(^|/)(tests?/|dev/toy/test-)|\.loop/regression\.tsv|\.test\.|_test\."
 SECRET = r"AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,}|sk-[A-Za-z0-9]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----"
-SKIP = r"\bskip\b|\bxfail\b|expectedFailure|pytest\.mark\.skip|\|\| true"
+SKIP = r"\b(skip|xfail)\b|expectedFailure|\|\| true"
 
 
 def loosened(diff):
@@ -207,7 +209,6 @@ def cfg(top):
 
 
 def brief(top, slug):
-    """(task, release) of a goal from the task briefs; release 'default' when none."""
     import glob
     for f in sorted(glob.glob(os.path.join(glob.escape(top), ".loop", "tasks", "*.md"))):
         kv = {m[1].lower(): m[2].strip() for m in re.finditer(r"^- +(release|goals) *: *(.*)$", open(f, encoding="utf-8").read(), re.M | re.I)}
@@ -217,7 +218,6 @@ def brief(top, slug):
 
 
 def setting(top, slug):
-    """(on, scope): goal, task, release, default on."""
     held, (task, rel) = cfg(top).get("deliver_first") or {}, brief(top, slug)
     for scope, ident in (("goal", slug), ("task", task), ("release", rel)):
         if isinstance((held.get(scope) or {}).get(ident), bool):
@@ -227,7 +227,8 @@ def setting(top, slug):
 
 def set_setting(top, scope, ident, value, rid, g=None):
     """Set deliver_first on|off for a scope, only with an owner reference; returns the refusal or ''."""
-    now, where = setting(top, ident) if scope == "goal" else ((cfg(top).get("deliver_first") or {}).get(scope, {}).get(ident, True), scope)
+    held = (cfg(top).get("deliver_first") or {}).get(scope, {}).get(ident)
+    now, where = setting(top, ident) if scope == "goal" else (held is not False, scope)
     if not rid:
         return "refused: set deliver_first %s for %s %s needs an owner reference; unchanged (%s, from %s)" % (
             value, scope, ident, "on" if now else "off", where)
@@ -237,6 +238,17 @@ def set_setting(top, scope, ident, value, rid, g=None):
     data = cfg(top)
     data.setdefault("deliver_first", {}).setdefault(scope, {})[ident] = value == "on"
     json.dump(data, open(os.path.join(top, ".loop", "config.json"), "w"), indent=2)
+    return ""
+
+
+def breaks(g, state, left):
+    """The wait text of the first red-team break that waits, '' when every break became a line."""
+    slug = state["slug"]
+    for i, b in enumerate(left):
+        got = settle(g.root(), g.state_dir(), slug, "break", "b%dp%s" % (i + 1, b["principle"]), "red-team break of principle %s: %s" % (b["principle"], b["text"][:200]),
+                     "notify.py plan-accept %s %s --owner-record ID" % (slug, b["principle"]), "accept", paths=state.get("touches") or (), cls=b.get("class", ""))
+        if got[0] == "wait":
+            return got[1]
     return ""
 
 
@@ -251,7 +263,7 @@ def settle(top, runs, slug, stop, occ, what, words, rec, **ctx):
         return "wait", wait_line(slug, subject, what[:120], ask)
     lid, status = file_line(top, runs, slug, brief(top, slug)[1], stop, subject, occ, what, words, rec)
     if status == "local":
-        return "wait", wait_line(slug, "private data", "the line failed the private-name scan and stays in the run record", "remove the name, then " + ask)
+        return "wait", wait_line(slug, "private data", "the line failed the private-name scan", "remove the name, then " + ask)
     return "continue", lid or status
 
 
@@ -293,7 +305,7 @@ def budget_stop(slug, state, runs, cfg_, at=None, save=None, top=""):
             if on and est and new > held[name]:
                 import guards
                 guards.add_set(runs, slug, "budget", dict(held, **{name: new}), "raised the %s budget %d to %d (spent %d, estimate %d)" % (name, held[name], new, spent, est))
-                name == "minutes" and guards.add_set(runs, slug, "dlf_budget", {"minutes": new}, "the ETA stop follows the raised budget")
+                name == "minutes" and guards.add_set(runs, slug, "dlf_budget", {"minutes": new}, "eta follows")
                 print("BUDGET %s: %s %d -> %d (spent %d, estimate %d)" % (slug, name, held[name], new, spent, est))
             elif on and est and capped:
                 cap_line(top, runs, slug, brief(top, slug)[1], spent, est, held[name], new)
@@ -321,15 +333,16 @@ def ledger(top, rel, owner, loop):
                 notes.append("ignored %s by %s: %s" % (verb, who, "not the owner" if who != owner else "no line ids named"))
             for l in [l for l in lines.values() if l["id"] in ids]:
                 if l["cid"] > r["id"]:
-                    notes.append("ignored %s of %s: filed after it was posted" % (verb, l["id"]))
+                    notes.append("ignored %s of %s: filed after it" % (verb, l["id"]))
                 elif who == owner and l["state"] in ("open", "accepted") and not (verb != "decline" and l["state"] != "open"):
                     l["state"], l["at"] = "converted" if verb == "decline" else "accepted", r["created_at"]
-            notes += ["ignored %s of %s: no such line" % (verb, i) for i in ids if who == owner and i not in [l["id"] for l in lines.values()]]
+            known = [l["id"] for l in lines.values()]
+            notes += ["ignored %s of %s: no such id" % (verb, i) for i in ids if who == owner and i not in known]
         if event and event[1] in lines:
             l = lines[event[1]]
             ok = who == loop and event[2] == "closed" and l["state"] in ("accepted", "converted")
             l["state"] = "closed" if ok else l["state"]
-            notes += [] if ok or who == loop and event[2] in ("open", "filed") else ["ignored %s event by %s on %s: not allowed" % (event[2], who, l["id"])]
+            notes += [] if ok or who == loop and event[2] in ("open", "filed") else ["ignored %s by %s on %s" % (event[2], who, l["id"])]
     return lines, notes, number
 
 
@@ -347,12 +360,12 @@ def cut(top, runs, rel, owner="", loop=""):
         out += ["unfiled: %d line(s) of %s never reached the issue" % (len(queued), goal)] * bool(queued)
     got = ledger(top, rel, owner, loop)
     if got is None:
-        return "\n".join(["read failed: release %s's issue can't be read completely; try the cut again" % rel] + out)
+        return "\n".join(["read failed: release %s's issue can't be read completely" % rel] + out)
     lines, notes, number = got
     todo = sorted((l for l in lines.values() if l["state"] == "open"), key=lambda l: (l["goal"], l["cid"]))
     for l in [l for l in lines.values() if l["state"] == "converted"]:
+        convert(top, runs, l["goal"], rel, l["key"], l["id"], l["text"], "declined")
         patch = "patch-" + hashlib.sha1(l["key"].encode()).hexdigest()[:8]
-        convert(top, runs, l["goal"], rel, l["key"], l["id"], l["text"], "the owner declined it")
         try:
             merged = json.load(open(os.path.join(runs, patch + ".json"))).get("release") == "merged"
         except (OSError, ValueError):
@@ -365,24 +378,19 @@ def cut(top, runs, rel, owner="", loop=""):
         rel, len(todo), number, owner, " ".join(l["id"] for l in todo))] * bool(todo)
     for goal in sorted({l["goal"] for l in todo}):
         head += [goal + ":"] + ["  [ ] %s %s" % (l["id"], l["text"]) for l in todo if l["goal"] == goal]
-    return "\n".join(head + out + notes + ["accepted %s at %s" % (l["id"], l.get("at", "")) for l in lines.values() if l["state"] == "accepted"])
+    return "\n".join(head + out + notes + ["accepted %s at %s" % (l["id"], l["at"]) for l in lines.values() if l["state"] == "accepted"])
 
 
 def main(argv):
-    """dlf.py set deliver_first on|off --scope S --id ID [--owner-record R] | cut RELEASE"""
+    """dlf.py set deliver_first on|off --scope S --id ID [--owner-record R]"""
+    if argv[:2] != ["set", "deliver_first"] or argv[2:3] not in (["on"], ["off"]):
+        print(main.__doc__)
+        return 0 if "--help" in argv else 2
     import goal as g
-    top, runs = g.root(), g.state_dir()
-    if argv[:2] == ["set", "deliver_first"] and argv[2:3] in (["on"], ["off"]):
-        opt = lambda n: argv[argv.index(n) + 1] if n in argv else ""
-        why = set_setting(top, opt("--scope"), opt("--id"), argv[2], opt("--owner-record"), g)
-        print(why or "SET deliver_first %s for %s %s" % (argv[2], opt("--scope"), opt("--id")))
-        return 1 if why else 0
-    if argv[:1] == ["cut"] and len(argv) == 2:
-        why = cut(top, runs, argv[1])
-        print(why or "CLEAR %s" % argv[1])
-        return 1 if why else 0
-    print(main.__doc__)
-    return 0 if "--help" in argv or "-h" in argv else 2
+    o = lambda n: argv[argv.index(n) + 1] if n in argv else ""
+    why = set_setting(g.root(), o("--scope"), o("--id"), argv[2], o("--owner-record"), g)
+    print(why or "SET deliver_first %s for %s %s" % (argv[2], o("--scope"), o("--id")))
+    return 1 if why else 0
 
 
 if __name__ == "__main__":

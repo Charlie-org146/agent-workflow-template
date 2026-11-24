@@ -104,7 +104,7 @@ check(len(patch) == 1 and "converted: %s waits for patch goal %s to merge" % (id
 dlf.cut(top, runs, "v1")
 check(len([l for l in open(top + "/.loop/queue.md") if "slug: patch-" in l]) == 1, "a second cut queues no second patch goal (stable key)")
 as_("loopbot", "<!-- dlf-event key=ga|break|other|b1 state=accepted -->\nloop wrote an accept")
-check("not allowed" in dlf.cut(top, runs, "v1") and "converted: %s" % ids[0] in dlf.cut(top, runs, "v1"), "a loop-written accept after the owner's decline leaves the line declined and is reported")
+check("ignored accepted by loopbot" in dlf.cut(top, runs, "v1") and "converted: %s" % ids[0] in dlf.cut(top, runs, "v1"), "a loop-written accept after the owner's decline leaves the line declined and is reported")
 json.dump({"release": "merged"}, open(runs + "/" + patch[0] + ".json", "w"))
 as_("loopbot", "<!-- dlf-event key=ga|break|other|b1 state=closed -->\n%s closed: its patch goal merged" % ids[0])
 result = dlf.cut(top, runs, "v1")

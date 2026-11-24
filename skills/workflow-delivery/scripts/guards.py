@@ -312,7 +312,8 @@ def plan_gate(g, state):
     left = [b for b in seen.get("breaks", []) if not b.get("accepted")]
     new = ((state.get("log") or [""])[0].split(" ")[0]) > PLAN_RULE_AT
     why = ("no recorded review of the current plan" if not seen else "the plan changed since its last review" if seen.get("sha") != sha else "") * new
-    why = why or ("the red team recorded a break of principle %s: %s" % (left[0]["principle"], left[0]["text"][:200]) if left else "")
+    import dlf  # DLF-1.1: a break becomes a line on the release issue unless the table says it waits
+    why = why or (left and dlf.breaks(g, state, left))
     if why:
         sys.stderr.write("REFUSED (no try used): %s. Fix: record a fresh review (notify.py plan-review, plan-record) or, for a break, the "
                          "owner's words and notify.py plan-accept SLUG N --owner-record ID (PLAN_BREAK)\n" % why)
