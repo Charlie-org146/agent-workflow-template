@@ -114,10 +114,10 @@ def with_block(text, copy):
     return text.rstrip("\n") + "\n\n" + fresh if at < 0 else text[:at].rstrip("\n") + "\n\n" + fresh + text[at:]
 
 
-def read(root, page, source):
+def read(root, page, source, offline=False):
     import prd
     copy = copy_of(root, page)
-    return (copy, None) if copy else prd.read_link(source)
+    return (copy, None) if copy or offline else prd.read_link(source)
 
 
 def set_item(copy, ident, lines):

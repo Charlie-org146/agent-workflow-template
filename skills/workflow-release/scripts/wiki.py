@@ -83,12 +83,9 @@ def pending(top, cfg, fix=False, head="HEAD", filer=None):
     return kept
 
 
-def commit(top, cfg, slug):
-    folder = cfg.get("wiki_dir") or "docs/wiki"
-    if run(["git", "status", "--porcelain", "--", folder], cwd=top).stdout.strip():
-        git("add", "--", folder, cwd=top)
-        git("commit", "-m", "Wiki: update pages for %s" % slug, "--", folder, cwd=top)
-        print("COMMITTED the wiki pages for %s" % slug)
+def commit(top, cfg, slug, front=""):
+    code = "import sys;sys.path.insert(0,sys.argv[1]);import sections;sys.exit(sections.commit_wiki(*sys.argv[2:]))"
+    return subprocess.call([sys.executable, "-c", code, os.path.dirname(DOCS), top, cfg.get("wiki_dir") or "docs/wiki", slug, front], cwd=top)
 
 
 def cmd_prepare(args):
@@ -97,16 +94,16 @@ def cmd_prepare(args):
         print("NO WIKI: .loop/docs.tsv is not set up.")
         return 0
     cfg = read_config(top)
-    if args.commit:
-        commit(top, cfg, args.slug)
+    first = args.commit and commit(top, cfg, args.slug)
     stale = pending(top, cfg, fix=args.commit)
-    if args.commit:
-        commit(top, cfg, args.slug)  # the audit's mechanical fixes
+    bad = first or args.commit and commit(top, cfg, args.slug, "README.md")  # the audit's mechanical fixes
     for line in stale:
         print(line)
     if stale:
         names = sorted({l.split(":")[0].split()[1] for l in stale if l.startswith("REWRITE ")})
         print("NEXT: update %s, then wiki.py prepare %s --commit" % (", ".join(names) or "the pages above", args.slug))
+        return 1
+    if bad:
         return 1
     if args.commit and load(args.slug).get("pr"):
         branch = git("branch", "--show-current", cwd=top)
