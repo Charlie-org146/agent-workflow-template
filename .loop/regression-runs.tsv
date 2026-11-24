@@ -1,8 +1,8 @@
 # id	status	date	run	flaky
 adopt-record-qa	PASS	2026-11-16		c2d9ae715ff3
-adopt-set-1	FAIL	2026-11-12	
-adopt-set-3	FAIL	2026-11-19	
-adopt-set-5	FAIL	2026-11-19	
+adopt-set-1	PASS	2026-11-24	
+adopt-set-3	PASS	2026-11-24	
+adopt-set-5	PASS	2026-11-24	
 adoption-golden	PASS	2026-11-13	
 affected-deleted-root-runner	PASS	2026-11-24	
 agents-wire	PASS	2026-11-24	
@@ -115,6 +115,17 @@ desk-lists	PASS	2026-11-18
 desk-lists-4805	PASS	2026-11-18	
 digest-backlog	PASS	2026-11-10	
 digest-no-milestone	PASS	2026-11-12	
+dlf-budget-raises	PASS	2026-11-24	
+dlf-cut-refuses-open	PASS	2026-11-24	
+dlf-done-1-cases-linked	PASS	2026-11-24	
+dlf-done-2-budget	PASS	2026-11-24	
+dlf-done-3-sizes	PASS	2026-11-24	
+dlf-lines-not-waits	PASS	2026-11-24	
+dlf-merge-on-green	PASS	2026-11-24	
+dlf-mutation-controls	PASS	2026-11-24	
+dlf-only-safety-waits	PASS	2026-11-24	
+dlf-scan-every-path	PASS	2026-11-24	
+dlf-setting-off-waits	PASS	2026-11-24	
 doc18-howto-mapped	PASS	2026-11-16	
 doc18-howto-missing	PASS	2026-11-16	
 doc18-howto-orphan	PASS	2026-11-16	
@@ -131,7 +142,7 @@ docs-check-same	PASS	2026-11-24
 docs-check-speed	PASS	2026-11-24	
 docs-counts-issue-39	PASS	2026-11-12	
 docs-guide-page-issue-125	PASS	2026-11-24	
-docs-import-rows-pass	PASS	2026-11-16	
+docs-import-rows-pass	PASS	2026-11-24	
 docs-locked-hint-issue-133	PASS	2026-11-24	
 docs-milestone-line-issue-130	PASS	2026-11-24	
 docs-no-plain-dunder-import	PASS	2026-11-16	
@@ -239,6 +250,7 @@ link-page-passes	PASS	2026-11-24
 list-link-ids	PASS	2026-11-24	
 list-no-tests	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 list-tsv-raw	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+listing-names-every-command	PASS	2026-11-24	
 live-board-arrows	PASS	2026-11-12	
 live-board-flow	PASS	2026-11-12	
 live-board-header	PASS	2026-11-12	
@@ -316,7 +328,7 @@ mon9-board-fast	PASS	2026-11-10
 monitor-stray-runs-3862	PASS	2026-11-14	
 narrow-root-172	PASS	2026-11-10	
 new-binds-app-session-4257	PASS	2026-11-15	
-no-done-line-refused	PASS	2026-11-20	
+no-done-line-refused	PASS	2026-11-24	
 no-line-in-governor	PASS	2026-11-20	
 no-token-would	PASS	2026-11-20	
 notify-new-events	PASS	2026-11-18	
@@ -328,14 +340,16 @@ operate-all	PASS	2026-11-09
 operate-toy-no-check	PASS	2026-11-13	
 ops-findings-filed	PASS	2026-11-19	
 package-caps-held	PASS	2026-11-14		a3dcc03121ec
-package-gate-head	FAIL	2026-11-16	
+package-gate-head	PASS	2026-11-24	
 package-hang-bound	PASS	2026-11-12	
 package-hang-no-skills-file	PASS	2026-11-12	
 package-hang-slot	PASS	2026-11-12	
 package-hang-stdin	PASS	2026-11-12	
 package-headroom-held	FAIL	2026-11-15	
-package-passes	SKIPPED	2026-11-16	
+package-passes	PASS	2026-11-24	
+package-passes-3800	PASS	2026-11-24	
 package-rows-tracked	FAIL	2026-11-15	
+package-static-toy	PASS	2026-11-24	
 package-win-parity-1397	PASS	2026-11-24	
 package-win-stdin-1397	PASS	2026-11-24	
 page-relock	PASS	2026-11-14	
@@ -347,12 +361,13 @@ perms-settings-tracked	PASS	2026-11-15
 plan-cache-key	PASS	2026-11-12	
 plan-calls-flat	PASS	2026-11-22	
 plan-identity	PASS	2026-11-22	
-plan-sizes	PASS	2026-11-22	
+plan-sizes	PASS	2026-11-24	
 pods-blocks	PASS	2026-11-12	
 pods-docs	PASS	2026-11-12	
 pods-independent	PASS	2026-11-12	
 pods-lock	PASS	2026-11-12	
 pods-owner	PASS	2026-11-12	
+pods-size	PASS	2026-11-24	
 port-base-windows	PASS	2026-11-22	
 pr-body-by-file	PASS	2026-11-13	
 pr-body-cap-large	PASS	2026-11-16	
@@ -391,6 +406,7 @@ reg-same-env	PASS	2026-11-22
 reg2-wording	PASS	2026-11-22	
 regression-issue-no-milestone	PASS	2026-11-12	
 release-lists-fixes	PASS	2026-11-22	
+release-static-rules	PASS	2026-11-24	
 reopened-shows-failing	PASS	2026-11-11	
 repeat-no-second	PASS	2026-11-20	
 reply-hook-blocks	PASS	2026-11-10	
@@ -436,6 +452,7 @@ settings-render-fresh	FAIL	2026-11-17
 settings-start-fresh	PASS	2026-11-16	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
+setup-fit	PASS	2026-11-24	
 setup-owner-words-up-front	PASS	2026-11-15	
 setup-refusal-writes-120	PASS	2026-11-18	
 shard-balance	PASS	2026-11-22	
@@ -478,6 +495,7 @@ summary-render-guard	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-step	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-unknown-row	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 sync-both-sides	PASS	2026-11-18	
+sync-check-preview	PASS	2026-11-24		c77cb230f2eb
 sync-dry-run-drift	PASS	2026-11-18	
 sync-first-adopts	PASS	2026-11-18	
 sync-not-connected	PASS	2026-11-20	
