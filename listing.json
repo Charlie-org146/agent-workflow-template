@@ -46,6 +46,7 @@
     "leave",
     "ask",
     "show",
+    "set",
     "new",
     "step",
     "check",

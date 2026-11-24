@@ -4,6 +4,7 @@
 `SIZE <size> (<reason>) checks: ...` and `owner: <id>` when an owner line changed it. line(run) is the one-line form the board
 uses (board_tasks.py); alone() lists goals that belong to no task brief. The delivery modules are loaded by path when a command
 runs, so the script runs alone (--help) with nothing but its own folder."""
+import argparse
 import importlib
 import os
 import sys
@@ -46,17 +47,16 @@ def override(sizing, state, size, record):
 
 
 def main(argv):
-    if argv[:1] not in (["show"], ["set"]):
-        print(USAGE)
-        return 0 if argv[:1] in (["-h"], ["--help"]) else 1
-    args, record = argv[1:], ""
-    if "--owner-record" in args[:-1]:
-        at = args.index("--owner-record")
-        record, args = args[at + 1], args[:at] + args[at + 2:]
-    rest = args
-    if len(rest) != (1 if argv[0] == "show" else 2):
-        print(USAGE)
-        return 1
+    ap = argparse.ArgumentParser(prog="sizeline.py", description=USAGE)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("show").add_argument("slug")
+    item = sub.add_parser("set")
+    item.add_argument("slug")
+    item.add_argument("size", choices=("small", "medium", "large"))
+    item.add_argument("--owner-record", default="")
+    args = ap.parse_args(argv)
+    record, rest = getattr(args, "owner_record", ""), [args.slug] + ([args.size] if args.cmd == "set" else [])
+    argv = [args.cmd]
     sys.path.insert(0, DELIVERY)
     try:
         goal, sizing = importlib.import_module("goal"), importlib.import_module("sizing")
