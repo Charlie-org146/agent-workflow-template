@@ -347,10 +347,11 @@ def choices(state, pending, step):
 
 
 def autoapprove(state, pending, step, cfg, result="", why=""):
-    held = choices(state, pending or [why or "a pending decision with no context"] * (result == "pending"), step)  # settled first: auto_approve never skips the safety table
-    if held is not None:
-        return held and bool(pending or why)  # a pending result with no decision text fails closed
-    return cfg.get("auto_approve") is True or fit.plan_ahead(state, state_dir(), step)
+    import dlf
+    if result == "pending" and not (pending or why) and dlf.setting(root(), state["slug"])[0]:
+        return False  # no decision text: fails closed, files no placeholder line
+    held = choices(state, pending or [why] * (result == "pending"), step)
+    return cfg.get("auto_approve") is True or fit.plan_ahead(state, state_dir(), step) if held is None else held
 
 
 def queue(op, *args):
