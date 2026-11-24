@@ -90,14 +90,21 @@ def later(runs, slug, item):
     return "", "queued"
 
 
+def filed(runs, slug, held, key, lid, item):
+    held["lines"][key] = lid
+    held["queue"] = [q for q in held["queue"] if q != item]
+    keep(runs, slug, held)
+    return lid, ""
+
+
 def file_line(top, runs, slug, rel, stop, subject, occ, what, words, rec):
     """Found-or-create a line by key: (id, '' | queued | local)."""
     key = "|".join((slug, stop, subject, re.sub(r"[^A-Za-z0-9_.:-]", "-", str(occ))[:40]))
     what, words, rec = (" ".join(str(x).split()) for x in (what, words, rec))
     held = mem(runs, slug)
-    if key in held["lines"]:
-        return held["lines"][key], ""
     item = dict(rel=rel, stop=stop, subject=subject, occ=occ, what=what, words=words, rec=rec)
+    if key in held["lines"]:
+        return filed(runs, slug, held, key, held["lines"][key], item)
     number = ensure_issue(top, runs, slug, rel)
     rows = comments(top, number) if number else None
     if rows is None:
@@ -107,9 +114,7 @@ def file_line(top, runs, slug, rel, stop, subject, occ, what, words, rec):
     for row in rows:
         mark = KEY.search(row["body"])
         if mark and mark[1] == key:
-            held["lines"][key] = mark[2]
-            keep(runs, slug, held)
-            return mark[2], ""
+            return filed(runs, slug, held, key, mark[2], item)
     lid = "%s-%s-%d" % (slug, stop, 1 + sum(1 for k in held["lines"] if k.startswith("%s|%s|" % (slug, stop))))
     text = '[ ] %s %s | %s | %s - %s; settle with: "%s"; recommend: %s\n<!-- dlf key=%s id=%s -->' % (
         lid, slug, stop, subject, what, words, rec, key, lid)
@@ -118,17 +123,11 @@ def file_line(top, runs, slug, rel, stop, subject, occ, what, words, rec):
         return "", "local"
     if not ok and not any((KEY.search(r["body"]) or [0, 0])[1] == key for r in comments(top, number) or []):
         return later(runs, slug, item)
-    held["lines"][key] = lid
-    keep(runs, slug, held)
-    return lid, ""
+    return filed(runs, slug, held, key, lid, item)
 
 
 def retry(top, runs, slug):
-    held = mem(runs, slug)
-    if not held["queue"]:
-        return []
-    todo, held["queue"] = held["queue"], []
-    keep(runs, slug, held)
+    todo = mem(runs, slug)["queue"]
     return [file_line(top, runs, slug, q["rel"], q["stop"], q["subject"], q["occ"], q["what"], q["words"], q["rec"]) for q in todo]
 
 

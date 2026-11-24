@@ -157,4 +157,23 @@ check(dlf.cut(top, runs, "v-none") == "", "a release with no lines is not held b
 os.environ["LOOP_OWNER_LOGIN"] = "boss"
 check(not dlf.cut(top, runs, "v1").startswith("owner acceptance can't be read"), "LOOP_OWNER_LOGIN in the environment supplies the login (nothing is committed)")
 json.dump({"owner_login": "boss"}, open(top + "/.loop/config.json", "w"))
+# round 3, finding B: retry keeps each queued entry until its filing is confirmed: an interruption mid-filing loses nothing
+os.environ["DLF_FAKE_FAIL"] = "list"
+file("gi", "i1")
+file("gi", "i2")
+os.environ.pop("DLF_FAKE_FAIL")
+check(len(dlf.mem(runs, "gi")["queue"]) == 2, "finding B: two lines queued for goal gi")
+real_post, calls_b = dlf.post, []
+def stop_once(*a, **k):
+    calls_b.append(1)
+    raise KeyboardInterrupt("interrupted mid-filing")
+dlf.post = stop_once
+try:
+    dlf.retry(top, runs, "gi")
+except KeyboardInterrupt:
+    pass
+dlf.post = real_post
+check(len(dlf.mem(runs, "gi")["queue"]) == 2, "finding B: after an interruption mid-filing both entries are still queued")
+check(all(s == "" for _, s in dlf.retry(top, runs, "gi")) and not dlf.mem(runs, "gi")["queue"], "finding B: the next retry files them and only then empties the queue")
+check(len([c for c in state()["comments"]["1"] if "gi|break|other|i" in c["body"]]) == 2, "and each was filed exactly once")
 sys.exit(1 if failed else 0)
