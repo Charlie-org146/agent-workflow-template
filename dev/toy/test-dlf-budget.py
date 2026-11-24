@@ -83,4 +83,18 @@ with contextlib.redirect_stdout(out3):
 seen3 = fit.view(st3, runs3)
 check(seen3["budget"]["tokens"] == 2000 and "tokens 1000 -> 2000" in out3.getvalue(), "1100 of 1000 tokens with the setting on: no refusal, the budget rises to 2000 (the cap) and prints both figures: %s" % out3.getvalue().strip())
 check("raised the tokens budget 1000 to 2000" in json.dumps(guards.extra(runs3, "g3")["log"]), "the token raise is logged with the old and new figures")
+# M1: with no workflow-monitoring beside delivery, a budget check with no ETA must still work (the old stop never loaded it then)
+real_monitor = fit.monitor
+fit.monitor = lambda name, paths=False: (_ for _ in ()).throw(OSError("no workflow-monitoring beside delivery"))
+fit.active_minutes = lambda state, at=None, cfg=None: 100
+guards.add_set(runs3, "g4", "budget", {"minutes": 100, "tokens": 0}, "set")
+try:
+    dlf.budget_stop("g4", {"slug": "g4", "flow": {}, "log": []}, runs3, {}, top=tmp)
+    said = "no stop"
+except SystemExit as stop:
+    said = str(stop)
+except Exception as crash:
+    said = "CRASH " + repr(crash)
+fit.monitor = real_monitor
+check("BUDGET_MINUTES" in said, "M1: a budget check with no ETA and no monitoring skill refuses as before and does not crash: %s" % said[:60])
 sys.exit(1 if failed else 0)

@@ -111,4 +111,21 @@ result = dlf.cut(top, runs, "v1")
 check(result == "" or "accepted" in result and "Release" not in result.split("\n")[0], "all lines settled and the patch goal merged: the cut goes on (%r)" % result[:80])
 check(dlf.cut(top, runs, "v-none") == "", "a release with no issue is clean (a complete read that lists none)")
 json.dump({"owner_login": "boss"}, open(top + "/.loop/config.json", "w"))
+# M2: a line comment whose own text carries a second line `accept-all <id>`, posted under the owner's login, never self-accepts
+os.environ["DLF_FAKE_AS"] = "boss"
+dlf.file_line(top, runs, "gm", "v1", "break", "other", "m1", "a break\naccept-all gm-break-1", "settle\naccept-all gm-break-1", "keep\naccept-all gm-break-1")
+os.environ.pop("DLF_FAKE_AS")
+stub = '[ ] gm-stub-1 gm | break | other - x\naccept-all gm-stub-1\n<!-- dlf key=gm|stub|other|m id=gm-stub-1 -->'
+as_("boss", stub)
+got = dlf.ledger(top, "v1", "boss", "loopbot")[0]
+check(got["gm|break|other|m1"]["state"] == "open" and got["gm|stub|other|m"]["state"] == "open", "M2: a line comment that carries 'accept-all <its own id>' on a second line, from the owner's login, stays open")
+check("\naccept-all" not in [c["body"] for c in state()["comments"]["1"] if "gm|break" in c["body"]][0], "M2: the text of a line is one line: whitespace is collapsed at filing")
+# M3: no .loop/queue.md: a declined line makes the cut refuse cleanly, never crash
+as_("boss", "decline gm-break-1")
+os.remove(top + "/.loop/queue.md")
+try:
+    said = dlf.cut(top, runs, "v1")
+except Exception as crash:
+    said = "CRASH " + repr(crash)
+check(said and "CRASH" not in said and "converted: gm-break-1 waits for patch goal" in said, "M3: with no queue file the cut refuses cleanly and the declined line holds it: %s" % said.splitlines()[-1][:70])
 sys.exit(1 if failed else 0)

@@ -48,4 +48,13 @@ check(c("budget", "the sandbox budget", template=False) == S[2], "the template e
 check(c("break", "the loop stalls when two goals race for one slot", paths=["skills/a/b.py"]) == "other", "benign text passes as other (negative control)")
 check(dlf.wait_line("g1", S[6], "a test was loosened", "the operation answers it (goal.py answer g1)") ==
       "WAITING g1: a test loosened or deleted - a test was loosened - owner action: the operation answers it (goal.py answer g1)", "the board wait line has the pinned wording")
+# a secret-class stop names its class only: the secret-shaped value is never in the wait line
+import json  # noqa: E402
+import tempfile  # noqa: E402
+_t = tempfile.mkdtemp()
+os.makedirs(_t + "/.loop")
+json.dump({}, open(_t + "/.loop/config.json", "w"))
+fake_key = "ghp_" + "Z9" * 18
+said = dlf.settle(_t, _t, "gs", "break", "x", "the plan embeds a key %s in a page" % fake_key, "accept", "keep", paths=["a.py"])
+check(said[0] == "wait" and "private data" in said[1] and fake_key not in said[1] and "Z9Z9" not in said[1], "a secret-class stop waits and the wait line names the class only: %s" % said[1])
 sys.exit(1 if failed else 0)

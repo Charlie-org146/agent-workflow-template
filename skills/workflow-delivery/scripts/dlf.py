@@ -93,6 +93,7 @@ def later(runs, slug, item):
 def file_line(top, runs, slug, rel, stop, subject, occ, what, words, rec):
     """Found-or-create a line by key: (id, '' | queued | local)."""
     key = "|".join((slug, stop, subject, re.sub(r"[^A-Za-z0-9_.:-]", "-", str(occ))[:40]))
+    what, words, rec = (" ".join(str(x).split()) for x in (what, words, rec))
     held = mem(runs, slug)
     if key in held["lines"]:
         return held["lines"][key], ""
@@ -142,13 +143,12 @@ def cap_line(top, runs, slug, rel, spend, estimate, old, new):
 
 
 def convert(top, runs, slug, rel, key, lid, what, words):
-    """A declined line becomes a patch goal: one queue line, a stable slug from the line key."""
     patch, path = "patch-" + hashlib.sha1(key.encode()).hexdigest()[:8], os.path.join(top, ".loop", "queue.md")
     text = "- slug: %s | level: quick | touches: .loop/findings.md | goal: Settle deliver-first line %s: %s | done: %s is settled: %s\n" % (
         patch, lid, what, lid, words)
 
     def add(t):
-        if "slug: %s |" % patch not in open(path).read():
+        if "slug: %s |" % patch not in (open(path).read() if os.path.exists(path) else ""):
             open(path, "a").write(t)
         return True, patch
     return write(top, runs, slug, "patch", text, add)[0]
@@ -242,7 +242,6 @@ def set_setting(top, scope, ident, value, rid, g=None):
 
 
 def breaks(g, state, left):
-    """The wait text of the first red-team break that waits, '' when every break became a line."""
     slug = state["slug"]
     for i, b in enumerate(left):
         got = settle(g.root(), g.state_dir(), slug, "break", "b%dp%s" % (i + 1, b["principle"]), "red-team break of principle %s: %s" % (b["principle"], b["text"][:200]),
@@ -253,14 +252,13 @@ def breaks(g, state, left):
 
 
 def settle(top, runs, slug, stop, occ, what, words, rec, **ctx):
-    """What a stop does: ('continue', line id) or ('wait', the board's wait line)."""
     on, scope = setting(top, slug)
     subject = classify(stop, what, ctx.get("paths", ()), ctx.get("diff", ""), ctx.get("label", ""), ctx.get("cls", ""), ctx.get("template", False))
     ask = "the operation answers it (goal.py answer %s)" % slug
     if not on:
         return "wait", wait_line(slug, "setting off", "deliver-first is off for %s %s" % (scope, slug), ask)
     if subject in SAFETY or subject == "unclassifiable":
-        return "wait", wait_line(slug, subject, what[:120], ask)
+        return "wait", wait_line(slug, subject, "text withheld" if subject == SAFETY[3] else what[:120], ask)
     lid, status = file_line(top, runs, slug, brief(top, slug)[1], stop, subject, occ, what, words, rec)
     if status == "local":
         return "wait", wait_line(slug, "private data", "the line failed the private-name scan", "remove the name, then " + ask)
@@ -287,9 +285,9 @@ def budget_stop(slug, state, runs, cfg_, at=None, save=None, top=""):
         goal.SEEN[slug] = json.dumps(state)
     seen = fit.view(state, runs)
     held, source = fit.budget(seen, cfg_)
-    auto, minutes = fit.monitor("auto", True), fit.active_minutes(state, at, cfg_)
-    on = bool(top) and setting(top, slug)[0]
-    eta = bool(seen.get("eta") or seen.get("eta_extend")) and auto.eta_over(seen, minutes)
+    minutes, on = fit.active_minutes(state, at, cfg_), bool(top) and setting(top, slug)[0]
+    auto = fit.monitor("auto", True) if seen.get("eta") or seen.get("eta_extend") else None
+    eta = bool(auto) and auto.eta_over(seen, minutes)
     if eta and on:
         held["minutes"], source = max(held["minutes"], auto.eta_minutes(seen)), "the ETA"
     elif eta:
@@ -327,7 +325,7 @@ def ledger(top, rel, owner, loop):
         mark, event = KEY.search(body), EVENT.search(body)
         if mark and mark[1] not in lines:
             lines[mark[1]] = dict(id=mark[2], goal=mark[1].split("|")[0], text=body.split("\n")[0][4:], state="open", cid=r["id"], key=mark[1])
-        for verb, rest in [] if event else re.findall(r"^\s*(accept-all|accept|decline)\b(.*)$", body, re.M):
+        for verb, rest in [] if event or mark else re.findall(r"^\s*(accept-all|accept|decline)\b(.*)$", body, re.M):
             ids = re.findall(r"[\w.:-]+", rest)
             if who != owner or not ids:
                 notes.append("ignored %s by %s: %s" % (verb, who, "not the owner" if who != owner else "no line ids named"))
