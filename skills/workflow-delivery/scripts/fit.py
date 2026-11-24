@@ -146,22 +146,13 @@ def monitor(name, paths=False):
 
 
 def budget_stop(slug, state, runs, cfg, at=None, save=None):
-    if save:
+    import dlf  # the rule moved there whole (DLF-1.2)
+    try:
         import goal
-        goal.SEEN[slug] = json.dumps(state)
-    seen = view(state, runs)
-    held, source = budget(seen, cfg)
-    if seen.get("eta") or seen.get("eta_extend"):
-        auto, spent = monitor("auto", True), active_minutes(state, at, cfg)
-        if auto.eta_over(seen, spent):
-            save and auto.eta_wait(state, spent, save)
-            sys.exit("REFUSED: %dm spent, past the ETA of %dm; no new step starts and the goal waits for the owner: ship now, extend "
-                     "once, or defer. Fix: the operation session runs goal.py set %s --eta-choice ship|defer or --eta-extend N, "
-                     "with --owner-record ID (ETA_PAST)" % (spent, auto.eta_minutes(seen), slug))
-    for name, spent in (("minutes", active_minutes(state, at, cfg)),("tokens", spent_tokens(state, bool(held["tokens"])))):
-        if held[name] and spent >= held[name]:
-            sys.exit("REFUSED: %d %s spent, at the %s budget of %d (%s); no new step starts. Fix: goal.py set %s --budget-%s N "
-                     "--why ... from the operation session (BUDGET_%s)" % (spent, name, name.rstrip("s"), held[name], source, slug, name, name.upper()))
+        top = goal.root()
+    except (SystemExit, Exception):
+        top = ""
+    return dlf.budget_stop(slug, state, runs, cfg, at, save, top)
 
 
 def run_saver(runs):

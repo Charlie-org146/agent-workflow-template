@@ -279,7 +279,7 @@ def eta_left(seen, at):
 def eta_over(seen, spent):
     """The goal has spent its ETA and the owner has not chosen ship now."""
     held = eta_minutes(seen)
-    return bool(held) and not eta_open(seen) and spent - eta_start(seen) >= held and (seen.get("eta_choice") or {}).get("choice") != "ship"
+    return bool(held) and not eta_open(seen) and spent - eta_start(seen) >= max(held, (seen.get("dlf_budget") or {}).get("minutes") or 0) and (seen.get("eta_choice") or {}).get("choice") != "ship"
 
 
 def eta_text(seen, at):
