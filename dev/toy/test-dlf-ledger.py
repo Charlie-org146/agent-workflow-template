@@ -146,4 +146,15 @@ keys = lambda: [c["body"] for c in state()["comments"]["1"]]
 check(any("gs|break|other|s1" in b for b in keys()) and not dlf.mem(runs, "gs")["queue"], "finding 8: the goal's next stop re-files its queued line before it files the new one")
 dlf.cut(top, runs, "v1")
 check(any("gr|break|other|r1" in b for b in keys()) and not dlf.mem(runs, "gr")["queue"], "finding 8: the cut re-files the lines still queued before it reads the issue")
+# review finding 6 (TD1483): with no owner login set, owner acceptance fails CLOSED with one plain refusal that names the setting
+json.dump({}, open(top + "/.loop/config.json", "w"))
+os.environ.pop("LOOP_OWNER_LOGIN", None)
+said = dlf.cut(top, runs, "v1")
+check(said.startswith("owner acceptance can't be read: owner_login is not set") and said.count("\n") == 0, "finding 6: no owner_login: one plain refusal naming the setting: %s" % said[:90])
+as_("boss", "accept-all %s" % lid_n)
+check(dlf.cut(top, runs, "v1").startswith("owner acceptance can't be read"), "even an owner's accept-all is not read while owner_login is unset")
+check(dlf.cut(top, runs, "v-none") == "", "a release with no lines is not held by the missing setting")
+os.environ["LOOP_OWNER_LOGIN"] = "boss"
+check(not dlf.cut(top, runs, "v1").startswith("owner acceptance can't be read"), "LOOP_OWNER_LOGIN in the environment supplies the login (nothing is committed)")
+json.dump({"owner_login": "boss"}, open(top + "/.loop/config.json", "w"))
 sys.exit(1 if failed else 0)

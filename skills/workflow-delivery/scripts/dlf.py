@@ -258,7 +258,6 @@ def settle(top, runs, slug, stop, occ, what, words, rec, **ctx):
     return "continue", lid or status
 
 
-# budget rule (DLF-1.2)
 SHARE = {"idea": .05, "plan": .15, "build": .40, "review": .15, "qa": .15, "ship": .10}
 
 
@@ -307,7 +306,6 @@ def budget_stop(slug, state, runs, cfg_, at=None, save=None, top=""):
                          "--why ... from the operation session (BUDGET_%s)" % (spent, name, name.rstrip("s"), held[name], source, slug, name, name.upper()))
 
 
-# ledger and cut (DLF-1.4)
 def ledger(top, rel, owner, loop):
     """(lines, notes, issue) from a complete read, None when a read fails; ({}, [], 0) is confirmed none."""
     number = find_issue(top, rel)
@@ -344,7 +342,8 @@ def cut(top, runs, rel, owner="", loop=""):
     import glob
     if not os.path.isdir(runs):
         return "read failed: the run-record folder %s can't be read" % os.path.basename(runs)
-    owner, loop, out = owner or cfg(top).get("owner_login", ""), loop or private.gh(top, "api", "user", "-q", ".login")[1].strip(), []
+    owner = owner or cfg(top).get("owner_login") or os.environ.get("LOOP_OWNER_LOGIN", "")
+    loop, out = loop or private.gh(top, "api", "user", "-q", ".login")[1].strip(), []
     for f in glob.glob(os.path.join(runs, "*.dlf.json")):
         goal = os.path.basename(f)[:-9]
         retry(top, runs, goal)
@@ -358,6 +357,8 @@ def cut(top, runs, rel, owner="", loop=""):
     if got is None:
         return "\n".join(["read failed: release %s's issue can't be read completely" % rel] + out)
     lines, notes, number = got
+    if lines and not owner:
+        return "owner acceptance can't be read: owner_login is not set (set LOOP_OWNER_LOGIN, or owner_login in a private config)"
     todo = sorted((l for l in lines.values() if l["state"] == "open"), key=lambda l: (l["goal"], l["cid"]))
     for l in [l for l in lines.values() if l["state"] == "converted"]:
         convert(top, runs, l["goal"], rel, l["key"], l["id"], l["text"], "declined")
