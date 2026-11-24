@@ -34,3 +34,6 @@ apply-rerender-blocks	fails on main since v1.0.96; fixed by kept-reds-2; see #49
 defect-categories	fails on main (order-dependent: runs after a row writes regression-runs.tsv); known until its fix right after the v1.1.0 cut, see #5774 (owner o760)
 builtin-flow	local-lane only; green on main 45110588623; #5860; removed by lane-home-isolation
 del5-patch-default	local-lane only; green on main 45110588623; #5860; removed by lane-home-isolation
+scripts-no-hang	local-lane only; green on main 45236323222; #5860; removed by lane-home-isolation
+defect-flow-steps	local-lane only; green on main 45236323222; #5860; removed by lane-home-isolation
+defect-closing-keywords	local-lane only; green on main 45236323222; #5860; removed by lane-home-isolation
