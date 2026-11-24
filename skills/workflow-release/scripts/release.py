@@ -329,6 +329,12 @@ def cmd_cut(args):
     unmet, left = criteria_trouble(cwd, cfg)
     if unmet:
         sys.exit("REFUSED: criteria without a passing regression row: %s." % ", ".join(unmet))
+    delivery = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts")
+    if os.path.isdir(delivery):  # DLF-1.4: the cut refuses while a deliver-first line is open
+        sys.path.insert(0, delivery)
+        import dlf
+        held = dlf.cut(cwd, os.path.dirname(state_path(slug)), dlf.brief(cwd, slug)[1])
+        held and sys.exit("REFUSED: deliver-first lines stand between this release and its cut:\n%s" % held)
     import review  # review imports release
     print(review.left_text(left).strip() or "LEFT 0 rows: every row ran or had a PASS on this commit")
     version_file = cfg.get("version_file") or "VERSION"

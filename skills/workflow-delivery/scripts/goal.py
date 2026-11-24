@@ -277,7 +277,7 @@ def cmd_record(args):
                              "STEP: done|skipped|pending|failed line, then record again", guards.NO_STEP_LINE, save)
     stamp, cfg = "", config()
     wait = pending or result == "pending"
-    auto, ok = wait and (cfg.get("auto_approve") is True or fit.plan_ahead(state, state_dir(), step)), result in ("done", "skipped")
+    auto, ok = wait and (cfg.get("auto_approve") is True or fit.plan_ahead(state, state_dir(), step) or choices(state, pending, step)), result in ("done", "skipped")
     if ok or auto:
         stamp, refusal, ask, skipped = guards.check_record(state, step, text, cfg, result)
         for line in skipped:
@@ -325,6 +325,13 @@ def cmd_record(args):
     failed_try(state, "%s %s" % (step, "failed: " + why[:200] if result else "gave no STEP line"), step,
                "fix the cause, then run flow.py %s %s again" % (slug, step))
     return 1
+
+
+def choices(state, pending, step):
+    import dlf  # DLF-1.1: each PENDING decision is a line and the recommended answer is taken, unless the table says it waits
+    return bool(pending) and all(dlf.settle(root(), state_dir(), state["slug"], "choice", "%s%d" % (step, i), "design choice at %s: %s" % (step, p[:200]),
+                                            "answer: the recommended one, or name another", "take the recommended answer", paths=state.get("touches") or ())[0] == "continue"
+                                 for i, p in enumerate(pending, 1))
 
 
 def queue(op, *args):

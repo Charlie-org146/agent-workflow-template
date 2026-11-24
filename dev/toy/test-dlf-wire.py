@@ -93,4 +93,15 @@ check(said == "refused: set deliver_first off for goal gb needs an owner referen
 check(json.load(open(tmp + "/.loop/config.json"))["deliver_first"].get("goal", {}).get("gb") is None, "and nothing changed")
 got = subprocess.run([sys.executable, os.path.join(root, "skills", "workflow-delivery", "scripts", "dlf.py"), "set", "deliver_first", "off", "--scope", "goal", "--id", "gb"], capture_output=True, text=True, cwd=tmp, env=env)
 check(got.returncode == 1 and got.stdout.startswith("refused: set deliver_first off for goal gb"), "the command refuses the same way and exits non-zero")
+# an open design choice in a step's reply (a PENDING line): a line and the recommended answer, unless the table says it waits
+import goal as goal_mod  # noqa: E402
+os.chdir(tmp)
+json.dump(dict(config), open(tmp + "/.loop/config.json", "w"))
+ask = ["approve the plan wording", "pick the first of two names"]
+check(goal_mod.choices({"slug": "gq", "touches": ["skills/a/b.py"]}, ask, "plan") is True and len(lines("gq")) == 2, "two PENDING choices on a goal with declared touches become two lines and the goal goes on")
+check(goal_mod.choices({"slug": "gq", "touches": ["skills/a/b.py"]}, ask, "plan") is True and len(lines("gq")) == 2, "the same choices again file no second line")
+check(goal_mod.choices({"slug": "gr", "touches": []}, ask, "plan") is False and not lines("gr"), "a choice on a goal with no touches is unclassifiable: it waits")
+check(goal_mod.choices({"slug": "gs", "touches": [".claude/settings.json"]}, ask, "plan") is False, "a choice on a goal touching a settings file waits")
+check(goal_mod.choices({"slug": "gt", "touches": ["docs/wiki/Deliver-first.md"]}, ask, "plan") is False, "a choice on a goal touching a requirement page changes what a feature promises: it waits")
+check(goal_mod.choices({"slug": "gu", "touches": ["skills/a/b.py"]}, [], "plan") is False, "no PENDING items: nothing to settle")
 sys.exit(1 if failed else 0)
