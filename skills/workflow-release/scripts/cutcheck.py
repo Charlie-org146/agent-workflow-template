@@ -6,6 +6,7 @@ it, prints `PASS`, `FAIL` or `NO COMMAND` (a check whose run is empty or a flow 
 exits 2. release.py is not edited: the cut test is a procedure (run this, then cut), not a refusal inside the cut."""
 import argparse
 import glob
+import importlib
 import json
 import os
 import re
@@ -13,8 +14,17 @@ import shlex
 import subprocess
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts"))
-import sizing  # noqa: E402
+sizing = None
+
+
+def need():
+    """Load sizing.py from the delivery skill by path when a check runs, so --help runs alone with only this folder."""
+    global sizing
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts"))
+    try:
+        sizing = importlib.import_module("sizing")
+    except ImportError:
+        sys.exit("REFUSED: cutcheck needs workflow-delivery beside it. Fix: install it (SIZING_NO_DELIVERY)")
 
 
 def git(*args):
@@ -62,6 +72,7 @@ def main(argv):
     ap.add_argument("--release", default="")
     ap.add_argument("--require-full", metavar="CHECK", default="")
     args = ap.parse_args(argv)
+    need()
     found = states(args.slugs, args.release)
     lines = skipped(found)
     print("\n".join(lines) if lines else "no check was skipped or run light")

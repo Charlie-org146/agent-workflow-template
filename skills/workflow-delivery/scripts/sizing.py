@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""CBS-1 and ASZ-1: sizing.py size|rule|show SLUG [STEP]. A goal is sized from its plan, the size picks its checks from the table
-checks_by_size (read from origin/<base>; sizing is off without it), a size only goes up. Imported by guards, role and flow."""
+"""CBS-1, ASZ-1: sizing.py size|rule|show SLUG [STEP]. A goal is sized from its plan; the size picks its checks from the table
+checks_by_size (read from origin/<base>; off without it); a size only goes up. Imported by guards, role and flow."""
 import json
 import os
 import re
@@ -315,7 +315,7 @@ def override(state, size, record):
 def check(state, step, text):
     sized, ok = state.get("sized"), base_cfg()[2]
     if not on():
-        return None if ok or not sized else ("the base config can't be read", "rerun after the read works, then record again", "SIZING_READ_FAILED sizing")
+        return None if ok or not sized else ("base config unreadable", "rerun when the read works, then record", "SIZING_READ_FAILED sizing")
     if not sized:
         return ("%s refused: this goal has no size" % step, FIX_SIZE + state["slug"], "SIZING_NOT_SIZED sizing") if step == "plan" else None
     try:
@@ -330,10 +330,10 @@ def check(state, step, text):
         sized = state["sized"]
     gone = [c for c, v in sized["checks"].items() if v["form"] not in forms.get(c, {})]
     if gone:
-        return "form %s of %s left the table" % (sized["checks"][gone[0]]["form"], gone[0]), "restore the row on the base branch, then run sizing.py size " + state["slug"], "SIZING_BAD_TABLE sizing"
+        return "form %s of %s left the table" % (sized["checks"][gone[0]]["form"], gone[0]), "restore the row on the base, then run sizing.py size " + state["slug"], "SIZING_BAD_TABLE sizing"
     found = re.findall(r"^\W*STEP:\s*(done|skipped|pending|failed)\b", text, re.M | re.I)
     result, rows = found[-1].lower() if found else "", re.findall(r"^\W*CHECK:(.*)$", text, re.M)
-    fix, seen = "run sizing.py rule %s, write the CHECK lines it prints, record again" % state["slug"], {}
+    fix, seen = "run sizing.py rule %s, write its CHECK lines, record again" % state["slug"], {}
     no = lambda why, code: (why, fix, "SIZING_" + code + " sizing")
     if rows and result in ("skipped", "failed"):
         return no("a CHECK line on a " + result, "CHECK_STEP")
@@ -392,7 +392,7 @@ def light(state, step):
 def main(argv):
     if len(argv) < 3 or argv[1] not in ("size", "rule", "show"):
         print("usage: sizing.py size|rule|show SLUG")
-        return 1
+        return int(argv[1:2] not in (["-h"], ["--help"]))
     cmd, slug = argv[1], argv[2]
     try:
         if cmd == "size":

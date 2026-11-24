@@ -2,12 +2,14 @@
 """ASZ-1.3: the owner's size line and the board's size line. `sizeline.py set SLUG SIZE --owner-record ID` raises a goal's size
 (up only, with the owner's words, never under a safety class; sizing.override does the work); `sizeline.py show SLUG` prints
 `SIZE <size> (<reason>) checks: ...` and `owner: <id>` when an owner line changed it. line(run) is the one-line form the board
-uses (board_tasks.py); alone() lists goals that belong to no task brief."""
-import argparse
+uses (board_tasks.py); alone() lists goals that belong to no task brief. The delivery modules are loaded by path when a command
+runs, so the script runs alone (--help) with nothing but its own folder."""
+import importlib
 import os
 import sys
 
 DELIVERY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts")
+USAGE = "usage: sizeline.py show SLUG | sizeline.py set SLUG small|medium|large --owner-record ID"
 
 
 def line(run, width=70):
@@ -31,35 +33,40 @@ def alone(runs, attached):
 
 
 def main(argv):
+    if argv[:1] not in (["show"], ["set"]):
+        print(USAGE)
+        return 0 if argv[:1] in (["-h"], ["--help"]) else 1
+    args, record = argv[1:], ""
+    if "--owner-record" in args[:-1]:
+        at = args.index("--owner-record")
+        record, args = args[at + 1], args[:at] + args[at + 2:]
+    rest = args
+    if len(rest) != (1 if argv[0] == "show" else 2):
+        print(USAGE)
+        return 1
     sys.path.insert(0, DELIVERY)
-    import goal
-    import sizing
-    ap = argparse.ArgumentParser(prog="sizeline.py")
-    sub = ap.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("show").add_argument("slug")
-    item = sub.add_parser("set")
-    item.add_argument("slug")
-    item.add_argument("size")
-    item.add_argument("--owner-record", default="")
-    args = ap.parse_args(argv)
-    state = goal.load(args.slug)
+    try:
+        goal, sizing = importlib.import_module("goal"), importlib.import_module("sizing")
+    except ImportError:
+        print("REFUSED: sizeline needs workflow-delivery beside it. Fix: install it (SIZING_NO_DELIVERY)")
+        return 2
+    slug = rest[0]
+    state = goal.load(slug)
     sized = state.get("sized")
-    if args.cmd == "show":
-        print(line(dict(state, sized=dict(sized, reason=sized["reason"])), 10 ** 6) if sized else "NOT SIZED: run sizing.py size " + args.slug)
+    if argv[0] == "show":
+        print(line(state, 10 ** 6) if sized else "NOT SIZED: run sizing.py size " + slug)
         return 0
     try:
-        if args.owner_record and sized:
-            import fit
-            fit.monitor("auto", True).eta_record(goal, args.owner_record, args.slug, "a size change")
+        if record and sized:
+            goal.fit.monitor("auto", True).eta_record(goal, record, slug, "a size change")
         old = (sized or {}).get("size")
         had = {a["check"] for a in (sized or {}).get("added") or []}
-        new = sizing.override(state, args.size, args.owner_record)
-        goal.guards.add_set(goal.state_dir(), args.slug, "size_owner", {"record": args.owner_record, "from": old, "to": args.size},
-                            "size raised %s to %s (record %s)" % (old, args.size, args.owner_record))
+        new = sizing.override(state, rest[1], record)
+        goal.guards.add_set(goal.state_dir(), slug, "size_owner", {"record": record, "from": old, "to": rest[1]},
+                            "size raised %s to %s (record %s)" % (old, rest[1], record))
     except sizing.Refusal as err:
         sizing.stop(err)
-    print("SIZE %s -> %s (record %s); added: %s" % (old, new["size"], args.owner_record,
-                                                    ", ".join(a["check"] for a in new["added"] if a["check"] not in had) or "none"))
+    print("SIZE %s -> %s (record %s); added: %s" % (old, new["size"], record, ", ".join(a["check"] for a in new["added"] if a["check"] not in had) or "none"))
     return 0
 
 
