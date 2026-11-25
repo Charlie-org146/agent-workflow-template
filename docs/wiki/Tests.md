@@ -138,7 +138,7 @@
 | <a id="t-grd7-round-cost"></a>grd7-round-cost | requirement | DEL-17 | not run | - | local | 2026-11-12 |
 | <a id="t-grd8-silent-worker"></a>grd8-silent-worker | requirement | DEL-17 | not run | - | local | 2026-11-12 |
 | <a id="t-budgets-agree"></a>budgets-agree | requirement | DEL-17 | PASS | 2026-11-22 | [CI 2026-11-22](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-22) | 2026-11-18 |
-| <a id="t-pr-body-by-file"></a>pr-body-by-file | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-19 |
+| <a id="t-pr-body-by-file"></a>pr-body-by-file | defect | [#1396](https://github.com/jcl2018/agent-workflow-template/issues/1396) closed (2026-11-12) | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-25 |
 | <a id="t-del5-docs-bump-minor"></a>del5-docs-bump-minor | requirement | DEL-1 | PASS | 2026-11-15 | [CI 2026-11-15](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-15) | 2026-11-13 |
 | <a id="t-resume-ask-worker-step"></a>resume-ask-worker-step | requirement | DEL-1 | not run | - | local | 2026-11-13 |
 | <a id="t-package-gate-controls"></a>package-gate-controls | requirement | DEL-1 | not run | - | local | 2026-11-13 |
@@ -779,7 +779,7 @@
 | <a id="t-defect-5605-guide-stamp"></a>defect-5605-guide-stamp | defect | [#5605](https://github.com/Charlie-org146/agent-workflow-template/issues/5605) closed (2026-11-21) | not run | - | local | 2026-11-21 |
 | <a id="t-defect-5386-restamp-no-identity"></a>defect-5386-restamp-no-identity | defect | [#5386](https://github.com/Charlie-org146/agent-workflow-template/issues/5386) closed (2026-11-21) | not run | - | local | 2026-11-21 |
 | <a id="t-defect-4115-lane-control"></a>defect-4115-lane-control | defect | [#4115](https://github.com/Charlie-org146/agent-workflow-template/issues/4115) closed (2026-11-21) | not run | - | local | no |
-| <a id="t-defect-5609-one-merge-path"></a>defect-5609-one-merge-path | defect | [#5609](https://github.com/Charlie-org146/agent-workflow-template/issues/5609) closed (2026-11-21) | not run | - | local | 2026-11-21 |
+| <a id="t-defect-5609-one-merge-path"></a>defect-5609-one-merge-path | defect | [#5609](https://github.com/Charlie-org146/agent-workflow-template/issues/5609) closed (2026-11-21) | not run | - | local | 2026-11-25 |
 | <a id="t-scan-fail-closed"></a>scan-fail-closed | requirement | done line scan-fail-closed:1 | not run | - | local | 2026-11-21 |
 | <a id="t-tasks-list-states"></a>tasks-list-states | requirement | done line v110-tasks:2 | FAIL | 2026-11-22 | [CI 2026-11-22](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-22) | 2026-11-21 |
 | <a id="t-tasks-needs-wait"></a>tasks-needs-wait | requirement | done line v110-tasks:3 | not run | - | local | 2026-11-21 |
@@ -793,3 +793,8 @@
 | <a id="t-sizing-done-2-sized-at-freeze"></a>sizing-done-2-sized-at-freeze | requirement | done line v110-cbs-asz:2 | PASS | 2026-11-24 | [CI 2026-11-24](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-24) | 2026-11-24 |
 | <a id="t-sizing-done-3-resized-up"></a>sizing-done-3-resized-up | requirement | done line v110-cbs-asz:3 | PASS | 2026-11-24 | [CI 2026-11-24](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-24) | 2026-11-24 |
 | <a id="t-sizing-done-4-sizes"></a>sizing-done-4-sizes | requirement | done line v110-cbs-asz:4 | PASS | 2026-11-24 | [CI 2026-11-24](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-24) | 2026-11-24 |
+| <a id="t-make-room-1-room"></a>make-room-1-room | requirement | done line v110-make-room:1 | not run | - | local | 2026-11-25 |
+| <a id="t-make-room-2-identical"></a>make-room-2-identical | requirement | done line v110-make-room:2 | not run | - | local | 2026-11-25 |
+| <a id="t-make-room-3-package"></a>make-room-3-package | requirement | done line v110-make-room:3 | not run | - | local | 2026-11-25 |
+| <a id="t-make-room-4-surface"></a>make-room-4-surface | requirement | done line v110-make-room:4 | not run | - | local | 2026-11-25 |
+| <a id="t-make-room-5-sizes"></a>make-room-5-sizes | requirement | done line v110-make-room:5 | not run | - | local | 2026-11-25 |
