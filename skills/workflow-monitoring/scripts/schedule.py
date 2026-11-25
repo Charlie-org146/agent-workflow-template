@@ -30,13 +30,16 @@ def top():
     return out
 
 
-def owner_record(paths, record):
-    try:
-        known = {x.split("\t")[0] for x in open(os.path.join(paths["folder"], "owner-words.tsv"), encoding="utf-8").read().splitlines()}
-    except OSError:
-        known = set()
-    if not record or record not in known:
-        raise ss.Refused("SCHED-E08", "%s is not a record of the owner's words" % (sl.clean(record, 30) or "no record"), "record them (sessions.py owner-words), then pass --by ID")
+def owner_record(root, record, slugs):
+    """Design H: the record must be one of the owner's words in owner-words.tsv (five columns) whose covered ids include every goal ordered
+    (or order:*); a made-up id, a malformed row and a record about other goals all refuse before anything is written."""
+    row = next((r for r in auto.owner_rows(root) if r[0] == record), None)
+    covers = set(row[4].split(",")) if row else set()
+    if not row or not covers - {""}:
+        raise ss.Refused("SCHED-E08", "%s is not a record of the owner's words" % (sl.clean(record, 30) or "no record"), "record them (sessions.py owner-words TEXT --ids GOALS), then pass --by ID")
+    gap = [x for x in slugs if x not in covers and "order:*" not in covers]
+    if gap:
+        raise ss.Refused("SCHED-E08", "record %s covers %s, not %s" % (sl.clean(record, 30), sl.clean(",".join(sorted(covers)), 60), sl.clean(gap[0], 30)), "record the owner's words for the goals ordered (sessions.py owner-words TEXT --ids GOALS)")
 
 
 def show(root):
@@ -71,7 +74,7 @@ def order(root, args):
     need_complete(root, "order")
     queued = [g["slug"] for g in sl.load(root)["goals"]]
     bad = [s for s in args.slugs if s not in queued]
-    owner_record(paths, args.by)
+    owner_record(root, args.by, args.slugs)
     if not args.slugs or bad:
         raise ss.Refused("SCHED-E03", "unknown goal %s" % (sl.clean(bad[0], 40) if bad else "(none given)"), "queued goals: " + ", ".join(queued))
     ss.set_order(paths, args.slugs, args.by)

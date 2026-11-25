@@ -81,5 +81,19 @@ run(top, *A("wait for the fix to merge"))
 code, out, err = run(top, "workaround", "use", "k1", "--goal", "v110-a")
 check(code == 0 and sl.load(top)["waived"] == {"v110-a": {"v110-fix"}}, "negative control: plain words activate")
 
+# 1b. SAFETY (design H): order's record must be a real owner record whose covered ids include the goals ordered
+rows = "o77\t2026-11-24T00:00:00Z\tsess\t\"words\"\tv110-other\n" + "o78\t2026-11-24T00:00:00Z\tsess\t\"words\"\tv110-fix,v110-a\n"
+top = repo(owner_rows=rows)
+code, out, err = run(top, "order", "v110-fix", "--by", "o999")
+check(code == 2 and "SCHED-E08" in err and not os.path.exists(sl.paths(top)["order"]), "order refuses a made-up record id")
+code, out, err = run(top, "order", "v110-fix", "--by", "o77")
+check(code == 2 and "SCHED-E08" in err and not os.path.exists(sl.paths(top)["order"]), "order refuses a real record id that covers another scope")
+code, out, err = run(top, "order", "v110-fix", "--by", "o123")
+check(code == 2 and "SCHED-E08" in err and not os.path.exists(sl.paths(top)["order"]), "order refuses a malformed record (an id with no covered ids)")
+code, out, err = run(top, "order", "v110-fix", "v110-a", "--by", "o78")
+check(code == 0 and os.path.exists(sl.paths(top)["order"]), "negative control: a real record covering every goal ordered is accepted")
+code, out, err = run(top, "order", "v110-fix", "v110-b", "--by", "o78")
+check(code == 2, "a record that covers only some of the goals ordered is refused")
+
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)

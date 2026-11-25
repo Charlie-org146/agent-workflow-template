@@ -56,7 +56,7 @@ def repo(queue=Q, briefs=True, branch="main"):
     open(os.path.join(top, ".loop", "queue.md"), "w").write(queue)
     briefs and open(os.path.join(top, ".loop", "tasks", "t.md"), "w").write("# Task first\n\n- Release: v1.1.0\n- Goals: v110-a, v110-dep\n")
     briefs and open(os.path.join(top, "docs", "release-brief-1.1.0.md"), "w").write("b\n")
-    open(os.path.join(top, ".git", "loop", "owner-words.tsv"), "w").write("o123\twords\n")
+    open(os.path.join(top, ".git", "loop", "owner-words.tsv"), "w").write("o123\t2026-11-24T00:00:00Z\tsess\t\"words\"\torder:*\n")
     return top
 
 
