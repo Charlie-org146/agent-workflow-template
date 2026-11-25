@@ -149,8 +149,7 @@ def cmd_pr(args):
     state["step"] = "pr"
     _s.save(state, "pr")
     url = _s.fit.pr_open(_s.ME, state, base, info, body)
-    if cover.refresh(_s, state, info, body):
-        return 1
+    cover.refresh(_s, state, info, body)
     state.update(pr=url, statuses="ok" if _s.private.pr_result(_s.root(), base, _s.git("rev-parse", "HEAD"), state["branch"], True) else "failed")
     state.update(step="release", status="done")
     _s.save(state, "pull request " + url)

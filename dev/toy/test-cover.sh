@@ -66,7 +66,7 @@ if mode == "lane":
     print("STATUS", status); print(line); print("CALLS", json.dumps(calls))
 elif mode == "need":
     over = lambda: ("over_caps called", "fix", "TEST_CAPS")
-    ref = lambda r, s, reply, st: ("no lane", "fix", "LANE_MISSING") if not os.environ.get("HAVE_OK") else None
+    ref = lambda r, s, reply, st: (("over a cap", "fix", "TEST_CAPS") if os.environ.get("REF_CAPS") else ("no lane", "fix", "LANE_MISSING")) if not os.environ.get("HAVE_OK") else None
     print("NEED", json.dumps(cover.need(ref, over, runs, slug, "reply.txt", step)))
 elif mode == "late":
     print("LATE", cover.late(runs, slug, cfg))
@@ -118,6 +118,13 @@ wf "run nightly --reuse --tier goal" "run nightly --tier goal"; off "a no-op sha
 wf "run nightly --reuse --tier goal" "run nightly --reuse --tier goal --ids example-row"; off "a shard limited to chosen rows" WF; unwf
 wf "run nightly --reuse --tier goal" "run nightly --reuse --tier goal --kind defect"; off "a shard narrowed by another argument" WF; unwf
 wf '$R --budget $B --timeout 200' '$R --budget $B --timeout 200 --kind defect'; off "one shard call narrowed by another argument" WF; unwf
+wf "      - run: python3 skills/workflow-regression/scripts/cutgate.py 's/shard-[0-7]/t.tsv' all.tsv .loop/regression-skips.tsv 8
+" ""; off "no aggregate check of the shards" WF; unwf
+wf "    timeout-minutes: 30
+" "    timeout-minutes: 30
+    continue-on-error: true
+"; off "a shard job allowed to fail" WF; unwf
+wf "shard: [0, 1, 2, 3, 4, 5, 6, 7, tree]" "shard: [0, 1, 2, 3, 4, 5, 6, 7]"; off "a matrix without the whole-tree shard" WF; unwf
 # a skip or limit list that is there but cannot be read is an unknown; a list that is not there is empty
 mkdir -p "$d/gitw"; printf '#!/bin/bash
 [ "$1 $2" = "show origin/main:.loop/regression-limits.tsv" ] && exit 1
@@ -169,6 +176,7 @@ reset; cov lane qa >/dev/null
 out=$(cov need qa); echo "$out"
 check "uncovered rows (n, s) with no passing local lane are refused: LANE_MISSING_UNCOVERED, naming the rows" 'grep -q "LANE_MISSING_UNCOVERED" <<<"$out" && grep -q "n, s have no passing local lane" <<<"$out" && grep -q "skills/workflow-delivery/scripts/cover.py lane g1 qa" <<<"$out"'
 out=$(HAVE_OK=1 cov need qa); check "the lane's own pass for the uncovered rows is accepted" 'grep -q "^NEED null" <<<"$out"'
+out=$(REF_CAPS=1 cov need qa); check "a refusal that is not about the lane (TEST_CAPS) passes through the cover unchanged" 'grep -q "^NEED \[\"over a cap\", \"fix\", \"TEST_CAPS\"\]" <<<"$out"'
 git switch -q -c feat2 feat; printf 't\tland\tbash dev/t.sh\tX-1\t2026-01-01\tt works.\tcriterion\t\n' >> .loop/regression.tsv; printf 'echo t >> "$TOY_LOG"; grep -q ok src/t.txt\n' > dev/t.sh; printf 'ok\n' > src/t.txt; git add -A; git commit -qm "A new reachable row"
 out=$(HAVE_OK=1 cov need qa); echo "$out"
 check "a row that became reachable after the claim runs locally: the old lane pass is not enough" 'grep -q "LANE_MISSING_UNCOVERED" <<<"$out" && grep -q "t have no passing local lane" <<<"$out"'
@@ -246,7 +254,7 @@ import json, os, sys
 sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True
 import lane, lanekit
 runs, base = sys.argv[2], lanekit.lane_base(sys.argv[2], "g1", "qa")
-status, line, _ = lane.lane(runs, "g1", "qa", {"test_record": ["bash", sys.argv[3]]}, json.load(open(".loop/config.json")), 60, True)
+status, line, _ = lane.lane(runs, "g1", "qa", {"test_record": ["bash", sys.argv[3]]}, json.load(open(".loop/config.json")), 60, os.environ.get("REDO") != "0")
 print("STATUS", status); print(line)
 print("ARGS", " ".join(l for l in open(base + ".txt").read().splitlines() if l.startswith("ARGV:")))
 head = os.popen("git rev-parse HEAD").read().strip()
@@ -262,6 +270,21 @@ check "the real lane with a claim listing exactly those ids launches --ids n,s a
 check "the real lane with ids the claim does not list launches without --ids (the whole lane)" 'grep -q "^STATUS pass" <<<"$o3" && grep -q "^ARGS ARGV: " <<<"$o3" && ! grep -q -- "--ids" <<<"$o3" && grep -q "^OK HEAD$" <<<"$o3"'
 check "a narrowed lane that leaves rows unrun records no pass: LANE_LEFT, no .ok" 'grep -q "^STATUS fail" <<<"$o4" && grep -q "LANE_LEFT: the lane narrowed to n,s left rows unrun" <<<"$o4" && grep -q "^OK none$" <<<"$o4"'
 check "control: a whole lane cut by the budget still passes as before" 'grep -q "^STATUS pass" <<<"$o5" && ! grep -q -- "--ids" <<<"$o5" && grep -q "^OK HEAD$" <<<"$o5"'
+reset; cov lane qa >/dev/null; LOOP_COVER_IDS=n,s real >/dev/null; reset; o6=$(REDO=0 real)
+check "a narrowed pass is not reused once its claim is gone: the whole lane runs again" 'grep -q "^STATUS pass" <<<"$o6" && grep -q "^ARGS ARGV: " <<<"$o6" && ! grep -q -- "--ids" <<<"$o6" && grep -q "^OK HEAD$" <<<"$o6"'
+# a row a narrowed run left unrun (LEFT in the run record) stays local: it is never planned as reused
+LR=$(cat <<'PYEND'
+import os, sys
+sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True
+import lanes
+root = os.getcwd(); path = lanes.record_path(root); old, _ = lanes.load(path, root)
+lanes.save(path, root, old["command"], [{"id": "s", "state": "LEFT", "seconds": 0}], old["commit"], old["at"], False, old.get("merge_base"))
+print("LEFT", lanes.load(path, root)[0]["rows"]["s"]["status"])
+PYEND
+)
+reset; reg run land --reuse --tier goal --ids n,s >/dev/null 2>&1; o7=$(cov lane qa); o8=$(python3 -B -c "$LR" "$S" 2>&1); o9=$(cov lane qa)
+echo "$o7" | head -1; echo "$o8"; echo "$o9" | head -1
+check "a row left unrun by a narrowed run stays local, never planned as reused" 'grep -q "^LEFT LEFT$" <<<"$o8" && grep -Eq "^COVERED [0-9]+ rows by L1; running [0-9]+ locally: .*\bs\b" <<<"$o9"'
 SH=$(cat <<'PYEND'
 import json, os, sys
 sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True

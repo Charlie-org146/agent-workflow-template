@@ -14,19 +14,21 @@ import os
 import re
 import subprocess
 import sys
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks (DEL-10)
 REG = os.path.join(HERE, os.pardir, os.pardir, "workflow-regression", "scripts")
 APP, BOUND, NAME = 15368, 30, "L1"  # the GitHub Actions app id; seconds per call
+HEAD_TRIES, HEAD_WAIT = 6, 5  # reads of the PR head after the push, seconds apart
 IFS = ("github.event_name != 'merge_group'", "always() && github.event_name != 'merge_group'", "always()",
        "always() && needs.shard.result == 'success'", "github.event_name == 'merge_group'")
 PIN = ("name: regression-pr\n", "  pull_request:\n  merge_group:\n    types: [checks_requested]\n", "\n  shard:\n", "\n  affected:\n",
        "\n  small:\n", "cutgate.py", 'test "${{ needs.shard.result }}" = success')
 JOB = {"shard": "github.event_name != 'merge_group'", "affected": "always() && github.event_name != 'merge_group'",
        "small": "github.event_name == 'merge_group'"}  # each job's own if: (a disabled pull_request job is no cover)
-CMDS = "bfc39b9371569ea04ece99c3551480f262fdbd20"  # sha1 of the shard's regression command lines: any other argument may narrow a run
+WF_SHA = "540058269baf8fe69e82b4c4a1ab40e5918cda59"  # sha1 of the base's regression-pr.yml as reviewed: any edit turns the cover off
 SILENT = ("GH", "RUNS")
 PLAN = r"""
 import json, sys
@@ -37,6 +39,7 @@ root = regression.top(); rows = regression.read_rows(root)
 picked = [r for r in tiers.kinds(regression.chosen(rows, tiers.target(root, A)), None) if r["level"] not in ("draft", "covered")]
 todo, reused, old, why = tiers.plan(root, picked, lanes.record_path(root))
 bad = [k for k, v in ((old or {}).get("rows") or {}).items() if v.get("status") in ("FAIL", "SKIPPED", "LEFT") or v.get("flaky")]
+todo += [k for k in bad if k in {r["id"] for r in picked} and k not in todo]  # a cut, failed, skipped or flaky row runs here, never reused
 print(json.dumps({"todo": todo, "bad": bad}))
 """
 
@@ -74,8 +77,8 @@ def pinned(text):
         got = re.search(r"^    if: (.+)$", block.group(1), re.M) if block else None
         if not got or got.group(1) != want:
             return False
-    cmds = "\n".join(x.strip() for x in text.splitlines() if re.search(r"\$R\b|regression\.py run", x))
-    return hashlib.sha1(cmds.encode()).hexdigest() == CMDS and all(p in text for p in PIN) and all(i in IFS for i in ifs)
+    same = hashlib.sha1(text.strip().replace("\r\n", "\n").encode()).hexdigest() == WF_SHA
+    return same and all(p in text for p in PIN) and all(i in IFS for i in ifs)
 
 
 def ruleset(root):
@@ -161,8 +164,8 @@ def drop(runs, slug):
 def off(runs, slug, step, code):
     data = load(runs, slug)
     if code not in SILENT and data.get("off", {}).get(step) != code:
-        print("COVER OFF: %s. %sNothing is lost: the local lane runs in full; rerun flow.py %s %s if the cause was transient"
-              % (code, "private repo: no cover. " if code == "PRIV" else "", slug, step))
+        print("COVER OFF: %s. %sNothing is lost: the local lane runs in full; rerun %s if the cause was transient" % (
+            code, "private repo: no cover. " if code == "PRIV" else "", "goal.py pr " + slug if step == "pr" else "flow.py %s %s" % (slug, step)))
     data.setdefault("off", {})[step] = code
     if data.pop("claim", None):
         drop(runs, slug)
@@ -206,6 +209,8 @@ def lane(fn, runs, slug, step, spec, cfg, wait=90):
 def need(fn, over, runs, slug, reply, step="qa"):
     """role.need_lane, with the lane waived only for rows recomputed as covered; the uncovered rows still need their own pass."""
     ref = fn(runs, slug, reply, step)
+    if ref and ref[2] not in ("LANE_MISSING", "HEAD_MOVED"):
+        return ref  # not about the lane (TEST_CAPS, say): the cover never hides it
     data = load(runs, slug)
     claim, root = data.get("claim"), sh(["git", "rev-parse", "--show-toplevel"])[1]
     if not claim or not root:
@@ -244,23 +249,26 @@ def late(runs, slug, cfg):
 
 
 def refresh(g, state, info, body):
-    """After pr_open: an already open PR gets the new Regression lane text; True when the pr step must stop (BODY_STALE, COVER_MOVED)."""
+    """After pr_open: an already open PR gets the new Regression lane text; a failed edit (BODY_STALE) or a moved head (COVER_MOVED) refuses."""
     mark = hashlib.sha1(body.encode()).hexdigest()
     if info.get("state") != "OPEN" or state.get("pr_body_pushed") in (None, mark):
         state["pr_body_pushed"] = mark
         return
-    rc, out = sh(["gh", "pr", "view", state["branch"], "--json", "headRefOid", "-q", ".headRefOid"])
-    if rc or out != sh(["git", "rev-parse", "HEAD"])[1]:
+    head = sh(["git", "rev-parse", "HEAD"])[1]
+    for _ in range(HEAD_TRIES):  # GitHub shows a push after a lag: only a head that stays other or unread has moved
+        rc, out = sh(["gh", "pr", "view", state["branch"], "--json", "headRefOid", "-q", ".headRefOid"])
+        if not rc and out == head:
+            break
+        time.sleep(HEAD_WAIT)
+    else:
         off(os.path.dirname(g.state_path(state["slug"])), state["slug"], "pr", "MOVED")
         g.guards.refuse_no_try(state, "the PR head %s; the body is not edited (PR %s)" % ("is unread" if rc else "moved", info.get("url", "")),
                                "goal.py pr %s reruns the pr step on the current head, with the whole lane" % state["slug"], "COVER_MOVED", g.save)
-        return True
     file = g.state_path(state["slug"]) + ".body"
     g.write(file, body)
     if sh(["gh", "pr", "edit", state["branch"], "--body-file", file])[0]:
         g.guards.refuse_no_try(state, "the PR is open and its body is stale (PR %s)" % info.get("url", ""),
                                "goal.py pr %s reruns the pr step: it re-syncs, may rerun the lane and push, then retries the edit" % state["slug"], "BODY_STALE", g.save)
-        return True
     state["pr_body_pushed"] = mark
 
 

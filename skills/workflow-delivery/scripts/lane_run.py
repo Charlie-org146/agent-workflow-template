@@ -109,6 +109,16 @@ def ok_head(runs, slug, path):
     return head if not ids or ids == [claim_ids(runs, slug)] else ""
 
 
+def stale(runs, slug, name):
+    """True when that lane's .ok is a narrowed one its cover claim no longer lists: its pass is never reused."""
+    path = _s.lanekit.lane_base(runs, slug, name) + ".ok"
+    try:
+        narrowed = len(open(path).read().split()) > 1
+    except OSError:
+        return False
+    return narrowed and not ok_head(runs, slug, path)
+
+
 def lane_status(runs, slug, name):
     """(state, line): running, pass, fail or none; finalizes, never spawns."""
     head = _s.rev("HEAD")

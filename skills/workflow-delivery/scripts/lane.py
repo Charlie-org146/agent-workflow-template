@@ -130,7 +130,7 @@ def lane(runs, slug, name, spec, cfg, wait=90, redo=False):
     if held and not live(held) and not ended(held) and not fresh(held) and time.time() - held["started"] > 30:
         stop(base, held)
         held = None
-    if not held and not dirty() and (src := lanekit.passed(runs, slug, head, name)):
+    if not held and not dirty() and (src := lanekit.passed(runs, slug, head, name)) and not stale(runs, slug, src):
         return "pass", answer(runs, slug, src, name), []
     if not held:
         top = rev("--show-toplevel")
@@ -266,7 +266,7 @@ def main(argv):
     return 0 if argv in ([], ["-h"], ["--help"]) else 2
 
 
-from lane_run import claim_ids, finalize, lane_status, wait_for  # noqa: E402,F401
+from lane_run import claim_ids, finalize, lane_status, stale, wait_for  # noqa: E402,F401
 
 
 if __name__ == "__main__":
