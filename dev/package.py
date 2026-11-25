@@ -191,7 +191,8 @@ def fail(rule, text, derived="", after="", source=None, origin=""):
     """Every failure line goes through here. The derived part (read from a shipped file or a child) is withheld whole
     when it, or the uncut source it was cut from, holds a match: masking part of it would leak through length and
     context. The rule text stays, so a line keeps its form."""
-    kind = hit(derived) or (hit(source) if source else None)
+    sources = source if isinstance(source, tuple) else (source,) if source else ()
+    kind = hit(derived) or next((k for k in map(hit, sources) if k), None)  # each source alone: anchored patterns keep their start
     if kind:
         derived = WITHHELD % (kind, " from " + origin if origin else "")
     kind = (hit(text + after) or hit(text + derived + after)  # the body, so a pattern anchored at its start still matches
@@ -272,7 +273,7 @@ def check_frontmatter(root, files):
             fail("Frontmatter", "%s has no name" % where(rel))
         elif fields["name"] != folder:
             fail("Frontmatter", "%s name " % where(rel), "%r does not match folder %r" % (fields["name"], folder),
-                 source="%s\n%s\n%s\n%s" % (fields["name"], folder, rel, doc))  # the name first (anchored patterns), then the whole SKILL.md
+                 source=("%s\n%s\n%s" % (fields["name"], folder, rel), doc))  # the parsed values, and the whole SKILL.md
         if not fields.get("description"):
             fail("Frontmatter", "%s has no description" % where(rel))
     return skills
