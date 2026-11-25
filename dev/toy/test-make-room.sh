@@ -50,6 +50,7 @@ neg "a non-header line in a new module fails the header proof" skills/workflow-r
 
 def advance(' "^FAIL: merge_steps: the header"
 neg "a g. prefix instead of _s. fails the text proof" $G/goal_steps.py "_s.guards.waiting_gate" "g.guards.waiting_gate" "^FAIL: goal.cmd_record moved"
+neg "a prefix the derive missed (a bare name left in a moved body) fails the unresolved-global proof" $G/goal_steps.py "_s.fit.keep(" "fit.keep(" "^FAIL: goal_steps.cmd_record has no unresolved global"
 # the same objects whichever side is imported first, and each module alone from another folder with python -E -s
 for line in "${MOVES[@]}"; do set -- $line; dir="$here/$(dirname "$1")"; stem=$(basename "$1" .py); funcs=$3
   for order in "$2 $stem" "$stem $2"; do
@@ -86,9 +87,9 @@ check "the NOT_WORKER refusal (a step outside a worker) has the same words and e
 # an unhandled exception inside a moved function: the last traceback line (type and message) is the same on head and base
 for line in "${MOVES[@]}"; do set -- $line; stem=$(basename "$1" .py); first=${3%%,*}
   last() { (cd "$1/$(dirname "$2")" && python3 -c "import $3 as m; m.$4(object())" 2>&1 | tail -1 | sed "s#$1#ROOT#g"); }
-  hl=$(last "$here" "$2" "$stem" "$first"); bl=$(last "$T/base" "$2" "$stem" "$first")
+  hl=$(last "$here" "$1" "$stem" "$first"); bl=$(last "$T/base" "$1" "$stem" "$first")
   out="head: $hl base: $bl"
-  check "$stem.$first: an unhandled exception ends in the same type and message on head and base" '[ -n "$hl" ] && [ "$hl" = "$bl" ]'
+  check "$stem.$first: an unhandled exception ends in the same type and message on head and base, from inside the moved function" '[ -n "$hl" ] && [ "$hl" = "$bl" ] && ! grep -q "ModuleNotFoundError\|ImportError" <<<"$hl"'
 done
 for f in $(python3 - "$MAN" <<'PY'
 import json, sys

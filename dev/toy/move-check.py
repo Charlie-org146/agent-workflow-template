@@ -209,6 +209,14 @@ def check(root):
                     print("PREFIX %s %s line %d: _s.%s" % (move["module"], f, m.lineno, m.attr))
             used = {m.id for m in ast.walk(bf[f]) if isinstance(m, ast.Name)} | {m.attr for m in ast.walk(bf[f]) if isinstance(m, ast.Attribute)}
             say(not (set(BAN) & used), "%s.%s uses none of %s" % (stem, f, ", ".join(BAN)))
+        info, stds = classify(btext, move["script"], move["functions"])
+        say(all(sorted(move["prefix"][f]) == info[f][0] for f in move["functions"]), "%s: the manifest's prefixes equal the free names derived from the base" % stem)
+        mtop = symtable.symtable(mtext, mpath, "exec")
+        mnames = {x.get_name() for x in mtop.get_symbols() if x.is_assigned() or x.is_imported() or x.is_namespace()}
+        for f in move["functions"]:
+            if f in mf:
+                lost = sorted(n for n, k in used_globals(tables(mtop, f), mnames).items() if k == "g" and n not in mnames and not hasattr(builtins, n))
+                say(not lost, "%s.%s has no unresolved global name%s" % (move["module"], f, (": " + ", ".join(lost)) if lost else ""))
         names = {n for n in mf} & set(move["functions"])
         say(f"from {move['module']} import " in ntext and all(f in ntext.split("from %s import" % move["module"])[-1].split("\n")[0] for f in move["functions"]),
             "%s re-exports its moved names from %s" % (stem, move["module"]))
