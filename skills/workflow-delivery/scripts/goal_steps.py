@@ -131,8 +131,11 @@ def cmd_pr(args):
         if _s.queue("ahead", base):
             return _s.queue("moved", _s.ME, state, "lane failed while %s moved" % base, "run pr")
         return _s.fit.pr_fail(_s.ME, state, head, line, ids)
+    tested = _s.git("rev-parse", "HEAD")
     _s.role.record(state, base)
+    late_check(state, slug, tested)
     if cover.late(_s.state_dir(), slug, cfg):
+        cover.save(_s.state_dir(), slug, dict(cover.load(_s.state_dir(), slug), late=True))  # checked at every record until one is clean
         gate, line, ids = cover.lane(_s.role.lane, _s.state_dir(), slug, "pr", _s.role.flow_spec(), cfg)
         print(line)
         if gate == "running":
@@ -141,9 +144,7 @@ def cmd_pr(args):
             return _s.fit.pr_fail(_s.ME, state, head, line, ids)
         tested = _s.git("rev-parse", "HEAD")
         _s.role.record(state, base)
-        if left := cover.late_inputs(_s.root(), tested):
-            _s.guards.refuse_no_try(state, "the bookkeeping commit after the late cover loss changes tested inputs: %s" % ", ".join(left[:5]),
-                                    "goal.py pr %s runs the whole lane on the new head" % slug, "LATE_INPUTS", _s.save)
+        late_check(state, slug, tested)
     state["pr_lane"] = cover.pr_part(_s.state_dir(), slug, state["pr_lane"])
     known = _s.run(["gh", "pr", "view", state["branch"], "--json", "url,state"])
     info = json.loads(known.stdout) if not known.returncode else {}
@@ -163,6 +164,18 @@ def cmd_pr(args):
     if state["statuses"] == "failed":
         print("NEXT: no merge until the status posts: private.py statuses --head %s --ok" % head)
     return 5 * (state["statuses"] == "failed")
+
+
+def late_check(state, slug, tested):
+    """After a late cover loss (marked in the cover file), a bookkeeping commit may change no tested input; a clean one clears the mark."""
+    data = cover.load(_s.state_dir(), slug)
+    if not data.get("late"):
+        return
+    if left := cover.late_inputs(_s.root(), tested):
+        _s.guards.refuse_no_try(state, "the bookkeeping commit after the late cover loss changes tested inputs: %s" % ", ".join(left[:5]),
+                                "goal.py pr %s runs the whole lane on the new head" % slug, "LATE_INPUTS", _s.save)
+    data.pop("late")
+    cover.save(_s.state_dir(), slug, data)
 
 
 def round_stop(g, state, what):

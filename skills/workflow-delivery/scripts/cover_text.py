@@ -1,5 +1,6 @@
 """The L1 cover's PR text (cover.py imports it): the Regression lane part and, for the PR that moves the reach finder, its Limits
 block. cover.py keeps the claim and the checks; this file only words them."""
+import json
 import os
 
 
@@ -29,8 +30,18 @@ def pr_part(runs, slug, keep=""):
         pass
     saved = ("estimated avoided: about %.0f min (the covered rows' recorded times; an estimate)" % (
         sum(times.get(k, 0) for k in claim["covered"]) / 60) if times else "estimated avoided: unavailable")
+    took = 0  # the measured seconds of this goal's own passing lanes
+    for name in ("qa", "ship", "pr"):
+        try:
+            last = json.load(open(os.path.join(runs, "%s.%s-lane.last" % (slug, name))))
+            took += last["ended"] - last["started"] if last.get("state") == "pass" else 0
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
+    measured = "measured local lanes: %.0f min; without cover: %s" % (took / 60, "about %.0f min (an estimate: the measured minutes plus the covered "
+                                                                    "rows' recorded times)" % ((took + sum(times.get(k, 0) for k in claim["covered"])) / 60)
+                                                                    if times else "unavailable")
     head = cover.sh(["git", "rev-parse", "--short=12", "HEAD"], root)[1]
     ran = sorted(set(claim["local"]) | set(claim.get("ran", [])))  # every row that ran locally at any step
     return ("\n### Regression lane\n\nCovered by %s, the PR's pull_request run (regression-pr), pending GitHub execution, head %s: %d rows (%s)\n\n"
-            "Run locally: %d rows (%s)\n\n%s\n%s" % (cover.NAME, head, len(claim["covered"]), ", ".join(claim["covered"][:40]), len(ran),
-                                                      ", ".join(ran[:40]) or "none", saved, limits(root)))
+            "Run locally: %d rows (%s)\n\n%s\n%s\n%s" % (cover.NAME, head, len(claim["covered"]), ", ".join(claim["covered"][:40]), len(ran),
+                                                          ", ".join(ran[:40]) or "none", saved, measured, limits(root)))
