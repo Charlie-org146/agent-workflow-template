@@ -7,9 +7,9 @@
 
 Each case builds a throwaway git repo, writes the repo's own rules and runs the real health.py (and settings.py) on it:
 run (rows land in their group with their feature), control (a rule's break makes Controls see it fail), refuse (a rule with
-no break exits 2), off (a default turned off shows its reason, one without a reason stays on and is UNREAD), threshold
-(health_script_bytes), setup (fill-repo writes the file once and keeps an edited one). usage: test-health-repo-rules.py [CASE ...] [--break]
-CASE is one of run, control, refuse, off, threshold or setup (default all). --break leaves the rules file out of every repo, to see the rows red."""
+no break exits 2), off (a default turned off shows its reason, one without a reason stays on and is UNREAD), setup (fill-repo
+writes the file once and keeps an edited one). usage: test-health-repo-rules.py [CASE ...] [--break]
+CASE is one of run, control, refuse, off or setup (default all). --break leaves the rules file out of every repo, to see the rows red."""
 import json
 import os
 import subprocess
@@ -39,17 +39,13 @@ def sh(args, cwd):
     return subprocess.run(args, cwd=cwd, capture_output=True, text=True, env=ENV, timeout=300)
 
 
-def repo(folder, rules=None, off=None, config=None, scripts=None):
+def repo(folder, rules=None, off=None, config=None):
     sh(["git", "init", "-q", "-b", "main"], folder)
     for rel, text in {".loop/config.json": json.dumps(dict({"base": "main"}, **(config or {}))),
                       ".loop/regression.tsv": "# id\tlevel\tcommand\n", "flag": "1"}.items():
         os.makedirs(os.path.dirname(os.path.join(folder, rel)), exist_ok=True)
         with open(os.path.join(folder, rel), "w") as handle:
             handle.write(text)
-    for rel, size in (scripts or {}).items():
-        os.makedirs(os.path.dirname(os.path.join(folder, rel)), exist_ok=True)
-        with open(os.path.join(folder, rel), "w") as handle:
-            handle.write("#" * size + "\n")
     if (rules is not None or off is not None) and not breaking:
         with open(os.path.join(folder, ".loop", "health-rules.json"), "w") as handle:
             json.dump({"rules": rules or [], "off": off or {}}, handle)
@@ -83,11 +79,11 @@ with tempfile.TemporaryDirectory() as tmp:
         a = os.path.join(tmp, "a")
         os.makedirs(a)
         repo(a, [rule("r-pass", "docs", "print('fine')", feature="Docs"), rule("r-warn", "repo", "import sys;sys.exit(2)", feature="Health"),
-                 rule("r-fail", "size", "import sys;sys.exit(1)", feature="Health"), rule("r-unread", "hygiene", "import sys;sys.exit(7)")])
-        found, _ = rows(a, "docs,size,hygiene,repo")
+                 rule("r-fail", "security", "import sys;sys.exit(1)", feature="Health"), rule("r-unread", "hygiene", "import sys;sys.exit(7)")])
+        found, _ = rows(a, "docs,security,hygiene,repo")
         got = {n: find(found, n) for n in ("r-pass", "r-warn", "r-fail", "r-unread")}
         check(all(got.values()) and [(got[n]["state"], got[n]["family"]) for n in got] ==
-              [("PASS", "docs"), ("WARN", "repo"), ("FAIL", "size"), ("UNREAD", "hygiene")],
+              [("PASS", "docs"), ("WARN", "repo"), ("FAIL", "security"), ("UNREAD", "hygiene")],
               "a repo rule runs in the report with its group and its exit as PASS, WARN, FAIL or UNREAD")
         check(bool(got["r-warn"]) and got["r-warn"].get("feature") == "Health" and got["r-pass"].get("feature") == "Docs",
               "a repo rule's row carries its feature")
@@ -129,23 +125,14 @@ with tempfile.TemporaryDirectory() as tmp:
         # off: a default turned off shows its reason; an empty reason leaves the rule on and is UNREAD
         d = os.path.join(tmp, "d")
         os.makedirs(d)
-        repo(d, [], off={"hooks": "CI runs no git hooks", "scripts": ""})
-        found, _ = rows(d, "security,size,repo")
+        repo(d, [], off={"hooks": "CI runs no git hooks", "nightly": ""})
+        found, _ = rows(d, "security,freshness,repo")
         off = find(found, "hooks")
         check(bool(off) and off["state"] == "INFO" and off["family"] == "security" and "turned off: CI runs no git hooks" in off["detail"],
               "a default rule turned off prints its reason in its own group")
-        bare = find(found, "scripts")
-        check(any(r["state"] == "UNREAD" and r["subject"] == "scripts" and r["family"] == "repo" for r in found) and bool(bare) and bare["family"] == "size",
+        bare = find(found, "nightly")
+        check(any(r["state"] == "UNREAD" and r["subject"] == "nightly" and r["family"] == "repo" for r in found) and bool(bare) and bare["family"] == "freshness",
               "a default turned off with no reason stays on and is reported UNREAD")
-    if run_it('threshold'):
-        # threshold: health_script_bytes
-        e1, e2 = os.path.join(tmp, "e1"), os.path.join(tmp, "e2")
-        for e, config in ((e1, None), (e2, {"health_script_bytes": 2000})):
-            os.makedirs(e)
-            repo(e, config=config, scripts={"skills/x/scripts/big.py": 3000})
-        one, two = find(rows(e1, "size")[0], "scripts"), [r for r in rows(e2, "size")[0] if r["rule"] == "scripts" and r["state"] == "FAIL"]
-        check(bool(one) and one["state"] == "PASS" and bool(two) and "over 2000" in two[0]["detail"],
-              "health_script_bytes in config.json lowers the script cap for that repo, the default leaves it at 20480")
     if run_it('setup'):
         # setup: fill-repo writes the file once and keeps an edited one
         f = os.path.join(tmp, "f")

@@ -20,7 +20,7 @@ export LOOP_HEALTH="$d/none.json"  # after setup: no private rules
 mkdir -p docs/wiki skills/x/scripts; mkdir -p "$FAKE_GH_DIR"; : > "$FAKE_GH_DIR/calls.log"
 printf '<!-- workflow-docs -->\n# Calc\n\n## Summary\n\nCalc adds numbers.\n\n## Criteria\n\n- REL-1: **Reviewed 2026-01-01** calc adds.\n' > docs/wiki/Calc.md
 printf 'Calc\tcalc.py\nGhost\tghost.py\n' > .loop/docs.tsv
-python3 -c "print('# pad\n' * 3400)" > skills/x/scripts/near.py
+printf '# Findings\n\n- f0: open\n- f1: open\n- f2: open\n- f3: open\n- f4: open\n- f5: open\n' > .loop/findings.md  # six open findings: a hygiene WARN (principle 5 retired the size rule, o988)
 git add -A; git commit -qm "Findings in several groups"; git push -q origin main; git branch loop/old
 fails=0
 ok() { echo "PASS: $1"; }
@@ -36,11 +36,11 @@ out=$($health check); echo "$out"
 [ "$(grep '^== ' <<<"$out" | sed 's/^== \([^(]*\) (.*$/\1/' | tr '\n' ',')" = "Requirements,Traceability,Consistency,Docs,Freshness,Tests,Performance,Security and privacy,Size,Hygiene,Adoption,Mine,Controls," ] \
   && grep -qx "== Performance (my clock's and my wallet's angle: is it fast and cheap enough?) ==" <<<"$out" && grep -qx "== Mine (my private angle) (skipped) ==" <<<"$out" \
   && ok "groups in the fixed order with their angles, Cost shown as Performance" || bad "order"
-for g in size:scripts requirements:rows traceability:defect-tests docs:"(check|missing)" hygiene:findings hygiene:waiting hygiene:"(branches|branch)" performance:cost; do
+for g in requirements:rows traceability:defect-tests docs:"(check|missing)" hygiene:"(findings|open)" hygiene:waiting hygiene:"(branches|branch)" performance:cost; do
   grep -Eq "^(PASS|WARN|FAIL|UNREAD|INFO) ${g%%:*} [^ ]+ ${g##*:}:" <<<"$out" || bad "rule missing from the report: $g"
 done; ok "every rule of every group is listed with a state"
 grep -E "^(WARN|FAIL|UNREAD)" <<<"$out" | grep -qv -e "-> fix: " && bad "a non-pass line has no fix" || ok "each non-pass line carries its fix"
-grep -q "^WARN size skills/x/scripts/near.py" <<<"$out" && grep -q "^FAIL docs Ghost missing" <<<"$out" && grep -q "^WARN hygiene loop/old branch" <<<"$out" \
+grep -q "^WARN hygiene findings " <<<"$out" && grep -q "^FAIL docs Ghost missing" <<<"$out" && grep -q "^WARN hygiene loop/old branch" <<<"$out" \
   && grep -q "^FAIL requirements REL-1 rows" <<<"$out" && ok "findings from four groups show" || bad "findings"
 [ "$(grep -c '^HEALTH: ' <<<"$out")" = 1 ] && tail -1 <<<"$out" | grep -q "^HEALTH: not green" && ok "one verdict, last" || bad "verdict"
 grep -q "^[A-Z]* cost " <<<"$out" && bad "cost leaked into a line" || ok "no line says cost"
@@ -76,7 +76,7 @@ sed -n 2p <<<"$out" | grep -q "^groups run: Docs; skipped: Requirements (not ask
 echo "== preview writes nothing"
 before=$(writes)
 out=$($health preview); echo "$out"
-grep -q "^WOULD open issue 'health: size skills/x/scripts/near.py scripts' \[health:size\]" <<<"$out" \
+grep -q "^WOULD open issue 'health: hygiene findings open' \[health:hygiene\]" <<<"$out" \
   && grep -q "^WOULD open issue 'health: requirements REL-1 rows' \[health:requirements\]" <<<"$out" \
   && grep -q "^WOULD open issue 'health: docs Ghost missing' \[health:docs\]" <<<"$out" \
   && grep -q "\[health:hygiene\]" <<<"$out" && ! grep -q "\[health:criteria\]" <<<"$out" && grep -q "as backlog on Backlog: " <<<"$out" && ok "each issue it would open shows with its tag and where it goes" || bad "preview lines"
@@ -90,25 +90,26 @@ out=$($health file 2>&1); rc=$?; grep -q "^REFUSED\[file\]: file needs --group" 
 echo "== file --group writes only the named groups"
 $health file --group docs >/dev/null
 [ "$(count health:docs OPEN)" = 1 ] && [ "$(count health)" = 1 ] && ok "file --group docs opened only the docs issue" || bad "docs only"
-$health file --group size | tee "$d/out" ; python3 - <<'PYEND' && ok "size issue: tagged health:size and backlog, on its Backlog milestone" || bad "size issue"
+keyed() { python3 -c "import json,sys;print(sum(1 for i in json.loads(sys.argv[1]) if sys.argv[2] in i['body'] and (len(sys.argv) < 4 or i['state'] == sys.argv[3])))" "$(issues)" "$@"; }
+$health file --group hygiene | tee "$d/out" ; python3 - <<'PYEND' && ok "findings issue: tagged health:hygiene and backlog, on its Backlog milestone" || bad "findings issue"
 import json, os
 issues = json.load(open(os.environ["FAKE_GH_DIR"] + "/issues.json"))
-size = [i for i in issues if "size:" in i["body"]]
-assert len(size) == 1 and size[0]["milestone"]["title"].startswith("Backlog: "), size[0]["milestone"]
-names = [l["name"] for l in size[0]["labels"]]
-assert "health:size" in names and "health" in names and "backlog" in names and "health:docs" not in names, names
-assert len(issues) == 2
+mine = [i for i in issues if "hygiene:findings:open" in i["body"]]
+assert len(mine) == 1 and mine[0]["milestone"]["title"].startswith("Backlog: "), [i["body"][:60] for i in issues]
+names = [l["name"] for l in mine[0]["labels"]]
+assert "health:hygiene" in names and "health" in names and "backlog" in names and "health:docs" not in names, names
+assert not [i for i in issues if "docs:" in i["body"] and i["number"] != 1]
 PYEND
-grep -q "^DONE open issue" "$d/out" && ! grep -q "docs\|hygiene\|criteria" "$d/out" && ok "filing size printed only size work" || bad "size output"
-# fix the docs finding; filing size must leave the docs issue alone, and filing docs then closes it
+grep -q "^DONE open issue" "$d/out" && ! grep -q "docs\|size\|criteria" "$d/out" && ok "filing hygiene printed only hygiene work" || bad "hygiene output"
+# fix the docs finding; filing hygiene must leave the docs issue alone, and filing docs then closes it
 printf 'Calc\tcalc.py\n' > .loop/docs.tsv; git commit -qam "Drop Ghost"
-$health file --group size >/dev/null
-[ "$(count health:docs OPEN)" = 1 ] && ok "file --group size left the fixed docs issue open" || bad "other group touched"
+$health file --group hygiene >/dev/null
+[ "$(count health:docs OPEN)" = 1 ] && ok "file --group hygiene left the fixed docs issue open" || bad "other group touched"
 out=$($health preview --group docs); grep -q "^WOULD close #1 .* \[health:docs\]" <<<"$out" && ok "preview shows the docs issue would close" || bad "preview close"
 $health file --group docs >/dev/null
-[ "$(count health:docs CLOSED)" = 1 ] && [ "$(count health:size OPEN)" = 1 ] && ok "file --group docs closed the docs issue only" || bad "docs close"
-python3 -c "print('# pad\n' * 3500)" > skills/x/scripts/near.py; git commit -qam "Bigger"
-$health file --group size | grep -q "^SAME\|^DONE update" && [ "$(count health:size)" = 1 ] && ok "a repeat updates its issue, opens no second" || bad "repeat"
+[ "$(count health:docs CLOSED)" = 1 ] && [ "$(keyed hygiene:findings:open OPEN)" = 1 ] && ok "file --group docs closed the docs issue only" || bad "docs close"
+echo "- f6: open" >> .loop/findings.md; git commit -qam "More findings"
+$health file --group hygiene | grep -q "^SAME\|^DONE update" && [ "$(keyed hygiene:findings:open)" = 1 ] && ok "a repeat updates its issue, opens no second" || bad "repeat"
 # Value: protects=an issue filed before tags (plain health label) gains its health:<group> tag; fails_when=plan() stops
 #   updating an issue whose body matches but whose tag is missing; why_new=every other issue here is born tagged;
 #   seam=none; no_claim=real gh label semantics (fake gh)
@@ -116,15 +117,16 @@ python3 - <<'PYEND'
 import json, os
 p = os.environ["FAKE_GH_DIR"] + "/issues.json"; issues = json.load(open(p))
 for i in issues:
-    if "size:" in i["body"]: i["labels"] = [{"name": "health"}]
+    if "hygiene:findings:open" in i["body"]: i["labels"] = [{"name": "health"}]
 json.dump(issues, open(p, "w"))
 PYEND
-$health preview --group size | grep -q "^WOULD update #2 size:.* \[health:size\]" && $health file --group size >/dev/null && [ "$(count health:size OPEN)" = 1 ] \
+n=$(python3 -c "import json,sys;print([i['number'] for i in json.loads(sys.argv[1]) if 'hygiene:findings:open' in i['body']][0])" "$(issues)")
+$health preview --group hygiene | grep -q "^WOULD update #$n hygiene:findings:open \[health:hygiene\]" && $health file --group hygiene >/dev/null && [ "$(keyed hygiene:findings:open OPEN)" = 1 ] \
   && ok "an untagged old issue is updated to carry its group tag" || bad "tag backfill"
-git rm -q skills/x/scripts/near.py; git commit -qm "Fixed"
-$health file --group size | grep -q "^DONE close #2" && ok "a fix closes it" || bad "close"
-mkdir -p skills/x/scripts; python3 -c "print('# pad\n' * 3600)" > skills/x/scripts/near.py; git add -A; git commit -qm "Back"
-$health file --group size | grep -q "^DONE reopen #2" && [ "$(count health:size OPEN)" = 1 ] && ok "a return reopens it" || bad "reopen"
+printf '# Findings\n\n- f0: open\n' > .loop/findings.md; git commit -qam "Fixed"
+$health file --group hygiene | grep -q "^DONE close #$n" && ok "a fix closes it" || bad "close"
+printf '# Findings\n\n- f0: open\n- f1: open\n- f2: open\n- f3: open\n- f4: open\n- f5: open\n' > .loop/findings.md; git commit -qam "Back"
+$health file --group hygiene | grep -q "^DONE reopen #$n" && [ "$(keyed hygiene:findings:open OPEN)" = 1 ] && ok "a return reopens it" || bad "reopen"
 $health file --group hygiene >/dev/null; git branch -q -d loop/old
 $health file --group hygiene | grep -q "^DONE close .* \[health:hygiene\]" && [ "$(count health:hygiene CLOSED)" = 1 ] && ok "a fixed hygiene finding closes its issue" || bad "hygiene close"
 $health preview --group mine | grep -q "^PREVIEW:" && ok "mine can be previewed when named" || bad "mine"
@@ -140,12 +142,10 @@ grep -q "PRIVATE-OUTPUT" "$FAKE_GH_DIR/issues.json" && bad "mine output filed" |
 #   back to an empty list, so every finding reopens as a duplicate; why_new=the fake gh always answers; seam=none;
 #   no_claim=real gh error text (a stand-in gh that prints no JSON)
 mkdir -p "$d/badgh"; printf '#!/bin/bash\necho "$*" >> "%s/badgh/calls"\necho "HTTP 502" >&2; exit 1\n' "$d" > "$d/badgh/gh"; chmod +x "$d/badgh/gh"
-p=$(PATH="$d/badgh:$PATH" $health preview --group size 2>&1); prc=$?; f=$(PATH="$d/badgh:$PATH" $health file --group size 2>&1); frc=$?
+p=$(PATH="$d/badgh:$PATH" $health preview --group hygiene 2>&1); prc=$?; f=$(PATH="$d/badgh:$PATH" $health file --group hygiene 2>&1); frc=$?
 grep -q "^REFUSED\[gh\]: can't list the issues (.*HTTP 502.*). Nothing was written." <<<"$p" && grep -q "^REFUSED\[gh\]: can't list the issues" <<<"$f" \
   && [ $prc = 2 ] && [ $frc = 2 ] && ! grep -qEv "^api repos/\{owner\}/\{repo\}/issues\?state=" "$d/badgh/calls" && ok "an unreadable issue list refuses, writes nothing" || bad "gh unreadable"
 [ "$(cd "$here/skills/workflow-health/scripts" && python3 -c "import file, health; print(file.tag_of(health.groups_of('cost')[0]))")" = health:performance ] && ok "the Cost group is tagged health:performance" || bad "performance tag"
-S="$here/skills/workflow-health/scripts"  # GRD-20 (TD482): over 19,000 warns, only over 20,480 fails; a 20,481-byte fixture fails, a 19,500-byte one only warns
-python3 "$here/dev/toy/size-check.py" --control "$S/health.py" "$S/report.py" "$S/file.py" >/dev/null && ok "health.py, report.py and file.py are within GRD-20" || bad "health scripts size"
 
 echo "repo: $d/repo"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

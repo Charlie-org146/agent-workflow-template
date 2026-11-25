@@ -29,12 +29,12 @@ def verdict(ask, kind="routine"):
 
 
 for ask in ("Add the DOC-17 sub-bullet to Delivery as drafted?",
-            "Raise criteria_max from 26 to 28?",
+            "Raise max_suite_seconds from 1900 to 2000?",
             "Un-review the Setup page so its wording can change?",
             "Is a reviewed requirement changed here without owner words?"):
     check(verdict(ask) == "", "a routine question that asks for owner words is answered (o118): " + ask[:40])
 check(verdict("Which name should the toy use?") == "", "a plain routine question is still answered")
-check(verdict("Raise criteria_max from 26 to 28?", "owner") == "", "an owner-kind question with a recommendation is answered (o118)")
+check(verdict("Raise max_suite_seconds from 1900 to 2000?", "owner") == "", "an owner-kind question with a recommendation is answered (o118)")
 check(verdict("Use the step-2 wording for the log line?") == "", "a lower-case word before a number is not a requirement id")
 
 

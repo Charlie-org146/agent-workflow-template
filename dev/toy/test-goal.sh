@@ -132,8 +132,7 @@ PY
 git switch -q main
 for s in pn1 pn2 pn3 pn4 pn5 pnmix pnedge; do rm -f "$C/loop/runs/$s".*; git branch -q -D "loop/$s" 2>/dev/null; done  # the goals above were only for the cases; later cases count running goals
 
-echo "== goal.py keeps room under 20 KB, and has no checks step"
-[ "$(wc -c < "$here/skills/workflow-delivery/scripts/goal.py")" -lt 19500 ] && ok "goal.py keeps room under 20 KB" || bad "goal.py size"
+echo "== goal.py has no checks step"
 $goal check low 2>&1 | grep -q "invalid choice" && ok "goal.py has no check command" || bad "check command"
 git switch -q main
 

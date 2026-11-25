@@ -4,7 +4,7 @@
 """hands-off-operation (#4781, #4507, #4813, #4679): a worker starts from a scheduled turn (workers: auto or --background), merged and released
 worker sessions are archived (and idle ones of retired goals under memory pressure), operate.py start prints a readiness table, the check-in
 timer is shown, recorded and found stale, and the check-in groups goals by feature. A throwaway repo and stand-ins: no network, no real pool.
-usage: test-hands-off.py [fallback|archive|pressure|start|timer|feature|queued|size]  (no argument: all)"""
+usage: test-hands-off.py [fallback|archive|pressure|start|timer|feature|queued]  (no argument: all)"""
 import datetime
 import json
 import os
@@ -21,7 +21,7 @@ os.environ["LOOP_ROLE"] = "worker"
 only = sys.argv[1] if len(sys.argv) > 1 else ""
 if not only:  # each part in its own process: they stub the same modules
     code = 0
-    for part in ("fallback", "archive", "pressure", "start", "timer", "feature", "queued", "size"):
+    for part in ("fallback", "archive", "pressure", "start", "timer", "feature", "queued"):
         done = subprocess.run([sys.executable, os.path.abspath(__file__), part], capture_output=True, text=True)
         print("".join(line + chr(10) for line in done.stdout.splitlines() if line.startswith(("PASS", "FAIL"))), end="")
         code = code or done.returncode
@@ -265,16 +265,5 @@ if want("feature") or want("queued"):
             text = "\n".join(checkin.render(root=root, at=datetime.datetime.now(datetime.timezone.utc), stamp="0000"))
             check("[ ] other ~? left" in text, "negative control: with no finished goal to learn from a queued goal still shows ~?")
         os.chdir(here)
-
-if want("size"):
-    def lf_size(path):
-        data = open(os.path.join(top, path), "rb").read()
-        return len(data) - data.count(b"\r\n")
-
-    base = "skills/workflow-monitoring/scripts/"
-    caps = {"checkin.py": 19495, "pool.py": 19000, "monitor.py": 18993, "mend.py": 19000, "notify.py": 19000, "watch.py": 19000, "graph.py": 19000, "board_status.py": 19000, "batch.py": 19000, "operate.py": 19864}
-    bad = ["%s %d > %d" % (n, lf_size(base + n), c) for n, c in caps.items() if lf_size(base + n) > c]
-    check(not bad, "checkin.py stays at or under 19,495 bytes and no script this goal touched grew past its starting size or 19,000 (%s)" % (bad or "all within"))
-    check(lf_size("skills/workflow-setup/scripts/settings.py") <= 19000, "settings.py stays under 19,000 bytes")
 
 sys.exit(1 if failed else 0)
