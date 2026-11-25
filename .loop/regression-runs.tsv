@@ -49,7 +49,7 @@ aut-secret-mapped	PASS	2026-11-12
 aut-secret-name	PASS	2026-11-12	
 aut-setup-health-only-with-skill	PASS	2026-11-12	
 aut7-budget-agrees	PASS	2026-11-22	
-auto-approved	PASS	2026-11-09	
+auto-approved	PASS	2026-11-25	
 auto-owner-words-wait	PASS	2026-11-24	
 auto-release	PASS	2026-11-24	
 automation-missing-workflow	PASS	2026-11-12	
@@ -63,7 +63,7 @@ blockers-first	PASS	2026-11-14
 board-estimates-overrun	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 board-tz-mixed-stamps	PASS	2026-11-20	
 breaking-asks	PASS	2026-11-09	
-budget-fair-base-moved	PASS	2026-11-15	
+budget-fair-base-moved	PASS	2026-11-25	
 budget-fair-failed-stays	PASS	2026-11-15	
 budgets-agree	PASS	2026-11-22	
 builtin-flow	PASS	2026-11-24	
@@ -107,16 +107,17 @@ deployments-counts-pages	PASS	2026-11-24
 deps-graph-94	PASS	2026-11-10	
 depth-auto-approve-gate	PASS	2026-11-18	
 depth-base-branch	PASS	2026-11-18	
-depth-condensed-refused	PASS	2026-11-18	
+depth-condensed-refused	PASS	2026-11-25	
 depth-condensed-when-set	PASS	2026-11-18	
 depth-fill-repo-help	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 depth-in-pr-body	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 depth-loop-flow	PASS	2026-11-18	
+depth-marker-rows-4557	PASS	2026-11-25	
 depth-markers	PASS	2026-11-18	
 depth-on-board	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 depth-recorded	PASS	2026-11-18	
 depth-reference	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-depth-setup	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+depth-setup	PASS	2026-11-25	
 desk-lists	PASS	2026-11-18	
 desk-lists-4805	PASS	2026-11-18	
 digest-backlog	PASS	2026-11-10	
@@ -162,8 +163,15 @@ est-area	PASS	2026-11-22
 est-big-goal	PASS	2026-11-22	
 est-pace	PASS	2026-11-22	
 est-stalled	PASS	2026-11-22	
-eta-freeze	PASS	2026-11-24	
-eta-health-missing	PASS	2026-11-24	
+eta-budget-raise	PASS	2026-11-25	
+eta-checkin-table	PASS	2026-11-25	
+eta-freeze	PASS	2026-11-25	
+eta-health	PASS	2026-11-25	
+eta-health-missing	PASS	2026-11-25	
+eta-health-rules	PASS	2026-11-25	
+eta-ledger	PASS	2026-11-25	
+eta-preflight-asked	PASS	2026-11-25	
+eta-preflight-missed	PASS	2026-11-25	
 every-row-described	PASS	2026-11-24	
 failed-waits-mender	PASS	2026-11-09	
 flaky-marked	PASS	2026-11-10	
@@ -171,7 +179,7 @@ format-frontdoor	PASS	2026-11-19
 format-home	PASS	2026-11-19	
 format-key	PASS	2026-11-24	
 format-usage-api	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-frozen-done-lines	PASS	2026-11-09	
+frozen-done-lines	PASS	2026-11-25	
 full-auto-all-answers	PASS	2026-11-17	
 full-auto-no-new-file	PASS	2026-11-17	
 full-auto-record-carried	PASS	2026-11-17	
@@ -179,9 +187,15 @@ full-auto-safety-waits	PASS	2026-11-17
 full-goal-lane-timeout	PASS	2026-11-10	
 gate-untouched-not-refused	PASS	2026-11-24	
 go-app-holds-goal	PASS	2026-11-19	
+goal-commands-page	PASS	2026-11-25	
 goal-levels-nightly	PASS	2026-11-11	
+goal-pr-push-error	PASS	2026-11-25	
+goal-pr-push-retried	PASS	2026-11-25	
+goal-pr-regenerates-start	PASS	2026-11-25	
 grd1-guardrail-list	PASS	2026-11-19	
+grd2-limits-in-settings	PASS	2026-11-25	
 grd2-pr-lane-holds-merge-slot	PASS	2026-11-15	
+grd2-time-stop	PASS	2026-11-25	
 grd4-budget	PASS	2026-11-25	
 grd4-touches	PASS	2026-11-25	
 grd4-worker-commit-main-refused	PASS	2026-11-15	
@@ -213,18 +227,18 @@ held-all	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 held-charge-idle	PASS	2026-11-25	
 held-charge-pauses	PASS	2026-11-25	
 held-stale-next	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-held-time-3878	PASS	2026-11-14	
-held-time-over-still-stops	PASS	2026-11-14	
+held-time-3878	PASS	2026-11-25	
+held-time-over-still-stops	PASS	2026-11-25	
 held-time-owner-wait	PASS	2026-11-14	
-held-time-pr-queue	PASS	2026-11-14	
-held-time-session-hold	PASS	2026-11-14	
+held-time-pr-queue	PASS	2026-11-25	
+held-time-session-hold	PASS	2026-11-25	
 held-time-stopped	PASS	2026-11-14	
 hlt2-twelve-groups	PASS	2026-11-19	
 hlt6-branches	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 hlt6-controls-fire	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 hlt6-refused	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 hlt7-fast-check	PASS	2026-11-12	
-home-guard-catches-leak	PASS	2026-11-24	
+home-guard-catches-leak	PASS	2026-11-25	
 home-header-both	PASS	2026-11-14	
 home-sandbox-4859	PASS	2026-11-24	
 home-topic-live	PASS	2026-11-24	
@@ -361,8 +375,9 @@ one-failure	PASS	2026-11-09
 one-link	PASS	2026-11-20	
 one-way-to-run	PASS	2026-11-24	
 operate-10-under-load	PASS	2026-11-11	
-operate-all	PASS	2026-11-09	
-operate-toy-no-check	PASS	2026-11-13	
+operate-all	PASS	2026-11-25	
+operate-toy-no-check	PASS	2026-11-25	
+operate-wait-99	PASS	2026-11-25	
 ops-findings-filed	PASS	2026-11-19	
 package-caps-held	PASS	2026-11-14		a3dcc03121ec
 package-gate-head	PASS	2026-11-24	
@@ -379,9 +394,9 @@ package-win-parity-1397	PASS	2026-11-24
 package-win-stdin-1397	PASS	2026-11-24	
 page-relock	PASS	2026-11-14	
 page-shape	FAIL	2026-11-20	
-pending-none-goes-on	PASS	2026-11-12	
-pending-real-waits	PASS	2026-11-12	
-pending-waits	PASS	2026-11-20	
+pending-none-goes-on	PASS	2026-11-25	
+pending-real-waits	PASS	2026-11-25	
+pending-waits	PASS	2026-11-25	
 perms-settings-tracked	PASS	2026-11-15	
 plan-cache-key	PASS	2026-11-12	
 plan-calls-flat	PASS	2026-11-22	
@@ -399,7 +414,7 @@ pr-body-by-file	PASS	2026-11-13
 pr-body-cap-large	PASS	2026-11-16	
 pr-body-cap-small	PASS	2026-11-16	
 pr-body-no-home-3841	PASS	2026-11-14	
-pr-commit-scope	PASS	2026-11-19	
+pr-commit-scope	PASS	2026-11-25	
 pr-head-audit-passes-4208	PASS	2026-11-15	
 pr-in-milestone	PASS	2026-11-12	
 pr-moved-uncounted	PASS	2026-11-15	
@@ -516,7 +531,7 @@ skill-kept	PASS	2026-11-24
 skill-refusals-in-references	PASS	2026-11-14	
 skill-size-116	PASS	2026-11-24	
 skill-workflow-in-references	PASS	2026-11-14	
-skip-list-approved	PASS	2026-11-24	
+skip-list-approved	PASS	2026-11-25	
 slot-pool-112	PASS	2026-11-10	
 spec-decisions-log	PASS	2026-11-13	
 spec-decisions-wording	PASS	2026-11-12	
@@ -530,10 +545,10 @@ status-graph-levels	PASS	2026-11-12
 status-graph-marks	PASS	2026-11-12	
 status-graph-order	PASS	2026-11-12	
 status-graph-total	PASS	2026-11-12	
-status-roadmap-features	PASS	2026-11-09	
+status-roadmap-features	PASS	2026-11-25	
 step-label-live	PASS	2026-11-12	
 steps-in-session	PASS	2026-11-12	
-stop-after-3-tries	PASS	2026-11-09	
+stop-after-3-tries	PASS	2026-11-25	
 stop-takes-tree	PASS	2026-11-24	
 stop-tree-session-tool	PASS	2026-11-24	
 stuck-stays-top	PASS	2026-11-24	
@@ -569,8 +584,15 @@ tests-own-folder	PASS	2026-11-13
 tests-page-stale	PASS	2026-11-24	
 tests-py-missing	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 tiers-unmapped-qa-pr	PASS	2026-11-10	
+token-diet-budget	PASS	2026-11-25	
+token-diet-layout	PASS	2026-11-25	
+token-diet-op-rows	PASS	2026-11-25	
+token-diet-output-cap	PASS	2026-11-25	
+token-diet-quiet	PASS	2026-11-25	
+token-diet-step-tokens	PASS	2026-11-25	
 topics-in-reference	PASS	2026-11-13	
 toy-no-leftovers	PASS	2026-11-12	
+toys-set-userprofile	PASS	2026-11-25	
 tree-once-lock	PASS	2026-11-24	
 trim-package-98	PASS	2026-11-16	
 trim-setup-under-19000	PASS	2026-11-16	
