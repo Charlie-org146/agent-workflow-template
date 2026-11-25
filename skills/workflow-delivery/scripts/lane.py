@@ -17,6 +17,7 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 REG = os.path.normpath(os.path.join(HERE, "..", "..", "workflow-regression", "scripts"))
 sys.path.insert(0, HERE)
+sys.modules.setdefault("lane", sys.modules[__name__])
 import lanekit  # noqa: E402
 import fit  # noqa: E402
 import proctree  # noqa: E402
@@ -89,86 +90,6 @@ def fresh(held):
     """A claimed rc younger than GRACE: another caller finishes it."""
     at = mtime(held["rc"] + ".claimed")
     return bool(at) and time.time() - at < GRACE
-
-
-def finalize(base, held, name):
-    """An ended lane's result, once: the first caller claims the rc."""
-    out, last = base + ".txt", base + ".last"
-    with open(base + ".lock", "w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        ended = mtime(held["rc"])
-        try:
-            os.replace(held["rc"], held["rc"] + ".claimed")
-            os.utime(held["rc"] + ".claimed")
-        except FileNotFoundError:
-            done = read_json(last) or {}
-            if done.get("attempt") == held["attempt"] and done.get("state") in TERMINAL:
-                return ("pass" if done["state"] == "pass" else "fail"), done.get("line", ""), done.get("ids", [])
-            if fresh(held):
-                return "running", "RUNNING: the lane is being finished by another caller; run this same command again", []
-            if not os.path.exists(held["rc"] + ".claimed"):
-                stop(base, held)
-                return death(base, out)
-            os.utime(held["rc"] + ".claimed")
-    rc = int((open(held["rc"] + ".claimed").read().strip() or "1"))
-    num = -rc if rc < 0 else rc - 128 if 128 < rc < 160 else 0  # a signal ended it
-    if num in set(signal.valid_signals()):
-        stop(base, held)
-        return death(base, out, signal.Signals(num).name)
-    rm_tmp(held)
-    text = open(out).read() if os.path.exists(out) else ""
-    began, now = mtime(held["rc"] + ".started"), time.time()
-    notes = open(held["rc"] + ".note").read().strip() if os.path.exists(held["rc"] + ".note") else ""
-    ids = re.findall(r"^(?:FAIL|UNPROVEN) ([^\s:]+)", text, re.M)
-    kind = (re.findall(r"^(REUSED|AFFECTED|FULL(?: \([^)]*\))?)", text, re.M) or ["FULL"])[0]
-    ran, reused = len(re.findall(r"^(?:PASS|FAIL|KNOWN) ", text, re.M)), re.findall(r"\((\d+) reused\)", text)
-    took = (ended or now) - (began or held["started"])
-    line = "LANE %s %s %d/%d in %ds" % (name, kind, ran, ran + int((reused or [0])[0]), took)
-    cfg = read_json(os.path.join(rev("--show-toplevel"), ".loop", "config.json")) or {}
-    plan, wait, part = lanekit.timing(held, held["rc"])
-    line += lanekit.budget_note(text, base, name)
-    killed = re.findall(r"^KILLED (\S+): signal (\S+) \(pid (\d+)\)", text, re.M)
-    if killed:
-        line += "; " + ", ".join("%s killed by %s (pid %s)" % k for k in killed)
-    if began and began - held["started"] >= 1:
-        line += " (queued %ds)" % (began - held["started"])
-    cannot = re.findall(r"^(?:NOTRUN|SKIPPED|ENV) (\S+)", text, re.M)
-    if cannot and not rc:
-        line += "; %d pass; %d not runnable here (%s)" % (ran + int((reused or [0])[0]), len(cannot), ", ".join(cannot[:5]))
-    line += lanekit.before_rows(held, plan, wait) + lanekit.rows_line(text, ran, out)
-    status, made = "fail", generated(cfg)
-    after = [p for p in dirty() if p not in made]
-    if rc == lanekit.EXIT_STALE:
-        stop(base, held)
-        set_last(base + ".last", held["attempt"], state="ended", rc=rc, note=notes, ended=now)
-        return "running", "%s\nRUNNING: the lane restarts on the new plan; run this same command again" % notes, []
-    if not began and "markers" in held and rc not in (0, lanekit.EXIT_PREP):
-        line += "\nthe lane never reported its start (a test_record wrapper may strip _LOOP_LANE_* variables)"
-    if after:
-        line += "\nLANE_DIRTY at end: a row left %s. Fix: make it clean up; %s." % (", ".join(after[:10]), NOTHING)
-        ids = []
-    elif rc == lanekit.EXIT_PREP:
-        line += "\n" + lanekit.cut_line(name, held, plan, wait, part)
-        lanekit.prep_hit(base, name, held, plan, wait, part)
-    elif rc == 124:
-        line += "\n" + lanekit.timeout_line(text, deadline(held)[1], held)
-    elif rc == lanekit.EXIT_ENV:
-        line += "\n" + lanekit.env_line(notes)
-    elif rc == lanekit.EXIT_WAIT:
-        line += "\nLANE_BUG: the lane's child stopped waiting for a slot (exit 4), which a lane never does; %s." % NOTHING
-    elif rc and fit.off_rows(text):
-        line += fit.off_line(text)
-    elif rc:
-        line += "\nLANE_FAIL %s (log %s). Reproduce one: python3 %s run <id>; %s." % (
-            ", ".join(ids) or "exit %d" % rc, out, lane_argv()[1], NOTHING)
-    else:
-        status = "pass"
-        with open(base + ".ok", "w") as handle:
-            handle.write(held["head"])
-    set_last(base + ".last", held["attempt"], state=status, rc=rc, line=line, ids=ids, note=notes, ended=now,
-             prep_s=held.get("prep_s") or 0, plan_s=plan, wait_s=wait)
-    stop(base, held)
-    return status, line, ids
 
 
 def answer(runs, slug, src, name):
@@ -265,52 +186,6 @@ def lane(runs, slug, name, spec, cfg, wait=90, redo=False):
     return finalize(base, held, name)
 
 
-def lane_status(runs, slug, name):
-    """(state, line): running, pass, fail or none; finalizes, never spawns."""
-    head = rev("HEAD")
-    base, held = job_of(runs, slug, name)
-    if held and held.get("head") == head:
-        if live(held):
-            return "running", running_line(held)
-        if ended(held):
-            status, line, _ = finalize(base, held, name)
-            return status, line
-        if time.time() - held["started"] > 30 and not alive(held["pid"], held.get("pstart", "")):
-            stop(base, held)
-            return "fail", lanekit.died(base + ".txt")
-    for other in NAMES:
-        sib, job = job_of(runs, slug, other)
-        if other != name and job and job.get("head") == head:
-            if live(job):
-                return "running", running_line(job, other)
-            if ended(job):
-                got = finalize(sib, job, other)
-                if got[0] != "pass":
-                    return got[:2]
-    if not dirty() and (src := lanekit.passed(runs, slug, head, name)):
-        return "pass", answer(runs, slug, src, name)
-    done = read_json(base + ".last") or {}
-    if done.get("head") == head and done.get("state") in TERMINAL:
-        return done["state"], done.get("line", "")
-    return "none", "NO LANE: none ran on %s; start one with role.py lane %s %s" % (head[:12], slug, name)
-
-
-def wait_for(runs, slug, name, timeout=None):
-    """role.py lane-wait: block while HEAD's lane runs; exit 0 pass, 1 fail, 2 timeout, 3 none."""
-    until = time.time() + timeout if timeout else None
-    while True:
-        state, line = lane_status(runs, slug, name)
-        if state != "running":
-            print(line, file=sys.stdout if state in ("pass", "none") else sys.stderr)
-            return {"pass": 0, "fail": 1, "none": 3}[state]
-        if until and time.time() > until:
-            print("LANE_WAIT_TIMEOUT: the %s lane of %s still %s after %ds; it keeps running. Fix: run role.py lane-wait "
-                  "%s %s again" % (name, slug, "waiting" if line.startswith("WAITING") else "running", timeout, slug, name),
-                  file=sys.stderr)
-            return 2
-        time.sleep(lanekit.POLL)
-
-
 def lane_exec(rc, seconds, last, attempt, pool, argv):
     """A lane's child: run it, stop it past deadline() or on a signal, write .last ended, then the rc."""
     held = {"rc": rc, "limit": seconds, "started": time.time(), "pool": pool, "markers": 1,
@@ -381,6 +256,9 @@ def main(argv):
     print("usage: role.py lane SLUG qa|ship|pr            start or poll a goal's regression lane\n"
           "       role.py lane-wait SLUG qa|ship|pr [--timeout S]   block until the lane for HEAD ends")
     return 0 if argv in ([], ["-h"], ["--help"]) else 2
+
+
+from lane_run import finalize, lane_status, wait_for  # noqa: E402,F401
 
 
 if __name__ == "__main__":
