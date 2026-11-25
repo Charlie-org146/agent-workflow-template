@@ -318,7 +318,7 @@ Proof: toy tests (test-guards.sh).
 | `NOT_RUN_BY_FLOW` | The reply or run marker isn't where `flow` leaves them | Run `flow` for the step until it prints NEXT |
 | `LANE_MISSING` | The qa lane hasn't passed on HEAD | `role.py lane SLUG qa` |
 | `LANE_MISSING_UNCOVERED` | A goal ran with a cover and its uncovered rows have no passing local lane | `python3 skills/workflow-delivery/scripts/cover.py lane SLUG STEP` |
-| `BODY_STALE` | The PR is open and its body still shows the old Regression lane text | `goal.py pr SLUG` retries only the edit |
+| `BODY_STALE` | The PR is open and its body still shows the old Regression lane text | `goal.py pr SLUG` reruns the pr step (re-sync, lane if needed, push), then retries the edit |
 | `COVER_NOBATCH` | merge.py was asked to batch a goal that ran with a cover | `merge.py SLUG` alone |
 | `WAITING_OWNER` | The goal waits for the owner | The operation answers |
 | `NOT_WORKER` | A goal step outside a worker | Run it in the bound session as `LOOP_ROLE=worker ...` (the refusal prints it) |

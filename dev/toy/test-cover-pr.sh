@@ -132,7 +132,7 @@ mkdir -p "$d/fake"; git -C "$d/m" checkout -q -b feat; git -C "$d/m" commit -q -
 rb() { (cd "$d/m" && PATH="$d/bin:$PATH" FAKE_DIR="$d/fake" FAKE_HEAD="$head" python3 -B -c "$H" "$D" "$1" 2>&1); }
 rm -f "$d/fake/fail" "$d/fake/edits"; out=$(rb '"old"'); check "an open PR whose body text changed is edited once and the new text is recorded" '[ "$(wc -l < "$d/fake/edits" | tr -d " ")" = 1 ] && grep -q "^PUSHED True" <<<"$out"'
 : > "$d/fake/fail"; rm -f "$d/fake/edits"; out=$(rb '"old"'); echo "$out" | head -2
-check "a failed edit refuses with BODY_STALE, the PR number in its words and goal.py pr as the fix" 'grep -q "^REFUSED BODY_STALE: the PR is open and its body is stale (PR https://example.test/pull/1) | goal.py pr g1 only retries the edit" <<<"$out"'
+check "a failed edit refuses with BODY_STALE, the PR number in its words and goal.py pr as the fix" 'grep -q "^REFUSED BODY_STALE: the PR is open and its body is stale (PR https://example.test/pull/1) | goal.py pr g1 reruns the pr step: it re-syncs, may rerun the lane and push, then retries the edit" <<<"$out"'
 rm -f "$d/fake/fail" "$d/fake/edits"; head=0000000000000000000000000000000000000000; out=$(rb '"old"')
 check "a PR head that moved is not edited (no merge, lane or push: the body waits for the next pr run)" '[ ! -e "$d/fake/edits" ] && grep -q "the PR head moved" <<<"$out"'
 fi

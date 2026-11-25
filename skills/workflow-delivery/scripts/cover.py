@@ -73,7 +73,7 @@ def pinned(text):
         got = re.search(r"^    if: (.+)$", block.group(1), re.M) if block else None
         if not got or got.group(1) != want:
             return False
-    return all(p in text for p in PIN) and all(i in IFS for i in ifs)
+    return "--ids" not in text and all(p in text for p in PIN) and all(i in IFS for i in ifs)  # a shard limited to chosen rows covers nothing
 
 
 def ruleset(root):
@@ -282,7 +282,7 @@ def refresh(g, state, info, body):
     g.write(file, body)
     if sh(["gh", "pr", "edit", state["branch"], "--body-file", file])[0]:
         g.guards.refuse_no_try(state, "the PR is open and its body is stale (PR %s)" % info.get("url", ""),
-                               "goal.py pr %s only retries the edit" % state["slug"], "BODY_STALE", g.save)
+                               "goal.py pr %s reruns the pr step: it re-syncs, may rerun the lane and push, then retries the edit" % state["slug"], "BODY_STALE", g.save)
     state["pr_body_pushed"] = mark
 
 
