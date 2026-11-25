@@ -22,7 +22,8 @@ dangerous command, or private prefix #k (k: entry k of leak_prefixes in $LOOP_FL
 where is the path, or `a path matching <kind>` when the path itself matches (one `private prefix #k in a path` line
 names the lowest k). Any other failure keeps its rule text and withholds the part read from a file or a child when it,
 or the text it was cut from, holds a match: find it locally with the lists below and your leak_prefixes, fix it, rerun.
-A TIMEOUT or STOPPED label that holds a match reads `a shipped file (name withheld)`. An unexpected error prints its
+A TIMEOUT or STOPPED label names a matching path as `a path matching <kind>` (else `a shipped file (name withheld)`);
+a private pattern's own text counts as a match too. An unexpected error prints its
 type on stderr and exits 4, never a traceback. Exit codes: 0 pass, 1 refused, 3 timeout, 4 unexpected error. CI has no
 private list, so it reports only the built-in kinds. Changed in v1.1.0: this Safety form (before, the match and the
 pattern were printed), one line for a path matching several prefixes, the withheld notices and exit 4.
@@ -193,7 +194,7 @@ def fail(rule, text, derived="", after="", source=None, origin=""):
     kind = hit(derived) or (hit(source) if source else None)
     if kind:
         derived = WITHHELD % (kind, " from " + origin if origin else "")
-    kind = hit(text + after) or hit(text + derived + after)  # a match across the parts counts too
+    kind = hit(text + after) or hit("FAIL %s: %s%s%s" % (rule, text, derived, after))  # the whole printed line counts too
     if kind:
         text, derived, after = "", WITHHELD % (kind, ""), ""
     failures.append((rule, text + derived + after))
@@ -263,13 +264,14 @@ def check_frontmatter(root, files):
     if not skills:
         fail("Frontmatter", "no skills/<name>/SKILL.md found")
     for rel in skills:
-        fields = frontmatter(read(root, rel).decode("utf-8", "replace"))
+        doc = read(root, rel).decode("utf-8", "replace")
+        fields = frontmatter(doc)
         folder = rel.split("/")[1]
         if not fields.get("name"):
             fail("Frontmatter", "%s has no name" % where(rel))
         elif fields["name"] != folder:
             fail("Frontmatter", "%s name " % where(rel), "%r does not match folder %r" % (fields["name"], folder),
-                 source="%s\n%s\n%s" % (fields["name"], folder, rel))
+                 source="%s\n%s\n%s" % (doc, folder, rel))  # the whole SKILL.md: a pattern may need its context
         if not fields.get("description"):
             fail("Frontmatter", "%s has no description" % where(rel))
     return skills
