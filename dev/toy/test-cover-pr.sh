@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-delivery/scripts/cover.py skills/workflow-delivery/scripts/goal_steps.py skills/workflow-delivery/scripts/lane.py
+# reads: skills/workflow-delivery/scripts/cover.py skills/workflow-delivery/scripts/cover_text.py skills/workflow-delivery/scripts/goal_steps.py skills/workflow-delivery/scripts/lane.py
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes.py skills/workflow-regression/scripts/row_reach.py
 # reads: skills/workflow-regression/scripts/narrow.py skills/workflow-regression/scripts/completion.py skills/workflow-release/scripts/merge.py
 # reads: dev/toy/fakegh/gh dev/toy/fakegh/fake.py dev/toy/make.sh dev/toy/reap.sh
@@ -111,7 +111,7 @@ printf '{"claim": {"name": "L1"}}' > .git/loop/runs/g1.cover.json
 out=$(python3 "$R/merge.py" --batch g1 g2 2>&1 </dev/null); echo "$out" | head -2
 check "a goal that ran with a cover is refused in a batch: COVER_NOBATCH names it and says merge it alone" 'grep -q "^REFUSED: g1 ran with a cover and cannot join a batch; merge it alone: merge.py SLUG (COVER_NOBATCH)\." <<<"$out"'
 rm -f .git/loop/runs/g1.cover.json; out=$(python3 "$R/merge.py" --batch g1 g2 2>&1 </dev/null); check "a batch with no covered goal is not refused for a cover" '! grep -q "COVER_NOBATCH" <<<"$out"'
-mkdir -p "$d/bin"; printf '#!/bin/bash\ncase "$1 $2" in\n  "pr view") echo "${FAKE_HEAD:-}";;\n  "pr edit") [ -f "$FAKE_DIR/fail" ] && { echo "edit refused" >&2; exit 1; }; echo edit >> "$FAKE_DIR/edits";;\nesac\n' > "$d/bin/gh"; chmod +x "$d/bin/gh"
+mkdir -p "$d/bin"; printf '#!/bin/bash\ncase "$1 $2" in\n  "pr view") [ "${FAKE_HEAD:-}" = fail ] && exit 1; echo "${FAKE_HEAD:-}";;\n  "pr edit") [ -f "$FAKE_DIR/fail" ] && { echo "edit refused" >&2; exit 1; }; echo edit >> "$FAKE_DIR/edits";;\nesac\n' > "$d/bin/gh"; chmod +x "$d/bin/gh"
 H=$(cat <<'PYEND'
 import json, os, sys
 sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True
@@ -119,13 +119,13 @@ import cover
 class G:
     class guards:
         @staticmethod
-        def refuse_no_try(state, why, fix, code, save): print("REFUSED %s: %s | %s" % (code, why, fix)); raise SystemExit(5)
+        def refuse_no_try(state, why, fix, code, save): print("REFUSED %s: %s | %s" % (code, why, fix))
     state_path = staticmethod(lambda slug: os.environ["FAKE_DIR"] + "/" + slug)
     write = staticmethod(lambda p, t: open(p, "w").write(t))
     save = staticmethod(lambda *a: None)
 state = {"slug": "g1", "branch": "feat", "pr_body_pushed": json.loads(sys.argv[2]) if sys.argv[2] != "none" else None}
-cover.refresh(G, state, {"state": "OPEN", "url": "https://example.test/pull/1"}, "new body")
-print("PUSHED", bool(state["pr_body_pushed"]))
+print("STOP", cover.refresh(G, state, {"state": "OPEN", "url": "https://example.test/pull/1"}, "new body"))
+print("PUSHED", bool(state["pr_body_pushed"])); print("MARKED", state["pr_body_pushed"] not in (None, "old"))
 PYEND
 )
 mkdir -p "$d/fake"; git -C "$d/m" checkout -q -b feat; git -C "$d/m" commit -q --allow-empty -m y; head=$(git -C "$d/m" rev-parse HEAD)
@@ -133,7 +133,10 @@ rb() { (cd "$d/m" && PATH="$d/bin:$PATH" FAKE_DIR="$d/fake" FAKE_HEAD="$head" py
 rm -f "$d/fake/fail" "$d/fake/edits"; out=$(rb '"old"'); check "an open PR whose body text changed is edited once and the new text is recorded" '[ "$(wc -l < "$d/fake/edits" | tr -d " ")" = 1 ] && grep -q "^PUSHED True" <<<"$out"'
 : > "$d/fake/fail"; rm -f "$d/fake/edits"; out=$(rb '"old"'); echo "$out" | head -2
 check "a failed edit refuses with BODY_STALE, the PR number in its words and goal.py pr as the fix" 'grep -q "^REFUSED BODY_STALE: the PR is open and its body is stale (PR https://example.test/pull/1) | goal.py pr g1 reruns the pr step: it re-syncs, may rerun the lane and push, then retries the edit" <<<"$out"'
-rm -f "$d/fake/fail" "$d/fake/edits"; head=0000000000000000000000000000000000000000; out=$(rb '"old"')
-check "a PR head that moved is not edited (no merge, lane or push: the body waits for the next pr run)" '[ ! -e "$d/fake/edits" ] && grep -q "the PR head moved" <<<"$out"'
+check "a failed edit stops the pr step and records no new body mark, so the next pr run retries the edit" 'grep -q "^STOP True" <<<"$out" && grep -q "^MARKED False" <<<"$out"'
+rm -f "$d/fake/fail" "$d/fake/edits"; good=$head; head=0000000000000000000000000000000000000000; printf '{"claim": {"name": "L1", "local": []}}' > "$d/fake/g1.cover.json"; out=$(rb '"old"'); echo "$out" | head -3
+check "a PR head that moved is not edited, stops the pr step with COVER_MOVED and drops the cover" '[ ! -e "$d/fake/edits" ] && grep -q "^REFUSED COVER_MOVED: the PR head moved; the body is not edited (PR https://example.test/pull/1) | goal.py pr g1 reruns the pr step on the current head, with the whole lane" <<<"$out" && grep -q "^STOP True" <<<"$out" && grep -q "COVER LOST (COVER_LOST): MOVED" <<<"$out" && ! grep -q claim "$d/fake/g1.cover.json"'
+head=fail; out=$(rb '"old"'); check "a PR head that cannot be read is treated as moved: COVER_MOVED, no edit" '[ ! -e "$d/fake/edits" ] && grep -q "^REFUSED COVER_MOVED: the PR head is unread" <<<"$out" && grep -q "^STOP True" <<<"$out"'
+head=$good; out=$(rb '"old"'); check "control: a PR head that matches is edited and the step goes on" 'grep -q "^STOP None" <<<"$out" && grep -q "^MARKED True" <<<"$out"'
 fi
 exit $((fails > 0))

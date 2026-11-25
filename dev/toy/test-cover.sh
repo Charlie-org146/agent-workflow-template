@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-delivery/scripts/cover.py skills/workflow-delivery/scripts/lane.py skills/workflow-delivery/scripts/lane_run.py skills/workflow-delivery/scripts/lanekit.py skills/workflow-delivery/scripts/role.py skills/workflow-delivery/scripts/flow.py
+# reads: skills/workflow-delivery/scripts/cover.py skills/workflow-delivery/scripts/cover_text.py skills/workflow-delivery/scripts/lane.py skills/workflow-delivery/scripts/lane_run.py skills/workflow-delivery/scripts/lanekit.py skills/workflow-delivery/scripts/role.py skills/workflow-delivery/scripts/flow.py
 # reads: skills/workflow-delivery/scripts/flow_steps.py skills/workflow-delivery/scripts/goal_steps.py skills/workflow-delivery/scripts/sizing.py
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes.py skills/workflow-regression/scripts/row_reach.py
 # reads: .github/workflows/regression-pr.yml dev/toy/fakegh/gh dev/toy/fakegh/fake.py dev/toy/make.sh dev/toy/reap.sh
@@ -116,6 +116,17 @@ wf "if: always() && github.event_name != 'merge_group'" "if: false"; off "a job 
 wf "if: always() && github.event_name != 'merge_group'" "if: github.event_name == 'merge_group'"; off "affected runs only in the merge queue" WF; unwf
 wf "run nightly --reuse --tier goal" "run nightly --tier goal"; off "a no-op shard (no --reuse)" WF; unwf
 wf "run nightly --reuse --tier goal" "run nightly --reuse --tier goal --ids example-row"; off "a shard limited to chosen rows" WF; unwf
+wf "run nightly --reuse --tier goal" "run nightly --reuse --tier goal --kind defect"; off "a shard narrowed by another argument" WF; unwf
+wf '$R --budget $B --timeout 200' '$R --budget $B --timeout 200 --kind defect'; off "one shard call narrowed by another argument" WF; unwf
+# a skip or limit list that is there but cannot be read is an unknown; a list that is not there is empty
+mkdir -p "$d/gitw"; printf '#!/bin/bash
+[ "$1 $2" = "show origin/main:.loop/regression-limits.tsv" ] && exit 1
+[ "$1" = ls-tree ] && [ -n "${GITW_MISSING:-}" ] && exit 0
+exec %s "$@"
+' "$(command -v git)" > "$d/gitw/git"; chmod +x "$d/gitw/git"
+PATH="$d/gitw:$PATH" off "an unread limit list on the base" LIST
+reset; out=$(GITW_MISSING=1 PATH="$d/gitw:$PATH" cov lane qa)
+check "control: a limit list that is not on the base reads as empty, and the cover still holds" 'grep -q "^COVERED " <<<"$out" && ! grep -q "COVER OFF" <<<"$out"'
 wf 'test "${{ needs.shard.result }}" = success' 'true'; off "a missing aggregate" WF; unwf
 git switch -q main; git rm -q .github/workflows/regression-pr.yml; git commit -qm "no workflow"; git push -q origin main; git switch -q feat
 off "no workflow on the base" WF; git switch -q main; git revert --no-edit HEAD >/dev/null; git push -q origin main; git switch -q feat

@@ -23,9 +23,10 @@ APP, BOUND, NAME = 15368, 30, "L1"  # the GitHub Actions app id; seconds per cal
 IFS = ("github.event_name != 'merge_group'", "always() && github.event_name != 'merge_group'", "always()",
        "always() && needs.shard.result == 'success'", "github.event_name == 'merge_group'")
 PIN = ("name: regression-pr\n", "  pull_request:\n  merge_group:\n    types: [checks_requested]\n", "\n  shard:\n", "\n  affected:\n",
-       "\n  small:\n", "run nightly --reuse --tier goal", "cutgate.py", 'test "${{ needs.shard.result }}" = success')
+       "\n  small:\n", "cutgate.py", 'test "${{ needs.shard.result }}" = success')
 JOB = {"shard": "github.event_name != 'merge_group'", "affected": "always() && github.event_name != 'merge_group'",
        "small": "github.event_name == 'merge_group'"}  # each job's own if: (a disabled pull_request job is no cover)
+CMDS = "bfc39b9371569ea04ece99c3551480f262fdbd20"  # sha1 of the shard's regression command lines: any other argument may narrow a run
 SILENT = ("GH", "RUNS")
 PLAN = r"""
 import json, sys
@@ -73,7 +74,8 @@ def pinned(text):
         got = re.search(r"^    if: (.+)$", block.group(1), re.M) if block else None
         if not got or got.group(1) != want:
             return False
-    return "--ids" not in text and all(p in text for p in PIN) and all(i in IFS for i in ifs)  # a shard limited to chosen rows covers nothing
+    cmds = "\n".join(x.strip() for x in text.splitlines() if re.search(r"\$R\b|regression\.py run", x))
+    return hashlib.sha1(cmds.encode()).hexdigest() == CMDS and all(p in text for p in PIN) and all(i in IFS for i in ifs)
 
 
 def ruleset(root):
@@ -134,8 +136,11 @@ def select(root, cfg, names):
         return [], [], "PLAN"
     gone = set(plan["bad"])  # GitHub reads the merge ref: a row on either the base's or this branch's list is not run there
     for ref in ("origin/%s" % base, "HEAD"):
-        gone |= ids_of(sh(["git", "show", ref + ":.loop/regression-skips.tsv"], root)[1])
-        gone |= ids_of(sh(["git", "show", ref + ":.loop/regression-limits.tsv"], root)[1], 0, "nightly")
+        for name, only in (("skips", None), ("limits", "nightly")):
+            rc, out = sh(["git", "show", "%s:.loop/regression-%s.tsv" % (ref, name)], root)
+            if rc and sh(["git", "ls-tree", ref, "--", ".loop/regression-%s.tsv" % name], root) != (0, ""):
+                return [], [], "LIST"  # the list is there (or unknown) but unread: no row may be claimed
+            gone |= ids_of(out, 0, only)
     todo = list(plan["todo"])
     covered = sorted(k for k in todo if k in reach and k not in gone)
     return covered, sorted(k for k in todo if k not in covered), "" if covered else "NONE"
@@ -238,51 +243,24 @@ def late(runs, slug, cfg):
     return bool(code)
 
 
-def limits(root):
-    """The PR text's Limits block (binding rule 4), for the PR that moves the reach finder and its fingerprint."""
-    if "skills/workflow-regression/scripts/row_reach.py" not in sh(["git", "diff", "--name-only", "origin/main...HEAD"], root)[1].split():
-        return ""
-    return ("\n### Limits\n\n- The first PRs after this merges run cold on GitHub: the runner fingerprint changed, so every cached plan and record is invalid.\n"
-            "- Platform rows not on the skip list are covered on Ubuntu only; see the skip list.\n"
-            "- This PR changes the regression scripts, so its own cover is off (the tooling-cover line); its measured with-and-without minutes cannot come from its own lanes.\n"
-            "- Not tested: the full-lane rerun after a late loss (cover.late is tested, the goal_steps.py call is not), and flow.py qa end to end through the hook.\n")
-
-
-def pr_part(runs, slug, keep=""):
-    claim = load(runs, slug).get("claim")
-    root = sh(["git", "rev-parse", "--show-toplevel"])[1]
-    if not claim:
-        return keep + limits(root)
-    times = {}
-    try:
-        for x in open(os.path.join(root, ".github", "workflows", "row-times.tsv")).read().splitlines():
-            c = x.split("\t")
-            times[c[0]] = float(c[1])
-    except (OSError, ValueError, IndexError):
-        pass
-    saved = ("estimated avoided: about %.0f min (the covered rows' recorded times; an estimate)" % (
-        sum(times.get(k, 0) for k in claim["covered"]) / 60) if times else "estimated avoided: unavailable")
-    head = sh(["git", "rev-parse", "--short=12", "HEAD"], root)[1]
-    ran = sorted(set(claim["local"]) | set(claim.get("ran", [])))  # every row that ran locally at any step
-    return ("\n### Regression lane\n\nCovered by %s, the PR's pull_request run (regression-pr), pending GitHub execution, head %s: %d rows (%s)\n\n"
-            "Run locally: %d rows (%s)\n\n%s\n%s" % (NAME, head, len(claim["covered"]), ", ".join(claim["covered"][:40]), len(ran),
-                                                      ", ".join(ran[:40]) or "none", saved, limits(root)))
-
-
 def refresh(g, state, info, body):
-    """After pr_open: an already open PR gets the new Regression lane text (BODY_STALE refuses when the edit fails)."""
+    """After pr_open: an already open PR gets the new Regression lane text; True when the pr step must stop (BODY_STALE, COVER_MOVED)."""
     mark = hashlib.sha1(body.encode()).hexdigest()
     if info.get("state") != "OPEN" or state.get("pr_body_pushed") in (None, mark):
         state["pr_body_pushed"] = mark
         return
     rc, out = sh(["gh", "pr", "view", state["branch"], "--json", "headRefOid", "-q", ".headRefOid"])
-    if not rc and out != sh(["git", "rev-parse", "HEAD"])[1]:
-        return print("NOTE: the PR head moved; the body is not edited (COVER_LOST rechecks on the next pr run)")
+    if rc or out != sh(["git", "rev-parse", "HEAD"])[1]:
+        off(os.path.dirname(g.state_path(state["slug"])), state["slug"], "pr", "MOVED")
+        g.guards.refuse_no_try(state, "the PR head %s; the body is not edited (PR %s)" % ("is unread" if rc else "moved", info.get("url", "")),
+                               "goal.py pr %s reruns the pr step on the current head, with the whole lane" % state["slug"], "COVER_MOVED", g.save)
+        return True
     file = g.state_path(state["slug"]) + ".body"
     g.write(file, body)
     if sh(["gh", "pr", "edit", state["branch"], "--body-file", file])[0]:
         g.guards.refuse_no_try(state, "the PR is open and its body is stale (PR %s)" % info.get("url", ""),
                                "goal.py pr %s reruns the pr step: it re-syncs, may rerun the lane and push, then retries the edit" % state["slug"], "BODY_STALE", g.save)
+        return True
     state["pr_body_pushed"] = mark
 
 
@@ -333,6 +311,8 @@ def main(argv=None):
     env = dict(os.environ, **({"LOOP_COVER_IDS": ",".join(claim["local"])} if claim.get("local") else {}))
     return subprocess.run([sys.executable, os.path.join(HERE, "role.py"), "lane", argv[1], argv[2]], env=env).returncode
 
+
+from cover_text import limits, pr_part  # noqa: E402,F401  (the PR text moved there: TD1850)
 
 if __name__ == "__main__":
     sys.exit(main())

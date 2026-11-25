@@ -319,6 +319,7 @@ Proof: toy tests (test-guards.sh).
 | `LANE_MISSING` | The qa lane hasn't passed on HEAD | `role.py lane SLUG qa` |
 | `LANE_MISSING_UNCOVERED` | A goal ran with a cover and its uncovered rows have no passing local lane | `python3 skills/workflow-delivery/scripts/cover.py lane SLUG STEP` |
 | `BODY_STALE` | The PR is open and its body still shows the old Regression lane text | `goal.py pr SLUG` reruns the pr step (re-sync, lane if needed, push), then retries the edit |
+| `COVER_MOVED` | The open PR's head moved or could not be read after the push, so the cover is dropped | `goal.py pr SLUG` reruns the pr step on the current head, with the whole lane |
 | `COVER_NOBATCH` | merge.py was asked to batch a goal that ran with a cover | `merge.py SLUG` alone |
 | `WAITING_OWNER` | The goal waits for the owner | The operation answers |
 | `NOT_WORKER` | A goal step outside a worker | Run it in the bound session as `LOOP_ROLE=worker ...` (the refusal prints it) |
