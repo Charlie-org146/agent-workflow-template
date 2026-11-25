@@ -288,6 +288,7 @@
 | <a id="t-cover-ids-lane"></a>cover-ids-lane | requirement | SKP-1 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-25 |
 | <a id="t-cover-moves"></a>cover-moves | requirement | SKP-1 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-25 |
 | <a id="t-cover-batch-body"></a>cover-batch-body | requirement | SKP-1 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-25 |
+| <a id="t-cover-lane"></a>cover-lane | requirement | SKP-1 | not run | - | local | 2026-11-25 |
 
 ## Guardrails
 
