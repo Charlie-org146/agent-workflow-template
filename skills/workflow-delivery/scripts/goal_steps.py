@@ -139,7 +139,11 @@ def cmd_pr(args):
             return 0
         if gate == "fail":
             return _s.fit.pr_fail(_s.ME, state, head, line, ids)
+        tested = _s.git("rev-parse", "HEAD")
         _s.role.record(state, base)
+        if left := cover.late_inputs(_s.root(), tested):
+            _s.guards.refuse_no_try(state, "the bookkeeping commit after the late cover loss changes tested inputs: %s" % ", ".join(left[:5]),
+                                    "goal.py pr %s runs the whole lane on the new head" % slug, "LATE_INPUTS", _s.save)
     state["pr_lane"] = cover.pr_part(_s.state_dir(), slug, state["pr_lane"])
     known = _s.run(["gh", "pr", "view", state["branch"], "--json", "url,state"])
     info = json.loads(known.stdout) if not known.returncode else {}
