@@ -285,6 +285,8 @@ PYEND
 reset; reg run land --reuse --tier goal --ids n,s >/dev/null 2>&1; o7=$(cov lane qa); o8=$(python3 -B -c "$LR" "$S" 2>&1); o9=$(cov lane qa)
 echo "$o7" | head -1; echo "$o8"; echo "$o9" | head -1
 check "a row left unrun by a narrowed run stays local, never planned as reused" 'grep -q "^LEFT LEFT$" <<<"$o8" && grep -Eq "^COVERED [0-9]+ rows by L1; running [0-9]+ locally: .*\bs\b" <<<"$o9"'
+fresh; o10=$(reg run land --reuse --tier goal --ids s 2>&1); echo "$o10" | grep -E "^(SELECTED|REUSED|ROWS|RESULT)"
+check "the narrowed run after a LEFT record runs that row again, never reuses it" 'grep -q "^s$" "$TOY_LOG" && grep -q "^SELECTED s: skipped last time" <<<"$o10" && ! grep -q "^REUSED" <<<"$o10"'
 SH=$(cat <<'PYEND'
 import json, os, sys
 sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True
