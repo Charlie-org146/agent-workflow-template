@@ -340,6 +340,11 @@ make-room-2-identical	PASS	2026-11-25
 make-room-3-package	PASS	2026-11-25	
 make-room-4-surface	PASS	2026-11-25	
 make-room-5-sizes	PASS	2026-11-25	
+make-room-b-1-room	PASS	2026-11-25	
+make-room-b-2-identical	PASS	2026-11-25	
+make-room-b-3-package	PASS	2026-11-25	
+make-room-b-4-surface	PASS	2026-11-25	
+make-room-b-5-sizes	PASS	2026-11-25	
 matrix-health-rule	PASS	2026-11-24	
 merge-batch-split	PASS	2026-11-24	
 merge-guard-base-head	PASS	2026-11-11	
