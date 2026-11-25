@@ -249,14 +249,6 @@ def late(runs, slug, cfg):
     return bool(code)
 
 
-def late_inputs(root, tested):
-    """Late loss (plan): the second bookkeeping commit may touch only the regression tool's no-effect and bookkeeping files."""
-    sys.path.insert(0, REG)
-    import lanes
-    rc, out = sh(["git", "diff", "--name-only", tested, "HEAD"], root)
-    return ["(the diff is unread)"] if rc else [n for n in out.split() if not n.startswith(lanes.BOOKKEEPING + lanes.NO_EFFECT)]
-
-
 def refresh(g, state, info, body):
     """After pr_open: an already open PR gets the new Regression lane text; a failed edit (BODY_STALE) or a moved head (COVER_MOVED) refuses."""
     mark = hashlib.sha1(body.encode()).hexdigest()

@@ -166,12 +166,22 @@ def cmd_pr(args):
     return 5 * (state["statuses"] == "failed")
 
 
+def late_inputs(root, tested):
+    """Late loss (plan): the second bookkeeping commit may touch only the regression tool's no-effect and bookkeeping files (read by a child: no cross-skill import)."""
+    rc, keep = cover.sh([sys.executable, "-B", "-c", "import sys; sys.path.insert(0, sys.argv[1]); import lanes; print(chr(10).join(lanes.BOOKKEEPING + lanes.NO_EFFECT))",
+                         cover.REG], root)
+    got, out = cover.sh(["git", "diff", "--name-only", tested, "HEAD"], root)
+    if rc or got or not keep:
+        return ["(the diff or the no-effect list is unread)"]
+    return [n for n in out.split() if not n.startswith(tuple(keep.split("\n")))]
+
+
 def late_check(state, slug, tested):
     """After a late cover loss (marked in the cover file), a bookkeeping commit may change no tested input; a clean one clears the mark."""
     data = cover.load(_s.state_dir(), slug)
     if not data.get("late"):
         return
-    if left := cover.late_inputs(_s.root(), tested):
+    if left := late_inputs(_s.root(), tested):
         _s.guards.refuse_no_try(state, "the bookkeeping commit after the late cover loss changes tested inputs: %s" % ", ".join(left[:5]),
                                 "goal.py pr %s runs the whole lane on the new head" % slug, "LATE_INPUTS", _s.save)
     data.pop("late")

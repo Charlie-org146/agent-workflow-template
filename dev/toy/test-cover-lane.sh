@@ -208,7 +208,7 @@ check "local rows that shrank drop the earlier narrowed pass and its own record 
 
 echo "== the late loss: the second bookkeeping commit"
 # after a late loss, the second bookkeeping commit may touch only the tool's no-effect and bookkeeping files
-LI='import os, sys; sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True; import cover; print("LATE", cover.late_inputs(os.getcwd(), sys.argv[2]))'
+LI='import os, sys; sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True; import goal_steps; print("LATE", goal_steps.late_inputs(os.getcwd(), sys.argv[2]))'
 git switch -q -c late feat; t0=$(git rev-parse HEAD); printf 'x\tPASS\n' >> .loop/regression-runs.tsv; git add -A; git commit -qm "records"; l1=$(python3 -B -c "$LI" "$D" "$t0" 2>&1)
 mkdir -p docs/wiki; printf 'page\n' > docs/wiki/Tests.md; printf '# more\n' >> .loop/regression.tsv; git add -A; git commit -qm "pages and rows"; l2=$(python3 -B -c "$LI" "$D" "$t0" 2>&1); git switch -q feat
 echo "$l1"; echo "$l2"
