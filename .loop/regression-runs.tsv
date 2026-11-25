@@ -518,7 +518,7 @@ setup-fit	PASS	2026-11-25
 setup-owner-words-up-front	PASS	2026-11-24	
 setup-refusal-writes-120	PASS	2026-11-18	
 setup-zero-tests-119	PASS	2026-11-24	
-shard-balance	PASS	2026-11-22	
+shard-balance	PASS	2026-11-25	
 shard-fits-budget	PASS	2026-11-24	
 size-140	PASS	2026-11-12	
 size-budget	PASS	2026-11-24	
