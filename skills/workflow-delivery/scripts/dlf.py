@@ -74,7 +74,11 @@ def ensure_issue(top, runs, slug, rel):
                                                                   "-f", "labels[]=%s:%s" % (LABEL, rel)))
     if not ok:
         return None
-    mine, lowest = json.loads(out)["number"], find_issue(top, rel)
+    try:
+        mine = json.loads(out)["number"]
+    except (ValueError, TypeError, KeyError):
+        return None  # not the answer a new issue gives: a failed write
+    lowest = find_issue(top, rel)
     if lowest is None:
         return None
     if lowest and lowest != mine:

@@ -21,7 +21,7 @@ os.symlink(os.path.join(root, "dev", "toy", "dlf-gh"), home + "/bin/gh")
 open(home + "/names", "w").write("acmesecret\n")
 open(top + "/.loop/queue.md", "w").write("# Goal queue\n")
 json.dump({"owner_login": "boss"}, open(top + "/.loop/config.json", "w"))
-os.environ.update(HOME=home, PATH=home + "/bin" + os.pathsep + os.environ["PATH"], DLF_FAKE_DIR=fake, LOOP_PRIVATE_NAMES=home + "/names")
+os.environ.update(HOME=home, USERPROFILE=home, PATH=home + "/bin" + os.pathsep + os.environ["PATH"], DLF_FAKE_DIR=fake, LOOP_PRIVATE_NAMES=home + "/names")
 import dlf  # noqa: E402
 import dlf_cut  # noqa: E402
 
@@ -197,4 +197,13 @@ os.environ["DLF_FAKE_FAIL"] = "list"
 got_n = dlf.file_line(top, runs, "gn1", "v1", "break", "other", "n1", "a clean break", "words", "rec")
 os.environ.pop("DLF_FAKE_FAIL")
 check(got_n[1] == "queued", "note 1: a failed issue read queues the line even when an earlier text failed the scan: %s" % (got_n,))
+# CI finding: an answer from the outside service that is not the object we expect (a list, no number) is a failed write: the line queues, nothing raises
+saved = (dlf.write, dlf.find_issue, dlf.post)
+dlf.write, dlf.find_issue, dlf.post = (lambda t, r, s, k, x, do: do(x)), (lambda t, rel: 0), (lambda *a: (True, "[]"))
+try:
+    odd = dlf.ensure_issue(top, runs, "gn2", "v1")
+except BaseException as exc:  # noqa: BLE001
+    odd = type(exc).__name__
+dlf.write, dlf.find_issue, dlf.post = saved
+check(odd is None, "an issue answer that is a list, not an object, files nothing and raises nothing (got %r)" % (odd,))
 sys.exit(1 if failed else 0)

@@ -20,7 +20,7 @@ for d in (tmp, fake, home + "/bin"):
     os.makedirs(d)
 os.symlink(os.path.join(root, "dev", "toy", "dlf-gh"), home + "/bin/gh")
 open(home + "/names", "w").write("acmesecret\n")
-env = dict(os.environ, LOOP_ROLE="worker", HOME=home, PATH=home + "/bin" + os.pathsep + os.environ["PATH"], DLF_FAKE_DIR=fake, LOOP_PRIVATE_NAMES=home + "/names")
+env = dict(os.environ, LOOP_ROLE="worker", HOME=home, USERPROFILE=home, PATH=home + "/bin" + os.pathsep + os.environ["PATH"], DLF_FAKE_DIR=fake, LOOP_PRIVATE_NAMES=home + "/names")
 os.environ.update(env)
 import dlf  # noqa: E402
 import govern_hook  # noqa: E402

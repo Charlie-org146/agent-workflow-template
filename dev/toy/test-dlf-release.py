@@ -18,7 +18,7 @@ os.symlink(os.path.join(root, "dev", "toy", "dlf-gh"), home + "/bin/gh")
 open(home + "/names", "w").write("acmesecret\n")
 json.dump({"owner_login": "boss"}, open(top + "/.loop/config.json", "w"))
 open(top + "/.loop/queue.md", "w").write("# Goal queue\n")
-os.environ.update(HOME=home, PATH=home + "/bin" + os.pathsep + os.environ["PATH"], DLF_FAKE_DIR=fake, LOOP_PRIVATE_NAMES=home + "/names")
+os.environ.update(HOME=home, USERPROFILE=home, PATH=home + "/bin" + os.pathsep + os.environ["PATH"], DLF_FAKE_DIR=fake, LOOP_PRIVATE_NAMES=home + "/names")
 sys.path.insert(0, os.path.join(root, "skills", "workflow-release", "scripts"))
 sys.path.insert(0, os.path.join(root, "skills", "workflow-delivery", "scripts"))
 import release  # noqa: E402

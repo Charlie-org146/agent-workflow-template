@@ -19,7 +19,7 @@ os.makedirs(fake)
 os.makedirs(os.path.join(home, "bin"))
 os.symlink(os.path.join(root, "dev", "toy", "dlf-gh"), os.path.join(home, "bin", "gh"))
 open(os.path.join(home, "names"), "w").write("# the planted list\nacmesecret\n")
-os.environ.update(HOME=home, PATH=os.path.join(home, "bin") + os.pathsep + os.environ["PATH"], DLF_FAKE_DIR=fake,
+os.environ.update(HOME=home, USERPROFILE=home, PATH=os.path.join(home, "bin") + os.pathsep + os.environ["PATH"], DLF_FAKE_DIR=fake,
                   LOOP_PRIVATE_NAMES=os.path.join(home, "names"))
 import dlf  # noqa: E402
 import dlf_cut  # noqa: E402
