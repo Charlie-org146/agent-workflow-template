@@ -504,7 +504,7 @@ settings-overridden	PASS	2026-11-12
 settings-reference	PASS	2026-11-12	
 settings-reference-fresh	PASS	2026-11-16	
 settings-refresh	PASS	2026-11-12	
-settings-render-fresh	FAIL	2026-11-25	
+settings-render-fresh	PASS	2026-11-25	
 settings-start-fresh	PASS	2026-11-16	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
@@ -512,7 +512,7 @@ setup-fit	PASS	2026-11-25
 setup-owner-words-up-front	PASS	2026-11-24	
 setup-refusal-writes-120	PASS	2026-11-18	
 setup-zero-tests-119	PASS	2026-11-24	
-shard-balance	FAIL	2026-11-25	
+shard-balance	PASS	2026-11-25	
 shard-fits-budget	PASS	2026-11-24	
 size-140	PASS	2026-11-12	
 size-budget	PASS	2026-11-24	
