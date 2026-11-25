@@ -28,6 +28,9 @@ import shutil
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from schedule_load import fields  # noqa: E402,F401  (moved whole)
+
 # No terminal, no waiting: a git or gh prompt must fail.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
@@ -104,14 +107,6 @@ def read_queue():
             return handle.read().splitlines()
     except OSError:
         return []
-
-
-def fields(line):
-    out = {}
-    for part in line.strip()[2:].split("|"):
-        key, _, value = part.partition(":")
-        out.setdefault(key.strip(), " ".join(value.split()))
-    return out
 
 
 def batch_items(name):
@@ -321,6 +316,8 @@ def cmd_queue(g, args):
         parts.append("touches: " + args.touches)
     if args.depends_on:
         parts.append("depends-on: " + args.depends_on)
+    if args.release:
+        parts.append("release: " + re.sub(r"[^\w.-]", "", args.release))
     parts.append("goal: " + " ".join(args.goal.split()))
     parts += ["done: " + " ".join(line.split()) for line in args.done]
     g.write(path, ("" if held.endswith("\n") or not held else "\n") + "- " + " | ".join(parts) + "\n", "a")

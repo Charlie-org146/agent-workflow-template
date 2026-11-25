@@ -24,6 +24,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import board_status as bs  # noqa: E402
 import graph  # noqa: E402
+import schedule_load as sl  # noqa: E402
 import auto  # noqa: E402
 from auto import loop_dir, top as root  # noqa: E402,F401
 import sessions as se  # noqa: E402
@@ -40,11 +41,7 @@ def runs(folder):
 
 
 def queue(top):
-    try:
-        with open(os.path.join(top, ".loop", "queue.md")) as handle:
-            return [item for item in map(graph.parse, handle.read().splitlines()) if item and graph.SLUG.match(item["slug"])]
-    except OSError:
-        return []
+    return sl.warn(sl.load(top))["goals"]
 
 
 def dependents(lines):
@@ -359,4 +356,4 @@ def pr_preflight(runs, g, state):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main() or sl.STATUS)

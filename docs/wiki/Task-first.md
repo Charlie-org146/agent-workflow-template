@@ -71,4 +71,9 @@ None
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| - | requirement | TSK-1 | no passing test | not enforced |
+| [task-first](Tests#t-task-first) | requirement | TSK-1 | Given a queue with task goals and fixes, a workaround record and an owner line, when the schedule is shown and the guards are tried, then task goals come before fixes, a fix is ahead only on a named reason, an activated workaround frees a task goal, every GitHub write is a preview, a worker is refused the owner's verbs, and an unreadable input is loud and exits 3. | PASS 2026-11-25 |
+| [task-first-1](Tests#t-task-first-1) | requirement | TSK-1 | Given a ready task goal and a ready fix that blocks nothing, when the schedule is shown and the real watch plan, freeze and assignment run, then the task goal starts first, the row names it a task, and the frozen record names the reason. | PASS 2026-11-25 |
+| [task-first-2](Tests#t-task-first-2) | requirement | TSK-1 | Given a fix that blocks a task goal and a fix with a first: key that blocks nothing, when the schedule is shown, then only the real blocker goes first and names the goal it blocks, and the other stays behind the task goals. | PASS 2026-11-25 |
+| [task-first-3](Tests#t-task-first-3) | requirement | TSK-1 | Given a recorded workaround, when it is activated for a task goal and later failed, then the task goal starts while its fix is unmerged, the frozen record keeps the waiver, and a revoked waiver restores the wait without taking the slot. | PASS 2026-11-25 |
+| [task-first-4](Tests#t-task-first-4) | requirement | TSK-1 | Given a main that is red on one known row, when a task goal's pull request run is judged by the real gate, then it passes, a red that is not known still fails it, and the toy reports TSK-1.4's safety clause as unproven. | PASS 2026-11-25 |
+| [task-first-5](Tests#t-task-first-5) | requirement | TSK-1 | Given an owner line that moves a goal, when it is given with a record that covers the goals and with one that covers other goals, then the first reorders the schedule with the stated reason and the second is refused before anything is written. | PASS 2026-11-25 |
