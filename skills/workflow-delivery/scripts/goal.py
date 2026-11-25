@@ -232,15 +232,16 @@ def cmd_new(args):
 
 def revoked_stop(slug):
     """TSK-1.3: a revoked workaround restores the wait, enforced for step, record and pr: every revoked fix must have merged; a fix whose run
-    record is absent or torn counts as unmerged. Exit 3, never a traceback."""
+    record is absent, torn or of an odd shape counts as unmerged. Exit 3, never a traceback."""
     try:
         state = load(slug)
     except (OSError, ValueError, SystemExit):
         return  # an unknown or unreadable goal is the command's own refusal
-    for fix in state.get("schedule_revoked_fixes") or []:
+    fixes = state.get("schedule_revoked_fixes") if isinstance(state, dict) else None
+    for fix in fixes if isinstance(fixes, list) else []:
         try:
             merged = bool(pods and os.path.exists(state_path(fix)) and pods.merged(load(fix)))
-        except (OSError, ValueError):
+        except (Exception, SystemExit):
             merged = False
         merged or sys.exit(print("REFUSED: %s waits for %s to merge: its workaround was revoked. Fix: let %s merge, then run this again (SCHED_REVOKED)" % (slug, fix, fix), file=sys.stderr) or 3)
 

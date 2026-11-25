@@ -267,5 +267,18 @@ json.dump({"slug": "v110-fix", "status": "done", "release": "merged"}, open(os.p
 code, said = goal(top10, "step", "v110-a", "review")
 check(code == 0 and "STEP v110-a review" in said, "(c) once every revoked fix has merged the goal goes on: %s" % said.strip()[-60:])
 
+# 10. the last short look: an odd-shaped or vanishing record for a revoked fix is unmerged, never a traceback
+top11, rd11 = running(["v110-fix"])
+for label, body in (("a JSON list", "[1]"), ("a string report", json.dumps({"slug": "v110-fix", "status": "done", "report": "x"}))):
+    open(os.path.join(rd11, "v110-fix.json"), "w").write(body)
+    code, said = goal(top11, "step", "v110-a", "review")
+    check(code == 3 and "SCHED_REVOKED" in said and "Traceback" not in said, "a fix record that is %s counts as unmerged: exit %s, %s" % (label, code, said.strip()[-70:]))
+rec11 = json.load(open(os.path.join(rd11, "v110-a.json")))
+rec11["schedule_revoked_fixes"] = "v110-fix"
+json.dump(rec11, open(os.path.join(rd11, "v110-a.json"), "w"))
+os.remove(os.path.join(rd11, "v110-fix.json"))
+code, said = goal(top11, "step", "v110-a", "review")
+check("Traceback" not in said, "a revoked-fixes field of the wrong type is no traceback: exit %s" % code)
+
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)
