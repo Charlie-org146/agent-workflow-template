@@ -103,6 +103,10 @@ json.dump(dict(config), open(tmp + "/.loop/config.json", "w"))
 ask = ["approve the plan wording", "pick the first of two names"]
 check(dlf.choices(goal_mod, {"slug": "gq", "touches": ["skills/a/b.py"]}, ask, "plan") is True and len(lines("gq")) == 2, "two PENDING choices on a goal with declared touches become two lines and the goal goes on")
 check(dlf.choices(goal_mod, {"slug": "gq", "touches": ["skills/a/b.py"]}, ask, "plan") is True and len(lines("gq")) == 2, "the same choices again file no second line")
+# ON side of test-goal.sh "a real PENDING item among none lines still waits" (that case runs with deliver-first off): the same reply, 'none' lines plus one real item, with it on becomes one line and the goal goes on
+import guards as guards_mod  # noqa: E402
+mixed = guards_mod.pending_items("PENDING: none\nPENDING: approve the plan\nDEPTH: full\nSTEP: done")
+check(mixed == ["approve the plan"] and dlf.choices(goal_mod, {"slug": "gmx", "touches": ["skills/a/b.py"]}, mixed, "idea") is True and len([l for l in lines("gmx") if "| choice |" in l]) == 1, "ON side of the mixed none and real item case: one line is filed and the goal goes on: %s" % (mixed,))
 check(dlf.choices(goal_mod, {"slug": "gp", "touches": ["skills/a/b.py"]}, ["the plan is past its review cap: approve one more round"], "plan") is True
       and len([l for l in lines("gp") if "| plan |" in l]) == 1, "a plan past its review cap is its own stop, one line, and the goal goes on")
 check(dlf.choices(goal_mod, {"slug": "gr", "touches": []}, ask, "plan") is False and not lines("gr"), "a choice on a goal with no touches is unclassifiable: it waits")
