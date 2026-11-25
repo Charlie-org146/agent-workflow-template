@@ -45,10 +45,9 @@ How to use: [How-to-use-Guardrails](How-to-use-Guardrails)
   - Reference: GitHub rulesets with merge queue and required checks: adopted; pre-commit: adopted
   - Line 1: metric missing; test 1 linked rows, see Tests
   - Line 2: metric missing; test 1 linked rows, see Tests
-- GRD-20: **Unreviewed** Sizes are one table, enforced on main, never met by reformatting
-  - One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB); pages, requirements per page, test rows and file count. [GRD-20]
-  - No script on main is over its fail line. [GRD-20]
-  - Reformatting a whole file only to fit is refused. [GRD-20]
+- GRD-20: **Unreviewed** Our rules set no size limits; the marketplace's package rules still apply
+  - The marketplace's package rules stay as they are: 200 files, 5,000,000 bytes and 20 KB per packaged script. [GRD-20]
+  - Reformatting a whole file only to hide a change is refused. [GRD-20]
 
   - Feature markers v1
   - Reference: Agensi packaging rules: adopted; ESLint `max-lines`: adapted
@@ -247,6 +246,7 @@ None
 
 | rev | date | text | why | approved |
 |---|---|---|---|---|
+| r5 | 2026-11-25 | Our rules set no size limits; the marketplace's package rules still apply <br> The marketplace's package rules stay as they are: 200 files, 5,000,000 bytes and 20 KB per packaged script. [GRD-20] <br> Reformatting a whole file only to hide a change is refused. [GRD-20] | o1020: revised as approved in o988; drops our size limits (principle 5) | o1020: "For v110-no-size-cap-a, revise DOC-26, GRD-20, REG-4, DEL-25 and DOC-27 as approved in" |
 | r4 | 2026-11-20 | Sizes are one table, enforced on main, never met by reformatting <br> One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,480 (Agensi's 20 KB); pages, requirements per page, test rows and file count. [GRD-20] <br> No script on main is over its fail line. [GRD-20] <br> Reformatting a whole file only to fit is refused. [GRD-20] | approved by operation-top under owner delegation (DOC-2, o486): the fail line matches the enforced Agensi limit | o654: "Then I want u to fix this merge time issuee first. I" |
 | r3 | 2026-11-20 | Sizes are one table, enforced on main, never met by reformatting <br> One table holds every size limit: Agensi's package rules, kept as they are; scripts warn at 19,000 bytes and fail at 20,000; pages, requirements per page, test rows and file count. [GRD-20] <br> No script on main is over its fail line. [GRD-20] <br> Reformatting a whole file only to fit is refused. [GRD-20] | readme-six: the owner-approved final README (o514) | o576: "yes build it" |
 | r2 | 2026-11-19 | The package always fits Agensi's rules <br> No release is cut unless the built package passes every rule Agensi publishes: the file, size and text-only limits of both upload routes, what a buyer's agent is sent, scripts that each run alone, the eight security checks and the listing limits. A failure names the rule and the file. [GRD-20] <br> One table on the Guardrails page states each package limit: Agensi's figure, ours, and the date Agensi's page was last read. Ours may be tighter, never looser. Raising one of ours takes my own words, and health warns when the last read is over 30 days old. [GRD-21] <br> A goal that adds a shipped file or grows a script past a package limit is refused at qa, not at release, unless it frees as much room as it takes. The refusal says how much room is left and what would free it. [GRD-22] | consolidation (TOP-DECISION 89) | o284: "consolidate the requirements ... absorb some requirements into the existing one requirement," |
