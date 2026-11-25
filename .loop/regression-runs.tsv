@@ -471,7 +471,7 @@ report-header	PASS	2026-11-19
 rerun-both-touched	PASS	2026-11-24	
 retired-leaves-waiting	PASS	2026-11-09	
 review-dated	FAIL	2026-11-20	
-review-findings-skill-lines	FAIL	2026-11-25	
+review-findings-skill-lines	PASS	2026-11-25	
 review-help-runs-alone	PASS	2026-11-24	
 review-hold-blocks	PASS	2026-11-24	
 roadmap-closed-drops	PASS	2026-11-15	
