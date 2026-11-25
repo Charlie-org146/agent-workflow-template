@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # reads: dev/package.py, .github/workflows/regression-pr.yml, skills/workflow-regression/scripts/runs.py
 """dev/package.py never prints matched text (goal v110-pkg-secret-print): a shipped file holding a sample of each Safety
-kind, or a made-up private word, is refused naming the kind, the place and the line, and the output holds no part
-of any sample, of the private word or of a path that holds one. Samples are built at run time, fake. Modes, one per run:
+kind, or a made-up private word, is refused naming the kind, the place and the line, and the output passes the no-echo
+scan for every sample, the private word and any path that holds one. Samples are built at run time, fake. Modes, one per run:
   static  --static on the sample tree; a malformed private entry; a flow file that can't be read
   pr-log  the pull-request workflow's own checker line, under bash
   full    the full run: the samples, a failing --help whose traceback holds a sample, a hanging private-named script,
@@ -60,7 +60,7 @@ def wins(text):
 
 
 check("setup", "the group lists hold 6, 10, 10 and 4 patterns (none shrank unseen)", [len(g[1]) for g in GROUPS] == [6, 10, 10, 4])
-check("setup", "no sample shares any part with the checker's fixed text",
+check("setup", "no sample overlaps the checker's fixed text under the no-echo scan",
       not [w for s in list(S.values()) + [WORD] for w in wins(s) if any(w.lower() in f.lower() for f in FIXED)])
 
 
@@ -126,14 +126,14 @@ def expected(files, private, designated):
 
 
 def leaks(case, out, base_out, forbidden, private_forbidden):
-    """No part of a forbidden string, raw or with escaped backslashes undone; the clean baseline must
-    hold none either (a match there would mean the samples clash with fixed text, not a pass)."""
+    """The no-echo scan: no forbidden string, raw or with escaped backslashes undone, is echoed; the clean baseline
+    must pass too (a match there would mean the samples clash with fixed text, not a pass)."""
     for name, text in (("output", out), ("baseline", base_out)):
         hay = text + "\n" + text.replace("\\\\", "\\")
         for s, fold in [(s, False) for s in forbidden] + [(s, True) for s in private_forbidden]:
             h = hay.lower() if fold else hay
             bad = [w for w in (wins(s) if len(s) >= 6 else [s]) if (w.lower() if fold else w) in h]
-            check(case, "no part of a forbidden string in the %s (%d found)" % (name, len(bad)), not bad)
+            check(case, "no echo of a forbidden string in the %s (%d found)" % (name, len(bad)), not bad)
 
 
 def judge(case, code, out, want_code, files, private, designated, base_out, forbidden, private_forbidden=()):
@@ -185,6 +185,15 @@ try:
             check("not-list", "a leak_prefixes setting that is not a list refuses, with no traceback",
                   "FAIL Private list: leak_prefixes is not a list" in out4 and "Traceback" not in out4 and code4 == 1)
             leaks("not-list", out4, "", [], [WORD])
+            odd = ["a{%d}" % 2 ** 64, "(" * 2000 + ")" * 2000]  # each fails to compile outside re.error
+            odd_flow = os.path.join(TMP, "odd.json")
+            with open(odd_flow, "w") as handle:
+                json.dump({"leak_prefixes": odd}, handle)
+            code5, out5 = run(os.path.join(TMP, "b"), "--static", flow=odd_flow)
+            check("odd-entry", "entries that fail to compile in any way refuse, named by number only, with no traceback",
+                  "FAIL Private list: leak_prefixes entry #1 is not a valid pattern" in out5 and
+                  "FAIL Private list: leak_prefixes entry #2 is not a valid pattern" in out5 and
+                  "Traceback" not in out5 and "ERROR (unexpected)" not in out5 and code5 == 1)
             code2, out2 = run(os.path.join(TMP, "b"), "--static", flow=os.path.join(TMP, WORD + "-cfg", "flow.json"))
             check("no-flow", "an unreadable flow file is named by a fixed line", "NOTE: no leak_prefixes loaded; only the built-in scans ran" in out2)
             leaks("no-flow", out2, "", [], [WORD])

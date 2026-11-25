@@ -380,7 +380,7 @@ def load_private():
             if isinstance(pattern, str) and pattern:  # an empty pattern would match everything
                 PRIVATE.append((k, re.compile(pattern, re.I)))
                 continue
-        except re.error:
+        except (re.error, OverflowError, RecursionError, ValueError, TypeError):  # any compile failure refuses
             pass
         fail("Private list", "leak_prefixes entry #%d is not a valid pattern" % k)
 
