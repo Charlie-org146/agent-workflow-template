@@ -257,10 +257,10 @@ def load(root, strict=False, policy=None, check=True):
             g["why"] = "safety: %s" % g["first_class"]
         elif hits:
             g["why"] = "blocks %s" % hits[0]
-        elif g["first"] and g["first"] != "safety" and g["first"] in task_slugs:
+        elif g["first"] in task_slugs and g["first"] in block[g["slug"]] and g["slug"] not in result["waived"].get(g["first"], ()):
             g["why"] = "first: %s" % g["first"]
         elif g["first"]:
-            notes.append("first: key of %s names %s, which is not a queued task goal or a safety class: ignored" % (g["slug"], clean(g["first"], 30)))
+            notes.append("first: key of %s names %s, which it does not block (or it is no queued task goal or safety class): ignored" % (g["slug"], clean(g["first"], 30)))
     pos = {s: i for i, s in enumerate(order)}
     def key(g):
         task = g["kind"] == "task"

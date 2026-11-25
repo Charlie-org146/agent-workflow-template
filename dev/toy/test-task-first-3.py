@@ -119,5 +119,14 @@ finally:
     os.chdir(old)
 check([g["slug"] for g in start] == ["v110-safe"] and [g["slug"] for g, _ in held] == ["v110-late"], "with one slot and a torn order file the safety goal starts, the held goal waits: start %s held %s" % ([g["slug"] for g in start], [g["slug"] for g, _ in held]))
 
+# 3. d1 (TSK-1.2): a first: key promotes a fix only when the fix really blocks that task goal
+Q3 = ("- slug: v110-clean | first: v110-b: tidy first | goal: clean | done: d\n- slug: v110-fix | first: v110-a: it blocks | goal: fix | done: d\n"
+      "- slug: v110-a | release: v1.1.0 | depends-on: v110-fix | goal: a | done: d\n- slug: v110-b | release: v1.1.0 | goal: b | done: d\n")
+top = repo(Q3)
+code, out, err = run(top, "show")
+rows = [x.split(". ", 1)[1] for x in out.splitlines() if x[:3].strip().rstrip(".").isdigit()]
+check([x.split(" | ")[0] for x in rows] == ["v110-fix", "v110-b", "v110-a", "v110-clean"], "an independent fix with first: stays behind the task goals, a real blocker goes first: %s" % [x.split(" | ")[0] for x in rows])
+check("v110-clean" in out and "does not block" in out and "tidy first" not in out + err, "the ignored first: key is named with its goal and the why text is not printed")
+
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)
