@@ -394,25 +394,29 @@ operate-all	PASS	2026-11-25
 operate-toy-no-check	PASS	2026-11-25	
 operate-wait-99	PASS	2026-11-25	
 ops-findings-filed	PASS	2026-11-19	
-package-caps-held	PASS	2026-11-14		a3dcc03121ec
+package-caps-held	PASS	2026-11-25		a3dcc03121ec
+package-gate-controls	PASS	2026-11-25	
 package-gate-head	PASS	2026-11-25	
-package-hang-bound	PASS	2026-11-12	
-package-hang-no-skills-file	PASS	2026-11-12	
-package-hang-slot	PASS	2026-11-12	
-package-hang-stdin	PASS	2026-11-12	
-package-headroom-held	FAIL	2026-11-15	
+package-hang-bound	PASS	2026-11-25	
+package-hang-no-skills-file	PASS	2026-11-25	
+package-hang-slot	PASS	2026-11-25	
+package-hang-stdin	PASS	2026-11-25	
+package-headroom-held	FAIL	2026-11-25	
 package-passes	PASS	2026-11-25	
 package-passes-3800	PASS	2026-11-25	
 package-rows-tracked	FAIL	2026-11-25	
 package-static-toy	PASS	2026-11-25	
 package-win-parity-1397	PASS	2026-11-25	
-package-win-stdin-1397	PASS	2026-11-24	
+package-win-stdin-1397	PASS	2026-11-25	
 page-relock	PASS	2026-11-14	
 page-shape	FAIL	2026-11-20	
 pending-none-goes-on	PASS	2026-11-25	
 pending-real-waits	PASS	2026-11-25	
 pending-waits	PASS	2026-11-25	
 perms-settings-tracked	PASS	2026-11-15	
+pkg-no-echo-1	PASS	2026-11-25	
+pkg-no-echo-2	PASS	2026-11-25	
+pkg-secret-print-4-sizes	PASS	2026-11-25	
 plan-cache-key	PASS	2026-11-12	
 plan-calls-flat	PASS	2026-11-22	
 plan-identity	PASS	2026-11-22	
