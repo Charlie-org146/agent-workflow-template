@@ -196,7 +196,7 @@ RULE_TXT='  full-test-run: form full, 1 pass. Covers: the full test run passes. 
 out=$(python3 -B -c "import sys; sys.path.insert(0,'$D'); sys.dont_write_bytecode=True; import cover; print(cover.rule_fix('$RULE_TXT', '$common/loop/runs', 'g1'))")
 check "the sizing rule's full-test-run line says what L1 covers and what still runs locally" 'grep -q "Run: covered by L1 (claimed; pending PR recheck and GitHub execution): 3 rows; the other 2 rows still run locally$" <<<"$out"'
 lane1() { (cd "$D" && LOOP_COVER_IDS=n,s python3 -B -c "import sys; sys.dont_write_bytecode=True; import lane; print($1)") 2>&1; }
-check "LOOP_COVER_IDS alone narrows no lane command: --ids comes only from the ids the launch passes" '! lane1 "lane.lane_argv(), lane.lane_argv(5)" | grep -q -- "--ids" && grep -q "argv = lane_argv(tests) + (\[\"--ids\", held\[\"ids\"\]\] if held\[\"ids\"\] else \[\])" "$D/lane.py"'
+check "LOOP_COVER_IDS alone narrows no lane command: lane_argv never reads it" 'o=$(lane1 "lane.lane_argv(), lane.lane_argv(5)"); [ "${o:0:1}" = "[" ] && ! grep -q -- "--ids" <<<"$o"'
 cid() { (cd "$D" && LOOP_COVER_IDS=$1 python3 -B -c "import sys; sys.dont_write_bytecode=True; import lane; print('IDS=' + lane.cover_ids('$common/loop/runs', 'g1'))") 2>&1; }
 reset; a=$(cid n,s); cov lane qa >/dev/null; b=$(cid n,s); c=$(cid s,n); e=$(cid n); f=$(cid a,b,c,n,s)
 check "the launch honours LOOP_COVER_IDS only while the cover claim lists exactly those ids" '[ "$a" = IDS= ] && [ "$b" = IDS=n,s ] && [ "$c" = IDS=n,s ] && [ "$e" = IDS= ] && [ "$f" = IDS= ]'
@@ -223,5 +223,46 @@ check "a narrowed lane .ok whose ids the cover claim lists exactly is accepted" 
 check "control: a full lane .ok (HEAD only, no ids) still passes, with or without a claim" '[ "$r4" = "NEED None" ] && [ "$r5" = "NEED None" ]'
 w=$(cd "$D" && python3 -B -c "import sys; sys.dont_write_bytecode=True; import lane_run; print(lane_run.ok_text({'head': 'h', 'ids': 'n,s'}) + '|' + lane_run.ok_text({'head': 'h', 'ids': ''}))" 2>&1)
 check "a passing lane's .ok holds HEAD then the ids of a narrowed lane, and HEAD alone for a full lane" '[ "$w" = "h n,s|h" ]'
+# The real lane under a stub recorder: what the launch passes, and what a pass records.
+cat > "$d/rec.sh" <<'A'
+#!/bin/bash
+echo "ARGV: $*"
+[ -z "${TOY_LEFT:-}" ] || echo "BUDGET 1 min: ran 1 of 2 rows; LEFT 1 to the scheduled full suite: s"
+exit 0
+A
+RL=$(cat <<'PYEND'
+import json, os, sys
+sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True
+import lane, lanekit
+runs, base = sys.argv[2], lanekit.lane_base(sys.argv[2], "g1", "qa")
+status, line, _ = lane.lane(runs, "g1", "qa", {"test_record": ["bash", sys.argv[3]]}, json.load(open(".loop/config.json")), 60, True)
+print("STATUS", status); print(line)
+print("ARGS", " ".join(l for l in open(base + ".txt").read().splitlines() if l.startswith("ARGV:")))
+head = os.popen("git rev-parse HEAD").read().strip()
+print("OK", open(base + ".ok").read().replace(head, "HEAD") if os.path.exists(base + ".ok") else "none")
+PYEND
+)
+real() { python3 -B -c "$RL" "$D" "$common/loop/runs" "$d/rec.sh" 2>&1; }
+reset; o1=$(LOOP_COVER_IDS=n,s real); cov lane qa >/dev/null; o2=$(LOOP_COVER_IDS=n,s real); o3=$(LOOP_COVER_IDS=n real)
+o4=$(LOOP_COVER_IDS=n,s TOY_LEFT=1 real); reset; o5=$(TOY_LEFT=1 real)
+printf '%s\n--\n' "$o1" "$o2" "$o3" "$o4" "$o5"
+check "the real lane with LOOP_COVER_IDS and no claim launches without --ids and records HEAD alone" 'grep -q "^STATUS pass" <<<"$o1" && grep -q "^ARGS ARGV: " <<<"$o1" && ! grep -q -- "--ids" <<<"$o1" && grep -q "^OK HEAD$" <<<"$o1"'
+check "the real lane with a claim listing exactly those ids launches --ids n,s and records HEAD then the ids" 'grep -q "^STATUS pass" <<<"$o2" && grep -q "^ARGS ARGV: .* --ids n,s$" <<<"$o2" && grep -q "^OK HEAD n,s$" <<<"$o2"'
+check "the real lane with ids the claim does not list launches without --ids (the whole lane)" 'grep -q "^STATUS pass" <<<"$o3" && grep -q "^ARGS ARGV: " <<<"$o3" && ! grep -q -- "--ids" <<<"$o3" && grep -q "^OK HEAD$" <<<"$o3"'
+check "a narrowed lane that leaves rows unrun records no pass: LANE_LEFT, no .ok" 'grep -q "^STATUS fail" <<<"$o4" && grep -q "LANE_LEFT: the lane narrowed to n,s left rows unrun" <<<"$o4" && grep -q "^OK none$" <<<"$o4"'
+check "control: a whole lane cut by the budget still passes as before" 'grep -q "^STATUS pass" <<<"$o5" && ! grep -q -- "--ids" <<<"$o5" && grep -q "^OK HEAD$" <<<"$o5"'
+SH=$(cat <<'PYEND'
+import json, os, sys
+sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True
+import cover, lanekit
+runs, base = sys.argv[2], lanekit.lane_base(sys.argv[2], "g1", "qa")
+data = cover.load(runs, "g1"); data["claim"]["local"] = ["n", "s", "t"]; cover.save(runs, "g1", data)
+open(base + ".ok", "w").write(os.popen("git rev-parse HEAD").read().strip() + " n,s,t"); open(base + ".last", "w").write("{}")
+cover.lane(lambda *a, **k: ("pass", "LANE stub", []), runs, "g1", "qa", {}, json.load(open(".loop/config.json")))
+print("LEFT", os.path.exists(base + ".ok"), os.path.exists(base + ".last"))
+PYEND
+)
+reset; cov lane qa >/dev/null; out=$(python3 -B -c "$SH" "$D" "$common/loop/runs" 2>&1)
+check "local rows that shrank drop the earlier narrowed pass and its own record (no stuck refusal)" '[ "$out" = "LEFT False False" ]'
 fi
 exit $((fails > 0))

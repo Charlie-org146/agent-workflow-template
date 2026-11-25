@@ -179,8 +179,8 @@ def lane(fn, runs, slug, step, spec, cfg, wait=90):
         return fn(runs, slug, step, spec, cfg, wait)
     head = sh(["git", "rev-parse", "HEAD"], root)[1]
     was = data.get("claim") or {}
-    if was and not set(local) <= set(was.get("local", [])):
-        drop(runs, slug)  # more rows are local now: no earlier partial pass stands for them
+    if was and local and set(local) != set(was.get("local", [])):
+        drop(runs, slug)  # other rows are local now: no earlier partial pass stands for them
     data["claim"] = {"name": NAME, "head": head, "covered": covered, "local": local, "step": step, "ran": was.get("ran", [])}
     save(runs, slug, data)
     line = "COVERED %d rows by %s; running %d locally: %s (claimed; pending PR recheck and GitHub execution)" % (
@@ -322,7 +322,7 @@ def main(argv=None):
             off(runs, argv[1], argv[2], got[2])
         else:
             was = data["claim"]
-            if not set(got[1]) <= set(was["local"]):
+            if got[1] and set(got[1]) != set(was["local"]):
                 drop(runs, argv[1])
             data["claim"] = dict(was, head=sh(["git", "rev-parse", "HEAD"], top)[1], covered=got[0], local=got[1], step=argv[2])
             save(runs, argv[1], data)

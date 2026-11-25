@@ -76,6 +76,9 @@ def finalize(base, held, name):
     elif rc:
         line += "\nLANE_FAIL %s (log %s). Reproduce one: python3 %s run <id>; %s." % (
             ", ".join(ids) or "exit %d" % rc, out, _s.lane_argv()[1], _s.NOTHING)
+    elif held.get("ids") and re.search(r"\bLEFT [1-9]", text):
+        line += "\nLANE_LEFT: the lane narrowed to %s left rows unrun, so it records no pass. Fix: run this same command " \
+            "again; rows that passed are reused; %s." % (held["ids"], _s.NOTHING)
     else:
         status = "pass"
         with open(base + ".ok", "w") as handle:
