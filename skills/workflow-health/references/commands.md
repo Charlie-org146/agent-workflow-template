@@ -43,15 +43,12 @@ unchanged repo print the same lines.
 | | `network` | a land row's command reaches the network: curl, wget, http(s):// (WARN) |
 | Performance (is it fast and cheap enough?) | `cost` | a finished goal over `time_budget_minutes` or `token_budget` (WARN); goals that recorded no tokens are left out |
 | | `test-time` | the land lane over `test_budget_minutes`, naming its slowest rows (WARN; shown, never filed) |
-| | `rows-cap` | the regression table's rows against `max_regression_rows` (default 1200): WARN from 90%, FAIL over; 0 is off (GRD-13) |
 | | `suite-cap` | the slowest full (non `--reuse`) run recorded here against `max_suite_seconds` (default 1900): WARN from 90%, FAIL over; shown, never filed (GRD-13) |
 | | `check-time` | the check, up to this group, past 60 seconds (WARN; shown, never filed) |
 | Security and privacy (can anything private escape?) | `private` | a tracked file matches a `leak_patterns` entry of the private flow file: file:line and the pattern's number only, never the text (FAIL) |
 | | `scan-hook` | no commit scan hook (WARN; shown, never filed) |
 | | `workflow-permissions` | a workflow has no top-level `permissions:` (WARN) |
-| Size (can someone still read this?) | `scripts` | a script over 19,000 bytes (WARN) or over 20 KB (FAIL) |
-| | `skill-lines` | a SKILL.md of 150 lines or more (FAIL) |
-| | `requirements-per-page` | a page with more requirements than `criteria_max` (FAIL) |
+| Size (can someone still read this?) | none | no rules by design: principle 5 retired them (o988); `--group size` runs and prints `size: no rules (retired by principle 5)`, never a passed check |
 | Hygiene (is anything left lying around?) | `findings` | over 5 open findings in `.loop/findings.md` (WARN) |
 | | `waiting` | a run waiting over 24 hours (WARN) |
 | | `branches` | a `loop/` branch already merged (WARN) |
@@ -93,8 +90,8 @@ does, and its row carries its `feature` so filing treats FAIL as a defect and WA
 group runs `break` on a private copy of the repo's files and the rule must then exit 1 or 2 (else it is reported as unable
 to fire); a rule with no `break`, a repeated or default rule's name, or an unknown group makes health refuse (exit 2). A rule
 in `off` does not run and its group prints `INFO <rule>: turned off: <reason>`; an empty reason leaves it on and UNREAD. The
-commands are the repo's own and run for whoever runs the check. The numbers `health_script_bytes` (20480) and
-`health_skill_lines` (150) in `.loop/config.json` set the Size group's script and SKILL.md caps for that repo.
+commands are the repo's own and run for whoever runs the check. An `off` entry that names a retired rule (`scripts`,
+`skill-lines`, `requirements-per-page`, `rows-cap`) prints `INFO <rule>: retired rule; nothing to turn off; the entry can go`.
 
 Adding a rule: write `fn(root) -> rows` in a rule module, add its name to its group in `report.py`, list it in the
 module's `FUNCTIONS`, and add a fixture to its `CONTROLS` that makes it fire. Health refuses to load until the control exists.
@@ -364,7 +361,7 @@ The one list the README, the Principles page and health's roll-up read (DOC-23, 
 | 2 | Sensed: enforced, verified and honest | Every principle and requirement is enforced by the loop's own machinery, and everything the loop says is verified. Tests, health, CI, the merge queue, the routines and a fresh-context reviewer check each one. Every claim carries its evidence and clock time. Every ETA is a commitment, and a miss stays recorded with its cause. Whatever falls short becomes tracked work until it is fixed. | requirements,tests,controls,consistency,docs,freshness,hygiene,honesty |
 | 3 | Fast | Every change runs on one clock from my ask to main, and every step keeps a time limit set in settings. | performance |
 | 4 | Cheap | Every step, task and release has a token budget from its measured usual, and I can see what each one cost. | none |
-| 5 | Small | Code, tests and pages stay inside one table of size limits, and growth is paid for, never hidden by reformatting. | size |
+| 5 | Small | Nothing in our rules caps the size of a script, page or test table; the marketplace's own package rules still apply, and a change is never hidden by reformatting. | none |
 | 6 | Private and guarded | No private name, path, address or key leaves the machine, and automation gets only the access it needs. | security |
 | 7 | Reproducible, portable and adoptable | The same inputs give the same result on any machine, in any repo and on any agent. Any repo adopts the template cleanly, plugs into other systems through adapters, and survives a failure without losing work. | adoption |
 | 8 | Autonomous and human-friendly | It runs by itself across machines and stops for me only when a decision is truly mine. At any moment I can see where everything stands, on one board and in one check-in layout, in plain words that read on a phone. When it needs me, it asks one clear question with a recommendation. | attention |

@@ -175,7 +175,6 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `smtp_port` | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. | set "smtp_port" in .loop/config.json | `465` | default |
 | `review_depth` | full runs the whole plan and review pipeline and refuses a condensed one; condensed allows a shorter run. | set "review_depth" in .loop/config.json | `full` | default |
 | `criteria` | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). | set "criteria" in .loop/config.json | `true` | default |
-| `criteria_max` | Most criteria a wiki page may hold, 1 to 50; docs check and health fail a page over it. | set "criteria_max" in .loop/config.json | `10` | **overridden:** `24` |
 | `wiki_dir` | The folder of wiki pages. | set "wiki_dir" in .loop/config.json | `docs/wiki` | default |
 | `risky_paths` | Regexes for paths whose goals need extra care. | set "risky_paths" in .loop/config.json | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | default |
 | `step_limit` | Seconds a flow step may run when the flow file sets none; 0 is built-in. | set "step_limit" in .loop/config.json | `0` | default |
@@ -193,7 +192,6 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `min_free_memory_gb` | Free GB below which no lane or goal starts; 0 off. | set "min_free_memory_gb" in .loop/config.json | `3` | default |
 | `eta_margin_percent` | Percent added to a goal's estimate for its hard ETA, 0 to 300. | set "eta_margin_percent" in .loop/config.json | `25` | default |
 | `token_budget` | Tokens a goal may spend before no new step starts; 0 means none. | set "token_budget" in .loop/config.json | `0` | **overridden:** `3000000` |
-| `max_regression_rows` | Most rows the regression table may hold; qa refuses a goal over it. | set "max_regression_rows" in .loop/config.json | `1200` | **overridden:** `1300` |
 | `max_suite_seconds` | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal over it. | set "max_suite_seconds" in .loop/config.json | `1900` | **overridden:** `2800` |
 | `test_budget_minutes` | Minutes one in-loop test run may take, 15 or more; later rows wait for the full suite. | set "test_budget_minutes" in .loop/config.json | `15` | default |
 | `prep_budget_minutes` | Minutes a lane may spend before its first test row, 15 or more; past it, it stops. | set "prep_budget_minutes" in .loop/config.json | `15` | **overridden:** `25` |
@@ -213,8 +211,6 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `full_auto` | Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait. | set "full_auto" in .loop/config.json | `false` | **overridden:** `true` |
 | `pool_size` | Idle worker sessions the pool keeps; low, the operation session asks you for more. | set "pool_size" in .loop/config.json | `20` | default |
 | `silent_minutes` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides. | set "silent_minutes" in .loop/config.json | `30` | default |
-| `health_script_bytes` | Script size health fails, in bytes (warns at 90%). | set "health_script_bytes" in .loop/config.json | `20480` | default |
-| `health_skill_lines` | SKILL.md line cap health fails. | set "health_skill_lines" in .loop/config.json | `150` | default |
 | `feature_labels` | true tags each health and regression issue feature:<Page>, creating the label. | set "feature_labels" in .loop/config.json | `false` | default |
 | `workers` | app: no background process; a goal no session took waits for sessions.py bind. auto: a background agent when no session can start. | set "workers" in .loop/config.json | `(empty)` | **overridden:** `app` |
 <!-- settings:end -->

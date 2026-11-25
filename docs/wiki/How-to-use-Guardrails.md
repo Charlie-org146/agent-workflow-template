@@ -87,8 +87,8 @@ Each requirement and how it is delivered:
 
 ### API/file contract: .loop/config.json
 - **Path:** `.loop/config.json`
-- **Fields:** `token_budget`, `step_budget_minutes`, `test_budget_minutes`, `silent_minutes` and `criteria_max`.
-- **Example:** `"criteria_max": 19` is this repo's cap on a page's requirements.
+- **Fields:** `token_budget`, `step_budget_minutes`, `test_budget_minutes` and `silent_minutes`.
+- **Example:** `"test_budget_minutes": 15` is this repo's time limit on a land lane.
 - **Writer:** workflow-setup writes the defaults; the owner edits a value.
 - **Reader:** the guards, the lanes, docs check and health.
 

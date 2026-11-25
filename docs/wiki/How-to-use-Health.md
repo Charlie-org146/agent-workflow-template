@@ -63,7 +63,6 @@ or a batch with a real agent. Records older than these goals may be gone, so "no
   outside `tests/`, a wiki with pages from another tool, and a pre-push hook that takes minutes." (FINDINGS.md)
 - Several goals pushing at once can fail with a bare git error, and a plain re-push works; `pr` retries twice
   (FINDINGS.md).
-- Some scripts are within a few hundred bytes of the 20 KB limit, so the next feature needs a new script
   (FINDINGS.md).
 - "Codex's `workspace-write` sandbox blocks writes to `.git` and outside the workspace." (FINDINGS.md)
 
