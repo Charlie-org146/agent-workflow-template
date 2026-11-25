@@ -156,6 +156,7 @@ docs-no-plain-dunder-import	PASS	2026-11-16
 docs-release-scripts-under-19000	PASS	2026-11-24	
 docs-scripts-import-by-name	PASS	2026-11-24	
 docs-scripts-under-19000	PASS	2026-11-24	
+docs-v2-repo-passes	FAIL	2026-11-25	
 done-line-rows-128	PASS	2026-11-12	
 done-lines-warning-143	PASS	2026-11-12	
 entry-stale	PASS	2026-11-24	
@@ -404,7 +405,7 @@ plan-identity	PASS	2026-11-22
 plan-sizes	PASS	2026-11-25	
 pods-blocks	PASS	2026-11-24	
 pods-caps-3919	PASS	2026-11-24	
-pods-docs	PASS	2026-11-24	
+pods-docs	PASS	2026-11-25	
 pods-independent	PASS	2026-11-24	
 pods-lock	PASS	2026-11-24	
 pods-owner	PASS	2026-11-24	
@@ -470,7 +471,7 @@ report-header	PASS	2026-11-19
 rerun-both-touched	PASS	2026-11-24	
 retired-leaves-waiting	PASS	2026-11-09	
 review-dated	FAIL	2026-11-20	
-review-findings-skill-lines	PASS	2026-11-17	
+review-findings-skill-lines	PASS	2026-11-25	
 review-help-runs-alone	PASS	2026-11-24	
 review-hold-blocks	PASS	2026-11-24	
 roadmap-closed-drops	PASS	2026-11-15	
@@ -503,7 +504,7 @@ settings-overridden	PASS	2026-11-12
 settings-reference	PASS	2026-11-12	
 settings-reference-fresh	PASS	2026-11-16	
 settings-refresh	PASS	2026-11-12	
-settings-render-fresh	FAIL	2026-11-17	
+settings-render-fresh	FAIL	2026-11-25	
 settings-start-fresh	PASS	2026-11-16	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
@@ -511,7 +512,7 @@ setup-fit	PASS	2026-11-25
 setup-owner-words-up-front	PASS	2026-11-24	
 setup-refusal-writes-120	PASS	2026-11-18	
 setup-zero-tests-119	PASS	2026-11-24	
-shard-balance	PASS	2026-11-22	
+shard-balance	FAIL	2026-11-25	
 shard-fits-budget	PASS	2026-11-24	
 size-140	PASS	2026-11-12	
 size-budget	PASS	2026-11-24	
