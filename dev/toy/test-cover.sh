@@ -165,6 +165,10 @@ git switch -q feat; reset; cov lane qa >/dev/null; : > "$(lb qa).ok"; git switch
 check "local rows that grew drop the earlier partial pass" '[ ! -e "$(lb qa).ok" ]'
 git switch -q feat
 git switch -q -c allc main; for r in a b c; do printf 'again\n' > "src/$r.txt"; done; git add -A; git commit -qm "Only covered rows change"
+git switch -q feat; reset; cov lane qa >/dev/null; git switch -q allc; cov lane ship >/dev/null; out=$(cov part)
+check "the PR text keeps every row that ran locally at any step, though the last step planned none" 'grep -q "Run locally: 2 rows (n, s)" <<<"$out"'
+out=$(python3 -B "$D/cover.py" lane g1 qa 2>&1); rc=$?
+check "the lane command with nothing left to run locally says so and starts no lane" '[ $rc = 0 ] && grep -q "^COVERED: every selected row is covered by L1; nothing is left to run locally" <<<"$out"'
 reset; out=$(cov lane qa); echo "$out" | head -3
 check "when every selected row is covered the local lane is not run at all" 'grep -q "^COVERED 3 rows by L1; running 0 locally: none" <<<"$out" && grep -q "^CALLS \[\]" <<<"$out" && grep -q "^STATUS pass" <<<"$out"'
 out=$(cov need qa); check "a covered goal's record still runs over_caps at qa" 'grep -q "over_caps called" <<<"$out"'
@@ -189,7 +193,7 @@ out=$(python3 -B -c "import sys; sys.path.insert(0,'$D'); sys.dont_write_bytecod
 check "with no claim the prompt is byte for byte as today" 'grep -q "already passed on this content" <<<"$out"'
 RULE_TXT='  full-test-run: form full, 1 pass. Covers: the full test run passes. Run: python3 skills/workflow-regression/scripts/regression.py run'
 out=$(python3 -B -c "import sys; sys.path.insert(0,'$D'); sys.dont_write_bytecode=True; import cover; print(cover.rule_fix('$RULE_TXT', '$common/loop/runs', 'g1'))")
-check "the sizing rule's full-test-run line says covered by L1, claimed and pending" 'grep -q "Run: covered by L1 (claimed; pending PR recheck and GitHub execution)$" <<<"$out"'
+check "the sizing rule's full-test-run line says what L1 covers and what still runs locally" 'grep -q "Run: covered by L1 (claimed; pending PR recheck and GitHub execution): 3 rows; the other 2 rows still run locally$" <<<"$out"'
 out=$(cd "$D" && LOOP_COVER_IDS=n,s python3 -B -c "import sys; sys.dont_write_bytecode=True; import lane; print(lane.lane_argv()[-2:], lane.lane_argv(5)[-4:])")
 check "the lane command takes --ids from LOOP_COVER_IDS and adds nothing without it" 'grep -q "\[.--ids., .n,s.\]" <<<"$out" && ! (cd "$D" && python3 -B -c "import sys; sys.dont_write_bytecode=True; import lane; print(lane.lane_argv())") | grep -q -- "--ids"'
 fi

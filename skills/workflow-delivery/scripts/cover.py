@@ -181,7 +181,7 @@ def lane(fn, runs, slug, step, spec, cfg, wait=90):
     was = data.get("claim") or {}
     if was and not set(local) <= set(was.get("local", [])):
         drop(runs, slug)  # more rows are local now: no earlier partial pass stands for them
-    data["claim"] = {"name": NAME, "head": head, "covered": covered, "local": local, "step": step}
+    data["claim"] = {"name": NAME, "head": head, "covered": covered, "local": local, "step": step, "ran": was.get("ran", [])}
     save(runs, slug, data)
     line = "COVERED %d rows by %s; running %d locally: %s (claimed; pending PR recheck and GitHub execution)" % (
         len(covered), NAME, len(local), ", ".join(local[:12]) + (", +%d more" % (len(local) - 12) if len(local) > 12 else "") or "none")
@@ -192,6 +192,9 @@ def lane(fn, runs, slug, step, spec, cfg, wait=90):
         status, text, ids = fn(runs, slug, step, spec, cfg, wait)
     finally:
         os.environ.pop("LOOP_COVER_IDS", None)
+    if status == "pass":  # the rows that ran locally, kept across steps for the PR text
+        data["claim"]["ran"] = sorted(set(data["claim"].get("ran", [])) | set(local))
+        save(runs, slug, data)
     return status, line + "\n" + text, ids
 
 
@@ -260,9 +263,10 @@ def pr_part(runs, slug, keep=""):
     saved = ("estimated avoided: about %.0f min (the covered rows' recorded times; an estimate)" % (
         sum(times.get(k, 0) for k in claim["covered"]) / 60) if times else "estimated avoided: unavailable")
     head = sh(["git", "rev-parse", "--short=12", "HEAD"], root)[1]
+    ran = sorted(set(claim["local"]) | set(claim.get("ran", [])))  # every row that ran locally at any step
     return ("\n### Regression lane\n\nCovered by %s, the PR's pull_request run (regression-pr), pending GitHub execution, head %s: %d rows (%s)\n\n"
-            "Run locally: %d rows (%s)\n\n%s\n%s" % (NAME, head, len(claim["covered"]), ", ".join(claim["covered"][:40]), len(claim["local"]),
-                                                      ", ".join(claim["local"][:40]) or "none", saved, limits(root)))
+            "Run locally: %d rows (%s)\n\n%s\n%s" % (NAME, head, len(claim["covered"]), ", ".join(claim["covered"][:40]), len(ran),
+                                                      ", ".join(ran[:40]) or "none", saved, limits(root)))
 
 
 def refresh(g, state, info, body):
@@ -296,7 +300,7 @@ def rule_fix(text, runs, slug):
     """sizing.rule: the full-test-run line says what the cover runs."""
     claim = load(runs, slug).get("claim")
     return text if not claim else re.sub(r"(full-test-run:[^\n]*Run: )[^\n]*", r"\1covered by %s (claimed; pending PR recheck and GitHub "
-                                         "execution)" % NAME, text)
+                                         "execution): %d rows; the other %d rows still run locally" % (NAME, len(claim["covered"]), len(claim["local"])), text)
 
 
 def main(argv=None):
@@ -323,6 +327,9 @@ def main(argv=None):
             data["claim"] = dict(was, head=sh(["git", "rev-parse", "HEAD"], top)[1], covered=got[0], local=got[1], step=argv[2])
             save(runs, argv[1], data)
     claim = load(runs, argv[1]).get("claim") or {}
+    if claim and not claim.get("local"):
+        print("COVERED: every selected row is covered by %s; nothing is left to run locally" % NAME)
+        return 0
     env = dict(os.environ, **({"LOOP_COVER_IDS": ",".join(claim["local"])} if claim.get("local") else {}))
     return subprocess.run([sys.executable, os.path.join(HERE, "role.py"), "lane", argv[1], argv[2]], env=env).returncode
 
