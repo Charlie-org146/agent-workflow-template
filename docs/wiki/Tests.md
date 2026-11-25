@@ -818,7 +818,7 @@
 | <a id="t-tasks-on-surfaces"></a>tasks-on-surfaces | requirement | done line v110-tasks:4 | not run | - | local | 2026-11-21 |
 | <a id="t-tasks-briefs-real"></a>tasks-briefs-real | requirement | done line v110-tasks:1 | not run | - | local | 2026-11-21 |
 | <a id="t-tasks-bad-briefs"></a>tasks-bad-briefs | requirement | done line v110-tasks:2 | not run | - | local | 2026-11-21 |
-| <a id="t-tasks-rows-only-added"></a>tasks-rows-only-added | requirement | done line v110-tasks:5 | not run | - | local | 2026-11-21 |
+| <a id="t-tasks-rows-only-added"></a>tasks-rows-only-added | requirement | done line v110-tasks:5 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-21 |
 | <a id="t-defect-5727-smoke-private-list"></a>defect-5727-smoke-private-list | defect | [#5727](https://github.com/Charlie-org146/agent-workflow-template/issues/5727) closed (2026-11-22) | not run | - | local | 2026-11-21 |
 | <a id="t-lane-once-5734"></a>lane-once-5734 | defect | [#5734](https://github.com/Charlie-org146/agent-workflow-template/issues/5734) closed (2026-11-21) | not run | - | local | 2026-11-21 |
 | <a id="t-dlf-done-2-budget"></a>dlf-done-2-budget | requirement | done line v110-dlf-1:2 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-24 |
