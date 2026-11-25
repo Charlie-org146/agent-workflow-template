@@ -113,4 +113,24 @@ out6 = io.StringIO()
 with contextlib.redirect_stdout(out6):
     dlf.budget_stop("g6", {"slug": "g6", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {}, "log": []}, runs6, {}, top=tmp)
 check("minutes 240 -> 480" in out6.getvalue() and "raised the minutes budget 240 to 480" in json.dumps(guards.extra(runs6, "g6")["log"]), "round 5: the raise prints and logs the stored old budget (240), not the ETA that replaced it: %s" % out6.getvalue().strip())
+# CI finding on the pull request (held-charge toys): a caller with no run-record folder (runs=None) is a scope with nothing to file
+# on, so deliver-first is off for it: no TypeError, no file written, and a goal at its budget gets today's stop
+json.dump({"deliver_first": {}}, open(os.path.join(tmp, ".loop", "config.json"), "w"))
+before = sorted(os.listdir(tmp))
+fit.active_minutes = lambda state, at=None, cfg=None: 30
+try:
+    dlf.budget_stop("g7", {"slug": "g7", "flow": {}, "log": []}, None, {"time_budget_minutes": 90}, top=tmp)
+    err = ""
+except BaseException as exc:  # noqa: BLE001
+    err = type(exc).__name__ + ": " + str(exc)[:100]
+check(not err and sorted(os.listdir(tmp)) == before, "no run-record folder, deliver-first on by default, under budget: no error and nothing filed (%s)" % err)
+fit.active_minutes = lambda state, at=None, cfg=None: 100
+try:
+    dlf.budget_stop("g7", {"slug": "g7", "eta": {"minutes": 999, "estimate": 90, "basis": "x"}, "flow": {}, "log": []}, None, {"time_budget_minutes": 90}, top=tmp)
+    err = "no stop"
+except SystemExit as stop:
+    err = "" if "BUDGET_MINUTES" in str(stop) else str(stop)[:100]
+except BaseException as exc:  # noqa: BLE001
+    err = type(exc).__name__ + ": " + str(exc)[:100]
+check(not err and sorted(os.listdir(tmp)) == before, "no run-record folder, past the budget: today's BUDGET_MINUTES stop, nothing filed (%s)" % err)
 sys.exit(1 if failed else 0)

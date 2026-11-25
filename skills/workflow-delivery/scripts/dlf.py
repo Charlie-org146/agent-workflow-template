@@ -263,7 +263,7 @@ def budget_stop(slug, state, runs, cfg_, at=None, save=None, top=""):
     seen = fit.view(state, runs)
     held, source = fit.budget(seen, cfg_)
     stored = dict(held)
-    minutes, on = fit.active_minutes(state, at, cfg_), bool(top) and setting(top, slug)[0]
+    minutes, on = fit.active_minutes(state, at, cfg_), bool(top and runs) and setting(top, slug)[0]  # no run folder: nothing to file on
     on and retry(top, runs, slug)
     auto = fit.monitor("auto", True) if seen.get("eta") or seen.get("eta_extend") else None
     eta = bool(auto) and auto.eta_over(seen, minutes)
