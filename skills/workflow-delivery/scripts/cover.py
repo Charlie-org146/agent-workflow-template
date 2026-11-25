@@ -243,7 +243,7 @@ def limits(root):
     if "skills/workflow-regression/scripts/row_reach.py" not in sh(["git", "diff", "--name-only", "origin/main...HEAD"], root)[1].split():
         return ""
     return ("\n### Limits\n\n- The first PRs after this merges run cold on GitHub: the runner fingerprint changed, so every cached plan and record is invalid.\n"
-            "- Platform rows that are not on the skip list go unrun on macOS once their cover moves to GitHub's Ubuntu runner.\n"
+            "- Platform rows not on the skip list are covered on Ubuntu only; see the skip list.\n"
             "- This PR changes the regression scripts, so its own cover is off (the tooling-cover line); its measured with-and-without minutes cannot come from its own lanes.\n"
             "- Not tested: the full-lane rerun after a late loss (cover.late is tested, the goal_steps.py call is not), and flow.py qa end to end through the hook.\n")
 

@@ -59,7 +59,7 @@ python3 -c "
 import json; c=json.load(open('.loop/config.json')); c['min_free_memory_gb']=0; json.dump(c,open('.loop/config.json','w'))"
 out=$(LOOP_LANES_DIR=/dev/null/lanes reg run land --reuse --tier goal --ids a 2>&1 </dev/null)
 check "an ids lane asks for a lane slot (the pool is tried before the rows run)" 'grep -q "LANE_SLOTS_UNAVAILABLE" <<<"$out"'
-out=$(reg run a 2>&1 </dev/null); check "the plain row run it replaces took no slot and wrote a tracked results file" '! grep -q "LANE_SLOTS" <<<"$out" && [ -n "$(git status --porcelain -- .loop/regression-runs.tsv)" ]'
+out=$(reg run a 2>&1 </dev/null); check "a plain row run, the comparison for the ids lane" '! grep -q "LANE_SLOTS" <<<"$out" && [ -n "$(git status --porcelain -- .loop/regression-runs.tsv)" ]'
 cd "$here"
 fi
 
