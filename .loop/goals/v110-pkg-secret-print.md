@@ -16,3 +16,10 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. In a checkout, run `python3 dev/package.py --static`.
+   Expect: `PASS: <n> files, the static rules hold`.
+2. Run `python3 dev/toy/test-package-no-echo.py static`, then the same with `full`, `names`, `pr-log` and `tail`.
+   Expect: each ends `ALL PASS`, and no line on screen shows a sample: only check names and counts.
+3. Run `python3 dev/package.py --help` and read the "Safety output" paragraph.
+   Expect: it names the line form `FAIL Safety: <kind> in <where>, line <n>`, the `#k` lookup, the withheld notice, and exit codes 0, 1, 3 and 4.
