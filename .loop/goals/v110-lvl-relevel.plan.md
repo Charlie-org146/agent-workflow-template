@@ -1,0 +1,85 @@
+# Plan: v110-lvl-relevel
+
+Design: given by the owner's approved Test levels page (o980, landing form o985; the source is the approved page file test-levels-feature-APPROVED-o1052-2026-11-24.md in the owner's Documents folder), split by TD1749 into three goals. This is G1: LVL-1.1 (the three levels as a column), LVL-1.3's tagging (the risk column and its rule) and LVL-1.5 (the one-time re-levelling and L0). The run rules (G2, v110-lvl-l1: L1 on the pull request, the local-run cover, the merge queue unchanged) and the full run (G3, v110-lvl-l2: L2 runs every row, a skipped row is red) are other goals and depend on this one. The idea step was skipped through the tool.
+
+## URGENT, outside this plan
+
+None.
+
+## Size
+
+Files: skills/workflow-regression/scripts/levels.py, skills/workflow-regression/scripts/regression.py, skills/workflow-regression/scripts/completion.py, skills/workflow-delivery/scripts/sizing.py, .loop/regression.tsv, .loop/regression-relevel.tsv, dev/toy/test-levels.py, dev/toy/test-relevel.py, skills/workflow-regression/SKILL.md, skills/loop-files.md, listing.json
+Lines: 520
+Gates: the new refusals are the goal's frozen done lines: a blank or "L3" stage is refused when the table is read (done line 1), a Principle 6 row with no risk tag is refused (2), the re-levelling keeps 744 rows and records each (3), an L0 total over 45 seconds is refused (4), a size table that leaves out L1 is refused (5)
+Classes: none
+
+No safety class, security setting or guard file in the owner's protected list is edited, and a refusal on a table read is a data check, not a gate that allows or refuses a step. 11 files, so the 20-file rule passes this plan itself. `levels.py` is one new script and `.loop/regression-relevel.tsv` is one new data file; the new script needs the owner's word (the queue line gives none: see Open for the owner). The Touches line (skills/workflow-regression, skills/workflow-delivery, dev/toy, .loop/regression.tsv) is widened by the operation through the tool for `skills/loop-files.md`, `listing.json` and `.loop/regression-relevel.tsv`. Generated, never hand edited: `docs/wiki/Tests.md` and the other wiki Tests tables, `docs/wiki/Regression.md` tests table rows, `.loop/START.md`, `.loop/regression-runs.tsv` and `.loop/kept/`. The Test levels page and the Regression runbook's Reviewed text are NOT edited here: the page lands with v110-test-levels-text, and a Reviewed line changes only by the owner's words.
+
+## Implementation plan
+
+Done lines (frozen): (1) a row whose level is blank or "L3" is refused when the table is read, naming the row and the three levels; (2) a row that guards a Principle 6 requirement with no risk tag is refused, naming the row; (3) the 744 rows on main, when re-levelling runs, remain 744, each with one level from L0 to L2, and the record gives each row's old word, new level and reason; (4) a re-levelling whose L0 rows add up to more than 45 seconds is refused, naming the total; (5) CBS-1's table with a size that leaves out L1 is refused when settings are read, naming the size and L1; (6) every script under 20,480 bytes, no test loosened, no row red, committed text never names the service repo.
+
+### The shape, and why (read from the code on main 73c7bdbae)
+
+- The table is `.loop/regression.tsv`, read by `regression.read_rows` (regression.py:83) and written by `edit_rows` with `FIELDS = (id, level, command, goal, seen_red, description, category, link)`. Sixteen scripts in four skills and 58 toys compare the OLD level words (land, nightly, draft, covered) as literals or build fixture rows with them (runs.py:279-282, actions.py's workflow render, lanes_cli.py, completion.py, tiers.py, lane.py, health's lean.py/rules.py/enforce.py/milestone.py, docs' criteria.py/render.py, settings.py's `goal_levels` and `ci_levels`). A hard swap of the word in column 2 would touch about 75 files, which is four goals' worth and fails the 20-file rule.
+- So this goal ADDS the new words in three new columns appended after `link` and leaves the old `level` column and every reader of it alone: `stage` (L0, L1 or L2), `risk` (security, private or none) and `covers` (the machine-readable list of row ids a covered row is proved by, comma separated). The old word stays in `level`, so the re-levelling record's "old word" is real. G2 and G3 move the run rules onto `stage`; the old column and its words are retired by a later goal once nothing reads them. `goal_levels`, `ci_levels`, the PR workflow's level map and the Regression runbook's labels keep the old words in this goal; their change belongs to the swap that retires them (LVL-1.5's last bullets), and this plan says so rather than hide it.
+- The new refusals are ARMED by the data, so no other table breaks: the stage and risk checks run only when at least one row has a non-blank `stage`. A fixture table, an adopted repo's table or a table that was never re-levelled has none, and reads exactly as today. Main's table, once re-levelled, has all 744 filled, and from then on a blank stage on any row is refused. `regression.py add` in an armed table needs `--stage` (and `--risk` for a Principle 6 row), so a new row cannot arrive untagged.
+
+### Steps
+
+1. `skills/workflow-regression/scripts/levels.py` (NEW, about 5,500 bytes, stdlib only): `STAGES = ("L0", "L1", "L2")`, `RISKS = ("security", "private", "none")`, `check(rows, root)` and `relevel(root, times)`. `check` returns nothing for an unarmed table; for an armed one it refuses, one line each and the first failure exits 2, with these codes: `LEVELS_BAD_STAGE` ("row <id> has stage <word>; the levels are L0, L1 and L2", for blank and for "L3"); `LEVELS_NO_RISK` ("row <id> guards Principle 6 requirement <ID> and has no risk tag; the tags are security, private and none"); `LEVELS_BAD_RISK` for a word outside the three; `LEVELS_BAD_COVERS` ("covered row <id> lists <x>, which is not a row id"); and `LEVELS_L0_OVER` ("the L0 rows add up to <n> seconds; the limit is 45"). Every refusal prints the exact fix: the row's line to write, and who acts (the worker edits the row).
+2. The Principle 6 rows: a row guards a Principle 6 requirement when its `goal` column (or, for a defect row, its `link`) names a requirement id listed in the Private and guarded table of `docs/wiki/Principles.md` (read, never edited), or a defect row whose link is a security issue by the `category` and a `security` label recorded in `.loop/regression-issues.tsv`. The ids come from that one table, so adding a Principle 6 requirement there arms the rule for its rows. A Principle 6 row must have `risk` security or private; a row with `none` or blank is refused.
+3. `regression.py` (20,447 B, 33 B left) gets, in order: `FIELDS` gains `stage`, `risk`, `covers`; `read_rows` calls `levels.check(rows, root)` once; `cmd_add` takes `--stage` and `--risk`; a new subcommand `relevel [--dry-run]` calls `levels.relevel`. To pay for this without trimming text, the two self-contained whole functions `merged` (502 B) and `split` (501 B), which use no name from regression.py and are called only by `cmd_run`, move whole into `completion.py` (1,909 B), with one re-export line in regression.py; the move check covers both.
+4. The re-levelling (`levels.relevel`), applied to the 744 rows, never drops or reorders a row, writes `stage`, `risk` and `covers`, and writes `.loop/regression-relevel.tsv`, one line per row: `id TAB old word TAB new stage TAB risk TAB reason`. The rules, as the approved page gives them (LVL-1.5): `land` becomes L1 by default; a `land` row goes to L0 only when its measured time (the 656 measured times in `.github/workflows/row-times.tsv`, read, never edited) is under 5 seconds, its command script uses no network and no toy repo (a fixed word list in `levels.py`: `dev/toy/make.sh`, `gh `, `fakegh`, `git push`, `git clone`, `git init`, `curl`, `urllib`), and adding it keeps the L0 total at 45 seconds or less (rows are taken fastest first until the next would pass 45); a row with no measured time starts at L1; `nightly` becomes L1 when its measured time is at most 120 seconds (an assumption the owner confirms, see Open) and L2 otherwise, and a nightly row with no measured time becomes L2; `covered` is not a run of its own: `covers` is filled from the row ids that its command or description text names and that exist in the table, its stage is the highest stage among them, and a covered row whose list does not resolve to row ids is refused (`LEVELS_BAD_COVERS`) and printed in the record, never guessed; `draft` has no row on main, so the separate state column for drafts is not built here and is left to the swap that retires the old words. Risk: every row that guards a Principle 6 requirement is tagged security or private (private when its requirement is under the Private-data rows, else security), every other row is `none`, and every Principle 6 row has stage L1 at the lowest (the minimum level), so it is never L0 or L2-only. The reason column is one of `time`, `risk`, `default`, `covered` or `no time`.
+5. The L0 total check: `levels.check` sums the measured times of the stage-L0 rows (from the times file) and refuses over 45 seconds, naming the total (`LEVELS_L0_OVER`); `relevel` runs it before writing and refuses to write a table that fails. A row at L0 with no measured time is refused too (it has no time to add).
+6. CBS-1's table (done line 5): the size table `checks_by_size` in `sizing.py` gets a `levels` key per size (default: small and medium `["L0", "L1"]`, large `["L0", "L1", "L2"]`, the page's "a size may add a level but never drop L0 or L1; a large goal adds one L2 run"). `sizing._validate` refuses a size whose `levels` leaves out L1 or L0 (`SIZING_BAD_LEVELS`: "row <size> leaves out L1; every size keeps L0 and L1"), naming the size and the level, and it keeps the `levels` key out of the check-form loop (it iterates the row's checks). A table with no `levels` key reads as the defaults, so no repo's config breaks. `cutcheck.py` already calls `sizing.validate`, so the cut sees the refusal too.
+7. Docs, text only: `skills/workflow-regression/SKILL.md` gets one command-map line for `relevel` and the new `add` options; `skills/loop-files.md` gets the three new columns and the new codes in the regression.tsv section; `listing.json` gains the `relevel` command line. No Reviewed wiki text is edited.
+
+### Toys and rows
+
+- `dev/toy/test-levels.py` (temp git dir, temp HOME; no network): done line 1 (an armed table with a blank stage and one with "L3" are each refused naming the row and "L0, L1 and L2"; an unarmed fixture table with no stage anywhere reads as before; negative control: a full table passes); done line 2 (a row whose goal is a Principle 6 requirement and whose risk is blank or `none` is refused naming the row; `security` and `private` pass; a row on another requirement with `none` passes); done line 5 (a `checks_by_size` whose small row has `levels` ["L0"] is refused naming small and L1; the defaults pass; a table with no `levels` key passes; `cutcheck` refuses the same table); done line 4's check on a hand-made table (L0 rows summing to 46 seconds refused naming 46; 45 passes); covered rows (a `covers` that names a row id passes, one that names nothing is refused).
+- `dev/toy/test-relevel.py` (done lines 3 and 4 on a copy of main's real table and times, in a temp dir): `relevel --dry-run` leaves the table byte for byte; a real run keeps 744 rows with ids in the same order, every `stage` one of L0, L1, L2, and the record has 744 lines with the old word, new stage, risk and reason for each; the L0 total is at most 45; every Principle 6 row has risk security or private and stage L1 or L2; every covered row's `covers` resolves (or the run stops listing the ones that do not, and the toy asserts the list is empty on main's table); a second run changes nothing (idempotent).
+- Every case is run on today's code first and fails there; each also has a negative control that passes; the build keeps one red-then-green line per case and a recorded `regression.py red --break` per rule.
+- Rows in `.loop/regression.tsv`: `lvl-table-refused` (done lines 1, 2, 5 and the covers/L0 checks) and `lvl-relevel-record` (done lines 3 and 4), each description starting "Given ..." and under 400 characters; rows are only added, and each new row carries the stage and risk the re-levelling gives it (L0 only if the toy qualifies, which these do not: they build a toy repo, so L1).
+
+### Byte table (TD1556-3; pods-size fails any script that newly crosses 19,000 B; every script stays under 20,480)
+
+Measured with `wc -c` on main 73c7bdbae. No text is trimmed to make room (GRD-20): room comes from the whole-function move of `merged` and `split` into `completion.py`. The build measures every touched file before and after and stops and asks if a file cannot make room by moving code whole.
+
+Bytes: skills/workflow-regression/scripts/levels.py: now 0, after 5,500, left 14,980; new
+Bytes: skills/workflow-regression/scripts/regression.py: now 20,447, after 20,347, left 133; moves merged; moves split; note: moves out 1,003 B, adds the re-export line (about 45 B), the wider `FIELDS` (about 25 B), the `read_rows` call (about 60 B), the two `add` options (about 150 B) and the `relevel` subcommand (about 120 B), already over 19,000 so it does not newly cross, and if the build measures less than 40 B left it stops and asks
+Bytes: skills/workflow-regression/scripts/completion.py: now 1,909, after 2,960, left 17,520; note: takes `merged` and `split` whole and adds the import lines they need
+Bytes: skills/workflow-delivery/scripts/sizing.py: now 18,089, after 18,430, left 570; note: adds the `levels` key to the defaults and the `_validate` check (about 340 B) and stays under 19,000, and if the build measures more than 570 B the check moves into `levels.py`
+
+Not edited, with the reason: `settings.py` (20,286; "when settings are read" is `sizing.validate`/`read_table`, which `cutcheck.py` also calls), `runs.py` (18,909), `actions.py` (18,997), `lanes_cli.py` (20,448), `tiers.py` (18,949) and every reader of the old words, because the old column is untouched.
+
+### Order and parallel builds
+
+This goal does not have to build after `v110-ontime`: it edits none of ontime's files (guards.py, role_gate.py, fit_budget.py, flow_steps.py, board files, notify.py). It does edit `sizing.py`, which `v110-ontime` also edits (the `check_step` call in `wrapped`) and `v110-safety-class` (paused) edits: two goals that edit `sizing.py` must not build at once, and the second to merge re-measures it (18,089 B now). `regression.py`, `completion.py` and `levels.py` are edited by no other open goal; `v110-lvl-l1` and `v110-lvl-l2` depend on this goal and edit `regression.py`, `runs.py` and `actions.py` after it merges.
+
+### Verify by hand (for the goal file at the pr step)
+
+1. Run `python3 skills/workflow-regression/scripts/regression.py relevel --dry-run` on main's table. Expect: it prints the L0 total (45 seconds or less), the counts per stage, and any covered row it cannot resolve, and changes nothing.
+2. Run `regression.py relevel`. Expect: `.loop/regression.tsv` still has 744 rows, each with a stage L0, L1 or L2, and `.loop/regression-relevel.tsv` has 744 lines naming each row's old word, new stage, risk and reason.
+3. Blank one row's stage and run any `regression.py` command. Expect: `LEVELS_BAD_STAGE` naming the row and L0, L1 and L2.
+4. Set a Principle 6 row's risk to `none`. Expect: `LEVELS_NO_RISK` naming the row.
+5. Set a size's `levels` to `["L0"]` in `checks_by_size` and run `sizing.py size SLUG`. Expect: `SIZING_BAD_LEVELS` naming the size and L1.
+
+### Obligations
+
+1. The toys never write to the live `.git/loop/runs` or to main's real table; `test-relevel.py` works on a copy.
+2. All commits are authored Charlie; nothing is pushed without the operation session's "go <sha>".
+3. No lane by hand; `dev/toy/test-merge-where.py` is never run.
+4. Output hygiene: seen-red output and refusal lines quoted in PR notes pass `private.py`'s private-name scan first.
+5. If `Files:` would pass 20, stop and tell operation-mac before another review.
+6. The PR body names the deviations from the approved page: the new columns beside the old `level` column (the swap that retires the old words, the `goal_levels` and `ci_levels` words, the PR workflow's level map and the runbook labels are a later goal), the draft state column left to that swap, and the `nightly` threshold of 120 seconds.
+
+### Open for the owner
+
+1. The shape: new columns beside the old `level` column, or a hard swap of the old words (about 75 files, which must be split into goals first). This plan builds the new columns.
+2. The new script `levels.py` (the queue line gives no allowance for a new script).
+3. The `nightly`-to-L1 threshold: the page says "when its time fits L1" and gives no number; this plan uses 120 seconds per row.
+
+## Review record
+
+Plan gate and red team: recorded through the tool; see the run record.
