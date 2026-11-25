@@ -1,7 +1,7 @@
 # The package checker never prints a matched credential or private-name text (urgent security repair, owner o1082)
 
 - Slug: v110-pkg-secret-print
-- Touches: dev/package.py, dev/toy, .loop/regression.tsv, dev/toy/test-package-no-echo.py
+- Touches: dev/package.py, dev/toy, .loop/regression.tsv, dev/toy/test-package-no-echo.py, dev/test-package.sh
 - ETA: 345 active minutes (estimate 273m plus a 25% margin, rough)
 
 ## Done lines
