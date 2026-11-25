@@ -232,7 +232,7 @@ def inventory():
         full = os.path.join(REPO, rel)
         files = [os.path.join(full, f) for f in sorted(os.listdir(full))] if os.path.isdir(full) else [full]
         for f in files:
-            if f.endswith((".json", ".bak")) or "move-" in f:
+            if f.endswith((".json", ".bak")) or "move-" in f or not os.path.isfile(f):
                 continue
             for n, line in enumerate(open(f, encoding="utf-8", errors="replace"), 1):
                 if pat.search(line) and re.search(r"grep|split|open\(|read|cat |\.find\(|count", line):
