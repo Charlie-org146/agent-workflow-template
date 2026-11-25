@@ -234,6 +234,8 @@ def cmd_step(args):
     state = load(args.slug)
     args.name == "build" and guards.plan_gate(ME, state)
     fit.budget_stop(args.slug, state, state_dir(), config(), save=save)
+    fix = state.get("schedule_revoked_fix")  # TSK-1.3: a revoked workaround restores the wait, enforced at the next step
+    fix and not (pods and os.path.exists(state_path(fix)) and pods.merged(load(fix))) and no("%s waits for %s to merge: its workaround was revoked. Fix: let %s merge, then run this again (SCHED_REVOKED)" % (args.slug, fix, fix))
     state["step"] = args.name
     if args.tokens:
         fit.tokens().add(state, args.name, args.tokens)

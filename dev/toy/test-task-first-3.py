@@ -213,5 +213,22 @@ for fn in (watch.plan,):
     start, held = at(l3, fn, 3)
 check("v110-late" not in [g["slug"] for g, _ in held] and "v110-late" not in [g["slug"] for g in start], "L3: a goal that already has a run record is in neither the start nor the held list when the order file is torn: held %s" % [g["slug"] for g, _ in held])
 
+# 8. revocation is enforced at the next step: goal.py step refuses while the revoked waiver's fix is unmerged, and goes on once it merges
+GOAL = os.path.join(here, "..", "..", "skills", "workflow-delivery", "scripts", "goal.py")
+json.dump({"command": ["true"], "probe": ["true"], "probe_expect": "", "steps": {k: "s" for k in ("idea", "plan", "review", "qa", "ship")}}, open(os.path.join(tmp, "flow.json"), "w"))
+
+
+def step(top):
+    done = subprocess.run([sys.executable, GOAL, "step", "v110-a", "review"], cwd=top, capture_output=True, text=True, stdin=subprocess.DEVNULL,
+                          env={"HOME": tmp, "PATH": os.environ["PATH"], "TERM": "dumb", "LOOP_FLOW": os.path.join(tmp, "flow.json"), "LOOP_ROLE": "worker"})
+    return done.returncode, (done.stdout + done.stderr)[-300:]
+
+
+code, said = step(d5)
+check(code != 0 and "SCHED_REVOKED" in said, "goal.py step refuses a running goal whose workaround was revoked while its fix is unmerged: %s" % said.strip()[-120:])
+json.dump({"slug": "v110-fix", "status": "done", "release": "merged"}, open(os.path.join(runs_dir, "v110-fix.json"), "w"))
+code, said = step(d5)
+check(code == 0 and "STEP v110-a review" in said, "once the fix has merged the goal goes on: %s" % said.strip()[-80:])
+
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)
