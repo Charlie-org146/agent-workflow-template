@@ -85,9 +85,9 @@ cover-claim	PASS	2026-11-25
 cover-ids-lane	PASS	2026-11-25	
 cover-lane	PASS	2026-11-25	
 cover-moves	PASS	2026-11-25	
-cut-complete	PASS	2026-11-24	
+cut-complete	PASS	2026-11-25	
 cut-draft	PASS	2026-11-09	
-cut-fails-checks	PASS	2026-11-24	
+cut-fails-checks	PASS	2026-11-25	
 defect-4496-checkin-goal-lines	PASS	2026-11-16	
 defect-5609-one-merge-path	PASS	2026-11-25	
 defect-categories	PASS	2026-11-24	
@@ -499,6 +499,7 @@ review-help-runs-alone	PASS	2026-11-24
 review-hold-blocks	PASS	2026-11-24	
 roadmap-closed-drops	PASS	2026-11-15	
 row-timeout-holds	PASS	2026-11-25	
+rows-pr-full	PASS	2026-11-25	
 runs-sha	PASS	2026-11-25	
 same-lines	PASS	2026-11-20	
 schedule-setting	PASS	2026-11-20	
@@ -537,7 +538,7 @@ setup-owner-words-up-front	PASS	2026-11-24
 setup-refusal-writes-120	PASS	2026-11-18	
 setup-zero-tests-119	PASS	2026-11-24	
 shard-balance	PASS	2026-11-25	
-shard-fits-budget	PASS	2026-11-24	
+shard-fits-budget	PASS	2026-11-25	
 size-140	PASS	2026-11-12	
 size-budget	PASS	2026-11-24	
 sizing-asz-1-1	PASS	2026-11-25	
@@ -627,6 +628,7 @@ topics-in-reference	PASS	2026-11-13
 toy-no-leftovers	PASS	2026-11-12	
 toys-set-userprofile	PASS	2026-11-25	
 tree-once-lock	PASS	2026-11-24	
+tree-rules-first	PASS	2026-11-25	
 trim-package-98	PASS	2026-11-16	
 trim-setup-under-19000	PASS	2026-11-25	
 two-lanes-toy-435	PASS	2026-11-10	
