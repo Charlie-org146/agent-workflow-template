@@ -368,7 +368,7 @@ $docs check | grep -q "DOCS OK" && ok "a page with no commands passes without a 
 page Delivery "$one
 - DEL-2: **Unreviewed** The calculator prints a mean."
 setmax 1  # principle 5 (o988): the key is retired and ignored, whatever its value
-out=$($docs check 2>&1); ! grep -q "^CAP\|REFUSED" <<<"$out" && ok "a leftover criteria_max of 1 is ignored: a page of two has no CAP" || bad "retired cap: $out"
+out=$($docs check 2>&1 || true); ! grep -q "^CAP\|REFUSED" <<<"$out" && ok "a leftover criteria_max of 1 is ignored: a page of two has no CAP" || bad "retired cap: $out"
 python3 "$here/skills/workflow-health/scripts/health.py" check 2>&1 | grep -q "requirements-per-page" && bad "health still counts requirements per page" || ok "health counts no requirements per page"
 setmax '"six"'
 $docs check 2>&1 | grep -q "REFUSED" && bad "a bad leftover criteria_max refuses" || ok "a bad leftover criteria_max is ignored, never refused"
