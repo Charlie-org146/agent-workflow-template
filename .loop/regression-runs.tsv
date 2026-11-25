@@ -411,7 +411,7 @@ plan-identity	PASS	2026-11-22
 plan-sizes	PASS	2026-11-22	
 pods-blocks	PASS	2026-11-24	
 pods-caps-3919	PASS	2026-11-24	
-pods-docs	PASS	2026-11-24	
+pods-docs	PASS	2026-11-25	
 pods-independent	PASS	2026-11-24	
 pods-lock	PASS	2026-11-24	
 pods-owner	PASS	2026-11-24	
