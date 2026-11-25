@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""ASZ-1.3: the owner's size line and the board's size line. `sizeline.py set SLUG SIZE --owner-record ID` raises a goal's size
+(up only, with the owner's words, never under a safety class; sizing.override does the work); `sizeline.py show SLUG` prints
+`SIZE <size> (<reason>) checks: ...` and `owner: <id>` when an owner line changed it. line(run) is the one-line form the board
+uses (board_tasks.py); alone() lists goals that belong to no task brief. The delivery modules are loaded by path when a command
+runs, so the script runs alone (--help) with nothing but its own folder."""
+import argparse
+import importlib
+import os
+import sys
+
+DELIVERY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts")
+USAGE = "usage: sizeline.py show SLUG | sizeline.py set SLUG small|medium|large --owner-record ID"
+
+
+def line(run, width=70):
+    """The goal's size line, '' when it has no stored size; the reason is cut to one line (the full text is in show)."""
+    sized = (run or {}).get("sized")
+    if not sized:
+        return ""
+    why = " ".join(str(sized.get("reason", "")).split())
+    checks = ", ".join("%s %s" % (c, v["form"]) for c, v in sized.get("checks", {}).items() if c in ("plan-review", "red-team", "review"))
+    owner = (sized.get("owner") or {}).get("record")
+    return "SIZE %s (%s) checks: %s%s" % (sized["size"], why if len(why) <= width else why[:width - 3] + "...", checks, "; owner: " + owner if owner else "")
+
+
+def tail(run):
+    return " | " + line(run) if line(run) else ""
+
+
+def alone(runs, attached):
+    """Lines for goals that no task brief lists."""
+    return ["- %s: %s" % (r["slug"], line(r)) for r in runs if line(r) and r["slug"] not in attached]
+
+
+def override(sizing, state, size, record):
+    old, slug = state.get("sized"), state["slug"]
+    for bad, why, fix, code in ((not old, "goal %s has no size yet" % slug, sizing.FIX_SIZE + slug, "NOT_SIZED"),
+                                (not record, "a size change needs the owner's words", "record the owner's words, rerun with --owner-record ID", "NO_RECORD"),
+                                (old and old.get("classes"), "goal %s has a safety class: always large" % slug, "leave the size", "SAFETY"),
+                                (size not in sizing.ORDER or old and sizing.ORDER.index(size) < sizing.ORDER.index(old["size"]), "sizes only go up (now %s, asked %s)" % (old and old["size"], size), "sizeline.py set %s SIZE --owner-record ID" % slug, "DOWN")):
+        if bad:
+            sizing.refuse(why, fix, "SIZING_" + code)
+    table, mark = sizing.read_table()[0], {"record": record, "from": old["size"], "to": size}
+    sizing.adopt(state, sizing.update(slug, lambda was: sizing.build(was, size, "%s; owner raised it to %s (record %s)" % (was["reason"], size, record), table, {"owner": mark})))
+    return state["sized"]
+
+
+def main(argv):
+    ap = argparse.ArgumentParser(prog="sizeline.py", description=USAGE)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("show").add_argument("slug")
+    item = sub.add_parser("set")
+    item.add_argument("slug")
+    item.add_argument("size", choices=("small", "medium", "large"))
+    item.add_argument("--owner-record", default="")
+    args = ap.parse_args(argv)
+    record, rest = getattr(args, "owner_record", ""), [args.slug] + ([args.size] if args.cmd == "set" else [])
+    argv = [args.cmd]
+    sys.path.insert(0, DELIVERY)
+    try:
+        goal, sizing = importlib.import_module("goal"), importlib.import_module("sizing")
+    except ImportError:
+        print("REFUSED: sizeline needs workflow-delivery beside it. Fix: install it (SIZING_NO_DELIVERY)")
+        return 2
+    slug = rest[0]
+    state = goal.load(slug)
+    sized = state.get("sized")
+    if argv[0] == "show":
+        print(line(state, 10 ** 6) if sized else "NOT SIZED: run sizing.py size " + slug)
+        return 0
+    try:
+        if record and sized:
+            goal.fit.monitor("auto", True).eta_record(goal, record, slug, "a size change")
+        old = (sized or {}).get("size")
+        had = {a["check"] for a in (sized or {}).get("added") or []}
+        new = override(sizing, state, rest[1], record)
+        goal.guards.add_set(goal.state_dir(), slug, "size_owner", {"record": record, "from": old, "to": rest[1]},
+                            "size raised %s to %s (record %s)" % (old, rest[1], record))
+    except sizing.Refusal as err:
+        sizing.stop(err)
+    print("SIZE %s -> %s (record %s); added: %s" % (old, new["size"], record, ", ".join(a["check"] for a in new["added"] if a["check"] not in had) or "none"))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
