@@ -268,9 +268,12 @@ printf '%s\n--\n' "$o1" "$o2" "$o3" "$o4" "$o5"
 check "the real lane with LOOP_COVER_IDS and no claim launches without --ids and records HEAD alone" 'grep -q "^STATUS pass" <<<"$o1" && grep -q "^ARGS ARGV: " <<<"$o1" && ! grep -q -- "--ids" <<<"$o1" && grep -q "^OK HEAD$" <<<"$o1"'
 check "the real lane with a claim listing exactly those ids launches --ids n,s and records HEAD then the ids" 'grep -q "^STATUS pass" <<<"$o2" && grep -q "^ARGS ARGV: .* --ids n,s$" <<<"$o2" && grep -q "^OK HEAD n,s$" <<<"$o2"'
 check "the real lane with ids the claim does not list launches without --ids (the whole lane)" 'grep -q "^STATUS pass" <<<"$o3" && grep -q "^ARGS ARGV: " <<<"$o3" && ! grep -q -- "--ids" <<<"$o3" && grep -q "^OK HEAD$" <<<"$o3"'
-check "a narrowed lane that leaves rows unrun records no pass: LANE_LEFT, no .ok" 'grep -q "^STATUS fail" <<<"$o4" && grep -q "LANE_LEFT: the lane narrowed to n,s left rows unrun" <<<"$o4" && grep -q "^OK none$" <<<"$o4"'
+check "a narrowed lane that leaves rows unrun records no pass: LANE_LEFT names the cut row and the budget, no .ok" 'grep -q "^STATUS fail" <<<"$o4" && grep -q "LANE_LEFT: the lane narrowed to n,s left s unrun" <<<"$o4" && grep -q "raise test_budget_minutes" <<<"$o4" && grep -q "^OK none$" <<<"$o4"'
 check "control: a whole lane cut by the budget still passes as before" 'grep -q "^STATUS pass" <<<"$o5" && ! grep -q -- "--ids" <<<"$o5" && grep -q "^OK HEAD$" <<<"$o5"'
-reset; cov lane qa >/dev/null; LOOP_COVER_IDS=n,s real >/dev/null; reset; o6=$(REDO=0 real)
+reset; cov lane qa >/dev/null; LOOP_COVER_IDS=n,s real >/dev/null; reset
+st=$(python3 -B -c "import sys; sys.path.insert(0, '$D'); sys.dont_write_bytecode=True; import lane; print('STATE', lane.lane_status('$common/loop/runs', 'g1', 'qa')[0])" 2>&1); echo "$st"
+check "the status of a narrowed pass whose claim is gone is not pass (lane-wait never answers it)" '[ "$st" != "STATE pass" ] && grep -q "^STATE " <<<"$st"'
+o6=$(REDO=0 real)
 check "a narrowed pass is not reused once its claim is gone: the whole lane runs again" 'grep -q "^STATUS pass" <<<"$o6" && grep -q "^ARGS ARGV: " <<<"$o6" && ! grep -q -- "--ids" <<<"$o6" && grep -q "^OK HEAD$" <<<"$o6"'
 # a row a narrowed run left unrun (LEFT in the run record) stays local: it is never planned as reused
 LR=$(cat <<'PYEND'
@@ -286,6 +289,10 @@ reset; reg run land --reuse --tier goal --ids n,s >/dev/null 2>&1; o7=$(cov lane
 echo "$o7" | head -1; echo "$o8"; echo "$o9" | head -1
 check "a row left unrun by a narrowed run stays local, never planned as reused" 'grep -q "^LEFT LEFT$" <<<"$o8" && grep -Eq "^COVERED [0-9]+ rows by L1; running [0-9]+ locally: .*\bs\b" <<<"$o9"'
 fresh; o10=$(reg run land --reuse --tier goal --ids s 2>&1); echo "$o10" | grep -E "^(SELECTED|REUSED|ROWS|RESULT)"
+# a row that passes but has no seen-failing date stays local: it is never waived
+git switch -q -c unp feat; printf 'u\tland\tbash dev/u.sh\tX-1\t\tu works.\tcriterion\t\n' >> .loop/regression.tsv; printf 'echo u >> "$TOY_LOG"\n' > dev/u.sh; git add -A; git commit -qm "An unproven row"
+reset; reg run land --reuse --tier goal --ids u >/dev/null 2>&1; o11=$(cov lane qa); git switch -q feat; echo "$o11" | head -1
+check "a row that passes but is unproven stays local, never waived" 'grep -Eq "^COVERED [0-9]+ rows by L1; running [0-9]+ locally: .*\bu\b" <<<"$o11"'
 check "the narrowed run after a LEFT record runs that row again, never reuses it" 'grep -q "^s$" "$TOY_LOG" && grep -q "^SELECTED s: skipped last time" <<<"$o10" && ! grep -q "^REUSED" <<<"$o10"'
 SH=$(cat <<'PYEND'
 import json, os, sys

@@ -33,12 +33,13 @@ SILENT = ("GH", "RUNS")
 PLAN = r"""
 import json, sys
 sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True
-import regression, tiers, lanes
+import regression, tiers, lanes, runs
 class A: tier, target, kind, reuse = "goal", "land", None, True
 root = regression.top(); rows = regression.read_rows(root)
 picked = [r for r in tiers.kinds(regression.chosen(rows, tiers.target(root, A)), None) if r["level"] not in ("draft", "covered")]
 todo, reused, old, why = tiers.plan(root, picked, lanes.record_path(root))
 bad = [k for k, v in ((old or {}).get("rows") or {}).items() if v.get("status") in ("FAIL", "SKIPPED", "LEFT") or v.get("flaky")]
+bad += runs.unproven(root, picked, regression.SEEN)  # a row with no seen-failing date fails the lane wherever it runs
 todo += [k for k in bad if k in {r["id"] for r in picked} and k not in todo]  # a cut, failed, skipped or flaky row runs here, never reused
 print(json.dumps({"todo": todo, "bad": bad}))
 """
@@ -254,16 +255,21 @@ def refresh(g, state, info, body):
     if info.get("state") != "OPEN" or state.get("pr_body_pushed") in (None, mark):
         state["pr_body_pushed"] = mark
         return
-    head = sh(["git", "rev-parse", "HEAD"])[1]
-    for _ in range(HEAD_TRIES):  # GitHub shows a push after a lag: only a head that stays other or unread has moved
+    head, runs = sh(["git", "rev-parse", "HEAD"])[1], os.path.dirname(g.state_path(state["slug"]))
+    claim = load(runs, state["slug"]).get("claim")
+    for _ in range(HEAD_TRIES if claim else 1):  # GitHub shows a push late: with a cover, only a head that stays other or unread moved
         rc, out = sh(["gh", "pr", "view", state["branch"], "--json", "headRefOid", "-q", ".headRefOid"])
         if not rc and out == head:
             break
-        time.sleep(HEAD_WAIT)
+        time.sleep(HEAD_WAIT if claim else 0)
     else:
-        off(os.path.dirname(g.state_path(state["slug"])), state["slug"], "pr", "MOVED")
-        g.guards.refuse_no_try(state, "the PR head %s; the body is not edited (PR %s)" % ("is unread" if rc else "moved", info.get("url", "")),
-                               "goal.py pr %s reruns the pr step on the current head, with the whole lane" % state["slug"], "COVER_MOVED", g.save)
+        if not claim:  # no cover to lose: the body waits for the next pr run (an unread head is edited, as before)
+            if not rc:
+                return print("NOTE: the PR head moved; the body is not edited (the next pr run edits it)")
+        else:
+            off(runs, state["slug"], "pr", "MOVED")
+            g.guards.refuse_no_try(state, "the PR head %s; the body is not edited (PR %s)" % ("is unread" if rc else "moved", info.get("url", "")),
+                                   "goal.py pr %s reruns the pr step on the current head, with the whole lane" % state["slug"], "COVER_MOVED", g.save)
     file = g.state_path(state["slug"]) + ".body"
     g.write(file, body)
     if sh(["gh", "pr", "edit", state["branch"], "--body-file", file])[0]:

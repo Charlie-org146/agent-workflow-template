@@ -134,10 +134,14 @@ rb() { rm -f "$d/fake/n"; (cd "$d/m" && PATH="$d/bin:$PATH" FAKE_DIR="$d/fake" F
 rm -f "$d/fake/fail" "$d/fake/edits"; out=$(rb '"old"'); check "an open PR whose body text changed is edited once and the new text is recorded" '[ "$(wc -l < "$d/fake/edits" | tr -d " ")" = 1 ] && grep -q "^PUSHED True" <<<"$out"'
 : > "$d/fake/fail"; rm -f "$d/fake/edits"; out=$(rb '"old"'); echo "$out" | head -2
 check "a failed edit refuses with BODY_STALE, the PR number in its words and goal.py pr as the fix" 'grep -q "^REFUSED BODY_STALE: the PR is open and its body is stale (PR https://example.test/pull/1) | goal.py pr g1 reruns the pr step: it re-syncs, may rerun the lane and push, then retries the edit" <<<"$out"'
+check "a failed edit records no new body mark, so the next pr run retries the edit" '! grep -q "^MARKED" <<<"$out"'
 rm -f "$d/fake/fail" "$d/fake/edits"; good=$head; head=0000000000000000000000000000000000000000; printf '{"claim": {"name": "L1", "local": []}}' > "$d/fake/g1.cover.json"; out=$(rb '"old"'); echo "$out" | head -3
 check "a PR head that moved is not edited, stops the pr step with COVER_MOVED and drops the cover" '[ ! -e "$d/fake/edits" ] && grep -q "^REFUSED COVER_MOVED: the PR head moved; the body is not edited (PR https://example.test/pull/1) | goal.py pr g1 reruns the pr step on the current head, with the whole lane" <<<"$out" && ! grep -q "^MARKED" <<<"$out" && grep -q "COVER LOST (COVER_LOST): MOVED" <<<"$out" && ! grep -q claim "$d/fake/g1.cover.json"'
-head=fail; out=$(rb '"old"'); check "a PR head that cannot be read is treated as moved: COVER_MOVED, no edit" '[ ! -e "$d/fake/edits" ] && grep -q "^REFUSED COVER_MOVED: the PR head is unread" <<<"$out" && ! grep -q "^MARKED" <<<"$out"'
+claim() { printf '{"claim": {"name": "L1", "local": []}}' > "$d/fake/g1.cover.json"; }
+claim; head=fail; out=$(rb '"old"'); check "a PR head that cannot be read is treated as moved: COVER_MOVED, no edit" '[ ! -e "$d/fake/edits" ] && grep -q "^REFUSED COVER_MOVED: the PR head is unread" <<<"$out" && ! grep -q "^MARKED" <<<"$out"'
+rm -f "$d/fake/g1.cover.json" "$d/fake/edits"; head=0000000000000000000000000000000000000000; out=$(rb '"old"')
+check "with no cover, a PR head that moved only leaves a note: no refusal, no cover file, no edit" 'grep -q "^NOTE: the PR head moved; the body is not edited" <<<"$out" && ! grep -q "REFUSED" <<<"$out" && [ ! -e "$d/fake/g1.cover.json" ] && [ ! -e "$d/fake/edits" ]'
 head=$good; out=$(rb '"old"'); check "control: a PR head that matches is edited and the step goes on" '[ "$(wc -l < "$d/fake/edits" | tr -d " ")" = 1 ] && grep -q "^MARKED True" <<<"$out"'
-rm -f "$d/fake/edits"; out=$(FAKE_LAG=3 rb '"old"'); check "a PR head GitHub shows late (three older reads, then ours) is not called moved: the body is edited" '! grep -q "COVER_MOVED" <<<"$out" && [ "$(wc -l < "$d/fake/edits" | tr -d " ")" = 1 ] && grep -q "^MARKED True" <<<"$out"'
+rm -f "$d/fake/edits"; claim; out=$(FAKE_LAG=3 rb '"old"'); check "a PR head GitHub shows late (three older reads, then ours) is not called moved: the body is edited" '! grep -q "COVER_MOVED" <<<"$out" && [ "$(wc -l < "$d/fake/edits" | tr -d " ")" = 1 ] && grep -q "^MARKED True" <<<"$out"'
 fi
 exit $((fails > 0))

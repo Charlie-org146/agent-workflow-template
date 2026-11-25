@@ -77,8 +77,9 @@ def finalize(base, held, name):
         line += "\nLANE_FAIL %s (log %s). Reproduce one: python3 %s run <id>; %s." % (
             ", ".join(ids) or "exit %d" % rc, out, _s.lane_argv()[1], _s.NOTHING)
     elif held.get("ids") and re.search(r"\bLEFT [1-9]", text):
-        line += "\nLANE_LEFT: the lane narrowed to %s left rows unrun, so it records no pass. Fix: run this same command " \
-            "again; rows that passed are reused; %s." % (held["ids"], _s.NOTHING)
+        cut = ", ".join(re.findall(r"\bLEFT [1-9]\d* [^:\n]*: (.+)$", text, re.M)) or "rows"
+        line += "\nLANE_LEFT: the lane narrowed to %s left %s unrun, so it records no pass. Fix: run this same command again " \
+            "(rows that passed are reused); a row longer than the budget never fits: raise test_budget_minutes; %s." % (held["ids"], cut, _s.NOTHING)
     else:
         status = "pass"
         with open(base + ".ok", "w") as handle:
@@ -141,10 +142,10 @@ def lane_status(runs, slug, name):
                 got = finalize(sib, job, other)
                 if got[0] != "pass":
                     return got[:2]
-    if not _s.dirty() and (src := _s.lanekit.passed(runs, slug, head, name)):
+    if not _s.dirty() and (src := _s.lanekit.passed(runs, slug, head, name)) and not stale(runs, slug, src):
         return "pass", _s.answer(runs, slug, src, name)
     done = _s.read_json(base + ".last") or {}
-    if done.get("head") == head and done.get("state") in _s.TERMINAL:
+    if done.get("head") == head and done.get("state") in _s.TERMINAL and not (done["state"] == "pass" and stale(runs, slug, name)):
         return done["state"], done.get("line", "")
     return "none", "NO LANE: none ran on %s; start one with role.py lane %s %s" % (head[:12], slug, name)
 
