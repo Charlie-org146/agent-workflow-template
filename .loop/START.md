@@ -78,7 +78,6 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `ci_levels` | nightly | Target of scheduled and tag regression runs: nightly (every row) or land. |
 | `codex_profile` | 8 entries in config.json |  |
 | `criteria` | true | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). |
-| `criteria_max` | 10 | Most criteria a wiki page may hold, 1 to 50; docs check and health fail a page over it. |
 | `deliver_first` | none | Deliver first, default on: {goal: {ID: false}, task: {...}, release: {...}} turns it off for a scope (most specific wins); set only with an owner reference: dlf.py set deliver_first off --scope S --id ID --owner-record R. |
 | `digest_mail` | cloudflare | How the round's digest is mailed: cloudflare, smtp or off; keys live only in Actions secrets. |
 | `digest_owner` | none | Who the digest comment mentions; empty is the repo owner (an organisation: none). |
@@ -88,15 +87,12 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `goal_levels` | land | Row levels a goal lane plans from: land, or nightly (land and nightly rows). |
 | `govern_hook` | true | false turns off the govern-only hook (edits, commits, pushes refused in the operation session). |
 | `health_cron` | 47 */4 * * * | Five cron fields: when health, the judge and its digest run on the Mac; or off. |
-| `health_script_bytes` | 20480 | Script size health fails, in bytes (warns at 90%). |
-| `health_skill_lines` | 150 | SKILL.md line cap health fails. |
 | `judge_env` | ANTHROPIC_API_KEY | No longer read. |
 | `judge_setup` | none | No longer read; old configs stay valid. |
 | `limit_wait` | 1800 | Seconds to wait after a usage limit before resuming. |
 | `machine_setup` | none | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |
 | `max_active_goals` | 20 | Goals live at once (or parallel, if smaller); 0 is none. |
 | `max_merge_rounds` | 8 | Merge rounds goal.py pr may take before it waits. |
-| `max_regression_rows` | 1200 | Most rows the regression table may hold; qa refuses a goal over it. |
 | `max_suite_seconds` | 2800 | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal over it. |
 | `max_tries` | 3 | Failed tries a goal gets before it stops and files a finding. |
 | `mend` | true | true lets watch start a fresh agent for a failed goal. |

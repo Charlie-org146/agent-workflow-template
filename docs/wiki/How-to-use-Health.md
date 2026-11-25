@@ -85,7 +85,7 @@ The consistency group counts definitions in Requirements sections; How-to items 
 
 Each requirement and how it is delivered:
 
-- HLT-2: The rules. Example, from the size-fail test: given a script over 20 KB, when health runs, then it is a FAIL with a fix.
+- HLT-2: The rules. Example, from the same-lines test: given a stale page, when health runs, then it shows as a docs row naming the page, with a fix.
 - HLT-4: Findings become issues tagged with their group and their feature. Example, from the health-feature-always test: given findings filed by health.py file, when issues are created or updated, then each carries its feature label whatever feature_labels says, and a finding with no feature is filed under Other. Another example
 , from the no-token-would test: given no token and no --live flag, when health previews its findings, then it prints only WOULD lines and writes nothing.
 
