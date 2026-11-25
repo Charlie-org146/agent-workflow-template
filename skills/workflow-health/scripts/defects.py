@@ -145,7 +145,7 @@ def refs(root):
     prefixes = {key.split("-")[0] for key in live}
     out, seen = [], set()
     for name, text in pages(root).items():
-        for key in re.findall(r"\b([A-Z]{2,5}-\d+[a-z]?)\b", re.sub(r"^\| r\d+ \|.*$", "", text, flags=re.M)):  # Revisions: history
+        for key in re.findall(r"\b([A-Z]{2,5}-\d+[a-z]?)\b", re.sub(r"^\| r\d+ \|.*$", "", text, flags=re.M)):  # Revisions rows are history
             if key.split("-")[0] in prefixes and key not in known and (name, key) not in seen:
                 seen.add((name, key))
                 out.append(row("FAIL", "consistency", key, "refs", "page %s names %s, which no page defines" % (name, key),
