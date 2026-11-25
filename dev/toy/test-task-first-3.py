@@ -21,7 +21,7 @@ import schedule_load as sl  # noqa: E402
 
 failed = []
 tmp = tempfile.mkdtemp()
-os.environ.update(HOME=tmp, LOOP_PRIVATE_NAMES=os.path.join(tmp, "names"), FILER_LOG=os.path.join(tmp, "filer.log"),
+os.environ.update(HOME=tmp, USERPROFILE=tmp, LOOP_PRIVATE_NAMES=os.path.join(tmp, "names"), FILER_LOG=os.path.join(tmp, "filer.log"),
                   SCHEDULE_FILER=sys.executable + " " + os.path.join(tmp, "filer.py"))
 os.environ.pop("LOOP_ROLE", None)
 open(os.path.join(tmp, "names"), "w").write("plantedname\n")
@@ -220,7 +220,7 @@ json.dump({"command": ["true"], "probe": ["true"], "probe_expect": "", "steps": 
 
 def step(top):
     done = subprocess.run([sys.executable, GOAL, "step", "v110-a", "review"], cwd=top, capture_output=True, text=True, stdin=subprocess.DEVNULL,
-                          env={"HOME": tmp, "PATH": os.environ["PATH"], "TERM": "dumb", "LOOP_FLOW": os.path.join(tmp, "flow.json"), "LOOP_ROLE": "worker"})
+                          env={"HOME": tmp, "USERPROFILE": tmp, "PATH": os.environ["PATH"], "TERM": "dumb", "LOOP_FLOW": os.path.join(tmp, "flow.json"), "LOOP_ROLE": "worker"})
     return done.returncode, (done.stdout + done.stderr)[-300:]
 
 
@@ -248,7 +248,7 @@ def running(fixes):
 def goal(top, *argv):
     tree = os.path.join(top, ".git", "loop", "worktrees", "v110-a")  # the goal's own worktree, where record and pr run
     done = subprocess.run([sys.executable, GOAL, *argv], cwd=tree if os.path.isdir(tree) and argv[0] in ("record", "pr") else top, capture_output=True, text=True, stdin=subprocess.DEVNULL,
-                          env={"HOME": tmp, "PATH": os.environ["PATH"], "TERM": "dumb", "LOOP_FLOW": os.path.join(tmp, "flow.json"), "LOOP_ROLE": "worker"})
+                          env={"HOME": tmp, "USERPROFILE": tmp, "PATH": os.environ["PATH"], "TERM": "dumb", "LOOP_FLOW": os.path.join(tmp, "flow.json"), "LOOP_ROLE": "worker"})
     return done.returncode, done.stdout + done.stderr
 
 

@@ -25,7 +25,7 @@ import schedule_state as ss  # noqa: E402
 
 failed = []
 tmp = tempfile.mkdtemp()
-os.environ.update(HOME=tmp, LOOP_PRIVATE_NAMES=os.path.join(tmp, "names"), FILER_LOG=os.path.join(tmp, "filer.log"),
+os.environ.update(HOME=tmp, USERPROFILE=tmp, LOOP_PRIVATE_NAMES=os.path.join(tmp, "names"), FILER_LOG=os.path.join(tmp, "filer.log"),
                   SCHEDULE_FILER=sys.executable + " " + os.path.join(tmp, "filer.py"), PATH=os.path.join(tmp, "bin") + os.pathsep + os.environ["PATH"])
 os.environ.pop("LOOP_ROLE", None)
 open(os.path.join(tmp, "names"), "w").write("plantedname\n")

@@ -47,7 +47,7 @@ def repo(known=True, extra=""):
 def gate(top):
     """The real gate run from a clean environment: (exit code, the RESULT line)."""
     done = subprocess.run([sys.executable, REGRESSION, "run", "--timeout", "60"], cwd=top, capture_output=True, text=True, stdin=subprocess.DEVNULL,
-                          env={"HOME": home, "PATH": os.environ["PATH"], "TERM": "dumb"})
+                          env={"HOME": home, "USERPROFILE": home, "PATH": os.environ["PATH"], "TERM": "dumb"})
     return done.returncode, next((x for x in done.stdout.splitlines() if x.startswith("RESULT")), done.stdout[-200:] + done.stderr[-200:])
 
 
