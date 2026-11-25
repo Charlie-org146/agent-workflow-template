@@ -197,6 +197,10 @@ def load(root, strict=False, policy=None, check=True):
         return finish(result)
     bl = briefs(root, bad)
     known = {g["slug"] for g in goals}
+    stale = [x for x in order if x not in known]
+    if stale:
+        notes.append("order: pruned %s (not queued)" % ", ".join(clean(x, 30) for x in stale))
+        order = [x for x in order if x in known]
     R = selected(root, notes)
     result["release"] = R
     live = [b for b in bl if not b["replaced"] and not b["patch"] and R and b["release"] == R]
