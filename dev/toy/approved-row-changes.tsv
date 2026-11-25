@@ -61,3 +61,4 @@ pods-caps-3919	o988 (owner o984: the size limits end), v110-no-size-cap-a, done 
 test-caps-health	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1880, done line 4	removed with its checker (lean.rows_cap and test-test-caps.py's health half)
 repo-rules-threshold	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1880, done line 4	removed with its checker (test-health-repo-rules.py threshold, health_script_bytes)
 hands-off-size	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1880, done line 4	removed with its checker (test-hands-off.py size); off the known list
+backlog-milestones-made	o988 (owner o984: the size limits end), v110-no-size-cap-a, o1007	its health finding is the Docs group's stale page, not a size finding; it greps that PASS line; every other clause unchanged
