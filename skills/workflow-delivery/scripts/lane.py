@@ -43,7 +43,13 @@ def lane_checks(top, contexts):
 
 def lane_argv(seconds=0):
     return ["python3", os.path.join(REG, "regression.py"), "run", "land", "--reuse", "--tier", "goal"] + (
-        ["--budget", str(int(seconds))] if seconds else []) + (["--ids", os.environ["LOOP_COVER_IDS"]] if os.environ.get("LOOP_COVER_IDS") else [])
+        ["--budget", str(int(seconds))] if seconds else [])
+
+
+def cover_ids(runs, slug):
+    """LOOP_COVER_IDS, honoured only while the standing cover claim lists exactly those ids; "" runs the whole lane."""
+    want, got = os.environ.get("LOOP_COVER_IDS", ""), claim_ids(runs, slug)
+    return got if want and sorted(want.split(",")) == got.split(",") else ""
 
 
 def lane_text():
@@ -156,17 +162,19 @@ def lane(runs, slug, name, spec, cfg, wait=90, redo=False):
         attempt = "%d-%d" % (os.getpid(), time.time() * 1000)
         held = {"head": head, "attempt": attempt, "started": time.time(), "limit": seconds, "source": source,
                 "rc": "%s.%s.rc" % (base, attempt), "pool": lanekit.lanes_dir(), "markers": 1, "prep_s": spent,
-                "prep_by": 0 if prefix else began_prep + budget_s, "budget": budget_s, "override": override}
+                "prep_by": 0 if prefix else began_prep + budget_s, "budget": budget_s, "override": override,
+                "ids": cover_ids(runs, slug)}
         env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1", _LOOP_LANE_LABEL="%s/%s %s" % (os.path.basename(top), slug, name),
                    _LOOP_LANE_QUEUED=held["rc"] + ".queued", _LOOP_LANE_STARTED=held["rc"] + ".started",
                    _LOOP_LANE_NOTE=held["rc"] + ".note", _LOOP_LANE_PREP_BY=str(held["prep_by"]))
         env.pop("_LOOP_LANE_HELD", None)
         env["TMPDIR"] = held["tmp"] = tempfile.mkdtemp(prefix=os.path.basename(tmp), dir=os.path.dirname(tmp))
+        argv = lane_argv(tests) + (["--ids", held["ids"]] if held["ids"] else [])
         with open(base + ".txt", "w") as log:
             if line:
                 log.write(line + "\n")
             child = subprocess.Popen([sys.executable, os.path.abspath(__file__), "lane-exec", held["rc"], str(seconds),
-                                      base + ".last", attempt, held["pool"], "--"] + prefix + lane_argv(tests), stdout=log,
+                                      base + ".last", attempt, held["pool"], "--"] + prefix + argv, stdout=log,
                                      stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True, env=env)
         held["pid"], held["pstart"] = child.pid, lanekit.pstart(child.pid)
         os.write(handle, json.dumps(held).encode())
@@ -258,7 +266,7 @@ def main(argv):
     return 0 if argv in ([], ["-h"], ["--help"]) else 2
 
 
-from lane_run import finalize, lane_status, wait_for  # noqa: E402,F401
+from lane_run import claim_ids, finalize, lane_status, wait_for  # noqa: E402,F401
 
 
 if __name__ == "__main__":

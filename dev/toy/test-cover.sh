@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/workflow-delivery/scripts/cover.py skills/workflow-delivery/scripts/lane.py skills/workflow-delivery/scripts/flow.py
+# reads: skills/workflow-delivery/scripts/cover.py skills/workflow-delivery/scripts/lane.py skills/workflow-delivery/scripts/lane_run.py skills/workflow-delivery/scripts/lanekit.py skills/workflow-delivery/scripts/role.py skills/workflow-delivery/scripts/flow.py
 # reads: skills/workflow-delivery/scripts/flow_steps.py skills/workflow-delivery/scripts/goal_steps.py skills/workflow-delivery/scripts/sizing.py
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes.py skills/workflow-regression/scripts/row_reach.py
 # reads: .github/workflows/regression-pr.yml dev/toy/fakegh/gh dev/toy/fakegh/fake.py dev/toy/make.sh dev/toy/reap.sh
@@ -195,7 +195,33 @@ check "with no claim the prompt is byte for byte as today" 'grep -q "already pas
 RULE_TXT='  full-test-run: form full, 1 pass. Covers: the full test run passes. Run: python3 skills/workflow-regression/scripts/regression.py run'
 out=$(python3 -B -c "import sys; sys.path.insert(0,'$D'); sys.dont_write_bytecode=True; import cover; print(cover.rule_fix('$RULE_TXT', '$common/loop/runs', 'g1'))")
 check "the sizing rule's full-test-run line says what L1 covers and what still runs locally" 'grep -q "Run: covered by L1 (claimed; pending PR recheck and GitHub execution): 3 rows; the other 2 rows still run locally$" <<<"$out"'
-out=$(cd "$D" && LOOP_COVER_IDS=n,s python3 -B -c "import sys; sys.dont_write_bytecode=True; import lane; print(lane.lane_argv()[-2:], lane.lane_argv(5)[-4:])")
-check "the lane command takes --ids from LOOP_COVER_IDS and adds nothing without it" 'grep -q "\[.--ids., .n,s.\]" <<<"$out" && ! (cd "$D" && python3 -B -c "import sys; sys.dont_write_bytecode=True; import lane; print(lane.lane_argv())") | grep -q -- "--ids"'
+lane1() { (cd "$D" && LOOP_COVER_IDS=n,s python3 -B -c "import sys; sys.dont_write_bytecode=True; import lane; print($1)") 2>&1; }
+check "LOOP_COVER_IDS alone narrows no lane command: --ids comes only from the ids the launch passes" '! lane1 "lane.lane_argv(), lane.lane_argv(5)" | grep -q -- "--ids" && grep -q "argv = lane_argv(tests) + (\[\"--ids\", held\[\"ids\"\]\] if held\[\"ids\"\] else \[\])" "$D/lane.py"'
+cid() { (cd "$D" && LOOP_COVER_IDS=$1 python3 -B -c "import sys; sys.dont_write_bytecode=True; import lane; print('IDS=' + lane.cover_ids('$common/loop/runs', 'g1'))") 2>&1; }
+reset; a=$(cid n,s); cov lane qa >/dev/null; b=$(cid n,s); c=$(cid s,n); e=$(cid n); f=$(cid a,b,c,n,s)
+check "the launch honours LOOP_COVER_IDS only while the cover claim lists exactly those ids" '[ "$a" = IDS= ] && [ "$b" = IDS=n,s ] && [ "$c" = IDS=n,s ] && [ "$e" = IDS= ] && [ "$f" = IDS= ]'
+NL=$(cat <<'PYEND'
+import os, sys
+sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True
+import lanekit, role
+runs = sys.argv[2]
+for n in ("qa", "ship", "pr"):
+    try:
+        os.remove(lanekit.lane_base(runs, "g1", n) + ".ok")
+    except OSError:
+        pass
+open(lanekit.lane_base(runs, "g1", "qa") + ".ok", "w").write((role.git_out("rev-parse", "HEAD") + " " + sys.argv[3]).strip())
+got = role.need_lane(runs, "g1", "nope.txt", "qa")
+print("NEED", got[2] if got else None)
+PYEND
+)
+okneed() { python3 -B -c "$NL" "$D" "$common/loop/runs" "$1" 2>&1; }
+reset; r1=$(okneed n,s); cov lane qa >/dev/null; r2=$(okneed n,s); r3=$(okneed n); r4=$(okneed ""); reset; r5=$(okneed "")
+echo "$r1 | $r2 | $r3 | $r4 | $r5"
+check "a lane .ok narrowed to ids is refused at record without a cover claim listing exactly those ids: LANE_MISSING" '[ "$r1" = "NEED LANE_MISSING" ] && [ "$r3" = "NEED LANE_MISSING" ]'
+check "a narrowed lane .ok whose ids the cover claim lists exactly is accepted" '[ "$r2" = "NEED None" ]'
+check "control: a full lane .ok (HEAD only, no ids) still passes, with or without a claim" '[ "$r4" = "NEED None" ] && [ "$r5" = "NEED None" ]'
+w=$(cd "$D" && python3 -B -c "import sys; sys.dont_write_bytecode=True; import lane_run; print(lane_run.ok_text({'head': 'h', 'ids': 'n,s'}) + '|' + lane_run.ok_text({'head': 'h', 'ids': ''}))" 2>&1)
+check "a passing lane's .ok holds HEAD then the ids of a narrowed lane, and HEAD alone for a full lane" '[ "$w" = "h n,s|h" ]'
 fi
 exit $((fails > 0))

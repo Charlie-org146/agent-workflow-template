@@ -79,11 +79,31 @@ def finalize(base, held, name):
     else:
         status = "pass"
         with open(base + ".ok", "w") as handle:
-            handle.write(held["head"])
+            handle.write(ok_text(held))
     _s.set_last(base + ".last", held["attempt"], state=status, rc=rc, line=line, ids=ids, note=notes, ended=now,
              prep_s=held.get("prep_s") or 0, plan_s=plan, wait_s=wait)
     _s.stop(base, held)
     return status, line, ids
+
+
+def ok_text(held):
+    """What a passing lane's .ok holds: HEAD, then the ids of a lane narrowed to them."""
+    return (held["head"] + " " + (held.get("ids") or "")).strip()
+
+
+def claim_ids(runs, slug):
+    """The standing cover claim's local ids, sorted and comma-joined; "" with no claim."""
+    import cover
+    return ",".join(sorted((cover.load(runs, slug).get("claim") or {}).get("local") or []))
+
+
+def ok_head(runs, slug, path):
+    """A lane .ok's HEAD; a narrowed lane's .ok counts only while the cover claim lists exactly its ids."""
+    try:
+        head, *ids = open(path).read().split()
+    except (OSError, ValueError):
+        return ""
+    return head if not ids or ids == [claim_ids(runs, slug)] else ""
 
 
 def lane_status(runs, slug, name):
