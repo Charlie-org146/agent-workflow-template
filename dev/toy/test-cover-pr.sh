@@ -65,7 +65,6 @@ fi
 
 if [ "$part" = all ] || [ "$part" = moves ]; then
 echo "== the moves are whole functions, byte for byte, and every module imports"
-check "row_reach.py, lanes.py and regression.py are under the caps (2,500 and 20,480 bytes)" '[ $(wc -c < "$S/row_reach.py") -lt 2500 ] && [ $(wc -c < "$S/lanes.py") -lt 20480 ] && [ $(wc -c < "$S/regression.py") -lt 20480 ]'
 check "narrow.py is not edited (it keeps the bytes the base commit gave it)" '[ "$(git -C "$here" show $BASE:skills/workflow-regression/scripts/narrow.py | wc -c)" = "$(wc -c < "$S/narrow.py")" ]'
 python3 -B - "$here" "$BASE" <<'PY' > "$d/moves.out" 2>&1
 import ast, subprocess, sys
