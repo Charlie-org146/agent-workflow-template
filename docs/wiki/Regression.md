@@ -214,7 +214,7 @@ None
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | [unproven-blocks](Tests#t-unproven-blocks) | requirement | REG-4 | Given REG-4, when test-regression.sh runs its 10 cases, then each passes: the run is blocked; it stays unproven; it is flagged; the date is kept; both end the same way and open the same issues; it is refused and the row's seen-failing date stay; it is refused and the row stays unproven; it is refused; the row has a seen-failing date; it names the row, date, runner and commit. | PASS 2026-11-20 |
-| [one-link](Tests#t-one-link) | requirement | REG-4 | Given REG-4, when test-criteria.sh runs its 2 cases, then each passes: the check fails; each test's result and date are recorded. | PASS 2026-11-20 |
+| [one-link](Tests#t-one-link) | requirement | REG-4 | Given REG-4, when test-criteria.sh runs its 2 cases, then each passes: the check fails; each test's result and date are recorded. | PASS 2026-11-25 |
 | [refused-unmet](Tests#t-refused-unmet) | requirement | REG-4 | Given REG-4, when test-criteria.sh runs its 3 cases, then each passes: it is refused; its table row carries the test link, its Given/Whe; the row carries its anchor, result, date, run and. | PASS 2026-11-20 |
 | [milestones-once](Tests#t-milestones-once) | requirement | REG-4 | Given a free-form milestone title such as v1.0, when new runs twice, then one milestone is made and the second run says it exists. | PASS 2026-11-20 |
 | [every-row-described](Tests#t-every-row-described) | requirement | REG-4 | Given this repo's test rows, when they are checked, then every row has a plain one-line description. | PASS 2026-11-24 |
