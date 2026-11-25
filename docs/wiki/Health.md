@@ -203,7 +203,7 @@ None
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | [same-lines](Tests#t-same-lines) | requirement | HLT-2 | Given HLT-2, when test-health.sh runs its 6 cases, then each passes: both runs print the same lines; it is a FAIL with a fix; it shows as a docs row naming the page; it is a FAIL; it is never shown green; it writes no file and makes no commit. | PASS 2026-11-20 |
-| [defect-health](Tests#t-defect-health) | requirement | HLT-2 | Given a closed issue or finding with no defect test, when health runs, then it is flagged. | PASS 2026-11-24 |
+| [defect-health](Tests#t-defect-health) | requirement | HLT-2 | Given a closed issue or finding with no defect test, when health runs, then it is flagged. | PASS 2026-11-25 |
 | [cost-time-warn](Tests#t-cost-time-warn) | requirement | HLT-2 | Given HLT-2, when test-health-judge.sh runs its 2 cases, then each passes: it is a Cost warning naming its slowest steps; it prints INFO and leaves the token check out, nev. | PASS 2026-11-12 |
 | [report-header](Tests#t-report-header) | requirement | HLT-2 | Given a repo with findings in several groups, when health check runs, then the report header names every group it ran and the one it skipped. | PASS 2026-11-19 |
 | [hlt6-controls-fire](Tests#t-hlt6-controls-fire) | requirement | HLT-2 | Given HLT-2, when test-health-hygiene.sh runs its 2 cases, then each passes: each rule's negative control makes it fire; that rule is reported as one that cannot fire, wit. | PASS 2026-11-10 |
