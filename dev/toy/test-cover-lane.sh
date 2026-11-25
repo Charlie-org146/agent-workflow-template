@@ -89,7 +89,7 @@ assert a in t, a
 open(p,'w').write(t.replace(a,b,1))" "$1" "$2"; git commit -qam "variant"; git push -q origin main; git switch -q feat; }
 unwf() { git switch -q main; git revert --no-edit HEAD >/dev/null; git push -q origin main; git switch -q feat; }
 wf "run nightly --reuse --tier goal" "run nightly --reuse --tier goal --kind defect"; off "a shard narrowed by another argument" WF; unwf
-wf '$R --budget $B --timeout 200' '$R --budget $B --timeout 200 --kind defect'; off "one shard call narrowed by another argument" WF; unwf
+wf '$R --budget $B --timeout 300' '$R --budget $B --timeout 300 --kind defect'; off "one shard call narrowed by another argument" WF; unwf
 wf "      - run: python3 skills/workflow-regression/scripts/cutgate.py 's/shard-[0-7]/t.tsv' all.tsv .loop/regression-skips.tsv 8
 " ""; off "no aggregate check of the shards" WF; unwf
 wf "    timeout-minutes: 30

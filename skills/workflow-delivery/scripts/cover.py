@@ -28,7 +28,7 @@ PIN = ("name: regression-pr\n", "  pull_request:\n  merge_group:\n    types: [ch
        "\n  small:\n", "cutgate.py", 'test "${{ needs.shard.result }}" = success')
 JOB = {"shard": "github.event_name != 'merge_group'", "affected": "always() && github.event_name != 'merge_group'",
        "small": "github.event_name == 'merge_group'"}  # each job's own if: (a disabled pull_request job is no cover)
-WF_SHA = "540058269baf8fe69e82b4c4a1ab40e5918cda59"  # sha1 of the base's regression-pr.yml as reviewed: any edit turns the cover off
+WF_SHA = "d915bcc5584270f75b511de8f62faa6138fcb879"  # sha1 of the base's regression-pr.yml as reviewed: any edit turns the cover off
 SILENT = ("GH", "RUNS")
 PLAN = r"""
 import json, sys
