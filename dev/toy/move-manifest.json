@@ -222,6 +222,205 @@
     "sys": "import sys",
     "time": "import time"
    }
+  },
+  {
+   "script": "skills/workflow-delivery/scripts/fit.py",
+   "module": "fit_budget",
+   "doc": "the regen, pull request and owed text of a goal",
+   "functions": [
+    "regen",
+    "nag",
+    "bind_here",
+    "frozen_fields",
+    "plan_ahead",
+    "eta_line",
+    "pr_open",
+    "pr_text",
+    "verdicts",
+    "step_line",
+    "regen_warnings",
+    "pr_body",
+    "off_rows",
+    "off_line",
+    "off_reply",
+    "pr_fail",
+    "main_here",
+    "owed",
+    "cmd_show"
+   ],
+   "base": "73c7bdbaea2cfb660708d1ca04555a81773ca82b",
+   "needs": [
+    "path",
+    "guard"
+   ],
+   "prefix": {
+    "regen": [
+     "tool"
+    ],
+    "nag": [
+     "tool"
+    ],
+    "bind_here": [
+     "tool"
+    ],
+    "frozen_fields": [
+     "SURFACES",
+     "budget_of",
+     "monitor",
+     "says_bump",
+     "size_of",
+     "surface"
+    ],
+    "plan_ahead": [
+     "view"
+    ],
+    "eta_line": [],
+    "pr_open": [],
+    "pr_text": [
+     "view"
+    ],
+    "verdicts": [
+     "VERDICT"
+    ],
+    "step_line": [
+     "tokens"
+    ],
+    "regen_warnings": [],
+    "pr_body": [
+     "STEPS",
+     "budget",
+     "depth_for",
+     "tokens_text"
+    ],
+    "off_rows": [],
+    "off_line": [],
+    "off_reply": [],
+    "pr_fail": [],
+    "main_here": [],
+    "owed": [
+     "monitor"
+    ],
+    "cmd_show": [
+     "active_minutes",
+     "resume_at",
+     "wall_minutes"
+    ]
+   },
+   "std": {
+    "sys": "import sys",
+    "os": "import os",
+    "time": "import time",
+    "re": "import re",
+    "json": "import json"
+   }
+  },
+  {
+   "script": "skills/workflow-delivery/scripts/role.py",
+   "module": "role_gate",
+   "doc": "the record step, its gates and the lane caps",
+   "functions": [
+    "recorded_gate",
+    "over_caps",
+    "record",
+    "bump_version",
+    "requirement_gate",
+    "session_reply"
+   ],
+   "base": "73c7bdbaea2cfb660708d1ca04555a81773ca82b",
+   "needs": [
+    "guard"
+   ],
+   "prefix": {
+    "recorded_gate": [
+     "alive",
+     "git_out",
+     "goal_state",
+     "now",
+     "save"
+    ],
+    "over_caps": [
+     "git_out"
+    ],
+    "record": [
+     "FILES",
+     "NO_PUSH",
+     "REG",
+     "generated",
+     "git_out",
+     "issues",
+     "lane_part",
+     "results",
+     "undo"
+    ],
+    "bump_version": [],
+    "requirement_gate": [],
+    "session_reply": []
+   },
+   "std": {
+    "json": "import json",
+    "os": "import os",
+    "sys": "import sys",
+    "glob": "import glob",
+    "subprocess": "import subprocess",
+    "re": "import re",
+    "shutil": "import shutil"
+   }
+  },
+  {
+   "script": "skills/workflow-delivery/scripts/routing.py",
+   "module": "routing_pick",
+   "doc": "the agent build, detect and check commands",
+   "functions": [
+    "cmd_build",
+    "cmd_detect",
+    "tree_run",
+    "ask",
+    "cmd_check",
+    "usage"
+   ],
+   "base": "73c7bdbaea2cfb660708d1ca04555a81773ca82b",
+   "needs": [
+    "guard"
+   ],
+   "prefix": {
+    "cmd_build": [
+     "BUILD",
+     "RUNS",
+     "WALLS",
+     "brief",
+     "entry",
+     "exe",
+     "load",
+     "resolve",
+     "role",
+     "top",
+     "update"
+    ],
+    "cmd_detect": [
+     "load",
+     "path",
+     "unavailable"
+    ],
+    "tree_run": [
+     "proctree"
+    ],
+    "ask": [
+     "exe"
+    ],
+    "cmd_check": [
+     "CHECK",
+     "WALLS",
+     "load",
+     "resolve"
+    ],
+    "usage": []
+   },
+   "std": {
+    "subprocess": "import subprocess",
+    "sys": "import sys",
+    "json": "import json",
+    "os": "import os"
+   }
   }
  ]
 }

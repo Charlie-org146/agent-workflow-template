@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+# windows: ok
+# reads: skills/workflow-delivery/scripts/dlf.py skills/workflow-delivery/scripts/fit.py
+"""DLF-1.2 (done line 2): the budget rule. New budget = max(held, min(spend + what is left, 2 x estimate)); 240 spent of 240 with 100
+left goes to 340; remaining 0 gets a floor of 25 percent; past the cap the budget stays at the cap and one cap line is due; a held
+budget above the cap is kept; zero tokens means unlimited. Calls dlf.raise_budget and dlf.budget_stop in a throwaway run record."""
+import contextlib
+import io
+import json
+import os
+import sys
+import tempfile
+
+root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+for skill in ("delivery", "monitoring"):
+    sys.path.insert(0, os.path.join(root, "skills", "workflow-" + skill, "scripts"))
+import dlf  # noqa: E402
+
+failed = []
+
+
+def check(ok, text):
+    print(("PASS: " if ok else "FAIL: ") + text)
+    if not ok:
+        failed.append(text)
+
+
+r = dlf.raise_budget
+check(r(240, 240, 240, 140) == (340, False), "240 of 240 with 100 left goes to 340 and files no line")
+check(r(360, 288, 360, 288) == (432, False), "remaining 0 with held 360, estimate 288, spend 360 gives 432 (floor of 25 percent) and no line")
+check(r(480, 240, 480, 100) == (480, True), "spend at 2 x the estimate: the budget stays at the cap and the one cap line is due")
+check(r(480, 240, 480, 100, finished=True) == (480, False), "a goal that finishes at the cap files none")
+check(r(600, 240, 600, 100) == (600, True), "a held budget above the cap is kept, not lowered, and not raised")
+check(r(400, 240, 400, 100) == (480, False), "a raise never takes the budget above 2 x the estimate")
+check(r(0, 240, 500, 0) == (0, False), "a held budget of zero is unlimited: the rule does not apply")
+check(r(240, 0, 240, 0) == (240, False), "no estimate: the rule does not apply")
+
+# the real stop, in a throwaway repo: a goal at its budget keeps working and the raise is logged with both figures
+tmp = tempfile.mkdtemp()
+runs = os.path.join(tmp, "runs")
+os.makedirs(runs)
+import fit  # noqa: E402
+import guards  # noqa: E402
+fit.active_minutes = lambda state, at=None, cfg=None: 240
+state = {"slug": "g1", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {"idea": "done", "plan": "done", "build": "done"}, "log": []}
+guards.add_set(runs, "g1", "budget", {"minutes": 240, "tokens": 0}, "set")
+os.makedirs(os.path.join(tmp, ".loop"))
+json.dump({"deliver_first": {}}, open(os.path.join(tmp, ".loop", "config.json"), "w"))
+out = io.StringIO()
+with contextlib.redirect_stdout(out):
+    dlf.budget_stop("g1", state, runs, {}, top=tmp)
+seen = fit.view(state, runs)
+check(seen["budget"]["minutes"] > 240, "at 240 of 240 the stop does not refuse and the budget rises (%s)" % seen["budget"])
+check("240 ->" in out.getvalue() and str(seen["budget"]["minutes"]) in out.getvalue(), "the raise prints the old and new figures: %s" % out.getvalue().strip())
+check("raised the minutes budget 240 to" in json.dumps(guards.extra(runs, "g1")["log"]), "the raise is logged with both figures")
+json.dump({"deliver_first": {"goal": {"g1": False}}}, open(os.path.join(tmp, ".loop", "config.json"), "w"))
+guards.add_set(runs, "g1", "budget", {"minutes": 240, "tokens": 0}, "set")
+try:
+    dlf.budget_stop("g1", state, runs, {}, top=tmp)
+    refused = ""
+except SystemExit as stop:
+    refused = str(stop)
+check("BUDGET_MINUTES" in refused, "with the setting off the budget stop refuses as it always did: %s" % refused[:60])
+
+# the ETA stop follows the raised budget, so a goal past its ETA keeps working (the health row eta-overrun agrees)
+import auto  # noqa: E402
+state2 = {"slug": "g2", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {"idea": "done"}, "log": []}
+fit.active_minutes = lambda state, at=None, cfg=None: 300
+json.dump({"deliver_first": {}}, open(os.path.join(tmp, ".loop", "config.json"), "w"))
+check(auto.eta_over(fit.view(state2, runs), 300), "a goal at 300 minutes is past its ETA of 288")
+with contextlib.redirect_stdout(io.StringIO()):
+    dlf.budget_stop("g2", state2, runs, {}, top=tmp)
+check(not auto.eta_over(fit.view(state2, runs), 300), "after the raise the ETA stop no longer fires, and the goal keeps working")
+# the ON-scope case of the token refusal: a goal past its token budget keeps working, the budget rises by the same rule, both figures logged
+os.makedirs(os.path.join(tmp, "runs3"))
+runs3 = os.path.join(tmp, "runs3")
+st3 = {"slug": "g3", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {}, "tokens": {"idea": 1100}, "log": []}
+guards.add_set(runs3, "g3", "budget", {"minutes": 0, "tokens": 1000}, "set")
+fit.active_minutes = lambda state, at=None, cfg=None: 5
+out3 = io.StringIO()
+with contextlib.redirect_stdout(out3):
+    dlf.budget_stop("g3", st3, runs3, {"token_budget": 1000}, top=tmp)
+seen3 = fit.view(st3, runs3)
+check(seen3["budget"]["tokens"] == 2000 and "tokens 1000 -> 2000" in out3.getvalue(), "1100 of 1000 tokens with the setting on: no refusal, the budget rises to 2000 (the cap) and prints both figures: %s" % out3.getvalue().strip())
+check("raised the tokens budget 1000 to 2000" in json.dumps(guards.extra(runs3, "g3")["log"]), "the token raise is logged with the old and new figures")
+# M1: with no workflow-monitoring beside delivery, a budget check with no ETA must still work (the old stop never loaded it then)
+real_monitor = fit.monitor
+fit.monitor = lambda name, paths=False: (_ for _ in ()).throw(OSError("no workflow-monitoring beside delivery"))
+fit.active_minutes = lambda state, at=None, cfg=None: 100
+guards.add_set(runs3, "g4", "budget", {"minutes": 100, "tokens": 0}, "set")
+try:
+    dlf.budget_stop("g4", {"slug": "g4", "flow": {}, "log": []}, runs3, {}, top=tmp)
+    said = "no stop"
+except SystemExit as stop:
+    said = str(stop)
+except Exception as crash:
+    said = "CRASH " + repr(crash)
+fit.monitor = real_monitor
+check("BUDGET_MINUTES" in said, "M1: a budget check with no ETA and no monitoring skill refuses as before and does not crash: %s" % said[:60])
+# review finding 4: both limits reached in one check: the token raise must not undo the minute raise
+guards.add_set(runs3, "g5", "budget", {"minutes": 240, "tokens": 1000}, "set")
+fit.active_minutes = lambda state, at=None, cfg=None: 240
+with contextlib.redirect_stdout(io.StringIO()):
+    dlf.budget_stop("g5", {"slug": "g5", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {}, "tokens": {"idea": 1100}, "log": []}, runs3, {"token_budget": 1000}, top=tmp)
+both = fit.view({"slug": "g5"}, runs3)["budget"]
+check(both["minutes"] > 240 and both["tokens"] > 1000, "finding 4: with both limits reached both raises stay (%s)" % both)
+# round 5, done-line finding: on the ETA path the raise logs the STORED old budget (held 240, ETA 288, estimate 240, spend 300: 240 -> 480, not 288 -> 480)
+os.makedirs(os.path.join(tmp, "runs6"))
+runs6 = os.path.join(tmp, "runs6")
+guards.add_set(runs6, "g6", "budget", {"minutes": 240, "tokens": 0}, "set")
+fit.active_minutes = lambda state, at=None, cfg=None: 300
+out6 = io.StringIO()
+with contextlib.redirect_stdout(out6):
+    dlf.budget_stop("g6", {"slug": "g6", "eta": {"minutes": 288, "estimate": 240, "basis": "x"}, "flow": {}, "log": []}, runs6, {}, top=tmp)
+check("minutes 240 -> 480" in out6.getvalue() and "raised the minutes budget 240 to 480" in json.dumps(guards.extra(runs6, "g6")["log"]), "round 5: the raise prints and logs the stored old budget (240), not the ETA that replaced it: %s" % out6.getvalue().strip())
+# CI finding on the pull request (held-charge toys): a caller with no run-record folder (runs=None) is a scope with nothing to file
+# on, so deliver-first is off for it: no TypeError, no file written, and a goal at its budget gets today's stop
+json.dump({"deliver_first": {}}, open(os.path.join(tmp, ".loop", "config.json"), "w"))
+before = sorted(os.listdir(tmp))
+fit.active_minutes = lambda state, at=None, cfg=None: 30
+try:
+    dlf.budget_stop("g7", {"slug": "g7", "flow": {}, "log": []}, None, {"time_budget_minutes": 90}, top=tmp)
+    err = ""
+except BaseException as exc:  # noqa: BLE001
+    err = type(exc).__name__ + ": " + str(exc)[:100]
+check(not err and sorted(os.listdir(tmp)) == before, "no run-record folder, deliver-first on by default, under budget: no error and nothing filed (%s)" % err)
+fit.active_minutes = lambda state, at=None, cfg=None: 100
+try:
+    dlf.budget_stop("g7", {"slug": "g7", "eta": {"minutes": 999, "estimate": 90, "basis": "x"}, "flow": {}, "log": []}, None, {"time_budget_minutes": 90}, top=tmp)
+    err = "no stop"
+except SystemExit as stop:
+    err = "" if "BUDGET_MINUTES" in str(stop) else str(stop)[:100]
+except BaseException as exc:  # noqa: BLE001
+    err = type(exc).__name__ + ": " + str(exc)[:100]
+check(not err and sorted(os.listdir(tmp)) == before, "no run-record folder, past the budget: today's BUDGET_MINUTES stop, nothing filed (%s)" % err)
+sys.exit(1 if failed else 0)
