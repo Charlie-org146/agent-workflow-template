@@ -160,8 +160,9 @@ def plan(limit):
     taken, why = pool()
     sched = sl.warn(sl.load(root(), True))
     keep, held = sl.split(sched)
-    start, wait = graph.ready(keep, {state["slug"]: state for state in runs()}, limit, taken, why)
-    return start, held + wait
+    recs = {state["slug"]: state for state in runs()}
+    start, wait = graph.ready(keep, recs, limit, taken, why)
+    return start, [h for h in held if h[0]["slug"] not in recs] + wait
 
 
 def facts():

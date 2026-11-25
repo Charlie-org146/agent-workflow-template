@@ -61,7 +61,7 @@ def need_complete(root, verb):
     """A mutation never runs on an unreadable input: exit 3 with the input's code (order --clear is the repair and skips this)."""
     bad = sl.load(root)["incomplete"]
     if bad:
-        raise ss.Refused(sl.CODES[bad[0][0]], "%s needs every input readable, and %s is not (%s)" % (verb, bad[0][0], sl.clean(bad[0][1], 60)), sl.REPAIR[bad[0][0]])
+        raise ss.Refused(sl.CODES[bad[0][0]], "%s needs every input readable, and %s is not (%s)" % (verb, bad[0][0], sl.shown(root, bad[0][1])), sl.REPAIR[bad[0][0]])
 
 
 def order(root, args):

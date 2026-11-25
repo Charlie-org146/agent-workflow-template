@@ -280,8 +280,9 @@ def plan(limit):
     found, why = pool()
     sched = sl.warn(sl.load(root(), True))
     keep, held = sl.split(sched)
-    start, wait = graph.ready(keep, {state["slug"]: state for state in runs()}, limit, graph.assigned(found), why)
-    return start, held + wait
+    recs = {state["slug"]: state for state in runs()}
+    start, wait = graph.ready(keep, recs, limit, graph.assigned(found), why)
+    return start, [h for h in held if h[0]["slug"] not in recs] + wait
 
 
 def limit_of(args, cfg):

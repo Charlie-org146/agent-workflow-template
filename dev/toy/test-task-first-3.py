@@ -193,5 +193,25 @@ with mock.patch.object(ss, "lookup", lambda *a: 41):
 state = json.loads(open(sl.paths(cl)["workaround"]).read())["state"]
 check(state == "closed" and sl.load(cl)["waived"] == {}, "reconcile leaves a closed record closed and waives nothing: state %s" % state)
 
+# 7. the short look: P1 every refusal prints the screened cause, P2 the task title is hidden with the marks, L3 a held list never holds a goal that already runs
+p1 = repo()
+open(os.path.join(p1, ".loop", "tasks", "plantedname.md"), "wb").write(b"\xff\x80")
+for argv in (["order", "v110-fix", "--by", "o123"], A("words")):
+    code, out, err = run(p1, *argv)
+    check(code == 3 and "SCHED-E10" in err and "plantedname" not in out + err, "P1: `%s` refuses on an unreadable brief without printing the private name on stderr" % argv[0])
+p2 = repo(Q3)
+open(os.path.join(p2, ".loop", "tasks", "t.md"), "w").write("# plantedname Task\n\n- Release: v1.1.0\n- Goals: v110-a, v110-b\n")
+rows, deps = board.collect("n", p2, "main", datetime.datetime.now(datetime.timezone.utc))
+res = sl.load(p2)
+check("plantedname" not in json.dumps(deps) and all("plantedname" not in json.dumps(g.get("sched")) for g in res["goals"]), "P2: a private name in a brief title is in no JSON board field and no frozen schedule field")
+l3 = repo("- slug: v110-late | goal: late | done: d\n- slug: v110-safe | first: safety: security | goal: s | done: d\n")
+os.unlink(os.path.join(l3, ".loop", "tasks", "t.md"))
+open(os.path.join(l3, ".git", "loop", "order.json"), "w").write("{torn")
+os.makedirs(os.path.join(l3, ".git", "loop", "runs"), exist_ok=True)
+json.dump({"slug": "v110-late", "status": "running", "pid": os.getpid()}, open(os.path.join(l3, ".git", "loop", "runs", "v110-late.json"), "w"))
+for fn in (watch.plan,):
+    start, held = at(l3, fn, 3)
+check("v110-late" not in [g["slug"] for g, _ in held] and "v110-late" not in [g["slug"] for g in start], "L3: a goal that already has a run record is in neither the start nor the held list when the order file is torn: held %s" % [g["slug"] for g, _ in held])
+
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)

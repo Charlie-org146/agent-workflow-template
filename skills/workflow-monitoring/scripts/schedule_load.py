@@ -302,7 +302,7 @@ def finish(result):
         if why:
             result["notes"], banner = ["output hidden: " + why] * bool(result["notes"]), [x.split(" (")[0] + " (hidden: " + why + ")" for x in banner]
             for g in result["goals"]:
-                g["marks"], g["hidden"] = ["hidden: " + why] if g["marks"] else [], why
+                g["marks"], g["hidden"], g["task"] = ["hidden: " + why] if g["marks"] else [], why, ""
     for g in result["goals"]:
         g["cell"] = "(hidden: %s)" % g["hidden"] if g.get("hidden") else " | ".join([g["slug"]] + g["marks"]) if g["marks"] else ""
         g["sched"] = {"kind": g["kind"], "task": g["task"], "cell": g["cell"], "waived": [{"key": k, "fix": f} for k, f in g.get("waived", [])]} if g["marks"] else None
