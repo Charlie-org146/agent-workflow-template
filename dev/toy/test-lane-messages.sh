@@ -12,7 +12,7 @@ fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
 doc="$here/skills/loop-files.md"
-codes=$(cat "$here"/skills/workflow-regression/scripts/*.py "$here"/skills/workflow-delivery/scripts/*.py "$here/skills/workflow-release/scripts/merge.py" \
+codes=$(cat "$here"/skills/workflow-regression/scripts/*.py "$here"/skills/workflow-delivery/scripts/*.py "$here/skills/workflow-release/scripts/merge.py" "$here/skills/workflow-release/scripts/merge_steps.py" \
   | grep -oE '\b(LANE_[A-Z_]+|UNMAPPED|FLAKY|KILLED|SUITE_TIME|BASE_MOVED|BASE_FETCH|HEAD_MOVED|NO LANE|WAITING)\b' | sort -u)
 missing=""
 for c in $codes; do grep -q "^| [^|]*$c" "$doc" || missing="$missing $c"; done
