@@ -164,7 +164,7 @@ def workaround(root, args):
                 found = ss.file_issue(root, rec, True)
             elif not found:
                 print("PREVIEW: none found; --live would file one issue")
-            if found:
+            if found and rec["state"] == "pending":  # only a pending record is completed; a closed or failed one is never revived
                 rec.update(issue=found, state="done")
                 ss.save_records(paths, recs)
             print("reconciled %s: %s" % (rec["key"], "issue #%d" % found if found else "none found"))

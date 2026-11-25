@@ -182,5 +182,16 @@ code, out, err = run(d5, "workaround", "fail", "k1", "--goal", "v110-a", "--reas
 now = json.load(open(os.path.join(runs_dir, "v110-a.json")))
 check(now["status"] == "running" and "v110-fix" in now["waits_on"] and "k1" in str(now.get("schedule_revoked")), "a revoked waiver after assignment keeps the slot and restores the wait on the run record: waits_on %s, note %s" % (now.get("waits_on"), now.get("schedule_revoked")))
 
+# 6. a CLOSED record is never revived by reconcile (its uses stay off)
+import schedule_state as ss  # noqa: E402
+cl = repo(Q5)
+run(cl, *A("wait for the fix to merge"))
+run(cl, "workaround", "use", "k1", "--goal", "v110-a")
+run(cl, "workaround", "close", "k1", "--reason", "retired")
+with mock.patch.object(ss, "lookup", lambda *a: 41):
+    code, out, err = run(cl, "workaround", "reconcile", "k1")
+state = json.loads(open(sl.paths(cl)["workaround"]).read())["state"]
+check(state == "closed" and sl.load(cl)["waived"] == {}, "reconcile leaves a closed record closed and waives nothing: state %s" % state)
+
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)
