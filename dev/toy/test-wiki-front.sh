@@ -260,7 +260,7 @@ PY
 import sys
 t = open(sys.argv[1] + "/workflow-delivery/scripts/goal_steps.py").read()
 body = t.split("def cmd_pr", 1)[1].split("\ndef ", 1)[0]
-assert 0 <= body.find("fit.regen(") < body.find("_s.role.lane(_s.state_dir(), slug, \"pr\"")
+assert 0 <= body.find("fit.regen(") < body.find("cover.lane(_s.role.lane, _s.state_dir(), slug, \"pr\"")
 PY'
 fi
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

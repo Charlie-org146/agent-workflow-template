@@ -76,14 +76,48 @@ def finalize(base, held, name):
     elif rc:
         line += "\nLANE_FAIL %s (log %s). Reproduce one: python3 %s run <id>; %s." % (
             ", ".join(ids) or "exit %d" % rc, out, _s.lane_argv()[1], _s.NOTHING)
+    elif held.get("ids") and re.search(r"\bLEFT [1-9]", text):
+        cut = ", ".join(re.findall(r"\bLEFT [1-9]\d* [^:\n]*: (.+)$", text, re.M)) or "rows"
+        line += "\nLANE_LEFT: the lane narrowed to %s left %s unrun, so it records no pass. Fix: run this same command again " \
+            "(rows that passed are reused); a row longer than the budget never fits: raise test_budget_minutes; %s." % (held["ids"], cut, _s.NOTHING)
     else:
         status = "pass"
         with open(base + ".ok", "w") as handle:
-            handle.write(held["head"])
+            handle.write(ok_text(held))
     _s.set_last(base + ".last", held["attempt"], state=status, rc=rc, line=line, ids=ids, note=notes, ended=now,
              prep_s=held.get("prep_s") or 0, plan_s=plan, wait_s=wait)
     _s.stop(base, held)
     return status, line, ids
+
+
+def ok_text(held):
+    """What a passing lane's .ok holds: HEAD, then the ids of a lane narrowed to them."""
+    return (held["head"] + " " + (held.get("ids") or "")).strip()
+
+
+def claim_ids(runs, slug):
+    """The standing cover claim's local ids, sorted and comma-joined; "" with no claim."""
+    import cover
+    return ",".join(sorted((cover.load(runs, slug).get("claim") or {}).get("local") or []))
+
+
+def ok_head(runs, slug, path):
+    """A lane .ok's HEAD; a narrowed lane's .ok counts only while the cover claim lists exactly its ids."""
+    try:
+        head, *ids = open(path).read().split()
+    except (OSError, ValueError):
+        return ""
+    return head if not ids or ids == [claim_ids(runs, slug)] else ""
+
+
+def stale(runs, slug, name):
+    """True when that lane's .ok is a narrowed one its cover claim no longer lists: its pass is never reused."""
+    path = _s.lanekit.lane_base(runs, slug, name) + ".ok"
+    try:
+        narrowed = len(open(path).read().split()) > 1
+    except OSError:
+        return False
+    return narrowed and not ok_head(runs, slug, path)
 
 
 def lane_status(runs, slug, name):
@@ -108,10 +142,10 @@ def lane_status(runs, slug, name):
                 got = finalize(sib, job, other)
                 if got[0] != "pass":
                     return got[:2]
-    if not _s.dirty() and (src := _s.lanekit.passed(runs, slug, head, name)):
+    if not _s.dirty() and (src := _s.lanekit.passed(runs, slug, head, name)) and not stale(runs, slug, src):
         return "pass", _s.answer(runs, slug, src, name)
     done = _s.read_json(base + ".last") or {}
-    if done.get("head") == head and done.get("state") in _s.TERMINAL:
+    if done.get("head") == head and done.get("state") in _s.TERMINAL and not (done["state"] == "pass" and stale(runs, slug, name)):
         return done["state"], done.get("line", "")
     return "none", "NO LANE: none ran on %s; start one with role.py lane %s %s" % (head[:12], slug, name)
 
