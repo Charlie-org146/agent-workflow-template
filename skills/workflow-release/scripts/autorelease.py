@@ -13,6 +13,7 @@ import sys
 import tempfile
 
 import release
+import release_docs
 import wiki  # noqa: E402
 
 # no prompt
@@ -137,7 +138,7 @@ def run_routines(top, cfg, state):
 def stage_notes(top, state, cfg):
   if "release_bullets" not in state:
     state["release_bullets"] = release.subjects(release.base_of(top, cfg), top) + wiki.fixes_lines(top)
-    state["release_steps"] = release.verify_steps(top, state["slug"]) or "No manual steps were recorded."
+    state["release_steps"] = release_docs.verify_steps(top, state["slug"]) or "No manual steps were recorded."
     release.save(state)
 
 

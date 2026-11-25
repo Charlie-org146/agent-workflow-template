@@ -31,7 +31,7 @@ def cmd_record(args):
                              "STEP: done|skipped|pending|failed line, then record again", _s.guards.NO_STEP_LINE, _s.save)
     stamp, cfg = "", _s.config()
     wait = pending or result == "pending"
-    auto, ok = wait and (cfg.get("auto_approve") is True or _s.fit.plan_ahead(state, _s.state_dir(), step)), result in ("done", "skipped")
+    auto, ok = wait and (_s.dlf.autoapprove(_s.ME, state, pending, step, cfg, result, why)), result in ("done", "skipped")
     if ok or auto:
         stamp, refusal, ask, skipped = _s.guards.check_record(state, step, text, cfg, result)
         for line in skipped:
@@ -49,7 +49,7 @@ def cmd_record(args):
     if ok or auto:
         _s.fit.keep(_s.ME, state, step, text)
     if auto:
-        took = "; ".join(pending) or why or "the step's pending gate"
+        took = _s.dlf.safe(_s.root(), "; ".join(pending) or why or "the step's pending gate")
         state["flow"][step] = "done: auto-approved: " + took[:200] + stamp
         state["step"] = _s.role.after(step)
         state["note"] = {"text": "auto-approved at %s: %s" % (step, took[:240]), "at": _s.now()}
@@ -60,7 +60,7 @@ def cmd_record(args):
         return 0
     if wait:
         state["flow"][step] = "pending"
-        ask = "%s left this for you: %s" % (step, "; ".join(pending) or why or "see its reply")
+        ask = _s.dlf.held_ask(_s.root(), step, pending, why)
         _s.guards.hold(state, ask[:600])
         _s.save(state, "%s pending: %s" % (step, ask[:200]))
         print("WAITING %s: %s" % (slug, ask))
@@ -150,16 +150,7 @@ def cmd_pr(args):
 
 
 def round_stop(g, state, what):
-    limit, count = g.config().get("max_merge_rounds"), state.get("merge_rounds", 0) + 1
-    limit = limit if isinstance(limit, int) and not isinstance(limit, bool) and limit > 0 else 8
-    if what not in ("merged", "conflict"):
-        return
-    over = count > limit
-    state["merge_rounds"] = 0 if over else count
-    ask = "merge round %d would pass max_merge_rounds (%d). Fix: land it when main is quiet or raise it, then goal.py answer %s (MERGE_ROUNDS)" % (count, limit, state["slug"])
-    over and _s.guards.hold(state, ask)
-    g.save(state, ask if over else None)
-    over and g.no(ask)
+    return _s.dlf.round_stop(g, state, what)
 
 
 import goal as _s  # noqa: E402

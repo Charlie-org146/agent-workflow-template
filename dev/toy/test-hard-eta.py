@@ -29,6 +29,9 @@ import auto  # noqa: E402
 import controls  # noqa: E402
 import proctree  # noqa: E402
 import rules  # noqa: E402
+# DLF-1.5: these cases pin today's stop, which is what a scope with deliver-first off gets
+import dlf as _dlf  # noqa: E402
+_dlf.setting = lambda top, slug: (False, "release")
 
 failed = []
 

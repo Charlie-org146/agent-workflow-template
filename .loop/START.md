@@ -79,6 +79,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `codex_profile` | 8 entries in config.json |  |
 | `criteria` | true | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). |
 | `criteria_max` | 24 | Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it. |
+| `deliver_first` | none | Deliver first, default on: {goal: {ID: false}, task: {...}, release: {...}} turns it off for a scope (most specific wins); set only with an owner reference: dlf.py set deliver_first off --scope S --id ID --owner-record R. |
 | `digest_mail` | cloudflare | How the round's digest is mailed: cloudflare, smtp or off; keys live only in Actions secrets. |
 | `digest_owner` | none | Who the digest comment mentions; empty is the repo owner (an organisation: none). |
 | `eta_margin_percent` | 25 | Percent added to a goal's estimate for its hard ETA, 0 to 300. |

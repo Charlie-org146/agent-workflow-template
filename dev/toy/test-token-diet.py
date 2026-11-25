@@ -20,6 +20,9 @@ import fit  # noqa: E402
 import govern_hook  # noqa: E402
 import proctree as tokens  # noqa: E402  (the token functions live in proctree.py)
 import reply_hook  # noqa: E402
+# DLF-1.5: these cases pin today's stop, which is what a scope with deliver-first off gets
+import dlf as _dlf  # noqa: E402
+_dlf.setting = lambda top, slug: (False, "release")
 
 optokens = types.SimpleNamespace(append=tokens.op_append, needs_layout=tokens.needs_layout, common=tokens.common,
                                  remember=govern_hook.remember, decide=govern_hook.quiet_decide)

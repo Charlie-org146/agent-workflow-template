@@ -79,4 +79,10 @@ None
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| - | requirement | DLF-1 | no passing test | not enforced |
+| [dlf-lines-not-waits](Tests#t-dlf-lines-not-waits) | requirement | DLF-1 | Given three red-team breaks, a plan past its review cap, an open design choice and a budget past the cap, when the goal runs, then each becomes one line on the release's one issue with its settle words and the goal goes on (DLF-1.1). | PASS 2026-11-25 |
+| [dlf-budget-raises](Tests#t-dlf-budget-raises) | requirement | DLF-1 | Given a goal at 240 of 240 minutes with 100 left, when its budget is checked, then it rises to 340 without stopping, the log shows both figures, and past 2x the estimate it stays at the cap and files one line (DLF-1.2). | PASS 2026-11-25 |
+| [dlf-only-safety-waits](Tests#t-dlf-only-safety-waits) | requirement | DLF-1 | Given a break that loosens a test or touches a safety subject, when the stop table classifies it, then the goal waits and the board names the class, while every other stop becomes a line (DLF-1.3). | PASS 2026-11-25 |
+| [dlf-scan-every-path](Tests#t-dlf-scan-every-path) | requirement | DLF-1 | Given a planted private name in a line, an event, the cap line, a patch goal or the release issue body, when deliver-first writes it, then nothing is written outside the run record (DLF-1.3). | PASS 2026-11-25 |
+| [dlf-cut-refuses-open](Tests#t-dlf-cut-refuses-open) | requirement | DLF-1 | Given three goals with five open lines, when the release is cut, then it is refused with one list of five plus one accept-all line, and only the owner's comment accepts (DLF-1.4). | PASS 2026-11-25 |
+| [dlf-setting-off-waits](Tests#t-dlf-setting-off-waits) | requirement | DLF-1 | Given deliver-first off for one goal, when its first break arrives, then it waits for the owner and the other goals' breaks do not, and the setting changes only with an owner reference (DLF-1.5). | PASS 2026-11-25 |
+| [dlf-merge-on-green](Tests#t-dlf-merge-on-green) | requirement | DLF-1 | Given a goal with five open deliver-first lines on its release issue, when it is merged, then it merges on green and ends done and released; a goal that failed for another reason is still refused (DLF-1.1). | PASS 2026-11-25 |
