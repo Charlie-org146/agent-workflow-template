@@ -23,7 +23,7 @@ SECRET = re.compile(r"(gh[pousr]_[A-Za-z0-9]{16,}|sk-[A-Za-z0-9_-]{16,}|AKIA[0-9
                     r"(?i:(password|passwd|secret|token|api[_-]?key)\s*[:=]\s*\S{6,}))")
 def outside(root, *texts, strict=True):
     """None when the texts may leave this machine, else the reason (a class, never the text). strict: only a clean private-name scan
-    passes (an issue, a printed stored word); a display path (board, show) also passes when no name list exists to match."""
+    passes (an issue, a printed stored word); a display path (board, show) follows the display rule."""
     for text in texts:
         if SECRET.search(text or ""):
             return "secret-shaped value (class: credential)"

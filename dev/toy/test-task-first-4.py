@@ -2,11 +2,10 @@
 # windows: ok
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-release/scripts/merge.py skills/workflow-delivery/scripts/private.py
 """TSK-1.4 (task first): a red main does not stop task merges by themselves. The real gate here is regression.py's run over the rows of a
-pull request's own head: a row red on main and listed in .loop/regression-known.tsv counts as known and the run passes (exit 0), so a
+pull request's own head: a row already known red on main counts as known and the run passes (exit 0), so a
 task goal's green pull request goes on; a row red on the head and not known counts failed (exit 1), so a red that reaches the pull
 request's own run still stops it; take the known list away (the mutation) and the same run fails. Nothing in the gate is replaced
-and no gate file is edited. The safety clause: this toy reports plainly that NO merge-side safety boundary exists (merge.py and the
-gate files have no check that refuses a pull request for touching a safety class), so that clause of TSK-1.4 is UNPROVEN.
+and no gate file is edited. The safety clause: TSK-1.4's safety clause is UNPROVEN here; it is proven when the merge-side boundary is built (v110-safety-class's function, called by v110-quick-3).
 Hermetic: temp repos, an empty temp HOME, no network."""
 import os
 import re
@@ -71,11 +70,11 @@ open(os.path.join(gone, ".loop", "regression-known.tsv"), "w").write("some-other
 code, line = gate(gone)
 check(code == 1, "a known list that names another row does not excuse this one (the allowance is per row): %s" % line)
 
-# the safety clause: no merge-side boundary exists, said plainly
+# the safety clause: reported as unproven here
 text = "".join(open(os.path.join(skills, "workflow-release", "scripts", name), encoding="utf-8").read().lower() for name in ("merge.py", "autorelease.py"))
 text += open(os.path.join(skills, "workflow-delivery", "scripts", "private.py"), encoding="utf-8").read().lower()
 boundary = re.search(r"safety[ _-]?class|safety[ _-]?boundary|risky[ _-]?path", text)
-check(not boundary, "UNPROVEN: no merge-side safety boundary exists (merge.py, autorelease.py and private.py name no safety class or risky path), so TSK-1.4's clause that a safety class still stops a merge cannot be tested here; when a boundary is added this case must become a real one")
+check(not boundary, "TSK-1.4's safety clause is UNPROVEN here; it is proven when the merge-side boundary is built (v110-safety-class's function, called by v110-quick-3)")
 
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)
