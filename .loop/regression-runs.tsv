@@ -199,7 +199,7 @@ grd2-limits-in-settings	PASS	2026-11-25
 grd2-pr-lane-holds-merge-slot	PASS	2026-11-15	
 grd2-time-stop	PASS	2026-11-25	
 grd4-budget	PASS	2026-11-25	
-grd4-touches	PASS	2026-11-24	
+grd4-touches	PASS	2026-11-25	
 grd4-worker-commit-main-refused	PASS	2026-11-15	
 grd6-head-moved	PASS	2026-11-22	
 grd7-round-cost	PASS	2026-11-25	

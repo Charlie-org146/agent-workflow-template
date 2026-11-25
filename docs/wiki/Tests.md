@@ -287,7 +287,7 @@
 | <a id="t-mon7-govern-blocks"></a>mon7-govern-blocks | requirement | GRD-4 | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
 | <a id="t-pull-ff-only-passes"></a>pull-ff-only-passes | defect | [#495](https://github.com/jcl2018/agent-workflow-template/issues/495) closed (2026-11-11) | PASS | 2026-11-24 | [CI 2026-11-24](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-24) | 2026-11-10 |
 | <a id="t-machine-no-prompt-mode"></a>machine-no-prompt-mode | requirement | GRD-4 | PASS | 2026-11-24 | [CI 2026-11-24](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-24) | 2026-11-12 |
-| <a id="t-grd4-touches"></a>grd4-touches | requirement | GRD-4 | PASS | 2026-11-24 | [CI 2026-11-24](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-24) | 2026-11-12 |
+| <a id="t-grd4-touches"></a>grd4-touches | requirement | GRD-4 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-12 |
 | <a id="t-grd4-budget"></a>grd4-budget | requirement | GRD-4 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-12 |
 | <a id="t-grd4-govern"></a>grd4-govern | requirement | GRD-4 | not run | - | local | 2026-11-12 |
 | <a id="t-grd5-regression-dry"></a>grd5-regression-dry | requirement | GRD-5 | not run | - | local | 2026-11-12 |
