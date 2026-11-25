@@ -211,7 +211,7 @@ def check(root):
         extra_ok = all(isinstance(n, (ast.ImportFrom, ast.Expr)) and ("sys.modules" in ast.unparse(n) or isinstance(n, ast.ImportFrom)) for n in extra)
         say(extra_ok and [d for d in have if d in rest] == rest, "%s: the rest of the script is the base's, plus only the registration and the re-export" % stem)
         body = [n for n in mtree.body if not (isinstance(n, ast.FunctionDef) and n.name in move["functions"])]
-        okh = all(isinstance(n, (ast.Import, ast.Expr)) and (not isinstance(n, ast.Expr) or isinstance(n.value, ast.Constant) or ast.unparse(n) == GUARD) for n in body[:-1]) and ast.unparse(body[-1]) == "import %s as _s" % stem
+        okh = all(isinstance(n, (ast.Import, ast.Expr)) and (not isinstance(n, ast.Expr) or isinstance(n.value, ast.Constant) or ast.dump(n.value) == ast.dump(ast.parse(GUARD).body[0].value)) for n in body[:-1]) and ast.unparse(body[-1]) == "import %s as _s" % stem
         say(okh, "%s: the header of %s holds only the docstring, imports, the guard line and the _s import" % (move["module"], move["module"]))
         header = [n for n in mtree.body if not isinstance(n, ast.FunctionDef)]
         want = sorted(strings(btree))
