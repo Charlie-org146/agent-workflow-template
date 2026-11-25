@@ -71,4 +71,5 @@ None
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
+| [task-first](Tests#t-task-first) | requirement | TSK-1 | Given a queue with task goals and fixes, a workaround record and an owner line, when the schedule is shown and the guards are tried, then task goals come before fixes, a fix is ahead only on a named reason, an activated workaround frees a task goal, every GitHub write is a preview, a worker is refused the owner's verbs, and an unreadable input is loud and exits 3. | not run |
 | - | requirement | TSK-1 | no passing test | not enforced |

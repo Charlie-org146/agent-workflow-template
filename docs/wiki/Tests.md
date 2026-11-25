@@ -549,6 +549,12 @@
 | <a id="t-agent-routing"></a>agent-routing | workflow | SET-10: One versioned package; every agent runs one loop | not run | - | local | 2026-11-20 |
 | <a id="t-goal-pr-regenerates-start"></a>goal-pr-regenerates-start | requirement | SET-2 | not run | - | local | 2026-11-21 |
 
+## Task first
+
+| Test | Kind | Guards | Result | Date | Run | Seen failing |
+|---|---|---|---|---|---|---|
+| <a id="t-task-first"></a>task-first | requirement | TSK-1 | not run | - | local | 2026-11-25 |
+
 ## Other
 
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
