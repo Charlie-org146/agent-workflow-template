@@ -310,7 +310,7 @@ def finish(result):
         if not result["active"] and not held:
             g["marks"] = []
     bad = result["incomplete"]
-    banner = ["schedule incomplete: %s (%s); dispatch: %s; repair: %s" % (i, clean(c, 80), "last-good copy" if "last-good" in c else "conservative", REPAIR[i]) for i, c in bad[:1]]
+    banner = ["schedule incomplete: %s (%s); dispatch: %s; repair: %s" % (i, clean(c, 80), "last-good copy" if "using its last-good" in c else "conservative", REPAIR[i]) for i, c in bad[:1]]
     if result["active"] or held or result["notes"] or banner:  # everything the boards print passes the name scan once
         why = outside(result["root"], "\n".join([c for g in result["goals"] for c in g["marks"] + g["depends"]] + result["notes"] + banner + [g["slug"] for g in result["goals"]]), strict=False)
         if why:
