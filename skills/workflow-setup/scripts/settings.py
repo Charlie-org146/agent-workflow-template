@@ -37,7 +37,6 @@ TABLE = [
     ("smtp_port", REPO, 465, "465 (TLS) or 587 (STARTTLS) for digest_mail smtp."),
     ("review_depth", REPO, "full", "full runs the whole plan and review pipeline and refuses a condensed one; condensed allows a shorter run."),
     ("criteria", REPO, True, "true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests)."),
-    ("criteria_max", REPO, 10, "Most criteria a wiki page may hold, 1 to 50; docs check and health fail a page over it."),
     ("wiki_dir", REPO, "docs/wiki", "The folder of wiki pages."),
     ("risky_paths", REPO, RISKY, "Regexes for paths whose goals need extra care."),
     ("step_limit", REPO, 0, "Seconds a flow step may run when the flow file sets none; 0 is built-in."),
@@ -55,7 +54,6 @@ TABLE = [
     ("min_free_memory_gb", REPO, 3, "Free GB below which no lane or goal starts; 0 off."),
     ("eta_margin_percent", REPO, 25, "Percent added to a goal's estimate for its hard ETA, 0 to 300."),
     ("token_budget", REPO, 0, "Tokens a goal may spend before no new step starts; 0 means none."),
-    ("max_regression_rows", REPO, 1200, "Most rows the regression table may hold; qa refuses a goal over it."),
     ("max_suite_seconds", REPO, 1900, "Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal over it."),
     ("test_budget_minutes", REPO, 15, "Minutes one in-loop test run may take, 15 or more; later rows wait for the full suite."),
     ("prep_budget_minutes", REPO, 15, "Minutes a lane may spend before its first test row, 15 or more; past it, it stops."),
@@ -75,8 +73,6 @@ TABLE = [
     ("full_auto", REPO, False, "Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait."),
     ("pool_size", REPO, 20, "Idle worker sessions the pool keeps; low, the operation session asks you for more."),
     ("silent_minutes", REPO, 30, "Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides."),
-    ("health_script_bytes", REPO, 20480, "Script size health fails, in bytes (warns at 90%)."),
-    ("health_skill_lines", REPO, 150, "SKILL.md line cap health fails."),
     ("feature_labels", REPO, False, "true tags each health and regression issue feature:<Page>, creating the label."),
     ("workers", REPO, "", "app: no background process; a goal no session took waits for sessions.py bind. auto: a background agent when no session can start."),
     ("command", PRIVATE, ["claude", "-p"], "Flow file: the agent command that runs each flow step unattended."),
@@ -182,7 +178,7 @@ def check_depth(held, path):
 
 def repo_help(held):
     found = held.get("_help") if isinstance(held.get("_help"), dict) else {}
-    return dict({k: t for k, _, _, t in TABLE if k in ("review_depth", "criteria_max")}, **found)
+    return dict({k: t for k, _, _, t in TABLE if k in ("review_depth",)}, **found)
 
 
 def private_path():
@@ -273,9 +269,6 @@ def show(repo, as_json):
 
 def fill_repo(path):
     held = load(path)
-    most = held.get("criteria_max", 10)
-    if isinstance(most, bool) or not isinstance(most, int) or not 1 <= most <= 50:
-        sys.exit("REFUSED: criteria_max is %r in %s. Fix: a whole number from 1 to 50 (default 10)." % (most, path))
     check_depth(held, path)
     source = held.get("milestones_source", "")
     if source and not re.fullmatch(r"url:\S+|mcp:(?!notion:)\w[\w-]*:\S+|mcp:notion:[0-9a-f]{32}", str(source)):

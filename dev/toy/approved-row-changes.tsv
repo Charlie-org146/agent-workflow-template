@@ -88,3 +88,5 @@ skill-refusals-in-references	o988 (owner o984: the size limits end), v110-no-siz
 skill-workflow-in-references	o988 (owner o984: the size limits end), v110-no-size-cap-a, plan-wrong (the step-1 sweep missed the literal 150)	drops only the 150-line SKILL.md clause; every other clause stays
 auto-owner-words-wait	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: its question fixture names a non-size key now; command unchanged
 full-auto-all-answers	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: its question fixture names a non-size key now; command unchanged
+settings-reference	o988 (owner o984: the size limits end), v110-no-size-cap-a, gate d5a	the criteria_max clause becomes 'none of the four retired keys is listed', and the d5a case (a config carrying them loads) is added; the other clauses stay
+repo-rules-run	o988 (owner o984: the size limits end), v110-no-size-cap-a, gate d13 d23 d29 d32	adds the retired case (item 8); its four cases stay

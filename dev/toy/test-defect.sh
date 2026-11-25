@@ -251,8 +251,8 @@ workflow-delivery|With `pr_bumps_version` on, it moves the last number of the ve
 workflow-delivery|branch already changed it. It retries a failed push twice, then prints git's full error.
 workflow-delivery|- `"auto_approve": true`: `record` approves what a step leaves for the owner, logs it as auto-approved, and goes on.
 workflow-delivery|merges the pull request, bumps the version once and publishes a GitHub release with a CHANGELOG entry.
-workflow-docs|2. `## Problem`: who it's for and what it solves, at most `problem_lines` lines;
-workflow-docs|5. `## Non-goals`: at least one line; `## Success metrics`: one to `metrics_lines` measurable lines;
+workflow-docs|2. `## Problem`: who it's for and what it solves, at least one line;
+workflow-docs|5. `## Non-goals`: at least one line; `## Success metrics`: at least one measurable line;
 workflow-docs|   when no row passes; then the workflow tests, then the defect tests, in the same table.
 workflow-docs|`NONGOALS`, `METRICS`, `CRITERION`, `CAP`, `SCRIPT`, `USAGE`, `TESTS` (run `render`), `LOCKED`, `CHANGED`.
 workflow-docs|the retired Usage print, still written and never reported). After it, a change to any of them is `LOCKED` (check, audit and release fail).
@@ -271,7 +271,7 @@ KEPT
     exit 0;;
   size-139) # issue 139: criteria.py's page rules moved unchanged into deployments.py
     python3 -B "$here/dev/toy/split-check.py" "$here" skills/workflow-docs/scripts/criteria.py deployments \
-      CRITERIA_MAX_DEFAULT,SHEET,criteria_max,rules || exit 1
+      SHEET,rules || exit 1
     exit 0;;
   size-140) # issue 140: docs.py's page map moved unchanged into counting.py
     python3 -B "$here/dev/toy/split-check.py" "$here" skills/workflow-docs/scripts/docs.py counting map_path,read_map,write_map || exit 1

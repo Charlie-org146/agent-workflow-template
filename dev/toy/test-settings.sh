@@ -20,14 +20,14 @@ export HOME="$T/home"; mkdir -p "$HOME"; unset LOOP_FLOW LOOP_HEALTH
 export USERPROFILE="$HOME"
 ref=$($SET reference)
 missing=""
-for k in parallel cadence auto_approve auto_merge pr_bumps_version version_file routines regression_cron step_limit token_budget mend max_tries resume_on_limit base wiki_dir risky_paths criteria_max command allowed_tools model steps overrides rules repos; do
+for k in parallel cadence auto_approve auto_merge pr_bumps_version version_file routines regression_cron step_limit token_budget mend max_tries resume_on_limit base wiki_dir risky_paths command allowed_tools model steps overrides rules repos; do
   grep -q "^| \`$k\` | .* | .[A-Za-z0-9]" <<<"$ref" || missing="$missing $k"
 done
 check "the reference lists every repo and private setting with a default and a line" '[ -z "$missing" ]'
 saved=$(sed -n '/^# Settings reference$/,$p' "$here/skills/loop-files.md")
 check "the saved reference is the generated one" '[ "$ref" = "$saved" ]'
 check "parallel 0 means unlimited and is the default" 'grep -q "^| .parallel. | .0. | Workers running at once; 0 means unlimited" <<<"$ref"'
-check "criteria_max defaults to 10 with a one-line explanation" 'grep -q "^| .criteria_max. | .10. | Most criteria a wiki page may hold" <<<"$ref"'
+check "the reference lists none of the four retired size keys (o988)" '! grep -qE "^\| .(criteria_max|max_regression_rows|health_script_bytes|health_skill_lines). \|" <<<"$ref"'
 check "this repo commits parallel 0" '[ "$(python3 -c "import json;print(json.load(open(\"$here/.loop/config.json\"))[\"parallel\"])")" = 0 ]'
 
 cd "$T/repo" || exit 1
@@ -40,17 +40,18 @@ c = json.load(open(".loop/config.json"))
 print(all(k in c for k, *_ in settings.keys("repo")) and c["parallel"] == 0)
 PY
 )
-check "setup writes criteria_max 10 to the config" '[ "$(python3 -c "import json;print(json.load(open(\".loop/config.json\"))[\"criteria_max\"])")" = 10 ]'
+check "setup writes none of the four retired size keys" '[ "$(python3 -c "import json;c=json.load(open(\".loop/config.json\"));print(any(k in c for k in (\"criteria_max\",\"max_regression_rows\",\"health_script_bytes\",\"health_skill_lines\")))")" = False ]'
 check "setup writes every repo setting, parallel 0" '[ "$all" = True ]'
 python3 - <<'PY'
 import json
-c = json.load(open(".loop/config.json")); c["criteria_max"] = "many"; json.dump(c, open(".loop/config.json", "w"))
+c = json.load(open(".loop/config.json")); c.update(criteria_max="many", max_regression_rows=3, health_script_bytes=2000, health_skill_lines=10)
+json.dump(c, open(".loop/config.json", "w"))
 PY
-check "fill-repo refuses a bad criteria_max and names the fix" 'python3 "$here/skills/workflow-setup/scripts/settings.py" fill-repo --repo . 2>&1 | grep -q "REFUSED: criteria_max is .many. in .* Fix"'
-python3 - <<'PY'
-import json
-c = json.load(open(".loop/config.json")); c["criteria_max"] = 6; json.dump(c, open(".loop/config.json", "w"))
-PY
+# d5a: a config still carrying the four retired keys (o988) loads; setup, health and docs ignore them with no finding and no refusal
+fr=$(python3 "$here/skills/workflow-setup/scripts/settings.py" fill-repo --repo . 2>&1); frc=$?
+hc=$(python3 "$here/skills/workflow-health/scripts/health.py" check 2>&1); hrc=$?
+dc=$(python3 "$here/skills/workflow-docs/scripts/docs.py" check 2>&1)
+check "a config carrying the four retired keys loads, and setup, health and docs run with no error" '[ $frc = 0 ] && [ $hrc != 2 ] && ! grep -qE "REFUSED|Traceback|criteria_max|max_regression_rows|health_script_bytes|health_skill_lines" <<<"$fr$hc$dc"'
 check "setup writes the private half outside the repo, owner only" '[ -f "$HOME/.workflow-loop/flow.json" ] && [ "$(stat -f %Lp "$HOME/.workflow-loop/flow.json" 2>/dev/null || stat -c %a "$HOME/.workflow-loop/flow.json")" = 600 ] && grep -q "_help" "$HOME/.workflow-loop/flow.json" && [ -f "$HOME/.workflow-loop/health.json" ] && [ -f "$HOME/.workflow-loop/repos" ] && ! git ls-files | grep -q flow.json'
 python3 - <<'PY'
 import json, os

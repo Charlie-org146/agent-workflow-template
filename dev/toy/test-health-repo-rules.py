@@ -9,7 +9,7 @@ Each case builds a throwaway git repo, writes the repo's own rules and runs the 
 run (rows land in their group with their feature), control (a rule's break makes Controls see it fail), refuse (a rule with
 no break exits 2), off (a default turned off shows its reason, one without a reason stays on and is UNREAD), setup (fill-repo
 writes the file once and keeps an edited one). usage: test-health-repo-rules.py [CASE ...] [--break]
-CASE is one of run, control, refuse, off or setup (default all). --break leaves the rules file out of every repo, to see the rows red."""
+CASE is one of run, control, refuse, off, retired or setup (default all). --break leaves the rules file out of every repo, to see the rows red."""
 import json
 import os
 import subprocess
@@ -133,6 +133,23 @@ with tempfile.TemporaryDirectory() as tmp:
         bare = find(found, "nightly")
         check(any(r["state"] == "UNREAD" and r["subject"] == "nightly" and r["family"] == "repo" for r in found) and bool(bare) and bare["family"] == "freshness",
               "a default turned off with no reason stays on and is reported UNREAD")
+    if run_it('retired'):
+        # retired (principle 5, o988): an off entry naming a retired rule is INFO, never UNREAD; unknown and malformed stay UNREAD
+        g = os.path.join(tmp, "g")
+        os.makedirs(g)
+        repo(g, [], off={"scripts": "old", "rows-cap": "", "nosuch": "x", "hooks": 5})
+        found, _ = rows(g, "security,size,repo")
+        ret = [r for r in found if r["subject"] in ("scripts", "rows-cap")]
+        check(len(ret) == 2 and all(r["state"] == "INFO" and "retired rule; nothing to turn off; the entry can go" in r["detail"] for r in ret),
+              "an off entry naming a retired rule gives one INFO row, not UNREAD, with or without a reason")
+        check(any(r["state"] == "UNREAD" and r["subject"] == "nosuch" for r in found) and any(r["state"] == "UNREAD" and r["subject"] == "hooks" for r in found),
+              "an unknown or malformed off entry is still UNREAD")
+        done = sh([py, os.path.join(root, "skills", "workflow-health", "scripts", "controls.py"), "run", "skill-lines"], root)
+        check(done.returncode == 0 and done.stdout.count("\n") == 1 and "retired by principle 5" in done.stdout,
+              "controls.py run on a retired rule prints one line and exits 0")
+        done = sh([py, health, "check", "--group", "size"], g)
+        check(done.returncode != 2 and "size: no rules (retired by principle 5)" in done.stdout and "PASS size" not in done.stdout,
+              "--group size runs: the empty group says why and counts no passed check")
     if run_it('setup'):
         # setup: fill-repo writes the file once and keeps an edited one
         f = os.path.join(tmp, "f")
@@ -146,8 +163,8 @@ with tempfile.TemporaryDirectory() as tmp:
         sh([py, settings, "fill-repo", "--repo", f], f)
         check(first.get("rules") == [] and first.get("off") == {} and "_comment" in first and json.load(open(target))["off"] == {"hooks": "kept"},
               "setup writes an empty commented .loop/health-rules.json once and keeps an edited one")
-        check(json.load(open(os.path.join(f, ".loop", "config.json"))).get("health_script_bytes") == 20480,
-              "setup fills the health_script_bytes and health_skill_lines settings with their defaults")
+        held = json.load(open(os.path.join(f, ".loop", "config.json")))
+        check(not {"health_script_bytes", "health_skill_lines"} & set(held), "setup writes neither retired size setting (o988)")
 
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)
