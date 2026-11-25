@@ -86,7 +86,7 @@ Adoption: 0% (the average of this principle's rows).
 
 ## 5. Small
 
-Code, tests and pages stay inside one table of size limits, and growth is paid for, never hidden by reformatting.
+Nothing in our rules caps the size of a script, page or test table; the marketplace's own package rules still apply, and a change is never hidden by reformatting.
 
 | Requirement | Summary | Follows | Feature | Adoption | Confidence |
 |---|---|---|---|---|---|
