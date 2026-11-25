@@ -96,7 +96,7 @@ def add(root, args, paths):
     need_complete(root, "workaround add")
     applies = [x for x in args.applies.split(",") if x]
     rec = {"key": args.key, "fix": args.fix, "applies": applies, "kind": args.kind, "words": args.words, "feature": args.feature, "found": args.found,
-           "goal": applies[0] if applies else "", "state": "pending", "attempts": 0, "issue": 0, "uses": {}, "review": datetime.date.today().isoformat(), "owner": args.owner_record}
+           "goal": applies[0] if applies else "", "safe": any(g["slug"] == args.fix and g["safe"] for g in sl.load(root)["goals"]), "state": "pending", "attempts": 0, "issue": 0, "uses": {}, "review": datetime.date.today().isoformat(), "owner": args.owner_record}
     if not (args.kind and applies and all(sl.NAME.match(x) for x in applies)):
         raise ss.Refused("SCHED-E03", "add needs --kind, --applies, --fix, --feature and --found", "see `schedule.py --help`")
     ss.screened(root, rec)  # the secret screen and the name scan, before anything is recorded
@@ -133,8 +133,10 @@ def workaround(root, args):
     with ss.Lock(paths):
         recs = records(paths)
         rec = find(recs, args.key)
+        if verb == "fail" and args.goal not in rec["applies"]:
+            raise ss.Refused("SCHED-E03", "%s does not apply to %s" % (sl.clean(rec["key"], 30), sl.clean(args.goal, 30)), "see `workaround list`")
         if verb != "use":
-            ss.guard_worker("workaround " + verb, [args.goal] if verb == "fail" and args.goal in rec["applies"] else [] if verb == "fail" else rec["applies"])
+            ss.guard_worker("workaround " + verb, [args.goal] if verb == "fail" else rec["applies"])
         if verb == "reconcile":
             found = ss.lookup(root, rec["key"], rec["fix"])
             if found is None:
@@ -149,7 +151,7 @@ def workaround(root, args):
             print("reconciled %s: %s" % (rec["key"], "issue #%d" % found if found else "none found"))
             return 0
         if verb == "use":
-            if any(g["slug"] == rec["fix"] and g["safe"] for g in sl.load(root)["goals"]):
+            if rec.get("safe") or any(g["slug"] == rec["fix"] and g["safe"] for g in sl.load(root)["goals"]):
                 raise ss.Refused("SCHED-E03", "%s is a safety fix: it is never waived" % sl.clean(rec["fix"], 40), "leave the wait")
             if args.goal not in rec["applies"] or rec["kind"] != "tool" or rec["state"] != "done":
                 raise ss.Refused("SCHED-E03", "%s does not apply to %s (it must be a done `tool` record for a listed goal)" % (sl.clean(rec["key"], 30), sl.clean(args.goal, 30)), "see `workaround list`")
@@ -195,7 +197,10 @@ def main(argv):
     args = ap.parse_args(argv)
     try:
         root = top()
-        return show(root) if args.cmd == "show" else order(root, args) if args.cmd == "order" else workaround(root, args)
+        code = show(root) if args.cmd == "show" else order(root, args) if args.cmd == "order" else workaround(root, args)
+        late = sl.load(root)["incomplete"] if code == 0 and args.cmd != "show" else []
+        late and print("%s: %s unreadable; the command ran, repair: %s" % (sl.CODES[late[0][0]], late[0][0], sl.REPAIR[late[0][0]]), file=sys.stderr)
+        return 3 if late else code
     except ss.Refused as err:
         print(err.line(), file=sys.stderr)
         return 3 if err.code in ("SCHED-E10", "SCHED-E11", "SCHED-E12", "SCHED-E13", "SCHED-E14") else 2

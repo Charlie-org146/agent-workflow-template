@@ -46,7 +46,7 @@ def guard_worker(verb, goals=None):
     if goals is None:
         raise Refused("SCHED-E01", "a worker may not run `%s`: it changes what the operation schedules" % verb, "run it from the operation session")
     me = own_goal()
-    if not me or any(x != me for x in goals):
+    if not me or not goals or any(x != me for x in goals):
         raise Refused("SCHED-E02", "`%s` reaches only a record that is about this worker's own goal alone" % verb, "ask the operation session to run it")
 
 
@@ -67,10 +67,15 @@ class Lock:
                 return self
             except FileExistsError:
                 if self.stale():
+                    old = "%s.%s.old" % (self.path, self.token)
                     try:
-                        os.rename(self.path, "%s.%s.old" % (self.path, self.token))
-                        os.unlink("%s.%s.old" % (self.path, self.token))
-                        print("note: broke a stale schedule lock (its owner is gone)", file=sys.stderr)
+                        os.rename(self.path, old)
+                        if os.path.getmtime(old) < time.time() - 60 or not open(old).read().strip():
+                            os.unlink(old)
+                            print("note: broke a stale schedule lock (its owner is gone)", file=sys.stderr)
+                        else:  # we renamed a live lock another waiter had just made: put it back
+                            os.link(old, self.path)
+                            os.unlink(old)
                     except OSError:
                         pass
                     continue
@@ -137,7 +142,7 @@ def lookup(root, key, fix):
                              capture_output=True, text=True, timeout=60)
         if out.returncode:
             return None
-        hits = [i["number"] for i in json.loads(out.stdout or "[]") if str(i.get("title", "")).startswith(title(key, fix))]
+        hits = [i["number"] for i in json.loads(out.stdout or "[]") if str(i.get("title", "")).startswith(title(key, fix)[:90])]
     except (OSError, subprocess.SubprocessError, ValueError):
         return None
     return hits[0] if hits else 0

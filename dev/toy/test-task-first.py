@@ -148,7 +148,7 @@ os.unlink(p["good"])
 code, out, err = run(top, "show")
 check(code == 3 and out.startswith("schedule incomplete: order (") and "repair: schedule.py order --clear" in out and "SCHED-E12" in err, "no usable copy: one loud banner naming the state and the repair, SCHED-E12 on stderr, exit 3")
 check(all("held: " in x for x in rows(out)) and not sl.eligible(sl.load(top)["goals"][0], sl.load(top))[0], "every start is held with the reason and eligible() says no")
-with mock.patch.object(sl, "read_order", lambda p_: ("", [], "", None)):
+with mock.patch.object(sl, "read_order", lambda p_: ("", [], "", None, None)):
     silent = run(top, "show")
 red(silent[0] == 3 or "held: " in silent[1], "task 3 guard removed: the torn order file is read as nothing and the goals sit idle with no line")
 code, out, err = run(top, "order", "--clear")

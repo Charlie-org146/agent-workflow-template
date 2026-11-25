@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
 
 DELIVERY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts")
-SECRET = re.compile(r"(gh[pousr]_[A-Za-z0-9]{16,}|sk-[A-Za-z0-9_-]{16,}|AKIA[0-9A-Z]{12,}|xox[abp]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*KEY|"
+SECRET = re.compile(r"(gh[pousr]_[A-Za-z0-9]{16,}|sk-[A-Za-z0-9_-]{16,}|AKIA[0-9A-Z]{12,}|xox[abp]-[A-Za-z0-9-]{10,}|github_pat_[A-Za-z0-9_]{20,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.|(?i:bearer\s+[A-Za-z0-9._~+/-]{16,})|-----BEGIN [A-Z ]*KEY|"
                     r"(?i:(password|passwd|secret|token|api[_-]?key)\s*[:=]\s*\S{6,}))")
 NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,59}$")
 SAFETY = ("deletion", "money", "security", "private-data", "steward-merge", "leak", "loosened-test")
@@ -90,7 +90,7 @@ def read_json_lines(path):
             return [], "torn at line %d" % number
         ok = isinstance(item, dict) and all(isinstance(item.get(k), str) and NAME.match(item[k]) for k in ("key", "fix")) and item.get("kind") in ("tool", "dependency") \
             and isinstance(item.get("applies"), list) and all(isinstance(x, str) for x in item["applies"]) and isinstance(item.get("uses"), dict) \
-            and item.get("state") in ("pending", "done", "failed", "closed") and isinstance(item.get("words", ""), str) and isinstance(item.get("goal", ""), str)
+            and item.get("state") in ("pending", "done", "failed", "closed") and isinstance(item.get("words"), str) and isinstance(item.get("goal"), str) and all(isinstance(item.get(k), str) and NAME.match(item[k]) for k in ("feature", "found"))
         if not ok:
             return [], "bad record at line %d" % number
         out.append(item)
@@ -127,7 +127,7 @@ def briefs(root, bad):
             continue
         kv = {m[1].lower(): m[2].strip() for m in re.finditer(r"^- +(release|goals|replaced by|priority) *: *(.*)$", text, re.M | re.I)}
         prio = kv.get("priority", "")
-        if prio and not prio.isdigit():
+        if prio and not re.fullmatch(r"[0-9]{1,6}", prio):
             bad.append(("brief", "%s has a bad Priority line" % os.path.basename(f)))
             prio = ""
         name = clean(text.split("\n")[0].lstrip("# "), 100) or os.path.basename(f)[:-3]
@@ -149,6 +149,8 @@ def selected(root, notes, bad):
         tags = set()
         bad.append(("release", "git tag --list could not run"))
     open_ = sorted(found - tags)
+    if any(i == "release" for i, _ in bad):
+        return None
     if len(open_) != 1:
         notes.append("release: none or several unpublished release briefs, so no release is selected")
     return open_[0] if len(open_) == 1 else None
@@ -255,12 +257,12 @@ def load(root, strict=False, policy=None, check=True):
     use = {(w["key"], g) for w in recs for g, v in w["uses"].items() if v == "active" and w["state"] == "done" and w["kind"] == "tool"}
     for w in recs:
         for goal in w["applies"]:
-            if (w["key"], goal) in use and goal in known and w["fix"] not in safe_fix:  # a safety dependency is never waived
+            if (w["key"], goal) in use and goal in known and w["fix"] not in safe_fix and not w.get("safe"):  # a safety dependency is never waived
                 result["waived"].setdefault(goal, set()).add(w["fix"])
-    block, idx = blocking(goals), {g["slug"]: i for i, g in enumerate(goals)}
-    task_slugs = {g["slug"] for g in tasks}
     for g in goals:  # an activated workaround waives the wait on its fix for that goal only
         g["depends"] = [d for d in g["depends"] if d not in result["waived"].get(g["slug"], ())]
+    block, idx = blocking(goals), {g["slug"]: i for i, g in enumerate(goals)}
+    task_slugs = {g["slug"] for g in tasks}
     for g in goals:
         if g["kind"] != "fix":
             continue
@@ -302,21 +304,22 @@ def load(root, strict=False, policy=None, check=True):
 def finish(result):
     held = result["held"]
     for g in result["goals"]:
-        g["hold"] = held
-        if held:
+        g["hold"] = "" if g.get("safe") else held  # a safety goal is never held by a torn order file
+        if g["hold"]:
             g["marks"] = g.get("marks", []) + ["held: " + held]
         if not result["active"] and not held:
             g["marks"] = []
-    if result["active"] or held or result["notes"]:  # what the boards print passes the name scan once
-        why = outside(result["root"], "\n".join([c for g in result["goals"] for c in g["marks"]] + result["notes"] + [g["slug"] for g in result["goals"]]), strict=False)
-        if why:
-            result["notes"] = ["output hidden: " + why]
-            for g in result["goals"]:
-                g["marks"] = ["hidden: " + why] if g["marks"] else []
-    for g in result["goals"]:
-        g["cell"] = " | ".join([g["slug"]] + g["marks"]) if g["marks"] else ""
     bad = result["incomplete"]
-    result["banner"] = ["schedule incomplete: %s (%s); dispatch: %s; repair: %s" % (i, clean(c, 80), "last-good copy" if "last-good" in c else "conservative", REPAIR[i]) for i, c in bad[:1]]
+    banner = ["schedule incomplete: %s (%s); dispatch: %s; repair: %s" % (i, clean(c, 80), "last-good copy" if "last-good" in c else "conservative", REPAIR[i]) for i, c in bad[:1]]
+    if result["active"] or held or result["notes"] or banner:  # everything the boards print passes the name scan once
+        why = outside(result["root"], "\n".join([c for g in result["goals"] for c in g["marks"] + g["depends"]] + result["notes"] + banner + [g["slug"] for g in result["goals"]]), strict=False)
+        if why:
+            result["notes"], banner = ["output hidden: " + why] * bool(result["notes"]), [x.split(" (")[0] + " (hidden: " + why + ")" for x in banner]
+            for g in result["goals"]:
+                g["marks"], g["hidden"] = ["hidden: " + why] if g["marks"] else [], why
+    for g in result["goals"]:
+        g["cell"] = "(hidden: %s)" % g["hidden"] if g.get("hidden") else " | ".join([g["slug"]] + g["marks"]) if g["marks"] else ""
+    result["banner"] = banner
     if result["notes"]:
         result["banner"].append("schedule notes: %d (schedule.py show)" % len(result["notes"]))
     return result

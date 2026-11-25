@@ -316,8 +316,8 @@ def cmd_queue(g, args):
         parts.append("touches: " + args.touches)
     if args.depends_on:
         parts.append("depends-on: " + args.depends_on)
-    if getattr(args, "release", ""):
-        parts.append("release: " + args.release)
+    if args.release:
+        parts.append("release: " + re.sub(r"[^\w.-]", "", args.release))
     parts.append("goal: " + " ".join(args.goal.split()))
     parts += ["done: " + " ".join(line.split()) for line in args.done]
     g.write(path, ("" if held.endswith("\n") or not held else "\n") + "- " + " | ".join(parts) + "\n", "a")
