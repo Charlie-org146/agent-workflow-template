@@ -279,7 +279,7 @@ lane-messages-table	PASS	2026-11-11
 lane-order	PASS	2026-11-24	
 lane-over-minutes	PASS	2026-11-25	
 lane-ports-tmpdir	PASS	2026-11-16		b8a343107016
-lane-start-mark-once	PASS	2026-11-11	
+lane-start-mark-once	PASS	2026-11-25	
 lane-walk-skips-git	PASS	2026-11-24	
 lane-walk-skips-node-modules	PASS	2026-11-24	
 lanes-abs-not-walked	PASS	2026-11-14	
