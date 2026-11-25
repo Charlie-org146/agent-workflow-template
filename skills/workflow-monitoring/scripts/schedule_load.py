@@ -6,6 +6,7 @@ may start. Imported, not run (--help prints this). Read-only: schedule_state.py 
 Order key: safety, owner order, a fix that blocks (or is first: for) a queued task goal, task goals before fixes, the brief's
 priority then fewest unmet dependencies (task goals only), file order. With no task goal and no owner line the order is today's."""
 import glob
+import importlib
 import json
 import os
 import re
@@ -15,6 +16,10 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
 
+DELIVERY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts")
+SECRET = re.compile(r"(gh[pousr]_[A-Za-z0-9]{16,}|sk-[A-Za-z0-9_-]{16,}|AKIA[0-9A-Z]{12,}|xox[abp]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*KEY|"
+                    r"(?i:(password|passwd|secret|token|api[_-]?key)\s*[:=]\s*\S{6,}))")
+NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,59}$")
 SAFETY = ("deletion", "money", "security", "private-data", "steward-merge", "leak", "loosened-test")
 STRIP = re.compile(r"[\x00-\x1f\x7f-\x9f|]")
 CODES = {"brief": "SCHED-E10", "workaround": "SCHED-E11", "order": "SCHED-E12", "queue": "SCHED-E13", "release": "SCHED-E14"}
@@ -28,6 +33,22 @@ def fields(line):  # moved whole from batch.py
         key, _, value = part.partition(":")
         out.setdefault(key.strip(), " ".join(value.split()))
     return out
+
+
+def outside(root, *texts, strict=True):
+    """None when the texts may leave this machine, else the reason (a class, never the text). strict: only a clean private-name scan
+    passes (an issue, a printed stored word); a display path (board, show) also passes when no name list exists to match."""
+    for text in texts:
+        if SECRET.search(text or ""):
+            return "secret-shaped value (class: credential)"
+    sys.path.insert(0, DELIVERY)
+    try:
+        got = importlib.import_module("private").scan(root, None, texts={"text-%d" % i: t for i, t in enumerate(texts)})
+    except Exception as err:  # a scan that cannot run keeps the text local
+        return "the private-name scan could not run (%s)" % type(err).__name__
+    if got["state"] == "clean" or not strict and got["state"] in ("none", "off"):
+        return None
+    return "private-name scan: " + got["state"]
 
 
 def norm(name):
@@ -67,14 +88,17 @@ def read_json_lines(path):
             item = json.loads(line)
         except ValueError:
             return [], "torn at line %d" % number
-        if not isinstance(item, dict) or not item.get("key"):
+        ok = isinstance(item, dict) and all(isinstance(item.get(k), str) and NAME.match(item[k]) for k in ("key", "fix")) and item.get("kind") in ("tool", "dependency") \
+            and isinstance(item.get("applies"), list) and all(isinstance(x, str) for x in item["applies"]) and isinstance(item.get("uses"), dict) \
+            and item.get("state") in ("pending", "done", "failed", "closed") and isinstance(item.get("words", ""), str) and isinstance(item.get("goal", ""), str)
+        if not ok:
             return [], "bad record at line %d" % number
         out.append(item)
     return out, None
 
 
 def read_order(paths_):
-    """(record, slugs, note, cause): the owner order, or its last-good copy with a note, or the cause it cannot be read."""
+    """(record, slugs, note, cause, soft): the owner order, or its last-good copy with a note and a soft cause (still incomplete, exit 3), or the cause it cannot be read."""
     def one(path):
         try:
             data = json.load(open(path, encoding="utf-8"))
@@ -82,15 +106,15 @@ def read_order(paths_):
             return None, None
         except (OSError, ValueError):
             return None, "torn or unreadable"
-        ok = isinstance(data, dict) and isinstance(data.get("slugs"), list) and isinstance(data.get("record"), str)
+        ok = isinstance(data, dict) and isinstance(data.get("slugs"), list) and isinstance(data.get("record"), str) and bool(NAME.match(data["record"])) and all(isinstance(x, str) for x in data["slugs"])
         return (data, None) if ok else (None, "bad shape")
     data, cause = one(paths_["order"])
     if data is None and cause:
         good, why = one(paths_["good"])
         if good:
-            return good["record"], [str(s) for s in good["slugs"]], "owner order file %s: using its last-good copy" % cause, None
-        return "", [], "", "owner order file %s and no usable last-good copy" % cause
-    return (data["record"], [str(s) for s in data["slugs"]], "", None) if data else ("", [], "", None)
+            return good["record"], good["slugs"], "owner order file %s: using its last-good copy" % cause, None, "owner order file %s, using its last-good copy" % cause
+        return "", [], "", "owner order file %s and no usable last-good copy" % cause, None
+    return (data["record"], data["slugs"], "", None, None) if data else ("", [], "", None, None)
 
 
 def briefs(root, bad):
@@ -114,13 +138,16 @@ def briefs(root, bad):
     return out
 
 
-def selected(root, notes):
+def selected(root, notes, bad):
     """R: the release whose brief docs/release-brief-X.Y.Z.md exists with no tag yet; exactly one, else unset."""
     found = {norm(m[1]) for f in glob.glob(os.path.join(glob.escape(root), "docs", "release-brief-*.md")) for m in [re.search(r"release-brief-(.+)\.md$", f)] if m}
     try:
-        tags = {norm(t) for t in subprocess.run(["git", "-C", root, "tag", "--list"], capture_output=True, text=True, timeout=20).stdout.split()}
+        done = subprocess.run(["git", "-C", root, "tag", "--list"], capture_output=True, text=True, timeout=20)
+        tags = {norm(t) for t in done.stdout.split()}
+        done.returncode and bad.append(("release", "git tag --list failed"))
     except (OSError, subprocess.SubprocessError):
         tags = set()
+        bad.append(("release", "git tag --list could not run"))
     open_ = sorted(found - tags)
     if len(open_) != 1:
         notes.append("release: none or several unpublished release briefs, so no release is selected")
@@ -145,7 +172,10 @@ def queue_goals(root, strict, bad, check=True):
     goals, seen = [], set()
     for line in lines:
         item = graph.parse(line)
-        if not item or check and not graph.SLUG.match(item["slug"]):
+        if not item:
+            continue
+        if check and not graph.SLUG.match(item["slug"]):
+            strict and print("SKIPPED queue line (needs a good slug, a goal and a done line): %s" % line.strip()[:80])
             continue
         if strict and (item["slug"] in seen or not item["goal"] or not item["done"]):
             print("SKIPPED queue line (needs a good slug, a goal and a done line): %s" % line.strip()[:80])
@@ -177,31 +207,33 @@ def blocking(goals):
 
 
 def load(root, strict=False, policy=None, check=True):
-    """The schedule: {goals, incomplete: [(input, cause)], notes, release, order, held, waived, banner, strings}. Goals are the queue items
-    (as graph.parse returns them) in schedule order with `marks` (the cells after the slug), `kind`, `task` and `hold`."""
+    """The schedule: {goals, incomplete: [(input, cause)], notes, release, order, held, waived, banner}. Goals are the queue items
+    (as graph.parse returns them) in schedule order with `marks` (the cells after the slug), `cell`, `kind`, `task` and `hold`.
+    With no task goal and no owner line the goals come back in file order with no marks."""
     bad, notes = [], []
     pol = policy_on(root) if policy is None else policy
     goals = queue_goals(root, strict, bad, check)
     p = paths(root)
     recs, cause = read_json_lines(p["workaround"])
     cause and bad.append(("workaround", "record file " + cause))
-    record, order, onote, ocause = read_order(p)
+    record, order, onote, ocause, soft = read_order(p)
     ocause and bad.append(("order", ocause))
+    soft and bad.append(("order", soft))
     onote and notes.append(onote)
     held = "order file unreadable (repair: schedule.py order --clear)" if ocause else ""
-    result = {"goals": goals, "incomplete": bad, "notes": notes, "release": None, "order": order, "record": record, "held": held,
-              "waived": {}, "active": False, "paths": p, "workarounds": recs}
-    for g in goals:
-        g.update(kind="fix", task="", marks=[], hold=held)
-    if not pol or not goals:
-        return finish(result)
     bl = briefs(root, bad)
+    result = {"goals": goals, "incomplete": bad, "notes": notes, "release": None, "order": order, "record": record, "held": held,
+              "waived": {}, "active": False, "paths": p, "workarounds": recs, "root": root}
+    for g in goals:
+        g.update(kind="fix", task="", marks=[], hold=held, why="", safe=g["first"] == "safety" and g["first_class"] in SAFETY)
     known = {g["slug"] for g in goals}
     stale = [x for x in order if x not in known]
     if stale:
         notes.append("order: pruned %s (not queued)" % ", ".join(clean(x, 30) for x in stale))
         order = [x for x in order if x in known]
-    R = selected(root, notes)
+    if not pol or not goals or not bl and not order:
+        return finish(result)
+    R = selected(root, notes, bad) if bl else None
     result["release"] = R
     live = [b for b in bl if not b["replaced"] and not b["patch"] and R and b["release"] == R]
     for g in goals:
@@ -213,44 +245,42 @@ def load(root, strict=False, policy=None, check=True):
             best = sorted(mine, key=lambda b: (b["prio"], b["file"]))[0]
             g.update(kind="task", task=best["name"], prio=best["prio"])
         elif norm(g["release"]) != owners[0]["release"] and g["release"]:
-            notes.append("release disagreement for %s: queue line %s, brief %s" % (g["slug"], g["release"], owners[0]["release"]))
+            notes.append("release disagreement for %s: queue line %s, brief %s" % (g["slug"], clean(g["release"], 30), owners[0]["release"]))
     tasks = [g for g in goals if g["kind"] == "task"]
     if bl and not tasks and not any(g["release"] for g in goals):
         notes.append("classification idle: no queue line carries a release")
-    use = {(w["key"], g): v for w in recs for g, v in (w.get("uses") or {}).items() if v == "active" and w.get("state") == "done" and w.get("kind") == "tool"}
+    if not tasks and not order:
+        return finish(result)
+    safe_fix = {g["slug"] for g in goals if g["safe"]}
+    use = {(w["key"], g) for w in recs for g, v in w["uses"].items() if v == "active" and w["state"] == "done" and w["kind"] == "tool"}
     for w in recs:
-        for goal in w.get("applies", []):
-            if (w["key"], goal) in use and goal in known:
+        for goal in w["applies"]:
+            if (w["key"], goal) in use and goal in known and w["fix"] not in safe_fix:  # a safety dependency is never waived
                 result["waived"].setdefault(goal, set()).add(w["fix"])
     block, idx = blocking(goals), {g["slug"]: i for i, g in enumerate(goals)}
     task_slugs = {g["slug"] for g in tasks}
     for g in goals:  # an activated workaround waives the wait on its fix for that goal only
         g["depends"] = [d for d in g["depends"] if d not in result["waived"].get(g["slug"], ())]
     for g in goals:
-        g["why"] = ""
-        if g["kind"] == "fix":
-            hits = sorted(t for t in block[g["slug"]] & task_slugs if g["slug"] not in result["waived"].get(t, ()))
-            if hits:
-                g["why"] = "blocks %s" % hits[0]
-            elif g["first"] and g["first"] != "safety" and g["first"] in task_slugs:
-                g["why"] = "first: %s" % g["first"]
-            elif g["first"] == "safety" and g["first_class"] in SAFETY:
-                g["why"] = "safety: %s" % g["first_class"]
-            elif g["first"] and g["first"] != "safety":
-                notes.append("first: key of %s names %s, which is not a queued task goal: ignored" % (g["slug"], clean(g["first"], 30)))
+        if g["kind"] != "fix":
+            continue
+        hits = sorted(t for t in block[g["slug"]] & task_slugs if g["slug"] not in result["waived"].get(t, ()))
+        if g["safe"]:
+            g["why"] = "safety: %s" % g["first_class"]
+        elif hits:
+            g["why"] = "blocks %s" % hits[0]
+        elif g["first"] and g["first"] != "safety" and g["first"] in task_slugs:
+            g["why"] = "first: %s" % g["first"]
+        elif g["first"]:
+            notes.append("first: key of %s names %s, which is not a queued task goal or a safety class: ignored" % (g["slug"], clean(g["first"], 30)))
     pos = {s: i for i, s in enumerate(order)}
-    dep = lambda g: len(g["depends"])
     def key(g):
-        safe = g["why"].startswith("safety")
         task = g["kind"] == "task"
-        return (0 if safe else 1, pos.get(g["slug"], 10 ** 6), 0 if g["why"] else 1, 0 if task else 1,
-                g.get("prio", 10 ** 6) if task else 0, dep(g) if task else 0, idx[g["slug"]])
-    for g in goals:
-        if g["why"].startswith("safety") and any(pos.get(x["slug"], 10 ** 6) < pos.get(g["slug"], 10 ** 6) for x in goals):
-            notes.append("safety goal %s sits behind an owner-ordered goal" % g["slug"])
+        return (0 if g["safe"] else 1, pos.get(g["slug"], 10 ** 6), 0 if g["why"] else 1, 0 if task else 1,
+                g.get("prio", 10 ** 6) if task else 0, len(g["depends"]) if task else 0, idx[g["slug"]])
     ordered = sorted(goals, key=key)
     result["goals"][:] = ordered
-    result["active"] = bool(tasks or order or any(g["why"] for g in goals))
+    result["active"] = True
     for n, g in enumerate(ordered):
         ahead = next((t["slug"] for t in ordered[n + 1:] if t["kind"] == "task"), "")
         owner = g["slug"] in pos and record
@@ -264,7 +294,7 @@ def load(root, strict=False, policy=None, check=True):
                 mark[-1] += "; overdue: passed over by %d task goals" % passed
             g["marks"] = mark
         if g["slug"] in result["waived"]:
-            keys = [w["key"] for w in recs if g["slug"] in w.get("applies", []) and (w["key"], g["slug"]) in use]
+            keys = [w["key"] for w in recs if g["slug"] in w["applies"] and (w["key"], g["slug"]) in use]
             g["marks"].append("workaround %s (fix %s pending)" % (keys[0], sorted(result["waived"][g["slug"]])[0]))
     return finish(result)
 
@@ -277,9 +307,16 @@ def finish(result):
             g["marks"] = g.get("marks", []) + ["held: " + held]
         if not result["active"] and not held:
             g["marks"] = []
+    if result["active"] or held or result["notes"]:  # what the boards print passes the name scan once
+        why = outside(result["root"], "\n".join([c for g in result["goals"] for c in g["marks"]] + result["notes"] + [g["slug"] for g in result["goals"]]), strict=False)
+        if why:
+            result["notes"] = ["output hidden: " + why]
+            for g in result["goals"]:
+                g["marks"] = ["hidden: " + why] if g["marks"] else []
+    for g in result["goals"]:
         g["cell"] = " | ".join([g["slug"]] + g["marks"]) if g["marks"] else ""
     bad = result["incomplete"]
-    result["banner"] = ["schedule incomplete: %s (%s); dispatch: %s; repair: %s" % (i, clean(c, 80), "conservative", REPAIR[i]) for i, c in bad[:1]]
+    result["banner"] = ["schedule incomplete: %s (%s); dispatch: %s; repair: %s" % (i, clean(c, 80), "last-good copy" if "last-good" in c else "conservative", REPAIR[i]) for i, c in bad[:1]]
     if result["notes"]:
         result["banner"].append("schedule notes: %d (schedule.py show)" % len(result["notes"]))
     return result

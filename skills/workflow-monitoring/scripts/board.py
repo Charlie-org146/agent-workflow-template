@@ -270,7 +270,7 @@ def build(at, since):
         count("done"), count("failed", "stopped"), len(deps) - freezing, count("retired"))
     delay = delay_of(cadence, bool(live))
     doc = {"generated": iso(at), "repos": names, "cadence": cadence, "digest": digest,
-           "next_delay": delay, "next_at": "" if delay == "none" else (at + datetime.timedelta(seconds=int(delay))).strftime("%H:%M UTC"), "open": bool(live or waiting or deps), "waiting": waiting, "dependencies": deps, "runs": rows, "state": flat, "incomplete": bool(sl.STATUS)}
+           "next_delay": delay, "next_at": "" if delay == "none" else (at + datetime.timedelta(seconds=int(delay))).strftime("%H:%M UTC"), "open": bool(live or waiting or deps), "waiting": waiting, "dependencies": deps, "runs": rows, "state": flat, **({"incomplete": True} if sl.STATUS else {})}
     old = (read_json(since) or {}).get("state") if since else {}
     old = old if isinstance(old, dict) else {}
     for key, item in flat.items():  # gh failing to answer says nothing about the pull request

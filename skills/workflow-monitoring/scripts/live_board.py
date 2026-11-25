@@ -288,7 +288,7 @@ def render(root=None, at=None):
         out += [bar(run, current(run), "  held"), *flow_lines(run), "    worker: none (%s)" % state, "    depth: " + depth_of(run, setting), *fits(run),
                 "    next: give it a worker session (sessions.py bind %s ID, where ID is the session's id from the app)%s" % (run["slug"], fix)]
     for goal in queue:
-        out.append("- %s  %s%s" % (goal["slug"], bs.estimate_text(next(i["est"] for i in items if i["slug"] == goal["slug"])),
+        out.append("- %s  %s%s" % (goal.get("cell") or goal["slug"], bs.estimate_text(next(i["est"] for i in items if i["slug"] == goal["slug"])),
                                    "  waits on " + ", ".join(waits(goal["depends"])) if waits(goal["depends"]) else ""))
     out += [] if queue or held else ["- (none)"]
     out += task_lines(root, runs, at, gone) + ["", "Dependencies"]

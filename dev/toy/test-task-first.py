@@ -142,7 +142,7 @@ run(top, "order", "v110-late", "--by", "o123")
 p = sl.paths(top)
 open(p["order"], "w").write("{torn")
 code, out, err = run(top, "show")
-check(code == 3 and "order file" not in err or True, "a torn order file with a last-good copy: exit 3 is not used, the copy is used with a loud note")
+check(code == 3 and "SCHED-E12" in err and out.startswith("schedule incomplete: order (") and "last-good copy" in out, "a torn order file with a last-good copy: still exit 3 and a loud line, the copy is used")
 check("last-good copy" in out and rows(out)[0].startswith("v110-late"), "a torn order file falls back to its last-good copy with a note")
 os.unlink(p["good"])
 code, out, err = run(top, "show")
@@ -180,9 +180,10 @@ check(code == 0 and "stale schedule lock" in err, "a lock over a minute old whos
 top = repo()
 code, out, err = run(top, *add, "wait for the fix to merge")
 check(code == 0 and "PREVIEW" in out and issues() == 0 and not os.path.exists(sl.paths(top)["workaround"]), "task 4: without --live nothing is filed and nothing is recorded")
-with mock.patch.object(ss, "file_issue", lambda root, rec, live: (subprocess.run([sys.executable, os.path.join(tmp, "filer.py"), "x"]) and 0) or 7):
-    run(repo(), *add, "words", "--live")
-red(issues() == 0, "task 4 guard removed: a run without a preview guard files a real issue (the stub saw it)")
+real = ss.file_issue
+with mock.patch.object(ss, "file_issue", lambda root, rec, live: real(root, rec, True)):
+    run(repo(), *add, "words")
+red(issues() == 0, "task 4 guard removed: the preview guard ignored, a run without --live files a real issue (the stub saw it)")
 os.unlink(os.environ["FILER_LOG"])
 code, out, err = run(top, *add, "wait for the fix to merge", "--live")
 check(code == 0 and issues() == 1 and "issue #7" in out, "with --live exactly one issue is filed and the record is done")

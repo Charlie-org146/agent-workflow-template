@@ -4,7 +4,6 @@ every outside write passes. Imported by schedule.py, not run (--help prints this
 
 Nothing here files, prints or sends text outward unless it passed outside(): the secret-shaped screen and the private-name scan.
 GitHub writes are previews unless the caller passes live=True (DEL-9, GRD-5)."""
-import importlib
 import json
 import os
 import re
@@ -17,10 +16,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import schedule_load as sl  # noqa: E402
 
-DELIVERY = os.path.join(HERE, "..", "..", "workflow-delivery", "scripts")
 HEALTH = os.path.join(HERE, "..", "..", "workflow-health", "scripts")
-SECRET = re.compile(r"(gh[pousr]_[A-Za-z0-9]{16,}|sk-[A-Za-z0-9_-]{16,}|AKIA[0-9A-Z]{12,}|xox[abp]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*KEY|"
-                    r"(?i:(password|passwd|secret|token|api[_-]?key)\s*[:=]\s*\S{6,}))")
+SECRET, outside = sl.SECRET, sl.outside
 
 
 class Refused(Exception):
@@ -41,20 +38,23 @@ def own_goal():
     return branch[5:] if branch.startswith("loop/") else ""
 
 
-def guard_worker(verb, record_goal=None):
-    """GRD-4: under LOOP_ROLE=worker, add, use and order are the operation's. fail, close and reconcile reach only the worker's own goal's records."""
+def guard_worker(verb, goals=None):
+    """GRD-4: under LOOP_ROLE=worker, add, use and order are the operation's (goals is None). fail, close and reconcile reach only a record
+    whose goals are exactly this worker's own goal: `goals` is the record's applies list (and the --goal target, for fail)."""
     if os.environ.get("LOOP_ROLE") != "worker":
         return
-    if record_goal is None:
+    if goals is None:
         raise Refused("SCHED-E01", "a worker may not run `%s`: it changes what the operation schedules" % verb, "run it from the operation session")
-    if not record_goal or record_goal != own_goal():
-        raise Refused("SCHED-E02", "`%s` reaches only the records of this worker's own goal" % verb, "ask the operation session to run it")
+    me = own_goal()
+    if not me or any(x != me for x in goals):
+        raise Refused("SCHED-E02", "`%s` reaches only a record that is about this worker's own goal alone" % verb, "ask the operation session to run it")
 
 
 class Lock:
-    """A lock file with the owner's pid; five seconds of waiting, then a refusal with no write; a lock over a minute old whose owner is gone is broken."""
+    """A lock file holding its owner's token; five seconds of waiting, then a refusal with no write. A lock over a minute old whose owner is
+    gone (or that holds no pid) is broken by renaming it away, which only one waiter can win; release removes only our own lock."""
     def __init__(self, paths, wait=5.0):
-        self.path, self.wait = paths["lock"], wait
+        self.path, self.wait, self.token = paths["lock"], wait, "%d.%s" % (os.getpid(), os.urandom(4).hex())
 
     def __enter__(self):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
@@ -62,16 +62,17 @@ class Lock:
         while True:
             try:
                 fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-                os.write(fd, str(os.getpid()).encode())
+                os.write(fd, self.token.encode())
                 os.close(fd)
                 return self
             except FileExistsError:
                 if self.stale():
                     try:
-                        os.unlink(self.path)
+                        os.rename(self.path, "%s.%s.old" % (self.path, self.token))
+                        os.unlink("%s.%s.old" % (self.path, self.token))
+                        print("note: broke a stale schedule lock (its owner is gone)", file=sys.stderr)
                     except OSError:
                         pass
-                    print("note: broke a stale schedule lock (its owner is gone)", file=sys.stderr)
                     continue
                 if time.time() > end:
                     raise Refused("SCHED-E04", "the schedule lock is held by another command", "wait and rerun; nothing was written")
@@ -79,12 +80,13 @@ class Lock:
 
     def stale(self):
         try:
-            old = time.time() - os.path.getmtime(self.path) > 60
-            pid = int(open(self.path).read().strip() or 0)
+            if time.time() - os.path.getmtime(self.path) <= 60:
+                return False
+            pid = int(open(self.path).read().strip().split(".")[0] or 0)
         except (OSError, ValueError):
             return True
-        if not old:
-            return False
+        if pid <= 0:
+            return True
         try:
             os.kill(pid, 0)
         except ProcessLookupError:
@@ -95,7 +97,8 @@ class Lock:
 
     def __exit__(self, *exc):
         try:
-            os.unlink(self.path)
+            if open(self.path).read() == self.token:
+                os.unlink(self.path)
         except OSError:
             pass
 
@@ -114,26 +117,6 @@ def save_records(paths, recs):
     write_atomic(paths["workaround"], "".join(json.dumps(r, sort_keys=True) + "\n" for r in recs))
 
 
-def top_of(root):
-    return subprocess.run(["git", "-C", root, "rev-parse", "--show-toplevel"], capture_output=True, text=True, timeout=20).stdout.strip() or root
-
-
-def outside(root, *texts):
-    """None when the texts may leave this machine, else the reason they may not: a secret-shaped value (class only) or a private-name hit."""
-    for text in texts:
-        if SECRET.search(text or ""):
-            return "secret-shaped value (class: credential)"
-    sys.path.insert(0, DELIVERY)
-    try:
-        private = importlib.import_module("private")
-        got = private.scan(top_of(root), None, texts={"text-%d" % i: t for i, t in enumerate(texts)})
-    except Exception as err:  # a scan that cannot run keeps the text local
-        return "the private-name scan could not run (%s)" % type(err).__name__
-    if got["state"] in ("hit", "broken"):
-        return "private-name scan: %s" % ("a hit" if got["state"] == "hit" else "broken")
-    return None
-
-
 def say(root, text):
     """Print text for a session only after outside() cleared it; otherwise print the refusal reason, never the text."""
     why = outside(root, text)
@@ -145,39 +128,61 @@ def title(key, fix):
     return "Workaround %s (fix %s)" % (key, fix)
 
 
-def lookup(key, fix):
-    """The number of the one issue with this title, 0 when none, None when the lookup failed (nothing may be created then)."""
+def lookup(root, key, fix):
+    """The number of the one issue whose title starts with this title, 0 when none, None when the lookup failed (nothing may be created then)."""
+    if outside(root, title(key, fix)):
+        return None
     try:
         out = subprocess.run(["gh", "issue", "list", "--state", "all", "--limit", "200", "--search", '"%s" in:title' % title(key, fix), "--json", "number,title"],
                              capture_output=True, text=True, timeout=60)
         if out.returncode:
             return None
-        hits = [i["number"] for i in json.loads(out.stdout or "[]") if i.get("title") == title(key, fix)]
+        hits = [i["number"] for i in json.loads(out.stdout or "[]") if str(i.get("title", "")).startswith(title(key, fix))]
     except (OSError, subprocess.SubprocessError, ValueError):
         return None
     return hits[0] if hits else 0
 
 
-def file_issue(root, rec, live):
-    """The issue number (0 on a preview), or raises. A preview prints what would be filed and files nothing; the filer is the existing
-    finding path (milestone.py leftovers), or the command in SCHEDULE_FILER for a test."""
-    text = "%s: %s" % (title(rec["key"], rec["fix"]), rec["words"])
+def check_fields(rec):
+    """key, fix, feature, found: one plain token each (no newline can carry a second finding line into the filer)."""
+    for name in ("key", "fix", "feature", "found"):
+        if not sl.NAME.match(str(rec.get(name, ""))):
+            raise Refused("SCHED-E03", "%s must be one plain token (letters, digits, . _ -)" % name, "see `schedule.py --help`")
+    if re.search(r"[\x00-\x1f\x7f]", rec.get("words", "")):
+        raise Refused("SCHED-E03", "the words may not hold a newline or control character", "write them on one line")
+
+
+def screened(root, rec):
+    """The full text that would leave this machine, or a refusal; checked before anything is recorded."""
+    check_fields(rec)
+    text = "%s [%s %s]: %s" % (title(rec["key"], rec["fix"]), rec["feature"], rec["found"], rec["words"])
     why = outside(root, text)
     if why:
-        raise Refused("SCHED-E06", "the words may not leave this machine: " + why, "reword them without names or secrets; the record stays local", "partial")
+        raise Refused("SCHED-E05" if why.startswith("secret") else "SCHED-E06", "the words may not leave this machine: " + why, "reword them without names or secrets; nothing was recorded")
+    return text
+
+
+def file_issue(root, rec, live):
+    """The issue number (0 on a preview), or raises. A preview prints what would be filed and files nothing; the filer is the existing
+    finding path (milestone.py leftovers), or the command in SCHEDULE_FILER for a test. The number comes from the filer's output, else from
+    a lookup by title (the real filer prints none)."""
+    text = screened(root, rec)
     if not live:
-        print("PREVIEW (no --live, nothing filed): would file one issue titled %r on page %s" % (title(rec["key"], rec["fix"]), rec.get("feature", "?")))
+        print("PREVIEW (no --live, nothing filed): would file one issue titled %r on page %s" % (title(rec["key"], rec["fix"]), rec["feature"]))
         return 0
     reply = os.path.join(sl.paths(root)["folder"], "workaround.%d.txt" % os.getpid())
     with open(reply, "w") as handle:
-        handle.write("FILE backlog %s: %s\n" % (rec.get("feature", ""), text))
+        handle.write("FILE backlog %s: %s\n" % (rec["feature"], text))
     cmd = os.environ.get("SCHEDULE_FILER", "").split() or [sys.executable, os.path.join(HEALTH, "milestone.py")]
     out = subprocess.run(cmd + ["leftovers", reply, "--goal", rec["fix"], "--live"], capture_output=True, text=True, timeout=120).stdout
     os.path.exists(reply) and os.unlink(reply)
-    found = re.search(r"^(?:FILED|SAME) .*?#(\d+)", out, re.M)
-    if not found or "FAILED" in out:
+    if not re.search(r"^(?:FILED|SAME)\b", out, re.M) or "FAILED" in out:
         raise Refused("SCHED-E07", "the issue was not confirmed", "run `schedule.py workaround reconcile %s`" % rec["key"], "unknown")
-    return int(found.group(1))
+    found = re.search(r"^(?:FILED|SAME) .*?#(\d+)", out, re.M)
+    number = int(found.group(1)) if found else lookup(root, rec["key"], rec["fix"])
+    if not number:
+        raise Refused("SCHED-E07", "the issue was filed but its number could not be read", "run `schedule.py workaround reconcile %s`" % rec["key"], "unknown")
+    return number
 
 
 def set_order(paths, slugs, record):

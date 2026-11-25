@@ -39,16 +39,24 @@ def owner_record(paths, record):
 
 def show(root):
     result = sl.load(root)
-    print(*result["banner"], sep="\n")
+    lines = list(result["banner"])
     if result["release"]:
-        print("release: %s (source: brief)" % result["release"])
+        lines.append("release: %s (source: brief)" % result["release"])
     for n, g in enumerate(result["goals"], 1):
-        print("  %d. %s" % (n, " | ".join([g["slug"]] + g["marks"] + ["waits for: " + (", ".join(g["depends"]) or "-")])))
-    for note in result["notes"]:
-        print("note: " + note)
+        lines.append("  %d. %s" % (n, " | ".join([g["slug"]] + g["marks"] + ["waits for: " + (", ".join(g["depends"]) or "-")])))
+    lines += ["note: " + note for note in result["notes"]]
+    why = sl.outside(root, "\n".join(lines), strict=False)  # queue words (a dependency name) pass the screen like the boards
+    print(*(lines if not why else ["output hidden: " + why]), sep="\n")
     for item, cause in result["incomplete"]:
         print("%s: %s unreadable (%s)" % (sl.CODES[item], item, sl.clean(cause, 80)), file=sys.stderr)
     return 3 if result["incomplete"] else 0
+
+
+def need_complete(root, verb):
+    """A mutation never runs on an unreadable input: exit 3 with the input's code (order --clear is the repair and skips this)."""
+    bad = sl.load(root)["incomplete"]
+    if bad:
+        raise ss.Refused(sl.CODES[bad[0][0]], "%s needs every input readable, and %s is not (%s)" % (verb, bad[0][0], sl.clean(bad[0][1], 60)), sl.REPAIR[bad[0][0]])
 
 
 def order(root, args):
@@ -58,6 +66,7 @@ def order(root, args):
         ss.clear_order(paths)
         print("order cleared")
         return 0
+    need_complete(root, "order")
     queued = [g["slug"] for g in sl.load(root)["goals"]]
     bad = [s for s in args.slugs if s not in queued]
     owner_record(paths, args.by)
@@ -75,64 +84,81 @@ def find(recs, key):
     return hit[0]
 
 
-def workaround(root, args):
-    paths, verb = sl.paths(root), args.verb
+def records(paths):
     recs, cause = sl.read_json_lines(paths["workaround"])
     if cause:
         raise ss.Refused("SCHED-E11", "the workaround record is " + cause, "inspect or move %s" % paths["workaround"])
-    if verb == "list":
-        for r in recs:
-            print("%s | fix %s | goals %s | %s | %s%s" % (r["key"], r["fix"], ",".join(r["applies"]), r["kind"], r["state"], " | issue #%s" % r["issue"] if r.get("issue") else ""))
-        return 0
-    if verb == "add":
-        ss.guard_worker("workaround add")
-        live = sl.load(root)
-        known = {g["slug"] for g in live["goals"]} | {n[:-5] for n in os.listdir(os.path.join(paths["folder"], "runs")) if n.endswith(".json")} if os.path.isdir(os.path.join(paths["folder"], "runs")) else {g["slug"] for g in live["goals"]}
-        applies = [x for x in args.applies.split(",") if x]
-        if any(r["key"] == args.key for r in recs):
-            raise ss.Refused("SCHED-E09", "workaround %s already exists" % sl.clean(args.key, 40), "reuse it with `workaround use %s --goal SLUG`" % sl.clean(args.key, 40))
-        if args.fix not in known or not applies or not args.kind or not args.feature or not args.found:
-            raise ss.Refused("SCHED-E03", "add needs a queued or running --fix, --applies, --kind, --feature and --found", "see `schedule.py --help`")
-        if ss.SECRET.search(args.words):
-            raise ss.Refused("SCHED-E05", "the words hold a secret-shaped value (class: credential)", "reword without it")
-        rec = {"key": args.key, "fix": args.fix, "applies": applies, "kind": args.kind, "words": args.words, "feature": args.feature, "found": args.found,
-               "goal": applies[0], "state": "pending", "attempts": 0, "issue": 0, "uses": {}, "review": datetime.date.today().isoformat(), "owner": args.owner_record}
-        if not args.live:
-            ss.file_issue(root, rec, False)
-            print("nothing recorded (preview); add --live to record and file")
-            return 0
-        with ss.Lock(paths):
-            ss.save_records(paths, recs + [rec])
-            rec["issue"] = ss.file_issue(root, rec, True)
-            rec["state"] = "done"
-            ss.save_records(paths, recs + [rec])
-        print("recorded %s, issue #%d" % (args.key, rec["issue"]))
-        return 0
-    rec = find(recs, args.key)
-    ss.guard_worker("workaround " + verb, None if verb == "use" else rec.get("goal", ""))
-    if verb == "reconcile":
-        found = ss.lookup(rec["key"], rec["fix"])
-        if found is None:
-            raise ss.Refused("SCHED-E07", "the issue lookup failed", "rerun later; nothing was created", "unknown")
-        with ss.Lock(paths):
-            if found:
-                rec.update(issue=found, state="done")
-            else:
-                ss.file_issue(root, rec, args.live) if args.live else print("PREVIEW: none found; --live would file one issue")
-            ss.save_records(paths, recs)
-        print("reconciled %s: %s" % (rec["key"], "issue #%d" % found if found else "none found"))
-        return 0
-    if verb == "use":
-        if args.goal not in rec["applies"] or rec["kind"] != "tool" or rec["state"] != "done":
-            raise ss.Refused("SCHED-E03", "%s does not apply to %s (it must be a done `tool` record for a listed goal)" % (sl.clean(rec["key"], 30), sl.clean(args.goal, 30)), "see `workaround list`")
-        if not ss.say(root, rec["words"]):
-            raise ss.Refused("SCHED-E06", "the stored words cannot be shown", "fix the record; no activation was written")
-        with ss.Lock(paths):
-            rec["uses"][args.goal] = "active"
-            ss.save_records(paths, recs)
-        print("activated %s for %s" % (rec["key"], args.goal))
+    return recs
+
+
+def add(root, args, paths):
+    ss.guard_worker("workaround add")
+    need_complete(root, "workaround add")
+    applies = [x for x in args.applies.split(",") if x]
+    rec = {"key": args.key, "fix": args.fix, "applies": applies, "kind": args.kind, "words": args.words, "feature": args.feature, "found": args.found,
+           "goal": applies[0] if applies else "", "state": "pending", "attempts": 0, "issue": 0, "uses": {}, "review": datetime.date.today().isoformat(), "owner": args.owner_record}
+    if not (args.kind and applies and all(sl.NAME.match(x) for x in applies)):
+        raise ss.Refused("SCHED-E03", "add needs --kind, --applies, --fix, --feature and --found", "see `schedule.py --help`")
+    ss.screened(root, rec)  # the secret screen and the name scan, before anything is recorded
+    if not args.live:
+        ss.file_issue(root, rec, False)
+        print("nothing recorded (preview); add --live to record and file")
         return 0
     with ss.Lock(paths):
+        recs = records(paths)
+        folder = os.path.join(paths["folder"], "runs")
+        known = {g["slug"] for g in sl.load(root)["goals"]} | ({n[:-5] for n in os.listdir(folder) if n.endswith(".json")} if os.path.isdir(folder) else set())
+        if any(r["key"] == args.key for r in recs):
+            raise ss.Refused("SCHED-E09", "workaround %s already exists" % args.key, "reuse it with `workaround use %s --goal SLUG`" % args.key)
+        if args.fix not in known:
+            raise ss.Refused("SCHED-E03", "--fix %s is not a queued or running goal" % sl.clean(args.fix, 40), "see `schedule.py show`")
+        ss.save_records(paths, recs + [rec])
+        rec["issue"] = ss.file_issue(root, rec, True)
+        rec["state"] = "done"
+        ss.save_records(paths, recs + [rec])
+    print("recorded %s, issue #%d" % (args.key, rec["issue"]))
+    return 0
+
+
+def workaround(root, args):
+    paths, verb = sl.paths(root), args.verb
+    if verb == "add":
+        return add(root, args, paths)
+    if verb == "list":
+        for r in records(paths):
+            print("%s | fix %s | goals %s | %s | %s%s" % (r["key"], r["fix"], ",".join(r["applies"]), r["kind"], r["state"], " | issue #%s" % r["issue"] if r.get("issue") else ""))
+        return 0
+    if verb == "use":
+        ss.guard_worker("workaround use")
+    with ss.Lock(paths):
+        recs = records(paths)
+        rec = find(recs, args.key)
+        if verb != "use":
+            ss.guard_worker("workaround " + verb, [args.goal] if verb == "fail" and args.goal in rec["applies"] else [] if verb == "fail" else rec["applies"])
+        if verb == "reconcile":
+            found = ss.lookup(root, rec["key"], rec["fix"])
+            if found is None:
+                raise ss.Refused("SCHED-E07", "the issue lookup failed", "rerun later; nothing was created", "unknown")
+            if not found and args.live:
+                found = ss.file_issue(root, rec, True)
+            elif not found:
+                print("PREVIEW: none found; --live would file one issue")
+            if found:
+                rec.update(issue=found, state="done")
+                ss.save_records(paths, recs)
+            print("reconciled %s: %s" % (rec["key"], "issue #%d" % found if found else "none found"))
+            return 0
+        if verb == "use":
+            if any(g["slug"] == rec["fix"] and g["safe"] for g in sl.load(root)["goals"]):
+                raise ss.Refused("SCHED-E03", "%s is a safety fix: it is never waived" % sl.clean(rec["fix"], 40), "leave the wait")
+            if args.goal not in rec["applies"] or rec["kind"] != "tool" or rec["state"] != "done":
+                raise ss.Refused("SCHED-E03", "%s does not apply to %s (it must be a done `tool` record for a listed goal)" % (sl.clean(rec["key"], 30), sl.clean(args.goal, 30)), "see `workaround list`")
+            if not ss.say(root, rec["words"]):
+                raise ss.Refused("SCHED-E06", "the stored words cannot be shown", "fix the record; no activation was written")
+            rec["uses"][args.goal] = "active"
+            ss.save_records(paths, recs)
+            print("activated %s for %s" % (rec["key"], args.goal))
+            return 0
         if verb == "fail":
             rec["uses"][args.goal] = "failed"
         else:
@@ -172,7 +198,7 @@ def main(argv):
         return show(root) if args.cmd == "show" else order(root, args) if args.cmd == "order" else workaround(root, args)
     except ss.Refused as err:
         print(err.line(), file=sys.stderr)
-        return 2
+        return 3 if err.code in ("SCHED-E10", "SCHED-E11", "SCHED-E12", "SCHED-E13", "SCHED-E14") else 2
     except Exception as err:  # SCHED-E99: never a bare trace
         print("FAILED SCHED-E99: %s in %s. Side effects: unknown. Fix: rerun `schedule.py show` before retrying; nothing is retried automatically." % (type(err).__name__, args.cmd), file=sys.stderr)
         return 1
