@@ -167,7 +167,7 @@ def groups():
 def hit(text):
     """The kind of the first Safety match in text (the private list first), else None."""
     for k, rx in PRIVATE:
-        if rx.search(text):
+        if rx.search(text) or rx.pattern.lower() in text.lower():  # the pattern's own text is private too
             return "private prefix #%d" % k
     for group, patterns in groups():
         if any(re.search(p, text) for p in patterns):
@@ -193,7 +193,7 @@ def fail(rule, text, derived="", after="", source=None, origin=""):
     kind = hit(derived) or (hit(source) if source else None)
     if kind:
         derived = WITHHELD % (kind, " from " + origin if origin else "")
-    kind = hit(text + after)
+    kind = hit(text + after) or hit(text + derived + after)  # a match across the parts counts too
     if kind:
         text, derived, after = "", WITHHELD % (kind, ""), ""
     failures.append((rule, text + derived + after))
@@ -224,7 +224,7 @@ def walk(root):
         return sorted(set(out))
     for base in SHIPPED:
         path = os.path.join(root, base)
-        wait_on("the walk of " + path)
+        wait_on("the walk of " + where(path))
         if os.path.isfile(path):
             out.append(base)
         for here, dirs, names in os.walk(path):
@@ -268,7 +268,8 @@ def check_frontmatter(root, files):
         if not fields.get("name"):
             fail("Frontmatter", "%s has no name" % where(rel))
         elif fields["name"] != folder:
-            fail("Frontmatter", "%s name " % where(rel), "%r does not match folder %r" % (fields["name"], folder))
+            fail("Frontmatter", "%s name " % where(rel), "%r does not match folder %r" % (fields["name"], folder),
+                 source="%s\n%s\n%s" % (fields["name"], folder, rel))
         if not fields.get("description"):
             fail("Frontmatter", "%s has no description" % where(rel))
     return skills
@@ -336,19 +337,19 @@ def check_scripts(root, files):
                 elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
                     modules.add(node.module.split(".")[0])
         except SyntaxError as error:
-            fail("Scripts", "%s does not parse: " % where(rel), str(error))
+            fail("Scripts", "%s does not parse: " % where(rel), str(error), source=text)
         for name in sorted(modules - set(sys.stdlib_module_names) - siblings):
-            fail("Scripts", "%s imports " % where(rel), name, ", which is not in the standard library")
+            fail("Scripts", "%s imports " % where(rel), name, ", which is not in the standard library", source=text)
         if re.search(r"skills/|\.\./", text.replace("../loop-files.md", "")) and re.search(r"open\([^)]*(skills/|\.\./)", text):
             fail("Scripts", "%s opens another package file" % where(rel))
         if STATIC:
             continue
         with tempfile.TemporaryDirectory() as lone:  # a copy of its own scripts folder only: siblings, nothing else
             waiting["lone"] = lone
-            wait_on("the copy of %s's folder" % rel)
+            wait_on("the copy of %s's folder" % where(rel))
             shutil.copytree(os.path.dirname(os.path.join(root, rel)), os.path.join(lone, "scripts"), symlinks=True)
             rc, err = run_alone([sys.executable, "-E", "-s", "-X", "utf8", os.path.join(lone, "scripts", os.path.basename(rel)), "--help"],
-                                lone, "%s --help" % rel)
+                                lone, "%s --help" % where(rel))
             if rc is None:
                 fail("Scripts", "%s --help did not finish in %d seconds with no stdin (it waits on input or a child)" % (where(rel), CHILD_SECONDS))
             elif rc:
@@ -366,11 +367,15 @@ def load_private():
     except (OSError, ValueError, AttributeError):
         print("NOTE: no leak_prefixes loaded (the flow file is missing or unreadable); only the built-in scans ran")
         return
-    for k, pattern in enumerate(raw if isinstance(raw, list) else [], 1):
+    if not isinstance(raw, list):
+        print("NOTE: leak_prefixes is not a list; only the built-in scans ran")
+        return
+    for k, pattern in enumerate(raw, 1):
         try:
-            PRIVATE.append((k, re.compile(pattern, re.I)))
-            continue
-        except (re.error, TypeError):
+            if isinstance(pattern, str) and pattern:  # an empty pattern would match everything
+                PRIVATE.append((k, re.compile(pattern, re.I)))
+                continue
+        except re.error:
             pass
         print("NOTE: leak_prefixes entry #%d is not a valid pattern; skipped" % k)
 
@@ -537,10 +542,10 @@ def main():
         print("PASS: %d files, the static rules hold" % len(files))
         return 0
     out = args.out or "dist/agent-workflow-template-v%s.zip" % version
-    wait_on("writing the ZIP " + out)
+    wait_on("writing the ZIP " + where(out))
     build(root, files, out, version)
     note_shell(root, files)
-    print("PASS: %d files, ZIP at %s (%d bytes), version %s" % (len(files), os.path.abspath(out), os.path.getsize(out), version))
+    print("PASS: %d files, ZIP at %s (%d bytes), version %s" % (len(files), where(os.path.abspath(out)), os.path.getsize(out), version))
     return 0
 
 
