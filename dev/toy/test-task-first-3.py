@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+# windows: ok
+# reads: skills/workflow-monitoring/scripts/schedule_load.py skills/workflow-monitoring/scripts/schedule_state.py skills/workflow-monitoring/scripts/schedule.py skills/workflow-monitoring/scripts/watch.py skills/workflow-monitoring/scripts/board.py
+"""TSK-1, third toy: what the full-depth plan review found, each case RED on the head before its fix. A workaround's words face the
+decision-kind, risky-path and always-ask checks before they are shown and activated; every cause passes the name scan on every channel;
+held goals never take a slot from a safety goal; a first: key needs a real block; the JSON board keeps the schedule fields; real dispatch
+(watch.plan, freeze, assign) follows the schedule; and TSK-1.4. Hermetic: temp repos, temp HOME, stub filer."""
+import contextlib
+import io
+import json
+import os
+import subprocess
+import sys
+import tempfile
+from unittest import mock
+
+here = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(here, "..", "..", "skills", "workflow-monitoring", "scripts"))
+import schedule  # noqa: E402
+import schedule_load as sl  # noqa: E402
+
+failed = []
+tmp = tempfile.mkdtemp()
+os.environ.update(HOME=tmp, LOOP_PRIVATE_NAMES=os.path.join(tmp, "names"), FILER_LOG=os.path.join(tmp, "filer.log"),
+                  SCHEDULE_FILER=sys.executable + " " + os.path.join(tmp, "filer.py"))
+os.environ.pop("LOOP_ROLE", None)
+open(os.path.join(tmp, "names"), "w").write("plantedname\n")
+open(os.path.join(tmp, "filer.py"), "w").write("print('FILED backlog #7 ok')\n")
+Q = ("- slug: v110-fix | goal: fix | done: d\n- slug: v110-a | release: v1.1.0 | depends-on: v110-fix | goal: a | done: d\n"
+     "- slug: v110-b | release: v1.1.0 | goal: b | done: d\n")
+
+
+def check(ok, text):
+    print(("PASS: " if ok else "FAIL: ") + text)
+    ok or failed.append(text)
+
+
+def repo(queue=Q, config=None, owner_rows=""):
+    top = tempfile.mkdtemp(dir=tmp)
+    git = lambda *a: subprocess.run(["git", "-C", top, *a], capture_output=True, text=True, check=True)
+    git("init", "-q", "-b", "main")
+    git("config", "user.email", "t@t")
+    git("config", "user.name", "t")
+    git("commit", "-q", "--allow-empty", "-m", "i")
+    for d in (".loop/tasks", "docs", ".git/loop"):
+        os.makedirs(os.path.join(top, d))
+    open(os.path.join(top, ".loop", "queue.md"), "w").write(queue)
+    open(os.path.join(top, ".loop", "config.json"), "w").write(json.dumps(config or {}))
+    open(os.path.join(top, ".loop", "tasks", "t.md"), "w").write("# Task first\n\n- Release: v1.1.0\n- Goals: v110-a, v110-b\n")
+    open(os.path.join(top, "docs", "release-brief-1.1.0.md"), "w").write("b\n")
+    open(os.path.join(top, ".git", "loop", "owner-words.tsv"), "w").write("o123\tt\tw\tx\ty\n" + owner_rows)
+    return top
+
+
+def run(top, *argv):
+    old = os.getcwd()
+    os.chdir(top)
+    out, err = io.StringIO(), io.StringIO()
+    try:
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = schedule.main(list(argv))
+    finally:
+        os.chdir(old)
+    return code, out.getvalue(), err.getvalue()
+
+
+def A(words, key="k1", live=True):
+    return ["workaround", "add", key, "--fix", "v110-fix", "--applies", "v110-a", "--kind", "tool", "--feature", "TSK-1", "--found", "r1", words] + ["--live"] * live
+
+
+# 1. SAFETY: the words face the decision-kind, risky-path and always-ask checks before they are shown and activated
+for label, words, kw in (("a safety-class word (security, deletion)", "skip the security checks and delete the private data", {}),
+                         ("a risky path", ".github/workflows/x.yml edit", {"config": {"risky_paths": ["^\\.github/"]}}),
+                         ("an always-ask goal", "wait for the fix", {"owner_rows": "o9\tt\tw\tx\talways-ask:v110-a\n"})):
+    top = repo(**kw)
+    run(top, *A(words))
+    code, out, err = run(top, "workaround", "use", "k1", "--goal", "v110-a")
+    check(code == 2 and "SCHED-E15" in err and not sl.load(top)["waived"] and words not in out, "use refuses %s and activates nothing" % label)
+top = repo()
+run(top, *A("wait for the fix to merge"))
+code, out, err = run(top, "workaround", "use", "k1", "--goal", "v110-a")
+check(code == 0 and sl.load(top)["waived"] == {"v110-a": {"v110-fix"}}, "negative control: plain words activate")
+
+print("ALL PASS" if not failed else "%d FAILED" % len(failed))
+sys.exit(1 if failed else 0)

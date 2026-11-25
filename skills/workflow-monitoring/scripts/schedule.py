@@ -6,15 +6,17 @@
   schedule.py workaround use KEY --goal SLUG | fail KEY --goal SLUG --reason TEXT | close KEY --reason TEXT | reconcile KEY [--live] | list
 Exit 0 done, 2 refused, 3 the schedule could not be read in full (every board prints why). A GitHub write is only a preview without --live.
 Codes: SCHED-E01 worker refused, E02 not the worker's own goal, E03 bad arguments, E04 lock held, E05 secret-shaped words, E06 outside
-text refused, E07 issue not confirmed, E08 not the owner's record, E09 duplicate key or unknown record, E10-E14 unreadable input, E99 unexpected."""
+text refused, E07 issue not confirmed, E08 not the owner's record, E09 duplicate key or unknown record, E10-E14 unreadable input, E15 stored words face a safety check, E99 unexpected."""
 import argparse
 import datetime
 import os
+import re
 import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import auto  # noqa: E402
 import schedule_load as sl  # noqa: E402
 import schedule_state as ss  # noqa: E402
 
@@ -91,6 +93,20 @@ def records(paths):
     return recs
 
 
+def unsafe(root, words, goal):
+    """The operation's own checks (auto.py): a safety class in the words, a risky path, or an always-ask goal; '' when none applies."""
+    for name, found in auto.CLASSES.items():
+        if found.search(words):
+            return "safety class " + name
+    for pattern in auto.config(root).get("risky_paths") or []:
+        try:
+            if re.search(pattern, words):
+                return "risky path " + pattern
+        except re.error:
+            continue
+    return "%s is an always-ask goal" % goal if auto.always(root, goal) else ""
+
+
 def add(root, args, paths):
     ss.guard_worker("workaround add")
     need_complete(root, "workaround add")
@@ -155,6 +171,9 @@ def workaround(root, args):
                 raise ss.Refused("SCHED-E03", "%s is a safety fix: it is never waived" % sl.clean(rec["fix"], 40), "leave the wait")
             if args.goal not in rec["applies"] or rec["kind"] != "tool" or rec["state"] != "done":
                 raise ss.Refused("SCHED-E03", "%s does not apply to %s (it must be a done `tool` record for a listed goal)" % (sl.clean(rec["key"], 30), sl.clean(args.goal, 30)), "see `workaround list`")
+            why = unsafe(root, rec["words"], args.goal)
+            if why:
+                raise ss.Refused("SCHED-E15", "the stored words face a safety check: " + why, "ask the owner through the operation; no activation was written")
             if not ss.say(root, rec["words"]):
                 raise ss.Refused("SCHED-E06", "the stored words cannot be shown", "fix the record; no activation was written")
             rec["uses"][args.goal] = "active"
