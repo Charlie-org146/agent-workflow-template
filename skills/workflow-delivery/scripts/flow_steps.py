@@ -113,7 +113,7 @@ def unattended(spec, step):
 def step_prompt(spec, args):
     skill = _s.skill_of(spec, args.step)
     text = _s.PROMPT.format(skill=skill, step=args.step, slug=args.slug, branch=_s.git("branch", "--show-current"),
-                         purpose=_s.PURPOSE[args.step].format(slug=args.slug, lane=_s.role.lane_text()),
+                         purpose=_s.cover.prompt(_s.PURPOSE[args.step].format(slug=args.slug, lane=_s.role.lane_text()), _s.RUNS(), args.slug),
                          note="The owner said: " + args.note + "\n" if args.note else "",
                          depth=_s.depth_rule(args.step, _s.role.goal_state(_s.RUNS(), args.slug), _s.RUNS())).rstrip()
     if skill == _s.BUILTIN:

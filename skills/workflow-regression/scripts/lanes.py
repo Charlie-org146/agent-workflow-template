@@ -16,6 +16,7 @@ import subprocess
 import sys
 
 import narrow
+from row_reach import references, HERE_FORMS  # noqa: F401
 from slots import fcntl
 
 # A prompt from git must fail, not block.
@@ -29,17 +30,10 @@ RECORDS = (".loop/goals/", ".loop/kept/")
 BOOKKEEPING = (RUNS_FILE, ".loop/goals/", ".loop/queue.md", ".loop/findings.md")
 NO_EFFECT = ("CHANGELOG.md", "VERSION", "README.md", "FINDINGS.md", "DECISIONS.md", "LICENSE", "docs/ROADMAP.md",
              "docs/designs/", *RECORDS, ".loop/findings.md", ".loop/queue.md", RUNS_FILE)
-PATH = re.compile(r"(?<![\w.@+/-])(?:\$\{?here\}?/|\./)?((?:\.?[A-Za-z0-9_@+-][A-Za-z0-9._@+-]*/)+[A-Za-z0-9._@+-]*"
-                  r"|[A-Za-z0-9_-]+\.[A-Za-z0-9]+)")
-BARE = re.compile(r"\$\{?here\}?/skills\b(?!/)")
-ROOT = re.compile(r"\$\{?here\}?/?(?=[\s\"')]|$)")
 RUNNER = "skills/workflow-regression/scripts/regression.py"
 TABLE = ".loop/regression.tsv"
-SKILL_NAME = re.compile(r"\bworkflow-[a-z]+\b")
 IMPORT = re.compile(r"^\s*(?:from\s+([A-Za-z_]\w*)|import\s+([\w, ]+))", re.M)
 ROOT_RUN = re.compile(r'(?:cd|pushd)\s+"?\$\{?here\}?/?"?(?=[\s;&|)]|$)|-C\s+"?\$\{?here\}?/?"?\s|--root[= ]"?\$\{?here\}?/?"?(?=[\s;&|)]|$)', re.M)
-HERE_FORMS = re.compile(r'"\$\{?here\}?"/|\$\{here\}/')
-CD_SKILLS = re.compile(r"cd\s+\"?\$\{?here\}?\"?\s*[;&|\n][^\n]*?(?<![\w./$-])skills(?:/\.)?(?=[\s\"')]|$)")
 
 
 def modules(text):
@@ -55,7 +49,7 @@ def git(root, *args):
 def runner():
     here = os.path.dirname(os.path.abspath(__file__))
     digest = hashlib.sha256()
-    for name in ("regression.py", "lanes.py", "narrow.py", "runs.py", "tiers.py"):
+    for name in ("regression.py", "lanes.py", "narrow.py", "runs.py", "tiers.py", "row_reach.py", "completion.py"):
         with open(os.path.join(here, name), "rb") as handle:
             digest.update(handle.read())
     return digest.hexdigest()[:12]
@@ -166,32 +160,17 @@ def ancestor(root, commit):
                           capture_output=True).returncode == 0
 
 
-def widen(path):
-    parts = path.rstrip("/").split("/")
-    return "skills/%s/" % parts[1] if parts[0] == "skills" and len(parts) > 1 else path
 
 
-def references(root, text, folder, wide=True, memo=None):
-    """Repo paths a text names (folders end /) and whether it names the whole repo; wide=False: no widening."""
-    memo = {} if memo is None else memo
-    text = HERE_FORMS.sub("$here/", text)
-    text = text if wide else re.sub(r"""(["'])/(skills|dev)/""", r"\1\2/", text)
-    found, whole = set(), bool(ROOT.search(text))
-    if BARE.search(text) or (not wide and CD_SKILLS.search(text)):
-        found.add("skills/")
-    for name in SKILL_NAME.findall(text) if wide else ():
-        found.add("skills/%s/" % name)
-    for raw in PATH.findall(text):
-        raw = raw.rstrip(".")
-        for cand in {raw, os.path.normpath(os.path.join(folder, raw)).replace("\\", "/")}:
-            if cand.startswith("/") or cand.split("/")[0] == ".git":
-                continue
-            kind = narrow.kind(memo, os.path.join(root, cand))
-            if kind == "d":
-                cand = cand.rstrip("/") + "/"
-            if kind in ("d", "f"):
-                found.add(widen(cand) if wide else cand)
-    return found, whole
+def merged(path, results=(), left=(), limit=0):
+    """{id: [seconds, state]} from a times file (`id TAB seconds TAB state`), then this shard's results."""
+    rows = {}
+    try:
+        rows.update({c[0]: [float(c[1]), "CUT" if c[2:3] == ["CUT"] else ""] for c in (x.split("\t") for x in open(path).read().splitlines()) if len(c) > 1})
+    except (OSError, ValueError):
+        pass
+    rows.update({r["id"]: [r["seconds"], ""] for r in results}, **{k: [limit, "LEFT"] for k in left})
+    return rows
 
 
 WHOLE = ("dev/package.py", "dev/toy/test-portable.sh", "dev/toy/test-tree.sh", "dev/toy/tree-once.sh")  # TD504: run once by the tree job
