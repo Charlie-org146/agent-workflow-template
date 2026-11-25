@@ -194,7 +194,8 @@ def fail(rule, text, derived="", after="", source=None, origin=""):
     kind = hit(derived) or (hit(source) if source else None)
     if kind:
         derived = WITHHELD % (kind, " from " + origin if origin else "")
-    kind = hit(text + after) or hit("FAIL %s: %s%s%s" % (rule, text, derived, after))  # the whole printed line counts too
+    kind = (hit(text + after) or hit(text + derived + after)  # the body, so a pattern anchored at its start still matches
+            or hit("FAIL %s: %s%s%s" % (rule, text, derived, after)))  # and the whole printed line
     if kind:
         text, derived, after = "", WITHHELD % (kind, ""), ""
     failures.append((rule, text + derived + after))
@@ -271,7 +272,7 @@ def check_frontmatter(root, files):
             fail("Frontmatter", "%s has no name" % where(rel))
         elif fields["name"] != folder:
             fail("Frontmatter", "%s name " % where(rel), "%r does not match folder %r" % (fields["name"], folder),
-                 source="%s\n%s\n%s" % (doc, folder, rel))  # the whole SKILL.md: a pattern may need its context
+                 source="%s\n%s\n%s\n%s" % (fields["name"], folder, rel, doc))  # the name first (anchored patterns), then the whole SKILL.md
         if not fields.get("description"):
             fail("Frontmatter", "%s has no description" % where(rel))
     return skills
