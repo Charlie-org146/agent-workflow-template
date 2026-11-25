@@ -236,7 +236,7 @@ PYEND
 )
 git switch -q -c late2 feat; t0=$(git rev-parse HEAD); mkdir -p docs/wiki; printf 'page 2\n' > docs/wiki/Tests.md; git add -A; git commit -qm "a page"
 o12=$(LOOP_ROLE=worker python3 -B -c "$LC" "$D" "$t0" 2>&1); t1=$(git rev-parse HEAD); printf 'y\tPASS\n' >> .loop/regression-runs.tsv; git add -A; git commit -qm "records"
-o13=$(LOOP_ROLE=worker python3 -B -c "$LC" "$D" "$t1" 2>&1); git switch -q feat; echo "$o12" | tail -2; echo "$o13" | tail -1
+o13=$(LOOP_ROLE=worker python3 -B -c "$LC" "$D" "$t1" 2>&1); git switch -q feat
 check "after a late loss, a record that changes a tested input refuses LATE_INPUTS and keeps the mark" 'grep -q "LATE_INPUTS" <<<"$o12" && grep -q "^STOPPED 2 True$" <<<"$o12"'
 check "a clean record after a late loss passes and clears the mark" 'grep -q "^PASSED False$" <<<"$o13"'
 exit $((fails > 0))
