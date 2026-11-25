@@ -6,7 +6,6 @@ may start. Imported, not run (--help prints this). Read-only: schedule_state.py 
 Order key: safety, owner order, a fix that blocks (or is first: for) a queued task goal, task goals before fixes, the brief's
 priority then fewest unmet dependencies (task goals only), file order. With no task goal and no owner line the order is today's."""
 import glob
-import importlib
 import json
 import os
 import re
@@ -16,9 +15,6 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
 
-DELIVERY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts")
-SECRET = re.compile(r"(gh[pousr]_[A-Za-z0-9]{16,}|sk-[A-Za-z0-9_-]{16,}|AKIA[0-9A-Z]{12,}|xox[abp]-[A-Za-z0-9-]{10,}|github_pat_[A-Za-z0-9_]{20,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.|(?i:bearer\s+[A-Za-z0-9._~+/-]{16,})|-----BEGIN [A-Z ]*KEY|"
-                    r"(?i:(password|passwd|secret|token|api[_-]?key)\s*[:=]\s*\S{6,}))")
 NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,59}$")
 SAFETY = ("deletion", "money", "security", "private-data", "steward-merge", "leak", "loosened-test")
 STRIP = re.compile(r"[\x00-\x1f\x7f-\x9f|]")
@@ -36,19 +32,9 @@ def fields(line):  # moved whole from batch.py
 
 
 def outside(root, *texts, strict=True):
-    """None when the texts may leave this machine, else the reason (a class, never the text). strict: only a clean private-name scan
-    passes (an issue, a printed stored word); a display path (board, show) also passes when no name list exists to match."""
-    for text in texts:
-        if SECRET.search(text or ""):
-            return "secret-shaped value (class: credential)"
-    sys.path.insert(0, DELIVERY)
-    try:
-        got = importlib.import_module("private").scan(root, None, texts={"text-%d" % i: t for i, t in enumerate(texts)})
-    except Exception as err:  # a scan that cannot run keeps the text local
-        return "the private-name scan could not run (%s)" % type(err).__name__
-    if got["state"] == "clean" or not strict and got["state"] in ("none", "off"):
-        return None
-    return "private-name scan: " + got["state"]
+    """The name scan and secret screen (schedule_state.outside); None when the texts may leave this machine, else the reason."""
+    import schedule_state
+    return schedule_state.outside(root, *texts, strict=strict)
 
 
 def norm(name):
@@ -335,12 +321,18 @@ def apply(plan, result):
     return keep, held
 
 
+def shown(root, text):
+    """A cause as it may be printed on any channel: cleaned, and hidden when the name scan or secret screen flags it."""
+    why = outside(root, text, strict=False)
+    return "(hidden: %s)" % why if why else clean(text, 80)
+
+
 def warn(result):
     """The unreadable inputs and the banner lines to stderr; sets STATUS to 3 so a command line consumer exits non-zero."""
     global STATUS
     for item, cause in result["incomplete"]:
         STATUS = 3
-        print("%s: %s unreadable (%s); dispatch: conservative; repair: %s" % (CODES[item], item, clean(cause, 80), REPAIR[item]), file=sys.stderr)
+        print("%s: %s unreadable (%s); dispatch: conservative; repair: %s" % (CODES[item], item, shown(result["root"], cause), REPAIR[item]), file=sys.stderr)
     return result
 
 

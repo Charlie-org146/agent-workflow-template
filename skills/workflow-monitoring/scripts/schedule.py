@@ -53,7 +53,7 @@ def show(root):
     why = sl.outside(root, "\n".join(lines), strict=False)  # queue words (a dependency name) pass the screen like the boards
     print(*(lines if not why else ["output hidden: " + why]), sep="\n")
     for item, cause in result["incomplete"]:
-        print("%s: %s unreadable (%s)" % (sl.CODES[item], item, sl.clean(cause, 80)), file=sys.stderr)
+        print("%s: %s unreadable (%s)" % (sl.CODES[item], item, sl.shown(root, cause)), file=sys.stderr)
     return 3 if result["incomplete"] else 0
 
 

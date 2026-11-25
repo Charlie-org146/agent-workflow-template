@@ -95,5 +95,15 @@ check(code == 0 and os.path.exists(sl.paths(top)["order"]), "negative control: a
 code, out, err = run(top, "order", "v110-fix", "v110-b", "--by", "o78")
 check(code == 2, "a record that covers only some of the goals ordered is refused")
 
+# 2. PRIVACY: every cause passes the name scan on every channel, stderr included
+top = repo()
+open(os.path.join(top, ".loop", "tasks", "plantedname.md"), "wb").write(b"\xff\x80")
+code, out, err = run(top, "show")
+check(code == 3 and "plantedname" not in out + err, "show hides a private name in an incomplete-input cause on stdout and stderr")
+buf = io.StringIO()
+with contextlib.redirect_stderr(buf):
+    sl.warn(sl.load(top))
+check("plantedname" not in buf.getvalue() and "SCHED-E10" in buf.getvalue(), "sl.warn keeps the code and the repair and hides the name on stderr")
+
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)

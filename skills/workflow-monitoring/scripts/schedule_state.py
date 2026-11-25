@@ -4,6 +4,7 @@ every outside write passes. Imported by schedule.py, not run (--help prints this
 
 Nothing here files, prints or sends text outward unless it passed outside(): the secret-shaped screen and the private-name scan.
 GitHub writes are previews unless the caller passes live=True (DEL-9, GRD-5)."""
+import importlib
 import json
 import os
 import re
@@ -17,7 +18,25 @@ sys.path.insert(0, HERE)
 import schedule_load as sl  # noqa: E402
 
 HEALTH = os.path.join(HERE, "..", "..", "workflow-health", "scripts")
-SECRET, outside = sl.SECRET, sl.outside
+DELIVERY = os.path.join(HERE, "..", "..", "workflow-delivery", "scripts")
+SECRET = re.compile(r"(gh[pousr]_[A-Za-z0-9]{16,}|sk-[A-Za-z0-9_-]{16,}|AKIA[0-9A-Z]{12,}|xox[abp]-[A-Za-z0-9-]{10,}|github_pat_[A-Za-z0-9_]{20,}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.|(?i:bearer\s+[A-Za-z0-9._~+/-]{16,})|-----BEGIN [A-Z ]*KEY|"
+                    r"(?i:(password|passwd|secret|token|api[_-]?key)\s*[:=]\s*\S{6,}))")
+def outside(root, *texts, strict=True):
+    """None when the texts may leave this machine, else the reason (a class, never the text). strict: only a clean private-name scan
+    passes (an issue, a printed stored word); a display path (board, show) also passes when no name list exists to match."""
+    for text in texts:
+        if SECRET.search(text or ""):
+            return "secret-shaped value (class: credential)"
+    sys.path.insert(0, DELIVERY)
+    try:
+        got = importlib.import_module("private").scan(root, None, texts={"text-%d" % i: t for i, t in enumerate(texts)})
+    except Exception as err:  # a scan that cannot run keeps the text local
+        return "the private-name scan could not run (%s)" % type(err).__name__
+    if got["state"] == "clean" or not strict and got["state"] in ("none", "off"):
+        return None
+    return "private-name scan: " + got["state"]
+
+
 
 
 class Refused(Exception):

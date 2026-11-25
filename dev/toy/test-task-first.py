@@ -210,7 +210,7 @@ check(not sl.load(dep)["waived"], "a dependency record is never waived")
 n0 = issues()
 code, out, err = run(repo(), *add, "see plantedname for details", "--live")
 check(code == 2 and "SCHED-E06" in err and "plantedname" not in err + out and issues() == n0, "task 2: words with a private name are refused for the issue path, the name is never echoed, nothing is filed")
-with mock.patch.object(ss, "outside", lambda root, *t: None):
+with mock.patch.object(ss, "outside", lambda root, *t, **k: None):
     code, out, err = run(repo(), *add, "see plantedname for details", "--live")
 red(issues() == n0, "task 2 guard removed (issue path): the planted name is filed")
 t3 = repo()
@@ -220,7 +220,7 @@ open(os.path.join(tmp, "names"), "a").write("fine words\n")
 code, out, err = run(t3, "workaround", "use", "k1", "--goal", "v110-dep")
 check(code == 2 and "fine words" not in out + err and not sl.load(t3)["waived"], "task 2: stored words that now hit the name scan are not shown and no activation is written")
 open(os.path.join(tmp, "names"), "w").write("plantedname\n")
-with mock.patch.object(ss, "outside", lambda root, *t: None):
+with mock.patch.object(ss, "outside", lambda root, *t, **k: None):
     code, out, err = run(t3, "workaround", "use", "k1", "--goal", "v110-dep")
 red("fine words" not in out, "task 2 guard removed (stderr/session path): the words are printed unscanned")
 code, out, err = run(repo(), *add, "token ghp_abcdefghijklmnopqrstuvwx1234", "--live")
