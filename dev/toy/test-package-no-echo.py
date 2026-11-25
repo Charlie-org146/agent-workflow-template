@@ -81,6 +81,7 @@ def tree(base, files, private_flow=None):
 def run(base, *flags, flow=None, home=None, cwd=None, cmd=None, env_more=None):
     env = {k: v for k, v in os.environ.items() if k not in ("LOOP_FLOW",)}
     env["HOME"] = home or os.path.join(TMP, "home")
+    env["USERPROFILE"] = env["HOME"]  # Python's expanduser reads USERPROFILE on Windows
     os.makedirs(env["HOME"], exist_ok=True)
     if flow:
         env["LOOP_FLOW"] = flow
