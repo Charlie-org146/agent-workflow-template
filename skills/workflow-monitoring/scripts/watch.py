@@ -279,7 +279,9 @@ def taken():
 def plan(limit):
     found, why = pool()
     sched = sl.warn(sl.load(root(), True))
-    return sl.apply(graph.ready(sched["goals"], {state["slug"]: state for state in runs()}, limit, graph.assigned(found), why), sched)
+    keep, held = sl.split(sched)
+    start, wait = graph.ready(keep, {state["slug"]: state for state in runs()}, limit, graph.assigned(found), why)
+    return start, held + wait
 
 
 def limit_of(args, cfg):

@@ -105,5 +105,19 @@ with contextlib.redirect_stderr(buf):
     sl.warn(sl.load(top))
 check("plantedname" not in buf.getvalue() and "SCHED-E10" in buf.getvalue(), "sl.warn keeps the code and the repair and hides the name on stderr")
 
+# 2b. capacity: held goals are taken out BEFORE slots are allocated, so a held goal never takes the slot a safety goal needs
+import watch  # noqa: E402
+cap = repo("- slug: v110-late | goal: late | done: d\n- slug: v110-safe | first: safety: security | goal: s | done: d\n")
+os.unlink(os.path.join(cap, ".loop", "tasks", "t.md"))
+open(os.path.join(cap, ".git", "loop", "order.json"), "w").write("{torn")
+old = os.getcwd()
+os.chdir(cap)
+try:
+    with contextlib.redirect_stderr(io.StringIO()):
+        start, held = watch.plan(1)
+finally:
+    os.chdir(old)
+check([g["slug"] for g in start] == ["v110-safe"] and [g["slug"] for g, _ in held] == ["v110-late"], "with one slot and a torn order file the safety goal starts, the held goal waits: start %s held %s" % ([g["slug"] for g in start], [g["slug"] for g, _ in held]))
+
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)

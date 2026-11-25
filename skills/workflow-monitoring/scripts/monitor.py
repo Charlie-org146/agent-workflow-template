@@ -159,7 +159,9 @@ def plan(limit):
     """Split queued goals into those that may start now and those that wait, with the reason."""
     taken, why = pool()
     sched = sl.warn(sl.load(root(), True))
-    return sl.apply(graph.ready(sched["goals"], {state["slug"]: state for state in runs()}, limit, taken, why), sched)
+    keep, held = sl.split(sched)
+    start, wait = graph.ready(keep, {state["slug"]: state for state in runs()}, limit, taken, why)
+    return start, held + wait
 
 
 def facts():

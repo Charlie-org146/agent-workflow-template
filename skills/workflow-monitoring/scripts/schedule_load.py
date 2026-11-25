@@ -311,6 +311,12 @@ def finish(result):
     return result
 
 
+def split(result):
+    """(goals that may start, [(goal, reason)] held): taken out BEFORE slots are allocated, so a held goal never takes a safety goal's slot."""
+    ok = [(g, eligible(g, result)) for g in result["goals"]]
+    return [g for g, (yes, _) in ok if yes], [(g, why) for g, (yes, why) in ok if not yes]
+
+
 def apply(plan, result):
     """The start path's (start, held) with every goal the schedule holds moved to held, with its reason."""
     start, held = plan
