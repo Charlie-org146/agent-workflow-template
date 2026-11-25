@@ -62,3 +62,29 @@ test-caps-health	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1
 repo-rules-threshold	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1880, done line 4	removed with its checker (test-health-repo-rules.py threshold, health_script_bytes)
 hands-off-size	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1880, done line 4	removed with its checker (test-hands-off.py size); off the known list
 backlog-milestones-made	o988 (owner o984: the size limits end), v110-no-size-cap-a, o1007	its health finding is the Docs group's stale page, not a size finding; it greps that PASS line; every other clause unchanged
+size-budget	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+docs-release-scripts-under-19000	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+scripts-c-regression-under-19000	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+release-scripts-under-19000	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+docs-scripts-under-19000	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+scripts-a-monitoring-under-19000	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+trim-setup-under-19000	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+size-warn-band	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: test-size-warn.py)
+trim-monitoring-4-size	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: test-trim-monitoring.py)
+dlf-done-3-sizes	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 20,480-byte find)
+sizing-done-4-sizes	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 20,480-byte find)
+make-room-5-sizes	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 20,480-byte find)
+make-room-b-5-sizes	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 20,480-byte find)
+make-room-1-room	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its 13,000-byte room loop on pinned objects)
+make-room-b-1-room	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its 13,000-byte room loop on pinned objects)
+skill-lines-release-4172	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 150-line SKILL.md count)
+skill-lines-docs-4171	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 150-line SKILL.md count)
+skill-lines-regression-3983	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 150-line SKILL.md count)
+skill-lines-regression-3815	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 150-line SKILL.md count)
+skill-lines-docs-1403	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 150-line SKILL.md count)
+review-findings-skill-lines	o988 (owner o984: the size limits end), v110-no-size-cap-a, plan-wrong (the step-1 sweep missed the literal 150)	drops only the 150-line SKILL.md clause; every other clause stays
+skill-criteria-in-references	o988 (owner o984: the size limits end), v110-no-size-cap-a, plan-wrong (the step-1 sweep missed the literal 150)	drops only the 150-line SKILL.md clause; every other clause stays
+skill-refusals-in-references	o988 (owner o984: the size limits end), v110-no-size-cap-a, plan-wrong (the step-1 sweep missed the literal 150)	drops only the 150-line SKILL.md clause; every other clause stays
+skill-workflow-in-references	o988 (owner o984: the size limits end), v110-no-size-cap-a, plan-wrong (the step-1 sweep missed the literal 150)	drops only the 150-line SKILL.md clause; every other clause stays
+auto-owner-words-wait	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: its question fixture names a non-size key now; command unchanged
+full-auto-all-answers	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: its question fixture names a non-size key now; command unchanged

@@ -3,7 +3,7 @@ lanes-headers	fails on clean main since v0.27.17; fixed by package-cap-3
 prd-repo-green	fails on clean main since v0.27.17; fixed by package-cap-3
 size-140	fails on clean main since v0.27.17: docs.py imports back sources from counting.py, which the case's moved-names list does not name (split-check.py names check); fixed by package-cap-3
 package-rows-tracked	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
-rel-major-refused	its size check fails on clean main 1ca5ae2f: checkin.py is 19,502 bytes against the cap of 19,495 (test-release-gate.py major)
+rel-major-refused	fails on clean main: test-release-gate.py major finds the Release page without REL-3, REL-12 and REL-13 (its size check was retired by principle 5, o988)
 ls-judge-login	red on main f3a20557: test-local-schedule.sh judge fails 'the default judge_command grants no tools (--tools "")'; see #5343
 ls-size-budget	red on this Mac at f7f86150d: test-local-schedule.sh scheduledrule fails 'a leftover health.yml is a WARN naming git rm' (its size case was retired by principle 5, o988); skipped in CI, see #5343
 runbook-registry	red on main 427590d4: test-runbook.sh fails 'the same routine passes once its page carries the runbook' and 'with no registry file the check still passes'; see #5343
