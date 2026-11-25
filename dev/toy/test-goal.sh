@@ -86,9 +86,11 @@ printf '\n\ndef low():\n    return 1\n' >> calc.py; git commit -qam "Add low"
 $goal pr low 2>&1 | grep -q "the flow hasn't finished: review, qa, ship" && ok "pr refuses until the flow ends" || bad "pr early"
 
 echo "== what a step leaves for the owner waits on the owner; a failed step is a try"
+cfg 'deliver_first={"release": {"default": false}}'  # DLF-1.5: these cases pin today's wait, which is what a scope with deliver-first off gets
 FAKE_SKILL_OUT='PENDING: approve the plan as written\nSTEP: pending' step low review | grep -q "WAITING low" && [ "$(field low status)" = waiting ] && ok "a pending decision waits" || bad "pending"
 python3 -c "import json,sys;w=json.load(open(sys.argv[1]))['waiting'];assert 'approve the plan' in w['ask'] and w['words']==['go on low','stop low']" "$C/loop/runs/low.json" && ok "Waiting on you gets the decision and the words" || bad "waiting fields"
 $goal answer low >/dev/null
+git checkout -q -- .loop/config.json  # deliver-first back on
 FAKE_SKILL_OUT='STEP: failed the tests would not run' step low review | grep -q "TRY 1 OF 3 FAILED: review failed" && ok "a failed step costs a try" || bad "failed step"
 FAKE_SKILL_OUT='nothing useful' step low review | grep -q "gave no STEP line" && ok "no STEP line costs a try" || bad "no step line"
 step low review >/dev/null
@@ -109,9 +111,11 @@ for reply in 'PENDING: none' 'PENDING: nothing' 'PENDING: **none**' 'PENDING: n/
 done
 [ $pnall = 1 ] && ok "PENDING none, nothing, **none**, n/a and empty record and go on"
 git switch -q main; $goal new pnmix --here --goal "Add pnmix" --done "calc has pnmix" >/dev/null
+cfg 'deliver_first={"release": {"default": false}}'  # DLF-1.5: these cases pin today's wait, which is what a scope with deliver-first off gets
 out=$(FAKE_SKILL_OUT='PENDING: none\nPENDING: approve the plan\nDEPTH: full\nSTEP: done' step pnmix idea 2>&1)
 python3 -c "import json,sys;w=json.load(open(sys.argv[1]))['waiting'];assert 'approve the plan' in w['ask'] and 'none' not in w['ask'].lower()" "$C/loop/runs/pnmix.json" && grep -q "WAITING pnmix" <<<"$out" \
   && ok "a real PENDING item among none lines still waits, with its own ask" || bad "mixed none and real item: ${out:0:160}"
+git checkout -q -- .loop/config.json  # deliver-first back on
 git switch -q main; $goal new pnedge --here --goal "Add pnedge" --done "calc has pnedge" >/dev/null
 FAKE_SKILL_OUT='PENDING: none\nDEPTH: full' step pnedge idea 2>&1 | grep -q "gave no STEP line" && ok "PENDING: none with no STEP line is a failed try, not a wait" || bad "none with no STEP line"
 FAKE_SKILL_OUT='PENDING: none\nDEPTH: full\nSTEP: pending' step pnedge idea 2>&1 | grep -q "WAITING pnedge" && ok "PENDING: none with STEP: pending still waits (the step asked to)" || bad "none with STEP: pending"

@@ -49,6 +49,7 @@ case "$id" in
   DEL-3)
     $goal new held --here --goal "Held" --done "held" >/dev/null || no "new"
     F="python3 $here/skills/workflow-delivery/scripts/flow.py"; R="$(git rev-parse --git-common-dir)/loop/runs"
+    python3 -c "import json;p='.loop/config.json';c=json.load(open(p));c['deliver_first']={'release': {'default': False}};json.dump(c,open(p,'w'),indent=2)"  # DLF-1.5: this case pins today's wait, which is what a scope with deliver-first off gets
     FAKE_SKILL_OUT='PENDING: approve the plan\nDEPTH: full\nSTEP: done' $F held plan --wait 5 >/dev/null; FAKE_SKILL_OUT='x' $F held plan --wait 10 >/dev/null
     $goal record held plan --file "$R/held.plan.txt" | grep -q "^WAITING held" || no "a pending decision didn't wait"
     python3 -c "import json,sys;s=json.load(open(sys.argv[1]));assert s['status']=='waiting' and s['flow']['plan']=='pending'" "$R/held.json" || no "pending was approved"

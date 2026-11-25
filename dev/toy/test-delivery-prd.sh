@@ -133,7 +133,7 @@ fi
 
 if on budget; then
   echo "== DEL-8 the goal carries a budget"
-  base 'time_budget_minutes=90' 'token_budget=1000'
+  base 'time_budget_minutes=90' 'token_budget=1000' 'deliver_first={"release": {"default": false}}'  # DLF-1.5: this pins today's stop
   new bud1 "src/api" >/dev/null
   check "a new goal carries the repo's time and token budget" '[ "$(field bud1 budget.minutes)" = 90 ] && [ "$(field bud1 budget.tokens)" = 1000 ]'
   python3 - "$R/bud1.json" <<'PY'
