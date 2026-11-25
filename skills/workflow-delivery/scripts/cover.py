@@ -24,6 +24,8 @@ IFS = ("github.event_name != 'merge_group'", "always() && github.event_name != '
        "always() && needs.shard.result == 'success'", "github.event_name == 'merge_group'")
 PIN = ("name: regression-pr\n", "  pull_request:\n  merge_group:\n    types: [checks_requested]\n", "\n  shard:\n", "\n  affected:\n",
        "\n  small:\n", "run nightly --reuse --tier goal", "cutgate.py", 'test "${{ needs.shard.result }}" = success')
+JOB = {"shard": "github.event_name != 'merge_group'", "affected": "always() && github.event_name != 'merge_group'",
+       "small": "github.event_name == 'merge_group'"}  # each job's own if: (a disabled pull_request job is no cover)
 SILENT = ("GH", "RUNS")
 PLAN = r"""
 import json, sys
@@ -66,6 +68,11 @@ def save(runs, slug, data):
 
 def pinned(text):
     ifs = re.findall(r"^\s*(?:- )?if: (.+)$", text, re.M)
+    for name, want in JOB.items():
+        block = re.search(r"\n  %s:\n(.*?)(?=\n  [\w-]+:\n|\Z)" % name, text, re.S)
+        got = re.search(r"^    if: (.+)$", block.group(1), re.M) if block else None
+        if not got or got.group(1) != want:
+            return False
     return all(p in text for p in PIN) and all(i in IFS for i in ifs)
 
 
@@ -84,7 +91,7 @@ def facts(root, cfg):
     """(code, diff paths): the first predicate that fails, or '' when the cover may be claimed."""
     base = cfg.get("base", "main")
     rc, url = sh(["git", "remote", "get-url", "origin"], root)
-    if base != "main" or "github.com" not in url:
+    if base != "main" or not re.search(r"(^|[/@.])github[.]com[:/]", url):
         return "GH", []
     if cfg.get("regression_runs") != "actions":
         return "RUNS", []
@@ -125,17 +132,20 @@ def select(root, cfg, names):
         plan = json.loads(out.splitlines()[-1])
     except (ValueError, IndexError):
         return [], [], "PLAN"
-    skips = sh(["git", "show", "origin/%s:.loop/regression-skips.tsv" % base], root)
-    limits = sh(["git", "show", "origin/%s:.loop/regression-limits.tsv" % base], root)
-    gone = ids_of(skips[1]) | ids_of(limits[1], 0, "nightly") | set(plan["bad"])
+    gone = set(plan["bad"])  # GitHub reads the merge ref: a row on either the base's or this branch's list is not run there
+    for ref in ("origin/%s" % base, "HEAD"):
+        gone |= ids_of(sh(["git", "show", ref + ":.loop/regression-skips.tsv"], root)[1])
+        gone |= ids_of(sh(["git", "show", ref + ":.loop/regression-limits.tsv"], root)[1], 0, "nightly")
     todo = list(plan["todo"])
     covered = sorted(k for k in todo if k in reach and k not in gone)
     return covered, sorted(k for k in todo if k not in covered), "" if covered else "NONE"
 
 
 def drop(runs, slug):
+    import lane as lanes
     import lanekit
     for name in ("qa", "ship", "pr"):
+        lanes.stop(*lanes.job_of(runs, slug, name))  # a partial job left running would later pass as the full lane
         for end in (".ok", ".last"):
             try:
                 os.remove(lanekit.lane_base(runs, slug, name) + end)
@@ -168,6 +178,9 @@ def lane(fn, runs, slug, step, spec, cfg, wait=90):
         off(runs, slug, step, code)
         return fn(runs, slug, step, spec, cfg, wait)
     head = sh(["git", "rev-parse", "HEAD"], root)[1]
+    was = data.get("claim") or {}
+    if was and not set(local) <= set(was.get("local", [])):
+        drop(runs, slug)  # more rows are local now: no earlier partial pass stands for them
     data["claim"] = {"name": NAME, "head": head, "covered": covered, "local": local, "step": step}
     save(runs, slug, data)
     line = "COVERED %d rows by %s; running %d locally: %s (claimed; pending PR recheck and GitHub execution)" % (
@@ -215,7 +228,8 @@ def late(runs, slug, cfg):
     root = sh(["git", "rev-parse", "--show-toplevel"])[1]
     code, names = facts(root, cfg)
     if not code:
-        code = select(root, cfg, names)[2]
+        got = select(root, cfg, names)
+        code = got[2] or ("GREW" if not set(got[1]) <= set(load(runs, slug)["claim"]["local"]) else "")
     if code:
         off(runs, slug, "pr", code)
     return bool(code)
@@ -290,8 +304,25 @@ def main(argv=None):
     if len(argv) != 3 or argv[0] != "lane" or argv[2] not in ("qa", "ship", "pr"):
         print("usage: cover.py lane SLUG qa|ship|pr\n\n" + __doc__)
         return 0 if argv[:1] in (["-h"], ["--help"]) else 2
-    common = sh(["git", "rev-parse", "--git-common-dir"])[1]
-    claim = load(os.path.join(os.path.abspath(common), "loop", "runs"), argv[1]).get("claim") or {}
+    runs = os.path.join(os.path.abspath(sh(["git", "rev-parse", "--git-common-dir"])[1]), "loop", "runs")
+    top = sh(["git", "rev-parse", "--show-toplevel"])[1]
+    try:
+        cfg = json.load(open(os.path.join(top, ".loop", "config.json")))
+    except (OSError, ValueError):
+        cfg = {}
+    data = load(runs, argv[1])
+    if data.get("claim") and top:  # recompute first: the named command must reach what the record will ask for
+        code, names = facts(top, cfg)
+        got = select(top, cfg, names) if not code else ([], [], code)
+        if got[2]:
+            off(runs, argv[1], argv[2], got[2])
+        else:
+            was = data["claim"]
+            if not set(got[1]) <= set(was["local"]):
+                drop(runs, argv[1])
+            data["claim"] = dict(was, head=sh(["git", "rev-parse", "HEAD"], top)[1], covered=got[0], local=got[1], step=argv[2])
+            save(runs, argv[1], data)
+    claim = load(runs, argv[1]).get("claim") or {}
     env = dict(os.environ, **({"LOOP_COVER_IDS": ",".join(claim["local"])} if claim.get("local") else {}))
     return subprocess.run([sys.executable, os.path.join(HERE, "role.py"), "lane", argv[1], argv[2]], env=env).returncode
 

@@ -113,6 +113,7 @@ wf '  pull_request:
     branches: [main]
 '; off "a pull_request filter" WF; unwf
 wf "if: always() && github.event_name != 'merge_group'" "if: false"; off "a job that can be skipped" WF; unwf
+wf "if: always() && github.event_name != 'merge_group'" "if: github.event_name == 'merge_group'"; off "affected runs only in the merge queue" WF; unwf
 wf "run nightly --reuse --tier goal" "run nightly --tier goal"; off "a no-op shard (no --reuse)" WF; unwf
 wf 'test "${{ needs.shard.result }}" = success' 'true'; off "a missing aggregate" WF; unwf
 git switch -q main; git rm -q .github/workflows/regression-pr.yml; git commit -qm "no workflow"; git push -q origin main; git switch -q feat
@@ -146,6 +147,10 @@ out=$(cov lane pr); echo "$out" | head -4
 check "a lost cover is a notice, not a refusal: COVER_LOST, the full lane runs" 'grep -q "^COVER LOST (COVER_LOST): WF\. Non-fatal: the local lane now runs in full" <<<"$out" && grep -q "^CALLS \[\"\"\]" <<<"$out"'
 check "a lost cover drops the qa, ship and pr lane passes and nothing else" 'for b in $lanes; do [ ! -e "$b.ok" ] && [ ! -e "$b.last" ] || exit 1; done; [ -e "$common/loop/runs/g1.cover.json" ]'
 git switch -q main; git revert --no-edit HEAD >/dev/null; git push -q origin main; git switch -q feat
+# a branch that adds a row to the skip list: GitHub reads that list from the merge ref, so the row is local
+git switch -q -c skipb feat; printf 'a\tmacOS only\n' >> .loop/regression-skips.tsv; git commit -qam "Skip a"
+reset; out=$(cov lane qa); check "a row this branch adds to the skip list is local, or the cover is off (never covered)" 'grep -Eq "^COVER OFF: REACH|^COVERED [0-9]+ rows by L1; running [0-9]+ locally: .*\ba\b" <<<"$out"'
+git switch -q feat
 
 echo "== the record: a covered row is waived, an uncovered row still needs its own pass"
 reset; cov lane qa >/dev/null
@@ -155,6 +160,9 @@ out=$(HAVE_OK=1 cov need qa); check "the lane's own pass for the uncovered rows 
 git switch -q -c feat2 feat; printf 't\tland\tbash dev/t.sh\tX-1\t2026-01-01\tt works.\tcriterion\t\n' >> .loop/regression.tsv; printf 'echo t >> "$TOY_LOG"; grep -q ok src/t.txt\n' > dev/t.sh; printf 'ok\n' > src/t.txt; git add -A; git commit -qm "A new reachable row"
 out=$(HAVE_OK=1 cov need qa); echo "$out"
 check "a row that became reachable after the claim runs locally: the old lane pass is not enough" 'grep -q "LANE_MISSING_UNCOVERED" <<<"$out" && grep -q "t have no passing local lane" <<<"$out"'
+lb() { python3 -c "import sys; sys.path.insert(0,'$D'); sys.dont_write_bytecode=True; import lanekit; print(lanekit.lane_base('$common/loop/runs','g1','$1'))"; }
+git switch -q feat; reset; cov lane qa >/dev/null; : > "$(lb qa).ok"; git switch -q feat2; cov lane qa >/dev/null
+check "local rows that grew drop the earlier partial pass" '[ ! -e "$(lb qa).ok" ]'
 git switch -q feat
 git switch -q -c allc main; for r in a b c; do printf 'again\n' > "src/$r.txt"; done; git add -A; git commit -qm "Only covered rows change"
 reset; out=$(cov lane qa); echo "$out" | head -3
