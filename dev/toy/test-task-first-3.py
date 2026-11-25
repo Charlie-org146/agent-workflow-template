@@ -128,5 +128,20 @@ rows = [x.split(". ", 1)[1] for x in out.splitlines() if x[:3].strip().rstrip(".
 check([x.split(" | ")[0] for x in rows] == ["v110-fix", "v110-b", "v110-a", "v110-clean"], "an independent fix with first: stays behind the task goals, a real blocker goes first: %s" % [x.split(" | ")[0] for x in rows])
 check("v110-clean" in out and "does not block" in out and "tidy first" not in out + err, "the ignored first: key is named with its goal and the why text is not printed")
 
+# 4. d2: the JSON board keeps the loader's schedule fields, and a held goal is not "ready to start"
+import board  # noqa: E402
+import datetime  # noqa: E402
+jb = repo(Q3)
+rows, deps = board.collect("n", jb, "main", datetime.datetime.now(datetime.timezone.utc))
+by = {d["slug"]: d for d in deps}
+check(by["v110-fix"].get("kind") == "fix" and "ahead of" in by["v110-fix"].get("cell", "") and by["v110-b"].get("task") == "Task first" and by["v110-b"]["kind"] == "task", "the JSON board carries kind, task and the exact cell for each queued goal: %s" % {k: by["v110-fix"].get(k) for k in ("kind", "cell")})
+open(os.path.join(jb, ".git", "loop", "order.json"), "w").write("{torn")
+rows, deps = board.collect("n", jb, "main", datetime.datetime.now(datetime.timezone.utc))
+check(all(str(d.get("waits_on")).startswith("held:") for d in deps if d["slug"] != "v110-x"), "a held goal's waits_on says held, never ready to start: %s" % [d["waits_on"][:30] for d in deps])
+nb = repo(Q3)
+os.unlink(os.path.join(nb, ".loop", "tasks", "t.md"))
+rows, deps = board.collect("n", nb, "main", datetime.datetime.now(datetime.timezone.utc))
+check(all("kind" not in d and "cell" not in d for d in deps), "with no task briefs the JSON board keeps today's keys (nothing added)")
+
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)

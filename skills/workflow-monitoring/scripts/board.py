@@ -217,9 +217,11 @@ def collect(name, path, base, at):
         limit = graph.parallel_of(cfg)
         if not waits and limit and used >= limit:
             why = "a free slot (%d of %s running)" % (used, limit)
+        why = "held: " + goal["hold"] if goal.get("hold") else why
         deps.append({"repo": name, "slug": goal["slug"], "waits_on": why, "on": ", ".join(slug for slug, _ in waits), "goal": clean(goal.get("goal"), 80),
                      "level": goal["level"], "touches": goal["touches"],
-                     "left": board_status and board_status.left_time({"slug": goal["slug"], "status": "queued"}, records, at)})
+                     "left": board_status and board_status.left_time({"slug": goal["slug"], "status": "queued"}, records, at),
+                     **({k: goal[k] for k in ("kind", "task", "hold", "marks", "cell")} if goal.get("marks") else {})})
     return rows, deps
 
 
