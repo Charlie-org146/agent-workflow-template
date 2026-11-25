@@ -25,6 +25,7 @@ import board_lines  # noqa: E402
 bb = board_lines  # budget, depth and private-name lines (its section 4)
 import board_status as bs  # noqa: E402
 import graph  # noqa: E402
+import schedule_load as sl  # noqa: E402
 import board_model as bm  # noqa: E402
 import board_page  # noqa: E402
 from board_tasks import age, parse_at, task_lines  # noqa: E402,F401
@@ -260,6 +261,7 @@ def render(root=None, at=None):
         out = [head, tail, "", "Issues"]
     else:
         out = [head, "", "Issues"]
+    out[-2:-2] = sl.load(root)["banner"]
     out += issues([r for r in runs if r["slug"] not in shut], gone, root, at, taken, why, freezing) + ["", "Running goals"]
     most = max_tries(root)
     bar = lambda run, done, end="": "- %s  [%s%s] %d%%  %s%s%s" % (
@@ -316,4 +318,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main() or sl.STATUS)

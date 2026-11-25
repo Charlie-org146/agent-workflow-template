@@ -23,6 +23,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
+import schedule_load as sl  # noqa: E402
 import proctree  # noqa: E402
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
@@ -106,23 +107,8 @@ def runs():
 
 
 def parse_queue():
-    """Goals from .loop/queue.md, one `- slug: .. | key: ..` line each. Other lines are ignored."""
-    try:
-        with open(os.path.join(root(), ".loop", "queue.md")) as handle:
-            lines = handle.read().splitlines()
-    except OSError:
-        return []
-    goals, seen = [], set()
-    for line in lines:
-        item = graph.parse(line)
-        if not item:
-            continue
-        if not SLUG.match(item["slug"]) or item["slug"] in seen or not item["goal"] or not item["done"]:
-            print("SKIPPED queue line (needs a good slug, a goal and a done line): %s" % line.strip()[:80])
-            continue
-        seen.add(item["slug"])
-        goals.append(item)
-    return goals
+    """Goals from .loop/queue.md in schedule order (schedule_load.load), one `- slug: .. | key: ..` line each."""
+    return sl.warn(sl.load(root(), True))["goals"]
 
 
 def alive(pid):
@@ -172,7 +158,8 @@ def pool():
 def plan(limit):
     """Split queued goals into those that may start now and those that wait, with the reason."""
     taken, why = pool()
-    return graph.ready(parse_queue(), {state["slug"]: state for state in runs()}, limit, taken, why)
+    sched = sl.warn(sl.load(root(), True))
+    return sl.apply(graph.ready(sched["goals"], {state["slug"]: state for state in runs()}, limit, taken, why), sched)
 
 
 def facts():
@@ -406,4 +393,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main() or sl.STATUS)

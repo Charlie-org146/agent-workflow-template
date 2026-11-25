@@ -419,8 +419,8 @@ def main():
         for flag, kinds in options:
             item.add_argument(flag, **kinds)
     goal = (("--goal", {"required": True}), ("--done", {"action": "append", "default": []}),
-            ("--touches", {"default": ""}))
-    add("new", cmd_new, *goal, ("--release", {"default": ""}), ("--here", {"action": "store_true"}))
+            ("--touches", {"default": ""}), ("--release", {"default": ""}))
+    add("new", cmd_new, *goal, ("--here", {"action": "store_true"}))
     add("queue", cmd_queue, *goal, ("--depends-on", {"default": ""}))
     add("adopt", cmd_adopt)
     add("step", cmd_step, ("name", {}), ("--note", {"default": ""}), ("--tokens", {"type": int, "default": 0}))

@@ -24,6 +24,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
+import schedule_load as sl  # noqa: E402
 from board_log import stamp, unread  # noqa: E402,F401  (aware UTC or None; a zone-less stamp is named, not guessed)
 try:  # without board_status.py there is no estimate
     import board_status  # noqa: E402
@@ -145,18 +146,7 @@ def delay_of(cadence, busy):
 
 
 def queue_of(path):
-    try:
-        with open(os.path.join(path, ".loop", "queue.md")) as handle:
-            lines = handle.read().splitlines()
-    except OSError:
-        return []
-    goals = []
-    for line in lines:
-        item = graph.parse(line)
-        if item and SLUG.match(item["slug"]):
-            item["level"] = "goal"
-            goals.append(item)
-    return goals
+    return [dict(item, level="goal") for item in sl.warn(sl.load(path))["goals"]]
 
 
 def started(run):
@@ -280,7 +270,7 @@ def build(at, since):
         count("done"), count("failed", "stopped"), len(deps) - freezing, count("retired"))
     delay = delay_of(cadence, bool(live))
     doc = {"generated": iso(at), "repos": names, "cadence": cadence, "digest": digest,
-           "next_delay": delay, "next_at": "" if delay == "none" else (at + datetime.timedelta(seconds=int(delay))).strftime("%H:%M UTC"), "open": bool(live or waiting or deps), "waiting": waiting, "dependencies": deps, "runs": rows, "state": flat}
+           "next_delay": delay, "next_at": "" if delay == "none" else (at + datetime.timedelta(seconds=int(delay))).strftime("%H:%M UTC"), "open": bool(live or waiting or deps), "waiting": waiting, "dependencies": deps, "runs": rows, "state": flat, "incomplete": bool(sl.STATUS)}
     old = (read_json(since) or {}).get("state") if since else {}
     old = old if isinstance(old, dict) else {}
     for key, item in flat.items():  # gh failing to answer says nothing about the pull request
@@ -394,4 +384,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main() or sl.STATUS)

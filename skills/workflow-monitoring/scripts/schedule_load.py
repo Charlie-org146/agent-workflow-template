@@ -22,6 +22,14 @@ REPAIR = {"brief": "fix the brief file named in the cause", "workaround": "sched
           "queue": "fix the queue line named in the cause", "release": "git tag --list"}
 
 
+def fields(line):  # moved whole from batch.py
+    out = {}
+    for part in line.strip()[2:].split("|"):
+        key, _, value = part.partition(":")
+        out.setdefault(key.strip(), " ".join(value.split()))
+    return out
+
+
 def norm(name):
     name = str(name).strip().lower()
     return name[1:] if re.match(r"^v\d", name) else name
@@ -126,7 +134,7 @@ def policy_on(root):
         return True
 
 
-def queue_goals(root, strict, bad):
+def queue_goals(root, strict, bad, check=True):
     try:
         lines = open(os.path.join(root, ".loop", "queue.md"), encoding="utf-8").read().splitlines()
     except FileNotFoundError:
@@ -137,7 +145,7 @@ def queue_goals(root, strict, bad):
     goals, seen = [], set()
     for line in lines:
         item = graph.parse(line)
-        if not item or not graph.SLUG.match(item["slug"]):
+        if not item or check and not graph.SLUG.match(item["slug"]):
             continue
         if strict and (item["slug"] in seen or not item["goal"] or not item["done"]):
             print("SKIPPED queue line (needs a good slug, a goal and a done line): %s" % line.strip()[:80])
@@ -168,12 +176,12 @@ def blocking(goals):
     return out
 
 
-def load(root, strict=False, policy=None):
+def load(root, strict=False, policy=None, check=True):
     """The schedule: {goals, incomplete: [(input, cause)], notes, release, order, held, waived, banner, strings}. Goals are the queue items
     (as graph.parse returns them) in schedule order with `marks` (the cells after the slug), `kind`, `task` and `hold`."""
     bad, notes = [], []
     pol = policy_on(root) if policy is None else policy
-    goals = queue_goals(root, strict, bad)
+    goals = queue_goals(root, strict, bad, check)
     p = paths(root)
     recs, cause = read_json_lines(p["workaround"])
     cause and bad.append(("workaround", "record file " + cause))
@@ -212,6 +220,8 @@ def load(root, strict=False, policy=None):
                 result["waived"].setdefault(goal, set()).add(w["fix"])
     block, idx = blocking(goals), {g["slug"]: i for i, g in enumerate(goals)}
     task_slugs = {g["slug"] for g in tasks}
+    for g in goals:  # an activated workaround waives the wait on its fix for that goal only
+        g["depends"] = [d for d in g["depends"] if d not in result["waived"].get(g["slug"], ())]
     for g in goals:
         g["why"] = ""
         if g["kind"] == "fix":
@@ -263,11 +273,34 @@ def finish(result):
             g["marks"] = g.get("marks", []) + ["held: " + held]
         if not result["active"] and not held:
             g["marks"] = []
+        g["cell"] = " | ".join([g["slug"]] + g["marks"]) if g["marks"] else ""
     bad = result["incomplete"]
     result["banner"] = ["schedule incomplete: %s (%s); dispatch: %s; repair: %s" % (i, clean(c, 80), "conservative", REPAIR[i]) for i, c in bad[:1]]
     if result["notes"]:
         result["banner"].append("schedule notes: %d (schedule.py show)" % len(result["notes"]))
     return result
+
+
+def apply(plan, result):
+    """The start path's (start, held) with every goal the schedule holds moved to held, with its reason."""
+    start, held = plan
+    keep = []
+    for g in start:
+        ok, why = eligible(g, result)
+        keep.append(g) if ok else held.append((g, why))
+    return keep, held
+
+
+def warn(result):
+    """The unreadable inputs and the banner lines to stderr; sets STATUS to 3 so a command line consumer exits non-zero."""
+    global STATUS
+    for item, cause in result["incomplete"]:
+        STATUS = 3
+        print("%s: %s unreadable (%s); dispatch: conservative; repair: %s" % (CODES[item], item, clean(cause, 80), REPAIR[item]), file=sys.stderr)
+    return result
+
+
+STATUS = 0
 
 
 def eligible(goal, result):

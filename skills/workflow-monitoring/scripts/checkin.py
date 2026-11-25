@@ -19,6 +19,7 @@ import board_lines
 from board_lines import gather, shown
 import govern_hook
 import graph
+import schedule_load as sl
 import live_board as lb
 import machines
 import mend
@@ -302,6 +303,7 @@ def main():
     args = parser.parse_args()
     args.since and bs.timed(args.since, "--since %r")
     lines = render(stamp=args.since or None)
+    lines[1:1] = sl.load(bs.git("rev-parse", "--show-toplevel"))["banner"]
     print("\n".join(lines))
     try:  # an op-tokens.tsv row (proctree.op_append) for the quiet hook; never fail a check-in
         import proctree
@@ -314,4 +316,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main() or sl.STATUS)

@@ -18,6 +18,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
+import schedule_load as sl  # noqa: E402
 import board_page  # noqa: E402
 # board_log sets the no-prompt guard (GIT_TERMINAL_PROMPT and the rest) before any git or gh process starts.
 from board_log import (COMMON, FLOW, HOLD, STEPS, UNHOLD, active_minutes, after, current, flow_seconds, git, goal_file,  # noqa: E402,F401
@@ -64,7 +65,7 @@ def board_items(live, queue, freezing, lines, runs, at, root, waits, held=None):
     the slugs the session pool says are held (None when unknown), whose step time stops growing."""
     def item(run, mark, depends):
         found = estimate_full(run, runs, at, root, held)
-        return dict(slug=run["slug"], mark=mark, depends=waits(depends), stage=0, est=found and found[:4], owner=graph.foreign(run),
+        return dict(slug=run["slug"], cell=run.get("cell", ""), mark=mark, depends=waits(depends), stage=0, est=found and found[:4], owner=graph.foreign(run),
                     left=found[0] if found else None, partial=bool(found and found[4]))
     out = [item(r, board_page.mark(r.get("status")), r.get("waits_on") or []) for r in live]
     out += [item(dict(g, status="queued"), "queued", g["depends"]) for g in queue]
@@ -76,11 +77,7 @@ def board_items(live, queue, freezing, lines, runs, at, root, waits, held=None):
 def queued(root, runs):
     """Queued goals, as queue.md lines parsed by graph.parse: the ones with no run record yet."""
     by_slug = {run["slug"] for run in runs}
-    try:
-        with open(os.path.join(root, ".loop", "queue.md")) as handle:
-            return [item for item in map(graph.parse, handle.read().splitlines()) if item and item["slug"] not in by_slug]
-    except OSError:
-        return []
+    return [item for item in sl.warn(sl.load(root, check=False))["goals"] if item["slug"] not in by_slug]
 
 
 def github_state(url, cwd):

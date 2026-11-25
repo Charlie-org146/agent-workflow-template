@@ -24,6 +24,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
+import schedule_load as sl  # noqa: E402
 import replan as lim  # noqa: E402
 import proctree  # noqa: E402
 from batch import agent_command  # noqa: E402
@@ -148,22 +149,7 @@ def runs():
 
 
 def parse_queue():
-    try:
-        with open(os.path.join(root(), ".loop", "queue.md")) as handle:
-            lines = handle.read().splitlines()
-    except OSError:
-        return []
-    goals, seen = [], set()
-    for line in lines:
-        item = graph.parse(line)
-        if not item:
-            continue
-        if not SLUG.match(item["slug"]) or item["slug"] in seen or not item["goal"] or not item["done"]:
-            print("SKIPPED queue line: " + line[:60])
-            continue
-        seen.add(item["slug"])
-        goals.append(item)
-    return goals
+    return sl.warn(sl.load(root(), True))["goals"]
 
 
 def alive(pid):
@@ -292,7 +278,8 @@ def taken():
 
 def plan(limit):
     found, why = pool()
-    return graph.ready(parse_queue(), {state["slug"]: state for state in runs()}, limit, graph.assigned(found), why)
+    sched = sl.warn(sl.load(root(), True))
+    return sl.apply(graph.ready(sched["goals"], {state["slug"]: state for state in runs()}, limit, graph.assigned(found), why), sched)
 
 
 def limit_of(args, cfg):
@@ -474,4 +461,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main() or sl.STATUS)

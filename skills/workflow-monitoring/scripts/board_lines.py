@@ -132,7 +132,7 @@ def queue_view(items, at):
         times = [end[d] for d in need]
         start = None if None in times else (min if full and not deps else max)(times or [0])
         end[q["slug"]] = None if None in (start, q.get("left")) else start + q["left"]
-        out.append("  %d. %s | waits for: %s | %s" % (n, q["slug"], q.get("why") or "nothing, starts next", eta(at, start, ", ".join(d for d in need if end[d] is None) + " has no estimate")))
+        out.append("  %d. %s | waits for: %s | %s" % (n, q.get("cell") or q["slug"], q.get("why") or "nothing, starts next", eta(at, start, ", ".join(d for d in need if end[d] is None) + " has no estimate")))
     return out + ["  (none queued)"] * (not wait)
 
 
