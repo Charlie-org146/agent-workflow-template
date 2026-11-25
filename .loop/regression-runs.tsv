@@ -510,7 +510,7 @@ settings-overridden	PASS	2026-11-12
 settings-reference	PASS	2026-11-12	
 settings-reference-fresh	PASS	2026-11-16	
 settings-refresh	PASS	2026-11-12	
-settings-render-fresh	FAIL	2026-11-17	
+settings-render-fresh	PASS	2026-11-25	
 settings-start-fresh	PASS	2026-11-16	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
