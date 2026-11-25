@@ -8,7 +8,6 @@ regression-limits.tsv (nightly) rows and the previous lane's failed, skipped and
 unknown means NO cover and the whole lane runs. The claim is made at qa or ship, never granted at pr (a one-way ratchet), kept in
 <runs>/<slug>.cover.json. Printed reasons are codes, never repo names or URLs. Hooks: flow.py (lane), goal_steps.py (need, late,
 pr_part, refresh), lane.py (LOOP_COVER_IDS), sizing.py (rule_fix), flow_steps.py (prompt)."""
-import argparse
 import hashlib
 import json
 import os
@@ -276,16 +275,14 @@ def rule_fix(text, runs, slug):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    sub = ap.add_subparsers(dest="cmd", required=True)
-    one = sub.add_parser("lane")
-    one.add_argument("slug")
-    one.add_argument("step", choices=("qa", "ship", "pr"))
-    args = ap.parse_args(argv)
+    argv = sys.argv[1:] if argv is None else argv
+    if len(argv) != 3 or argv[0] != "lane" or argv[2] not in ("qa", "ship", "pr"):
+        print("usage: cover.py lane SLUG qa|ship|pr\n\n" + __doc__)
+        return 0 if argv[:1] in (["-h"], ["--help"]) else 2
     common = sh(["git", "rev-parse", "--git-common-dir"])[1]
-    claim = load(os.path.join(os.path.abspath(common), "loop", "runs"), args.slug).get("claim") or {}
+    claim = load(os.path.join(os.path.abspath(common), "loop", "runs"), argv[1]).get("claim") or {}
     env = dict(os.environ, **({"LOOP_COVER_IDS": ",".join(claim["local"])} if claim.get("local") else {}))
-    return subprocess.run([sys.executable, os.path.join(HERE, "role.py"), "lane", args.slug, args.step], env=env).returncode
+    return subprocess.run([sys.executable, os.path.join(HERE, "role.py"), "lane", argv[1], argv[2]], env=env).returncode
 
 
 if __name__ == "__main__":
