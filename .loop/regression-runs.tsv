@@ -51,7 +51,7 @@ aut-setup-health-only-with-skill	PASS	2026-11-12
 aut7-budget-agrees	PASS	2026-11-22	
 auto-approved	PASS	2026-11-25	
 auto-owner-words-wait	PASS	2026-11-24	
-auto-release	PASS	2026-11-25	
+auto-release	PASS	2026-11-25		76fb682cf8ac
 automation-missing-workflow	PASS	2026-11-12	
 backlog-adoption-warns	PASS	2026-11-19	
 backlog-leftovers-filed	PASS	2026-11-16		52a00777dfa3
@@ -74,6 +74,7 @@ ci-issue-backlog	PASS	2026-11-10
 ci-summary	PASS	2026-11-24	
 ci-target-input	PASS	2026-11-10	
 codex-key-commands	FAIL	2026-11-25	
+codex-ro-home	FAIL	2026-11-25	
 config-holds-topics	PASS	2026-11-14	
 config-lane-duplicate-key	PASS	2026-11-15	
 config-lane-duplicate-same	PASS	2026-11-15	
@@ -112,7 +113,7 @@ depth-base-branch	PASS	2026-11-18
 depth-condensed-refused	PASS	2026-11-25	
 depth-condensed-when-set	PASS	2026-11-18	
 depth-fill-repo-help	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-depth-in-pr-body	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+depth-in-pr-body	PASS	2026-11-25		76fb682cf8ac
 depth-loop-flow	PASS	2026-11-18	
 depth-marker-rows-4557	PASS	2026-11-25	
 depth-markers	PASS	2026-11-18	
@@ -211,7 +212,7 @@ guards-null-report-nofiles	PASS	2026-11-24
 guards-null-report-reset	PASS	2026-11-24	
 guards-null-report-writers	PASS	2026-11-24	
 guards-resume	PASS	2026-11-12	
-guards-rule-start	PASS	2026-11-25	
+guards-rule-start	PASS	2026-11-25		76fb682cf8ac
 guards-worker-role	PASS	2026-11-25	
 head-moved-168	PASS	2026-11-25	
 health-feature-always	PASS	2026-11-17	
@@ -251,8 +252,8 @@ hook-stub-mark-foreign	PASS	2026-11-17
 hook-stub-mark-own	PASS	2026-11-17	
 issue-117-bind-self	PASS	2026-11-25	
 issue-117-github-touches	PASS	2026-11-25	
-issue-129-docs-published	PASS	2026-11-12	
-issue-38-verdicts	PASS	2026-11-25	
+issue-129-docs-published	PASS	2026-11-25		76fb682cf8ac
+issue-38-verdicts	PASS	2026-11-25		76fb682cf8ac
 issue-closed-ignored	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 issue-gh-fail-unread	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 issue-keeps-state	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -382,7 +383,7 @@ mon9-board-fast	PASS	2026-11-10
 monitor-stray-runs-3862	PASS	2026-11-14	
 narrow-root-172	PASS	2026-11-24	
 new-binds-app-session-4257	PASS	2026-11-15	
-no-done-line-refused	PASS	2026-11-25	
+no-done-line-refused	PASS	2026-11-25		76fb682cf8ac
 no-line-in-governor	PASS	2026-11-25	
 no-token-would	PASS	2026-11-20	
 notify-new-events	PASS	2026-11-18	
@@ -452,7 +453,7 @@ prd-usage-changed	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 preview-writes-nothing	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 private-checks-run-local	PASS	2026-11-24	
 private-names-scoped	PASS	2026-11-19	
-ptb-mend	PASS	2026-11-24	
+ptb-mend	PASS	2026-11-25		76fb682cf8ac
 publish-tables-handwritten	PASS	2026-11-13	
 publish-tables-regen	PASS	2026-11-13	
 pull-ff-only-passes	PASS	2026-11-24	
@@ -640,8 +641,8 @@ wiki-front-private-scan	PASS	2026-11-24
 wiki-front-stable	PASS	2026-11-24	
 wiki-front-tracked	PASS	2026-11-24	
 wiki-front-tree	PASS	2026-11-24	
-wiki-release	PASS	2026-11-20	
-wiki-release-pycache	PASS	2026-11-19	
+wiki-release	PASS	2026-11-25		76fb682cf8ac
+wiki-release-pycache	PASS	2026-11-25		76fb682cf8ac
 win-posix-calls-gone	PASS	2026-11-15	
 worker-per-goal	PASS	2026-11-20	
 worker-refuses	PASS	2026-11-25	
