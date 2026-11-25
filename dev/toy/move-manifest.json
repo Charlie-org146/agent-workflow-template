@@ -1,0 +1,227 @@
+{
+ "base": "189d1c831bee8f4c53424898406a6f747857608f",
+ "moves": [
+  {
+   "script": "skills/workflow-delivery/scripts/goal.py",
+   "module": "goal_steps",
+   "doc": "the record and pr commands",
+   "functions": [
+    "cmd_record",
+    "cmd_pr",
+    "round_stop"
+   ],
+   "prefix": {
+    "cmd_record": [
+     "FLOW",
+     "ME",
+     "SKILLS",
+     "add_tokens",
+     "config",
+     "failed_try",
+     "fit",
+     "guards",
+     "held",
+     "now",
+     "nxt",
+     "read",
+     "role",
+     "run",
+     "save",
+     "state_dir"
+    ],
+    "cmd_pr": [
+     "FLOW",
+     "ME",
+     "config",
+     "failed_try",
+     "fit",
+     "git",
+     "goal_file",
+     "guards",
+     "held",
+     "no",
+     "pods",
+     "private",
+     "queue",
+     "read",
+     "role",
+     "root",
+     "run",
+     "save",
+     "state_dir"
+    ],
+    "round_stop": [
+     "guards"
+    ]
+   },
+   "std": {
+    "os": "import os",
+    "re": "import re",
+    "sys": "import sys",
+    "json": "import json"
+   }
+  },
+  {
+   "script": "skills/workflow-delivery/scripts/lane.py",
+   "module": "lane_run",
+   "doc": "the lane finish, status and wait",
+   "functions": [
+    "finalize",
+    "lane_status",
+    "wait_for"
+   ],
+   "prefix": {
+    "finalize": [
+     "NOTHING",
+     "TERMINAL",
+     "deadline",
+     "death",
+     "dirty",
+     "fcntl",
+     "fit",
+     "fresh",
+     "generated",
+     "lane_argv",
+     "lanekit",
+     "mtime",
+     "read_json",
+     "rev",
+     "rm_tmp",
+     "set_last",
+     "stop"
+    ],
+    "lane_status": [
+     "NAMES",
+     "TERMINAL",
+     "alive",
+     "answer",
+     "dirty",
+     "ended",
+     "job_of",
+     "lanekit",
+     "live",
+     "read_json",
+     "rev",
+     "running_line",
+     "stop"
+    ],
+    "wait_for": [
+     "lanekit"
+    ]
+   },
+   "std": {
+    "os": "import os",
+    "re": "import re",
+    "signal": "import signal",
+    "time": "import time",
+    "sys": "import sys"
+   }
+  },
+  {
+   "script": "skills/workflow-release/scripts/merge.py",
+   "module": "merge_steps",
+   "doc": "the merge steps: base check, release advance, issue filing",
+   "functions": [
+    "advance",
+    "base_moved",
+    "missing_ids",
+    "file_issue"
+   ],
+   "prefix": {
+    "advance": [
+     "REVIEW",
+     "ar",
+     "forget",
+     "pending",
+     "release",
+     "start",
+     "title_of",
+     "view"
+    ],
+    "base_moved": [
+     "reach",
+     "run"
+    ],
+    "missing_ids": [
+     "run"
+    ],
+    "file_issue": [
+     "run"
+    ]
+   },
+   "std": {
+    "subprocess": "import subprocess",
+    "re": "import re"
+   }
+  },
+  {
+   "script": "skills/workflow-delivery/scripts/flow.py",
+   "module": "flow_steps",
+   "doc": "the step runner and the prompt builders",
+   "functions": [
+    "in_session",
+    "start",
+    "runnable",
+    "unattended",
+    "step_prompt",
+    "step_command",
+    "routine"
+   ],
+   "prefix": {
+    "in_session": [
+     "BUDGETED",
+     "BUILTIN",
+     "flow",
+     "lanekit",
+     "proctree",
+     "read",
+     "repo_config",
+     "role"
+    ],
+    "start": [
+     "BUDGETED",
+     "fit",
+     "flow",
+     "git",
+     "lanekit",
+     "repo_config",
+     "role"
+    ],
+    "runnable": [
+     "BUILTIN",
+     "FLOW_FILE",
+     "STEPS",
+     "skill_of"
+    ],
+    "unattended": [
+     "BUILTIN",
+     "skill_of"
+    ],
+    "step_prompt": [
+     "BUILTIN",
+     "PROMPT",
+     "PURPOSE",
+     "RUNS",
+     "depth_rule",
+     "git",
+     "role",
+     "skill_of"
+    ],
+    "step_command": [],
+    "routine": [
+     "ROUTINES",
+     "read"
+    ]
+   },
+   "std": {
+    "json": "import json",
+    "os": "import os",
+    "re": "import re",
+    "shutil": "import shutil",
+    "subprocess": "import subprocess",
+    "sys": "import sys",
+    "time": "import time"
+   }
+  }
+ ]
+}
