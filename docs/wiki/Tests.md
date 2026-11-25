@@ -376,7 +376,7 @@
 | <a id="t-known-no-block-cut-off-refused"></a>known-no-block-cut-off-refused | requirement | HLT-4 | not run | - | local | 2026-11-22 |
 | <a id="t-known-no-block-job-skip"></a>known-no-block-job-skip | requirement | HLT-4 | not run | - | local | 2026-11-22 |
 | <a id="t-known-no-block-opens-issue"></a>known-no-block-opens-issue | requirement | HLT-4 | not run | - | local | 2026-11-22 |
-| <a id="t-wiki-front-stable"></a>wiki-front-stable | requirement | HLT-2 | PASS | 2026-11-24 | [CI 2026-11-24](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-24) | 2026-11-23 |
+| <a id="t-wiki-front-stable"></a>wiki-front-stable | requirement | HLT-2 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-23 |
 
 ## Machines
 
