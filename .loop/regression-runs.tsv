@@ -156,7 +156,7 @@ docs-no-plain-dunder-import	PASS	2026-11-16
 docs-release-scripts-under-19000	PASS	2026-11-24	
 docs-scripts-import-by-name	PASS	2026-11-24	
 docs-scripts-under-19000	PASS	2026-11-24	
-docs-v2-repo-passes	FAIL	2026-11-25	
+docs-v2-repo-passes	PASS	2026-11-25	
 done-line-rows-128	PASS	2026-11-12	
 done-lines-warning-143	PASS	2026-11-12	
 entry-stale	PASS	2026-11-24	
@@ -471,7 +471,7 @@ report-header	PASS	2026-11-19
 rerun-both-touched	PASS	2026-11-24	
 retired-leaves-waiting	PASS	2026-11-09	
 review-dated	FAIL	2026-11-20	
-review-findings-skill-lines	PASS	2026-11-25	
+review-findings-skill-lines	FAIL	2026-11-25	
 review-help-runs-alone	PASS	2026-11-24	
 review-hold-blocks	PASS	2026-11-24	
 roadmap-closed-drops	PASS	2026-11-15	
@@ -504,7 +504,7 @@ settings-overridden	PASS	2026-11-12
 settings-reference	PASS	2026-11-12	
 settings-reference-fresh	PASS	2026-11-16	
 settings-refresh	PASS	2026-11-12	
-settings-render-fresh	PASS	2026-11-25	
+settings-render-fresh	FAIL	2026-11-25	
 settings-start-fresh	PASS	2026-11-16	
 settings-template-line	PASS	2026-11-12	
 setup-both-halves	PASS	2026-11-12	
