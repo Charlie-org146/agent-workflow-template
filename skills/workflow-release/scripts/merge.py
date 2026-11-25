@@ -172,6 +172,8 @@ def main():
   if args.batch or len(args.slug) > 1:
     if not (args.batch and cfg.get("merge_batch") is True):
       sys.exit("REFUSED: several goals need --batch and merge_batch true. Nothing merged.")
+    held = [s for s in args.slug if (load(os.path.join(os.path.abspath(common), "loop", "runs", s + ".cover.json")) or {}).get("claim")]
+    held and sys.exit("REFUSED: %s ran with a cover and cannot join a batch; merge it alone: merge.py SLUG (COVER_NOBATCH)." % ", ".join(held))
     pods and pods.merge_lock(os.path.abspath(common))
     spec = importlib.util.spec_from_file_location("batch", os.path.join(MON, "machines.py"))
     machines = importlib.util.module_from_spec(spec)

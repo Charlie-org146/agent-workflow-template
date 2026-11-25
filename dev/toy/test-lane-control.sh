@@ -8,7 +8,7 @@
 # tables. A toy repo with land rows that sleep; the real lane, regression.py and slots run. No model is called.
 # usage: test-lane-control.sh [DIR]
 set -u
-unset LOOP_BATCH LOOP_SESSION_TOOL LOOP_OPERATION_SESSION GH_TOKEN GITHUB_TOKEN _LOOP_LANE_HELD LOOP_LANE_LIMIT
+unset LOOP_BATCH LOOP_SESSION_TOOL LOOP_OPERATION_SESSION GH_TOKEN GITHUB_TOKEN _LOOP_LANE_HELD LOOP_LANE_LIMIT _LOOP_LANE_LABEL _LOOP_LANE_QUEUED _LOOP_LANE_STARTED _LOOP_LANE_NOTE _LOOP_LANE_PREP_BY LOOP_LANE_PORT_BASE
 export LOOP_ROLE=worker
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"

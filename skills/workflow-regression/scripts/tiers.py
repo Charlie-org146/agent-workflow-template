@@ -203,7 +203,7 @@ def reason(root, row, old, ok, base, cache, memo):
     """Why this row runs, or ''."""
     if ok and old["rows"].get(row["id"], {}).get("status") == "FAIL":
         return "failure rerun"
-    if ok and old["rows"].get(row["id"], {}).get("status") == "SKIPPED":
+    if ok and old["rows"].get(row["id"], {}).get("status") in ("SKIPPED", "LEFT"):
         return "skipped last time"
     at, paths = since(root, row, old, ok, base, memo)
     if lanes.table(root, at, "regression.tsv", memo).get(row["id"]) != memo["tsv"].get(row["id"]):
