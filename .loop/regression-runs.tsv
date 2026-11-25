@@ -83,6 +83,7 @@ cost-time-warn	PASS	2026-11-12
 cover-batch-body	PASS	2026-11-25	
 cover-claim	PASS	2026-11-25	
 cover-ids-lane	PASS	2026-11-25	
+cover-lane	PASS	2026-11-25	
 cover-moves	PASS	2026-11-25	
 cut-complete	PASS	2026-11-24	
 cut-draft	PASS	2026-11-09	
@@ -159,9 +160,9 @@ docs-import-rows-pass	PASS	2026-11-25
 docs-locked-hint-issue-133	PASS	2026-11-24	
 docs-milestone-line-issue-130	PASS	2026-11-24	
 docs-no-plain-dunder-import	PASS	2026-11-16	
-docs-release-scripts-under-19000	PASS	2026-11-24	
+docs-release-scripts-under-19000	PASS	2026-11-25	
 docs-scripts-import-by-name	PASS	2026-11-24	
-docs-scripts-under-19000	PASS	2026-11-24	
+docs-scripts-under-19000	PASS	2026-11-25	
 docs-v2-repo-passes	PASS	2026-11-25	
 done-line-rows-128	PASS	2026-11-12	
 done-lines-warning-143	PASS	2026-11-12	
@@ -421,7 +422,7 @@ perms-settings-tracked	PASS	2026-11-15
 plan-cache-key	PASS	2026-11-12	
 plan-calls-flat	PASS	2026-11-22	
 plan-identity	PASS	2026-11-22	
-plan-sizes	PASS	2026-11-22	
+plan-sizes	PASS	2026-11-25	
 pods-blocks	PASS	2026-11-25	
 pods-caps-3919	PASS	2026-11-25	
 pods-docs	PASS	2026-11-25	
@@ -500,6 +501,7 @@ same-lines	PASS	2026-11-20
 schedule-setting	PASS	2026-11-20	
 scripts-a-monitoring-under-19000	PASS	2026-11-25	
 scripts-a-under-19000	PASS	2026-11-15	
+scripts-c-regression-under-19000	PASS	2026-11-25	
 scripts-no-hang	PASS	2026-11-24	
 session-assign	PASS	2026-11-25	
 session-board-issue98	PASS	2026-11-25	
@@ -545,7 +547,7 @@ sizing-cbs-1-4	PASS	2026-11-25
 sizing-done-1-cases-linked	PASS	2026-11-25	
 sizing-done-2-sized-at-freeze	PASS	2026-11-25	
 sizing-done-3-resized-up	PASS	2026-11-25	
-sizing-done-4-sizes	PASS	2026-11-24	
+sizing-done-4-sizes	PASS	2026-11-25	
 skill-criteria-in-references	PASS	2026-11-14	
 skill-kept	PASS	2026-11-24	
 skill-refusals-in-references	PASS	2026-11-14	
@@ -591,7 +593,7 @@ sync-first-adopts	PASS	2026-11-18
 sync-not-connected	PASS	2026-11-20	
 sync-repo-delta	PASS	2026-11-18	
 sync-source-delta	PASS	2026-11-18	
-tables-prep-151	PASS	2026-11-25		5a4f89a4cf90
+tables-prep-151	PASS	2026-11-25	
 task-first	PASS	2026-11-25	
 task-first-1	PASS	2026-11-25	
 task-first-2	PASS	2026-11-25	
@@ -623,7 +625,7 @@ toy-no-leftovers	PASS	2026-11-12
 toys-set-userprofile	PASS	2026-11-25	
 tree-once-lock	PASS	2026-11-24	
 trim-package-98	PASS	2026-11-16	
-trim-setup-under-19000	PASS	2026-11-16	
+trim-setup-under-19000	PASS	2026-11-25	
 two-lanes-toy-435	PASS	2026-11-10	
 unattended-checkin-line	PASS	2026-11-25	
 unattended-loop-recreate	PASS	2026-11-24	
