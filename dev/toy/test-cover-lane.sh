@@ -3,8 +3,10 @@
 # reads: skills/workflow-delivery/scripts/lanekit.py skills/workflow-delivery/scripts/role.py skills/workflow-delivery/scripts/goal_steps.py skills/workflow-regression/scripts/tiers.py
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes.py skills/workflow-regression/scripts/row_reach.py
 # reads: .github/workflows/regression-pr.yml dev/toy/fakegh/gh dev/toy/fakegh/fake.py dev/toy/make.sh dev/toy/reap.sh
-# The L1 cover's review-round checks (split from test-cover.sh): certificates keyed to the claim's rows, cut, failed and unproven
-# rows kept local, the whole workflow pinned, unread lists and other refusals never a cover, late-loss records checked. No model.
+# Proves the L1 cover's lane certificates and its fail-safes, the checks its review rounds added (split from test-cover.sh): a
+# narrowed lane runs only the rows the standing claim lists and its pass counts only while the claim lists exactly them; a cut,
+# failed, skipped, flaky or unproven row stays local; the whole base workflow is pinned; an unread list or a refusal that is not
+# about the lane never becomes a cover; a late loss's bookkeeping commit changes no tested input. No model is called.
 # usage: test-cover-lane.sh
 set -u
 unset GITHUB_SERVER_URL GITHUB_REPOSITORY GITHUB_RUN_ID LOOP_SESSION_TOOL LOOP_OPERATION_SESSION GH_TOKEN GITHUB_TOKEN LOOP_COVER_IDS
@@ -76,7 +78,7 @@ cov() { python3 -B -c "$H" "$D" "$common/loop/runs" "$@" 2>&1; }
 reset() { rm -f "$common"/loop/runs/g1.cover.json; }
 
 
-echo "== fail-safes: the workflow pin, unread lists"
+echo "== the fail-safes the review rounds added (whole workflow pin, unread lists)"
 # off NAME CODE: run cov lane qa with a mutation applied already; the lane stub must get no ids and the line must show no COVERED
 off() { reset; out=$(cov lane qa); echo "--- $1"; echo "$out" | head -3
   check "$1: the whole lane runs (no ids)" 'grep -q "^CALLS \[\"\"\]" <<<"$out" && ! grep -q "^COVERED" <<<"$out"'
@@ -105,11 +107,11 @@ PATH="$d/gitw:$PATH" off "an unread limit list on the base" LIST
 reset; out=$(GITW_MISSING=1 PATH="$d/gitw:$PATH" cov lane qa)
 check "control: a limit list that is not on the base reads as empty, and the cover still holds" 'grep -q "^COVERED " <<<"$out" && ! grep -q "COVER OFF" <<<"$out"'
 
-echo "== other refusals"
+echo "== a refusal that is not about the lane passes through"
 reset; cov lane qa >/dev/null
 out=$(REF_CAPS=1 cov need qa); check "a refusal that is not about the lane (TEST_CAPS) passes through the cover unchanged" 'grep -q "^NEED \[\"over a cap\", \"fix\", \"TEST_CAPS\"\]" <<<"$out"'
 
-echo "== certificates, the real lane, cut and unproven rows"
+echo "== the lane command, the certificates, the real lane, cut and unproven rows"
 lane1() { (cd "$D" && LOOP_COVER_IDS=n,s python3 -B -c "import sys; sys.dont_write_bytecode=True; import lane; print($1)") 2>&1; }
 check "LOOP_COVER_IDS alone narrows no lane command: lane_argv never reads it" 'o=$(lane1 "lane.lane_argv(), lane.lane_argv(5)"); [ "${o:0:1}" = "[" ] && ! grep -q -- "--ids" <<<"$o"'
 cid() { (cd "$D" && LOOP_COVER_IDS=$1 python3 -B -c "import sys; sys.dont_write_bytecode=True; import lane; print('IDS=' + lane.cover_ids('$common/loop/runs', 'g1'))") 2>&1; }
@@ -204,18 +206,21 @@ PYEND
 reset; cov lane qa >/dev/null; out=$(python3 -B -c "$SH" "$D" "$common/loop/runs" 2>&1)
 check "local rows that shrank drop the earlier narrowed pass and its own record (no stuck refusal)" '[ "$out" = "LEFT False False" ]'
 
-echo "== the late loss"
+echo "== the late loss: the second bookkeeping commit"
+# after a late loss, the second bookkeeping commit may touch only the tool's no-effect and bookkeeping files
 LI='import os, sys; sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True; import cover; print("LATE", cover.late_inputs(os.getcwd(), sys.argv[2]))'
 git switch -q -c late feat; t0=$(git rev-parse HEAD); printf 'x\tPASS\n' >> .loop/regression-runs.tsv; git add -A; git commit -qm "records"; l1=$(python3 -B -c "$LI" "$D" "$t0" 2>&1)
 mkdir -p docs/wiki; printf 'page\n' > docs/wiki/Tests.md; printf '# more\n' >> .loop/regression.tsv; git add -A; git commit -qm "pages and rows"; l2=$(python3 -B -c "$LI" "$D" "$t0" 2>&1); git switch -q feat
+echo "$l1"; echo "$l2"
 check "after a late loss, a bookkeeping commit that touches only the run records changes no tested input" '[ "$l1" = "LATE []" ]'
 check "after a late loss, a bookkeeping commit that changes a page or the row table is named as changing tested inputs (LATE_INPUTS)" 'grep -q "docs/wiki/Tests.md" <<<"$l2" && grep -q "[.]loop/regression[.]tsv" <<<"$l2"\'
-echo "== measured minutes"
+echo "== the PR text: measured local minutes and the without-cover estimate"
 reset; cov lane qa >/dev/null; L="$common/loop/runs/g1.qa-lane.last"
 printf '{"state": "pass", "started": 1000, "ended": 1180}' > "$L"; p1=$(cov part pr)
 printf 'a\t60\nb\t60\nc\t60\n' > .github/workflows/row-times.tsv; p2=$(cov part pr); rm -f .github/workflows/row-times.tsv "$L"
 check "the covered PR text gives the measured minutes of the goal's own lanes, and no estimate without recorded times" 'grep -q "^measured local lanes: 3 min; without cover: unavailable$" <<<"$p1"'
 check "with recorded row times it adds the without-cover estimate: measured plus the covered rows' times" 'grep -q "^measured local lanes: 3 min; without cover: about 6 min (an estimate" <<<"$p2"'
+# a late loss is marked, and every bookkeeping record after it is checked until one is clean
 LC=$(cat <<'PYEND'
 import os, sys
 sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True
@@ -231,7 +236,7 @@ PYEND
 )
 git switch -q -c late2 feat; t0=$(git rev-parse HEAD); mkdir -p docs/wiki; printf 'page 2\n' > docs/wiki/Tests.md; git add -A; git commit -qm "a page"
 o12=$(LOOP_ROLE=worker python3 -B -c "$LC" "$D" "$t0" 2>&1); t1=$(git rev-parse HEAD); printf 'y\tPASS\n' >> .loop/regression-runs.tsv; git add -A; git commit -qm "records"
-o13=$(LOOP_ROLE=worker python3 -B -c "$LC" "$D" "$t1" 2>&1); git switch -q feat
+o13=$(LOOP_ROLE=worker python3 -B -c "$LC" "$D" "$t1" 2>&1); git switch -q feat; echo "$o12" | tail -2; echo "$o13" | tail -1
 check "after a late loss, a record that changes a tested input refuses LATE_INPUTS and keeps the mark" 'grep -q "LATE_INPUTS" <<<"$o12" && grep -q "^STOPPED 2 True$" <<<"$o12"'
 check "a clean record after a late loss passes and clears the mark" 'grep -q "^PASSED False$" <<<"$o13"'
 exit $((fails > 0))
