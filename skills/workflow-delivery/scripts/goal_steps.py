@@ -4,6 +4,8 @@ import os
 import re
 import sys
 
+import cover
+
 
 def cmd_record(args):
     slug, step = args.slug, args.step
@@ -13,7 +15,7 @@ def cmd_record(args):
     ran = os.path.join(_s.state_dir(), "%s.%s.ran" % (slug, step))
     if args.in_session:
         args.file = _s.role.session_reply(state, slug, step, args.file, _s.state_dir(), _s.FLOW)
-    lane = _s.role.need_lane(_s.state_dir(), slug, args.file, step) if step in ("qa", "ship") else None
+    lane = cover.need(_s.role.need_lane, _s.role.over_caps, _s.state_dir(), slug, args.file, step) if step in ("qa", "ship") else None
     if lane:
         _s.guards.refuse_no_try(state, *lane, _s.save)
     reply = os.path.realpath(args.file)
@@ -121,7 +123,7 @@ def cmd_pr(args):
         print("NOTE: uncommitted files stay out")
     head = _s.role.bump_version(_s.ME, state, head)
     head = _s.fit.regen(_s.ME, slug)
-    gate, line, ids = _s.role.lane(_s.state_dir(), slug, "pr", _s.role.flow_spec(), cfg)
+    gate, line, ids = cover.lane(_s.role.lane, _s.state_dir(), slug, "pr", _s.role.flow_spec(), cfg)
     print(line)
     if gate == "running":
         return 0
@@ -130,6 +132,15 @@ def cmd_pr(args):
             return _s.queue("moved", _s.ME, state, "lane failed while %s moved" % base, "run pr")
         return _s.fit.pr_fail(_s.ME, state, head, line, ids)
     _s.role.record(state, base)
+    if cover.late(_s.state_dir(), slug, cfg):
+        gate, line, ids = cover.lane(_s.role.lane, _s.state_dir(), slug, "pr", _s.role.flow_spec(), cfg)
+        print(line)
+        if gate == "running":
+            return 0
+        if gate == "fail":
+            return _s.fit.pr_fail(_s.ME, state, head, line, ids)
+        _s.role.record(state, base)
+    state["pr_lane"] = cover.pr_part(_s.state_dir(), slug) or state["pr_lane"]
     known = _s.run(["gh", "pr", "view", state["branch"], "--json", "url,state"])
     info = json.loads(known.stdout) if not known.returncode else {}
     body = _s.fit.pr_text(_s.ME, state)
@@ -138,6 +149,7 @@ def cmd_pr(args):
     state["step"] = "pr"
     _s.save(state, "pr")
     url = _s.fit.pr_open(_s.ME, state, base, info, body)
+    cover.refresh(_s, state, info, body)
     state.update(pr=url, statuses="ok" if _s.private.pr_result(_s.root(), base, _s.git("rev-parse", "HEAD"), state["branch"], True) else "failed")
     state.update(step="release", status="done")
     _s.save(state, "pull request " + url)

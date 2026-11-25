@@ -43,7 +43,7 @@ def lane_checks(top, contexts):
 
 def lane_argv(seconds=0):
     return ["python3", os.path.join(REG, "regression.py"), "run", "land", "--reuse", "--tier", "goal"] + (
-        ["--budget", str(int(seconds))] if seconds else [])
+        ["--budget", str(int(seconds))] if seconds else []) + (["--ids", os.environ["LOOP_COVER_IDS"]] if os.environ.get("LOOP_COVER_IDS") else [])
 
 
 def lane_text():
