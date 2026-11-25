@@ -145,7 +145,7 @@ def refs(root):
     prefixes = {key.split("-")[0] for key in live}
     out, seen = [], set()
     for name, text in pages(root).items():
-        for key in re.findall(r"\b([A-Z]{2,5}-\d+[a-z]?)\b", re.sub(r"^\| r\d+ \|.*$", "", text, flags=re.M)):  # Revisions rows are history
+        for key in re.findall(r"\b([A-Z]{2,5}-\d+[a-z]?)\b", re.sub(r"^\| r\d+ \|.*$", "", text, flags=re.M)):  # Revisions: history
             if key.split("-")[0] in prefixes and key not in known and (name, key) not in seen:
                 seen.add((name, key))
                 out.append(row("FAIL", "consistency", key, "refs", "page %s names %s, which no page defines" % (name, key),
@@ -252,7 +252,7 @@ def gaps_files(root, cfg, g):
 def gaps_settings(root, cfg, g):
     st = mod("workflow-setup", "settings")
     known = {row[0] for row in st.keys(st.REPO)}
-    extra = sorted(set(cfg) - known - {"_help", "template_version", "checks", "goal_lane_minutes"})
+    extra = sorted(set(cfg) - known - {*st.RETIRED, "_help", "template_version", "checks", "goal_lane_minutes"})
     missing = sorted(known - set(cfg) - {"regression_runs", "milestones_source"})
     if extra:
         g("MIG_SETTINGS", ", ".join(clean(k) for k in extra), "not in the settings table (unknown)", "remove the key from .loop/config.json")

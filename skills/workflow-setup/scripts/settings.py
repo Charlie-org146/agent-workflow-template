@@ -171,6 +171,9 @@ def repo_defaults():
     return {k: d for k, _, d, _ in keys(REPO)}
 
 
+RETIRED = ("criteria_max", "max_regression_rows", "health_script_bytes", "health_skill_lines")  # principle 5 (o988): a config may still hold them; ignored
+
+
 def check_depth(held, path):
     if "review_depth" in held and held["review_depth"] not in DEPTHS:
         sys.exit("REFUSED: review_depth is %r in %s. Fix: full or condensed." % (held["review_depth"], path))
