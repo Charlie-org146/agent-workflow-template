@@ -258,9 +258,9 @@ PY
   want "a README change inside a generated block is wiki-only for the merge step; a change in a table cell is not (HEAD_MOVED), so the front-file commit must precede the lane" '[ "$a" = 0 ] && [ "$b" != 0 ]'
   want "the pr step runs the wiki step (fit.regen) before it starts the pr lane" 'python3 - "$SK" <<PY
 import sys
-t = open(sys.argv[1] + "/workflow-delivery/scripts/goal.py").read()
+t = open(sys.argv[1] + "/workflow-delivery/scripts/goal_steps.py").read()
 body = t.split("def cmd_pr", 1)[1].split("\ndef ", 1)[0]
-assert 0 <= body.find("fit.regen(") < body.find("role.lane(state_dir(), slug, \"pr\"")
+assert 0 <= body.find("fit.regen(") < body.find("_s.role.lane(_s.state_dir(), slug, \"pr\"")
 PY'
 fi
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

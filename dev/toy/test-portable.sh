@@ -55,7 +55,7 @@ done
 cmp -s "$S/workflow-delivery/scripts/proctree.py" "$S/workflow-monitoring/scripts/proctree.py" \
   && cmp -s "$S/workflow-delivery/scripts/proctree.py" "$S/workflow-regression/scripts/proctree.py" \
   && ok "the three proctree.py copies are the same" || bad "proctree.py copies differ"
-left=$(cd "$S" && grep -n "os\.killpg\|os\.getpgrp()" workflow-delivery/scripts/flow.py workflow-delivery/scripts/lane.py \
+left=$(cd "$S" && grep -n "os\.killpg\|os\.getpgrp()" workflow-delivery/scripts/flow.py workflow-delivery/scripts/flow_steps.py workflow-delivery/scripts/lane.py workflow-delivery/scripts/lane_run.py \
   workflow-delivery/scripts/lanekit.py workflow-monitoring/scripts/mend.py workflow-monitoring/scripts/worker.py)
 [ -z "$left" ] && ok "no stop site calls os.killpg or os.getpgrp itself" || bad "POSIX-only stops left: $left"
 probes=$(cd "$S" && grep -rn "os\.kill([^)]*, 0)" --include=*.py workflow-delivery workflow-monitoring workflow-regression | grep -v "proctree.py")  # Ctrl+C to the target on Windows

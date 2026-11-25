@@ -169,7 +169,7 @@ check(read(here, "d")["status"] == "retired" and "next release" in read(here, "d
 record(here, "q", running(5))
 g.pods.pr_queue("join", g, g.load("q"))
 check(read(here, "q")["step"] == "pr", "goal.py pr joins the queue with the goal and its state")
-check('pods and pods.pr_queue("join", ME, state)' in open(os.path.join(root, "skills", "workflow-delivery", "scripts", "goal.py")).read(), "goal.py calls the join without the runs folder")
+check('_s.pods and _s.pods.pr_queue("join", _s.ME, state)' in open(os.path.join(root, "skills", "workflow-delivery", "scripts", "goal_steps.py")).read(), "goal.py calls the join without the runs folder")
 
 # 5. the check-in shows the ETA; health reads the three rules
 at = datetime.datetime.now(datetime.timezone.utc)

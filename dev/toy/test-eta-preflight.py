@@ -207,7 +207,7 @@ check(len(read("q")["missed_preflight"]) == 2, "negative control: a second pr do
 goal_state("l", preflight={"items": [{"id": "memory", "ask": "x", "options": ["a"], "recommend": "a"}, {"id": "private", "ask": "x", "options": ["a"], "recommend": "a"}]})
 pr("l")
 check(not read("l").get("missed_preflight"), "negative control: an item that was on the freeze list is not a missed one")
-check('queue("preflight", ME, state)' in open(os.path.join(root, "skills", "workflow-delivery", "scripts", "goal.py")).read() and
-      'pods and pods.pr_queue("join", ME, state)' in open(os.path.join(root, "skills", "workflow-delivery", "scripts", "goal.py")).read(),
+check('_s.queue("preflight", _s.ME, state)' in open(os.path.join(root, "skills", "workflow-delivery", "scripts", "goal_steps.py")).read() and
+      '_s.pods and _s.pods.pr_queue("join", _s.ME, state)' in open(os.path.join(root, "skills", "workflow-delivery", "scripts", "goal_steps.py")).read(),
       "goal.py's pr runs the pre-flight dry runs before the queue join")
 sys.exit(1 if failed else 0)
