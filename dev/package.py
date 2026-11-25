@@ -24,9 +24,10 @@ names the lowest k). Any other failure keeps its rule text and withholds the par
 or the text it was cut from, holds a match: find it locally with the lists below and your leak_prefixes, fix it, rerun.
 A TIMEOUT or STOPPED label names a matching path as `a path matching <kind>` (else `a shipped file (name withheld)`);
 a private pattern's own text counts as a match too. An unexpected error prints its
-type on stderr and exits 4, never a traceback. Exit codes: 0 pass, 1 refused, 3 timeout, 4 unexpected error. CI has no
-private list, so it reports only the built-in kinds. Changed in v1.1.0: this Safety form (before, the match and the
-pattern were printed), one line for a path matching several prefixes, the withheld notices and exit 4.
+type on stderr and exits 4, never a traceback. A leak_prefixes setting that is not a list, or an entry that is not a
+valid pattern, refuses as `FAIL Private list: ...`, naming the entry by number only. Exit codes: 0 pass, 1 refused,
+3 timeout, 4 unexpected error. Changed in v1.1.0: this Safety form (before, the match and the pattern were printed),
+one line for a path matching several prefixes, the withheld notices, the Private list refusal and exit 4.
 """
 import argparse
 import ast
@@ -369,10 +370,10 @@ def load_private():
         with open(path, encoding="utf-8") as handle:
             raw = json.load(handle).get("leak_prefixes", [])
     except (OSError, ValueError, AttributeError):
-        print("NOTE: no leak_prefixes loaded (the flow file is missing or unreadable); only the built-in scans ran")
+        print("NOTE: no leak_prefixes loaded; only the built-in scans ran")
         return
     if not isinstance(raw, list):
-        print("NOTE: leak_prefixes is not a list; only the built-in scans ran")
+        fail("Private list", "leak_prefixes is not a list")
         return
     for k, pattern in enumerate(raw, 1):
         try:
@@ -381,7 +382,7 @@ def load_private():
                 continue
         except re.error:
             pass
-        print("NOTE: leak_prefixes entry #%d is not a valid pattern; skipped" % k)
+        fail("Private list", "leak_prefixes entry #%d is not a valid pattern" % k)
 
 
 def check_safety(root, files):
