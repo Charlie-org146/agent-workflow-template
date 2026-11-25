@@ -230,5 +230,42 @@ json.dump({"slug": "v110-fix", "status": "done", "release": "merged"}, open(os.p
 code, said = step(d5)
 check(code == 0 and "STEP v110-a review" in said, "once the fix has merged the goal goes on: %s" % said.strip()[-80:])
 
+# 9. the revocation guard: one helper for step, record and pr; a torn fix record and several revoked fixes are handled
+def running(fixes):
+    top = repo(Q5)
+    run(top, *A("wait for the fix to merge"))
+    run(top, "workaround", "use", "k1", "--goal", "v110-a")
+    start, held = at(top, watch.plan, 3)
+    state = at(top, watch.freeze, [g for g in start if g["slug"] == "v110-a"][0], {"base": "main"})
+    state["status"] = "running"
+    rd = os.path.join(top, ".git", "loop", "runs")
+    json.dump(state, open(os.path.join(rd, "v110-a.json"), "w"))
+    for fix in fixes:
+        ss.revoke(sl.paths(top), ["v110-a"], "k1", fix)
+    return top, rd
+
+
+def goal(top, *argv):
+    tree = os.path.join(top, ".git", "loop", "worktrees", "v110-a")  # the goal's own worktree, where record and pr run
+    done = subprocess.run([sys.executable, GOAL, *argv], cwd=tree if os.path.isdir(tree) and argv[0] in ("record", "pr") else top, capture_output=True, text=True, stdin=subprocess.DEVNULL,
+                          env={"HOME": tmp, "PATH": os.environ["PATH"], "TERM": "dumb", "LOOP_FLOW": os.path.join(tmp, "flow.json"), "LOOP_ROLE": "worker"})
+    return done.returncode, done.stdout + done.stderr
+
+
+top9, rd9 = running(["v110-fix"])
+for argv in (["record", "v110-a", "review", "--file", os.path.join(tmp, "none.txt"), "--in-session"], ["pr", "v110-a"]):
+    code, said = goal(top9, *argv)
+    check("SCHED_REVOKED" in said, "(a) `goal.py %s` is held by the revocation as `step` is: %s" % (argv[0], said.strip()[-90:]))
+open(os.path.join(rd9, "v110-fix.json"), "w").write("{torn")
+code, said = goal(top9, "step", "v110-a", "review")
+check(code == 3 and "SCHED_REVOKED" in said and "Traceback" not in said, "(b) a torn record for the fix counts as unmerged: exit %s, %s" % (code, said.strip()[-80:]))
+top10, rd10 = running(["v110-fix", "v110-clean"])
+json.dump({"slug": "v110-clean", "status": "done", "release": "merged"}, open(os.path.join(rd10, "v110-clean.json"), "w"))
+code, said = goal(top10, "step", "v110-a", "review")
+check(code != 0 and "SCHED_REVOKED" in said and "v110-fix" in said, "(c) with two revoked fixes and only the second merged the goal still waits for the first: %s" % said.strip()[-100:])
+json.dump({"slug": "v110-fix", "status": "done", "release": "merged"}, open(os.path.join(rd10, "v110-fix.json"), "w"))
+code, said = goal(top10, "step", "v110-a", "review")
+check(code == 0 and "STEP v110-a review" in said, "(c) once every revoked fix has merged the goal goes on: %s" % said.strip()[-60:])
+
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)

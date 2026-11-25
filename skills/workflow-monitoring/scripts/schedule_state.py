@@ -221,7 +221,7 @@ def revoke(paths, goals, key, fix):
         if isinstance(data, dict) and data.get("status") in ("running", "waiting"):
             data["waits_on"] = list(dict.fromkeys(list(data.get("waits_on") or []) + [fix]))
             data["schedule_revoked"] = "workaround %s revoked: wait restored (fix %s pending)" % (key, fix)
-            data["schedule_revoked_fix"] = fix
+            data["schedule_revoked_fixes"] = list(dict.fromkeys(list(data.get("schedule_revoked_fixes") or []) + [fix]))
             write_atomic(path, json.dumps(data, indent=2))
 
 

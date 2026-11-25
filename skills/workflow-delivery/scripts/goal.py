@@ -230,12 +230,25 @@ def cmd_new(args):
     return 0
 
 
+def revoked_stop(slug):
+    """TSK-1.3: a revoked workaround restores the wait, enforced for step, record and pr: every revoked fix must have merged; a fix whose run
+    record is absent or torn counts as unmerged. Exit 3, never a traceback."""
+    try:
+        state = load(slug)
+    except (OSError, ValueError, SystemExit):
+        return  # an unknown or unreadable goal is the command's own refusal
+    for fix in state.get("schedule_revoked_fixes") or []:
+        try:
+            merged = bool(pods and os.path.exists(state_path(fix)) and pods.merged(load(fix)))
+        except (OSError, ValueError):
+            merged = False
+        merged or sys.exit(print("REFUSED: %s waits for %s to merge: its workaround was revoked. Fix: let %s merge, then run this again (SCHED_REVOKED)" % (slug, fix, fix), file=sys.stderr) or 3)
+
+
 def cmd_step(args):
     state = load(args.slug)
     args.name == "build" and guards.plan_gate(ME, state)
     fit.budget_stop(args.slug, state, state_dir(), config(), save=save)
-    fix = state.get("schedule_revoked_fix")  # TSK-1.3: a revoked workaround restores the wait, enforced at the next step
-    fix and not (pods and os.path.exists(state_path(fix)) and pods.merged(load(fix))) and no("%s waits for %s to merge: its workaround was revoked. Fix: let %s merge, then run this again (SCHED_REVOKED)" % (args.slug, fix, fix))
     state["step"] = args.name
     if args.tokens:
         fit.tokens().add(state, args.name, args.tokens)
@@ -297,6 +310,7 @@ def main():
     if args.command in ("step", "record", "pr"):
         role.guard(args.command, args.slug)
         role.inbox(os.path.abspath(git("rev-parse", "--git-common-dir")), args.slug)
+    args.command in ("step", "record", "pr") and revoked_stop(args.slug)
     return args.func(args)
 
 
