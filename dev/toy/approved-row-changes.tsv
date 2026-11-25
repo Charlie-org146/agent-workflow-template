@@ -33,3 +33,8 @@ pr-body-by-file	o957 (owner o1009)	moved by the make-room goal: its negative gre
 defect-5609-one-merge-path	o957 (owner o1009)	moved by the make-room goal: the files that contain a gh pr merge call were ['merge.py'], now ['merge.py', 'merge_steps.py'] (advance moved); assert unchanged
 pr-body-by-file	o957 (owner o1009), o962 (owner o1016)	moved by the make-room-b goal: pr_open, which holds "--body-file", moved from fit.py to fit_budget.py, so the positive grep now reads fit_budget.py (where pr_open lives, as strict as before) and the negative "--body" greps also read fit_budget.py; assert unchanged
 make-room-2-identical	o957 (owner o1009), o962 (owner o1016)	the pin rule of the make-room-b goal: the pin rule compares each move's own base with the pin; the row's command is not edited; assert unchanged
+task-first-1	TD1679 (v110-tsk-1: each TSK-1 case on its own row)	added: a row for one TSK-1 requirement; no existing row changed or removed
+task-first-2	TD1679 (v110-tsk-1: each TSK-1 case on its own row)	added: a row for one TSK-1 requirement; no existing row changed or removed
+task-first-3	TD1679 (v110-tsk-1: each TSK-1 case on its own row)	added: a row for one TSK-1 requirement; no existing row changed or removed
+task-first-4	TD1679 (v110-tsk-1: each TSK-1 case on its own row)	added: a row for one TSK-1 requirement; no existing row changed or removed
+task-first-5	TD1679 (v110-tsk-1: each TSK-1 case on its own row)	added: a row for one TSK-1 requirement; no existing row changed or removed
