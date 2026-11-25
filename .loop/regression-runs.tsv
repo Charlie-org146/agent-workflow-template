@@ -394,7 +394,7 @@ operate-all	PASS	2026-11-25
 operate-toy-no-check	PASS	2026-11-25	
 operate-wait-99	PASS	2026-11-25	
 ops-findings-filed	PASS	2026-11-19	
-package-caps-held	PASS	2026-11-25		a3dcc03121ec
+package-caps-held	PASS	2026-11-25	
 package-gate-controls	PASS	2026-11-25	
 package-gate-head	PASS	2026-11-25	
 package-hang-bound	PASS	2026-11-25	
