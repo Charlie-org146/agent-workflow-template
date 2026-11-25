@@ -17,6 +17,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks (DEL-10)
 REG = os.path.join(HERE, os.pardir, os.pardir, "workflow-regression", "scripts")
 APP, BOUND, NAME = 15368, 30, "L1"  # the GitHub Actions app id; seconds per call
 IFS = ("github.event_name != 'merge_group'", "always() && github.event_name != 'merge_group'", "always()",
