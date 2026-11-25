@@ -210,6 +210,8 @@ health-timing	PASS	2026-11-11
 health-unreviewed-warn-issue-118	PASS	2026-11-10	
 health-workflow-no-milestone	PASS	2026-11-12	
 held-all	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+held-charge-idle	PASS	2026-11-25	
+held-charge-pauses	PASS	2026-11-25	
 held-stale-next	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 held-time-3878	PASS	2026-11-14	
 held-time-over-still-stops	PASS	2026-11-14	
