@@ -157,6 +157,7 @@ docs-no-plain-dunder-import	PASS	2026-11-16
 docs-release-scripts-under-19000	PASS	2026-11-24	
 docs-scripts-import-by-name	PASS	2026-11-24	
 docs-scripts-under-19000	PASS	2026-11-24	
+docs-v2-repo-passes	PASS	2026-11-25	
 done-line-rows-128	PASS	2026-11-12	
 done-lines-warning-143	PASS	2026-11-12	
 entry-stale	PASS	2026-11-24	
