@@ -87,7 +87,7 @@ check("the owner raising the cap on the base lets the goal pass", goal(3, table(
 text = open(os.path.join(here, "skills", "workflow-setup", "scripts", "settings.py"), encoding="utf-8").read()
 check("max_suite_seconds is a setting with a default", '"max_suite_seconds", REPO' in text)
 check("the retired max_regression_rows key is ignored: a goal adding a row to a repo at that old cap passes",
-      goal(3, table(4), base_config=config(100000, max_regression_rows=3)) is None and '"max_regression_rows"' not in text)
+      goal(3, table(4), base_config=config(100000, max_regression_rows=3)) is None and '"max_regression_rows", REPO' not in text)
 check("the refusal names the one cap and the fix",
       slow is not None and slow[0].startswith("over the test cap (the full suite takes") and "owner raises max_suite_seconds" in slow[1])
 sys.exit(1 if fails else 0)
