@@ -16,6 +16,7 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import schedule_load as sl  # noqa: E402
+import proctree  # noqa: E402
 
 HEALTH = os.path.join(HERE, "..", "..", "workflow-health", "scripts")
 DELIVERY = os.path.join(HERE, "..", "..", "workflow-delivery", "scripts")
@@ -112,7 +113,7 @@ class Lock:
         if pid <= 0:
             return True
         try:
-            os.kill(pid, 0)
+            proctree.probe(pid)
         except ProcessLookupError:
             return True
         except OSError:
