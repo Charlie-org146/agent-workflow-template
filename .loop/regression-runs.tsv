@@ -157,7 +157,7 @@ docs-check-same	PASS	2026-11-24
 docs-check-speed	PASS	2026-11-24	
 docs-counts-issue-39	PASS	2026-11-12	
 docs-guide-page-issue-125	PASS	2026-11-24	
-docs-import-rows-pass	PASS	2026-11-25	
+docs-import-rows-pass	PASS	2026-11-25		00e75af405b2
 docs-locked-hint-issue-133	PASS	2026-11-24	
 docs-milestone-line-issue-130	PASS	2026-11-24	
 docs-no-plain-dunder-import	PASS	2026-11-16	
