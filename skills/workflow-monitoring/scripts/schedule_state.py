@@ -209,6 +209,21 @@ def file_issue(root, rec, live):
     return number
 
 
+def revoke(paths, goals, key, fix):
+    """A waiver revoked for a goal a worker already holds: the goal keeps its slot, its run record gets the wait on the fix back and a note
+    (through waits_on, which the boards already show); an absent or finished run record is left alone."""
+    for slug in goals:
+        path = os.path.join(paths["folder"], "runs", slug + ".json")
+        try:
+            data = json.load(open(path, encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(data, dict) and data.get("status") in ("running", "waiting"):
+            data["waits_on"] = list(dict.fromkeys(list(data.get("waits_on") or []) + [fix]))
+            data["schedule_revoked"] = "workaround %s revoked: wait restored (fix %s pending)" % (key, fix)
+            write_atomic(path, json.dumps(data, indent=2))
+
+
 def set_order(paths, slugs, record):
     """The order file and its last-good copy, together, under the lock."""
     text = json.dumps({"record": record, "slugs": slugs}, sort_keys=True)

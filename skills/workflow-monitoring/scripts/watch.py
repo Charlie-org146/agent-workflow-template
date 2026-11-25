@@ -245,7 +245,7 @@ def freeze(goal, cfg):
              "branch": branch, "worktree": tree, "touches": goal["touches"], "pid": None, "pr": "", "batch": True,
              "done_sha": hashlib.sha256("\n".join(lines).encode()).hexdigest(),
              "release": goal.get("release", ""), "waiting": None, "finding": "", "log": [],
-             "waits_on": goal["depends"], "rules_at": {"idea": known_rules()}}
+             "waits_on": goal["depends"], "rules_at": {"idea": known_rules()}, **({"schedule": goal["sched"]} if goal.get("sched") else {})}
     graph.stamp(state)
     save(state, "queued")
     git("worktree", "add", *([tree, branch] if git("rev-parse", "--verify", "--quiet", "refs/heads/" + branch, check=False) else ["-b", branch, tree, base]))

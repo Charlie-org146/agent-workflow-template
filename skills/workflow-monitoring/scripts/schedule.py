@@ -183,11 +183,13 @@ def workaround(root, args):
             ss.save_records(paths, recs)
             print("activated %s for %s" % (rec["key"], args.goal))
             return 0
+        gone = [args.goal] if verb == "fail" else [g for g, v in rec["uses"].items() if v == "active"]
         if verb == "fail":
             rec["uses"][args.goal] = "failed"
         else:
             rec["state"] = "closed"
         ss.save_records(paths, recs)
+        ss.revoke(paths, gone, rec["key"], rec["fix"])
     print("%s %s: the wait is restored" % (verb, rec["key"]))
     return 0
 

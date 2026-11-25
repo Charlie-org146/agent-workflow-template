@@ -282,8 +282,8 @@ def load(root, strict=False, policy=None, check=True):
                 mark[-1] += "; overdue: passed over by %d task goals" % passed
             g["marks"] = mark
         if g["slug"] in result["waived"]:
-            keys = [w["key"] for w in recs if g["slug"] in w["applies"] and (w["key"], g["slug"]) in use]
-            g["marks"].append("workaround %s (fix %s pending)" % (keys[0], sorted(result["waived"][g["slug"]])[0]))
+            g["waived"] = sorted({(w["key"], w["fix"]) for w in recs if g["slug"] in w["applies"] and (w["key"], g["slug"]) in use and w["fix"] in result["waived"][g["slug"]]})
+            g["marks"].append("workaround %s (fix %s pending)" % g["waived"][0])
     return finish(result)
 
 
@@ -305,6 +305,7 @@ def finish(result):
                 g["marks"], g["hidden"] = ["hidden: " + why] if g["marks"] else [], why
     for g in result["goals"]:
         g["cell"] = "(hidden: %s)" % g["hidden"] if g.get("hidden") else " | ".join([g["slug"]] + g["marks"]) if g["marks"] else ""
+        g["sched"] = {"kind": g["kind"], "task": g["task"], "cell": g["cell"], "waived": [{"key": k, "fix": f} for k, f in g.get("waived", [])]} if g["marks"] else None
     result["banner"] = banner
     if result["notes"]:
         result["banner"].append("schedule notes: %d (schedule.py show)" % len(result["notes"]))

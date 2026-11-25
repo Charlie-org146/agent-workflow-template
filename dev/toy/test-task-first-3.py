@@ -143,5 +143,44 @@ os.unlink(os.path.join(nb, ".loop", "tasks", "t.md"))
 rows, deps = board.collect("n", nb, "main", datetime.datetime.now(datetime.timezone.utc))
 check(all("kind" not in d and "cell" not in d for d in deps), "with no task briefs the JSON board keeps today's keys (nothing added)")
 
+# 5. d3: real dispatch (watch.plan, watch.freeze, sessions.assign) follows the schedule, frozen records keep the reason and the waiver, a revoked waiver is restored
+import sessions  # noqa: E402
+
+
+def at(top, fn, *a):
+    old = os.getcwd()
+    os.chdir(top)
+    try:
+        with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+            return fn(*a)
+    finally:
+        os.chdir(old)
+
+
+Q1 = "- slug: v110-fix | goal: fix | done: d\n- slug: v110-b | release: v1.1.0 | goal: b | done: d\n"
+d1 = repo(Q1)
+start, held = at(d1, watch.plan, 1)
+check([g["slug"] for g in start] == ["v110-b"], "TSK-1.1 real dispatch: with one slot the task goal starts before the fix: %s" % [g["slug"] for g in start])
+state = at(d1, watch.freeze, start[0], {"base": "main"})
+sched = state.get("schedule") or {}
+check(sched.get("kind") == "task" and "task Task first" in sched.get("cell", ""), "the frozen record names the reason it started: %s" % sched)
+check(at(d1, sessions.assign, state, "prompt", {}) is False and state.get("worker") == "background", "sessions.assign runs on the frozen record (no session tool set: a background worker)")
+Q5 = ("- slug: v110-fix | goal: fix | done: d\n- slug: v110-a | release: v1.1.0 | depends-on: v110-fix | goal: a | done: d\n- slug: v110-b | release: v1.1.0 | goal: b | done: d\n")
+d5 = repo(Q5)
+runs_dir = os.path.join(d5, ".git", "loop", "runs")
+start, held = at(d5, watch.plan, 3)
+check("v110-a" not in [g["slug"] for g in start], "before any workaround the task goal waits on its fix: start %s" % [g["slug"] for g in start])
+run(d5, *A("wait for the fix to merge"))
+run(d5, "workaround", "use", "k1", "--goal", "v110-a")
+start, held = at(d5, watch.plan, 3)
+check("v110-a" in [g["slug"] for g in start], "TSK-1.3 real dispatch: an activated workaround starts the task goal while the fix is unmerged: %s" % [g["slug"] for g in start])
+state = at(d5, watch.freeze, [g for g in start if g["slug"] == "v110-a"][0], {"base": "main"})
+check((state.get("schedule") or {}).get("waived") == [{"key": "k1", "fix": "v110-fix"}], "the frozen record keeps the waiver's provenance: %s" % (state.get("schedule") or {}).get("waived"))
+state["status"] = "running"
+json.dump(state, open(os.path.join(runs_dir, "v110-a.json"), "w"))
+code, out, err = run(d5, "workaround", "fail", "k1", "--goal", "v110-a", "--reason", "x")
+now = json.load(open(os.path.join(runs_dir, "v110-a.json")))
+check(now["status"] == "running" and "v110-fix" in now["waits_on"] and "k1" in str(now.get("schedule_revoked")), "a revoked waiver after assignment keeps the slot and restores the wait on the run record: waits_on %s, note %s" % (now.get("waits_on"), now.get("schedule_revoked")))
+
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)
