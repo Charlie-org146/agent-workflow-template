@@ -2,7 +2,7 @@
 # windows: ok
 # reads: dev/toy/move-manifest.json skills/workflow-delivery/scripts/ skills/workflow-release/scripts/merge.py
 """The move check of the make-room goal (pure moves of whole functions into sibling modules), plan section 3.
-usage: move-check.py check [--root DIR]    prove every move against the comparison base; print PASS or FAIL lines, exit 1 on any FAIL
+usage: move-check.py check [--root DIR] [--pin SHA]    prove every move (--pin reads the script and module texts from that commit) against the comparison base; print PASS or FAIL lines, exit 1 on any FAIL
        move-check.py --derive              write the free-name prefixes of each moved function into the manifest
        move-check.py --apply NAME          perform the move of one manifest entry (script stem) on the working tree
        move-check.py --inventory           list every toy, row and package rule that names a moved function or reads a moved script
@@ -22,6 +22,7 @@ import symtable
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
 MAN = os.path.join(HERE, "move-manifest.json")
+GIT = os.environ.get("MR_GIT") or REPO  # where git commands run (a row runs this from an archive of a pinned commit)
 GUARD = 'os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")'
 BAN = ("__file__", "__name__", "traceback", "inspect", "_getframe")
 OUT = []
@@ -33,11 +34,17 @@ def say(ok, text):
 
 
 def base_text(man, path):
-    got = subprocess.run(["git", "show", "%s:%s" % (man["base"], path)], capture_output=True, text=True, cwd=REPO)
+    got = subprocess.run(["git", "show", "%s:%s" % (man["base"], path)], capture_output=True, text=True, cwd=GIT)
     return got.stdout if got.returncode == 0 else ""
 
 
+PIN = [""]
+
+
 def read(root, path):
+    if PIN[0]:
+        got = subprocess.run(["git", "show", "%s:%s" % (PIN[0], path)], capture_output=True, text=True, cwd=GIT)
+        return got.stdout.replace("\r\n", "\n")
     with open(os.path.join(root, path), encoding="utf-8", newline="") as handle:
         return handle.read().replace("\r\n", "\n")
 
@@ -180,7 +187,7 @@ def check(root):
         stem = os.path.basename(move["script"])[:-3]
         folder = os.path.dirname(move["script"])
         mpath = os.path.join(folder, move["module"] + ".py")
-        if not os.path.exists(os.path.join(root, mpath)):
+        if not PIN[0] and not os.path.exists(os.path.join(root, mpath)):
             print("SKIP %s: not moved yet" % stem)
             continue
         btext, ntext, mtext = base_text(man, move["script"]), read(root, move["script"]), read(root, mpath)
@@ -248,8 +255,9 @@ def main(argv):
         return inventory() or 0
     if argv[:1] == ["check"]:
         root = argv[argv.index("--root") + 1] if "--root" in argv else REPO
+        PIN[0] = argv[argv.index("--pin") + 1] if "--pin" in argv else ""
         return 0 if check(root) else 1
-    print("usage: move-check.py check [--root DIR] | --derive | --apply NAME | --inventory")
+    print("usage: move-check.py check [--root DIR] [--pin SHA] | --derive | --apply NAME | --inventory")
     return 0 if argv[:1] in (["-h"], ["--help"]) else 2
 
 
