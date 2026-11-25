@@ -1,4 +1,4 @@
-# One-time make room (owner o954; owner o1009, ledger o957): split the core scripts that sit at the size line (goal, flow, lane, fit, role, routing in workflow-delivery; merge in workflow-release) into sibling modules by pure moves, with no behaviour change, so later goals have room without asking for new files
+# One-time make room (part A, owner o954; owner o1009, ledger o957; split by owner o1016, ledger o962): split the core scripts that sit at the size line (goal, flow and lane in workflow-delivery; merge in workflow-release; fit, role and routing are part B, the goal v110-make-room-b) into sibling modules by pure moves, with no behaviour change, so later goals have room without asking for new files
 
 - Slug: v110-make-room
 - Touches: skills/workflow-delivery/scripts, skills/workflow-release/scripts/merge.py, dev/toy, .loop/regression.tsv
