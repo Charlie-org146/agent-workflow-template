@@ -140,7 +140,7 @@ def cmd_pr(args):
         if gate == "fail":
             return _s.fit.pr_fail(_s.ME, state, head, line, ids)
         _s.role.record(state, base)
-    state["pr_lane"] = cover.pr_part(_s.state_dir(), slug) or state["pr_lane"]
+    state["pr_lane"] = cover.pr_part(_s.state_dir(), slug, state["pr_lane"])
     known = _s.run(["gh", "pr", "view", state["branch"], "--json", "url,state"])
     info = json.loads(known.stdout) if not known.returncode else {}
     body = _s.fit.pr_text(_s.ME, state)

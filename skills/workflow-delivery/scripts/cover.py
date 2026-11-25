@@ -221,11 +221,21 @@ def late(runs, slug, cfg):
     return bool(code)
 
 
-def pr_part(runs, slug):
-    claim = load(runs, slug).get("claim")
-    if not claim:
+def limits(root):
+    """The PR text's Limits block (binding rule 4), for the PR that moves the reach finder and its fingerprint."""
+    if "skills/workflow-regression/scripts/row_reach.py" not in sh(["git", "diff", "--name-only", "origin/main...HEAD"], root)[1].split():
         return ""
+    return ("\n### Limits\n\n- The first PRs after this merges run cold on GitHub: the runner fingerprint changed, so every cached plan and record is invalid.\n"
+            "- Platform rows that are not on the skip list go unrun on macOS once their cover moves to GitHub's Ubuntu runner.\n"
+            "- This PR changes the regression scripts, so its own cover is off (the tooling-cover line); its measured with-and-without minutes cannot come from its own lanes.\n"
+            "- Not tested: the full-lane rerun after a late loss (cover.late is tested, the goal_steps.py call is not), and flow.py qa end to end through the hook.\n")
+
+
+def pr_part(runs, slug, keep=""):
+    claim = load(runs, slug).get("claim")
     root = sh(["git", "rev-parse", "--show-toplevel"])[1]
+    if not claim:
+        return keep + limits(root)
     times = {}
     try:
         for x in open(os.path.join(root, ".github", "workflows", "row-times.tsv")).read().splitlines():
@@ -237,8 +247,8 @@ def pr_part(runs, slug):
         sum(times.get(k, 0) for k in claim["covered"]) / 60) if times else "estimated avoided: unavailable")
     head = sh(["git", "rev-parse", "--short=12", "HEAD"], root)[1]
     return ("\n### Regression lane\n\nCovered by %s, the PR's pull_request run (regression-pr), pending GitHub execution, head %s: %d rows (%s)\n\n"
-            "Run locally: %d rows (%s)\n\n%s\n" % (NAME, head, len(claim["covered"]), ", ".join(claim["covered"][:40]), len(claim["local"]),
-                                                   ", ".join(claim["local"][:40]) or "none", saved))
+            "Run locally: %d rows (%s)\n\n%s\n%s" % (NAME, head, len(claim["covered"]), ", ".join(claim["covered"][:40]), len(claim["local"]),
+                                                      ", ".join(claim["local"][:40]) or "none", saved, limits(root)))
 
 
 def refresh(g, state, info, body):

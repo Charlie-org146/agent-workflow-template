@@ -167,6 +167,9 @@ echo "== the final head: a late loss, the PR text, the prompt, the lane command"
 reset; cov lane qa >/dev/null; out=$(cov late pr); check "the cover still holds on the final head: no late loss" 'grep -q "^LATE False" <<<"$out"'
 out=$(cov part pr); echo "$out"
 check "the PR text names L1, says pending GitHub execution, lists both sets and an estimate" 'grep -q "Covered by L1, the PR.s pull_request run (regression-pr), pending GitHub execution, head [0-9a-f]\{12\}: 3 rows (a, b, c)" <<<"$out" && grep -q "Run locally: 2 rows (n, s)" <<<"$out" && grep -q "estimated avoided: unavailable" <<<"$out"'
+git switch -q -c rr feat; mkdir -p skills/workflow-regression/scripts; printf '#\n' > skills/workflow-regression/scripts/row_reach.py; git add -A; git commit -qm "moves the reach finder"
+out=$(cov part pr); git switch -q feat
+check "the PR that moves the reach finder states its limits: cold first runs, macOS rows, its own cover off, the two untested paths" 'grep -q "first PRs after this merges run cold" <<<"$out" && grep -q "not on the skip list go unrun on macOS" <<<"$out" && grep -q "its own cover is off" <<<"$out" && grep -q "flow.py qa end to end" <<<"$out"'
 git switch -q main; git rm -q .github/workflows/regression-pr.yml; git commit -qm "no workflow"; git push -q origin main; git switch -q feat
 out=$(cov late pr); check "a lost cover on the final head is a late loss" 'grep -q "^LATE True" <<<"$out" && grep -q "COVER LOST (COVER_LOST): WF" <<<"$out"'
 git switch -q main; git revert --no-edit HEAD >/dev/null; git push -q origin main; git switch -q feat
