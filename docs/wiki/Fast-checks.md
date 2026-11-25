@@ -65,4 +65,8 @@ None
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
+| [cover-claim](Tests#t-cover-claim) | requirement | SKP-1 | Given a goal whose PR will get L1 on GitHub, when its qa lane starts, then the covered rows run no local row, only the uncovered rows run as a partial lane, every unknown keeps the whole lane, and the cover is never granted at pr. | not run |
+| [cover-ids-lane](Tests#t-cover-ids-lane) | requirement | SKP-1 | Given a lane that runs only some rows, when regression.py run takes --ids, then exactly those rows run as one lane with the memory wait and a slot, no tracked file is written and the record keeps the other rows. | not run |
+| [cover-moves](Tests#t-cover-moves) | requirement | SKP-1 | Given the reach finder moved to row_reach.py, when the modules load, then the moved code is byte for byte the old code, every old name still resolves, every entry point imports alone and in the cycle orders, and the runner fingerprint covers the new files. | not run |
+| [cover-batch-body](Tests#t-cover-batch-body) | requirement | SKP-1 | Given a goal that ran with a cover, when a batch merge names it, then the batch is refused with COVER_NOBATCH, and a failed PR body edit refuses with BODY_STALE without a merge, lane or push. | not run |
 | - | requirement | SKP-1 | no passing test | not enforced |

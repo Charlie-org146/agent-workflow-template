@@ -280,6 +280,15 @@
 | <a id="t-wiki-front-hardening"></a>wiki-front-hardening | requirement | DOC-25 | PASS | 2026-11-24 | [CI 2026-11-24](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-24) | 2026-11-23 |
 | <a id="t-wiki-front-tracked"></a>wiki-front-tracked | requirement | DOC-25 | PASS | 2026-11-24 | [CI 2026-11-24](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-24) | 2026-11-23 |
 
+## Fast checks
+
+| Test | Kind | Guards | Result | Date | Run | Seen failing |
+|---|---|---|---|---|---|---|
+| <a id="t-cover-claim"></a>cover-claim | requirement | SKP-1 | not run | - | local | 2026-11-25 |
+| <a id="t-cover-ids-lane"></a>cover-ids-lane | requirement | SKP-1 | not run | - | local | 2026-11-25 |
+| <a id="t-cover-moves"></a>cover-moves | requirement | SKP-1 | not run | - | local | 2026-11-25 |
+| <a id="t-cover-batch-body"></a>cover-batch-body | requirement | SKP-1 | not run | - | local | 2026-11-25 |
+
 ## Guardrails
 
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
