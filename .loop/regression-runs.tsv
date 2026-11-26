@@ -254,7 +254,7 @@ held-time-owner-wait	PASS	2026-11-14
 held-time-pr-queue	PASS	2026-11-25	
 held-time-session-hold	PASS	2026-11-25	
 held-time-stopped	PASS	2026-11-14	
-hlt1-same-answer	PASS	2026-11-26		291e5ea24031
+hlt1-same-answer	PASS	2026-11-26	
 hlt2-twelve-groups	PASS	2026-11-19	
 hlt4-feature-milestones	PASS	2026-11-26	
 hlt6-branches	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
