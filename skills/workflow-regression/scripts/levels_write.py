@@ -6,8 +6,8 @@ import os
 import sys
 
 import slots
-from levels import (CODE, COLS, HEAD, LEVELS, RANK, RECORD, RHEAD, RISKS, TABLE, TAGS, State, covered_level, duplicates, excuse,
-                    file_of, fingerprint, needs, sha, text_of, tokens, validate)
+from levels import (CODE, COLS, GIVEN, HEAD, LEVELS, RANK, RECORD, RHEAD, RISKS, TABLE, TAGS, State, covered_level, duplicates, excuse,
+                    file_of, fingerprint, floor, needs, sha, text_of, tokens, validate)
 from levels_gate import covers_subject, excepted_lines, goal_slug, interrupted, ledger, lowered, mark_path, report
 
 
@@ -165,6 +165,14 @@ def pin(state, row_id, tag, why):
         state.risks["row"][row_id] = (tag, why)
 
 
+def unpin(state, row_id, record):
+    """Drop the row line a --risk added, with the removal and its owner record kept for the merge-base comparison."""
+    if state.risks["row"].get(row_id, ("", ""))[1].startswith(GIVEN):
+        kept = [x for x in (state.risk_text or RHEAD).rstrip("\n").split("\n") if x.split("\t")[:2] != ["row", row_id]]
+        state.risk_text = "\n".join(kept + ["removed\trow:%s\tnone\tlowered with owner:%s" % (row_id, record)]) + "\n"
+        del state.risks["row"][row_id]
+
+
 def derive(state, row, old_row, entry, opts):
     """The entry after a write of `row`: level, tag, list and reason (add, sync --write and red come through here)."""
     key, fresh = row["id"], entry is None
@@ -196,16 +204,18 @@ def derive(state, row, old_row, entry, opts):
     derived = max((have, tag, seen or "none"), key=lambda t: RANK[t])
     final = max((derived, asked or "none"), key=lambda t: RANK[t])
     if asked and (RANK[asked] < RANK[derived] or asked == "none" and defect and seen is None and not same):
-        if RANK[asked] < RANK[tag]:
-            sys.exit("REFUSED (LEVELS_NO_RISK): %s guards %s and keeps at least %s; nothing was written" % (key, why, tag))
+        low, lwhy = floor(state.risks, key, row["goal"])
+        if RANK[asked] < RANK[low]:
+            sys.exit("REFUSED (LEVELS_NO_RISK): %s guards %s and keeps at least %s; nothing was written" % (key, lwhy, low))
         record = owner_check(state.root, opts.get("owner"), key, "setting %s to %s" % (key, asked))
         final = asked
+        unpin(state, key, record)
         reasoned(out, "owner:" + record, drop=("owner", "risk"))
     out["risk"] = final
     if final != "none":
         reasoned(out, "risk:" + final, drop=("risk",))
         if asked == final:
-            pin(state, key, final, "given with --risk")
+            pin(state, key, final, GIVEN + " --risk")
         if row["level"] != "covered" and out["level"] != "L1":
             out.update(level="L1", seconds="", cmdhash="")
             reasoned(out, drop=("time", "limits-file"))

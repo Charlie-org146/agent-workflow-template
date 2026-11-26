@@ -417,7 +417,7 @@ def cmd_relevel(root, args):
             sys.exit("REFUSED: the table changed while relevel worked it out; nothing was written. Fix: rerun it")
         for key, tag in plan.given.items():
             if key in out:
-                pin(state, key, tag, "given with --risk-for")
+                pin(state, key, tag, "given with --risk-for")  # GIVEN
         have.update(out)
         state.record = [(0, e) for e in have.values()]
         return set(out)

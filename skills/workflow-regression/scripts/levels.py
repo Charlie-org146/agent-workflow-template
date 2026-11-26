@@ -21,6 +21,7 @@ KINDS = ("requirement", "row", "label", "removed", "off")
 REASON = re.compile(r"^(default|covers|limits-file|time:\d+(\.\d+)?|risk:(security|private)|excepted:[A-Za-z0-9]+|"
                     r"owner:[A-Za-z0-9._-]+|src:[0-9a-f]{10})$")
 L0_MS, MARKER, SHOWN = 45000, "lvl-armed", 20
+GIVEN = "given with"  # the why cell of a row line that a --risk or --risk-for added
 OPERATION = "operation, in a pull request, when the row is already on the base; otherwise this branch's author"
 # A covered row with no proving row, tied to its id, goal and command; the last cell says what excuses it.
 EXCUSED = {
@@ -133,6 +134,12 @@ def needs(risks, row_id, goal):
     if row_id in risks["row"]:
         found.append((risks["row"][row_id][0], "a listed row"))
     return max(found, key=lambda f: RANK[f[0]], default=("none", ""))
+
+
+def floor(risks, row_id, goal):
+    """needs() without the row lines a --risk added: what no owner record can lower (a requirement or a hand tag)."""
+    kept = {k: v for k, v in risks["row"].items() if not v[1].startswith(GIVEN)}
+    return needs(dict(risks, row=kept), row_id, goal)
 
 
 def fingerprint(row):
