@@ -24,8 +24,8 @@ HOME_DIR = re.compile(r"(?:file://)?(?:/(?:Users|home)/|[A-Za-z]:[\\/]Users[\\/]
 
 
 def mend(*args):
-    import lanekit
-    return lanekit.mend(*args)
+    import mend_tables
+    return mend_tables.mend(*args)
 
 
 def plain(text):

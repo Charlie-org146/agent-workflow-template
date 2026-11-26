@@ -4,6 +4,7 @@
 seconds; the word `nightly` keeps a nightly row out of the PR shards (it still runs in the nightly run). A row not on it keeps the
 run's own limit. Whole-tree rows run in the tree job only (TD504)."""
 import os
+import time
 
 
 def limits(root):
@@ -58,3 +59,17 @@ def split(ids, times, n):
         shards[j].append(key)
         load[j] += weight[key]
     return shards
+
+
+def merge_runs(root):
+    """The lane record's row results, with any flaky flag (tiers.py), into regression-runs.tsv."""
+    import lanes, runs, slots
+    record, _ = lanes.load(lanes.record_path(root), root)
+    rows = (record or {}).get("rows") or {}
+    done = [dict(id=key, state=value.get("status"), **{k: value[k] for k in ("flaky",) if k in value})
+            for key, value in sorted(rows.items()) if value.get("status") in ("PASS", "FAIL")]
+    if done:
+        day = time.strftime("%Y-%m-%d", time.gmtime())
+        head = (lanes.git(root, "rev-parse", "HEAD") or "").strip()
+        slots.edit(root, "regression-runs.tsv", lambda: runs.write(root, done, day, head))
+    return 0
