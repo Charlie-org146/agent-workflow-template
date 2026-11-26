@@ -1,7 +1,7 @@
 # No size limits, part A: the limits end (owner o984, done lines o988; frozen copy no-size-cap-done-lines-APPROVED-o988-2026-11-25.md, which gives the new DOC-26, GRD-20 and REG-4 text)
 
 - Slug: v110-no-size-cap-a
-- Touches: skills, dev, docs/wiki, .loop
+- Touches: skills, dev, docs/wiki, .loop, dev/toy/test-prd.sh, skills/workflow-docs/scripts/entry.py, dev/toy/test-entry-config.sh
 - ETA: 385 active minutes (estimate 305m plus a 25% margin)
 
 ## Done lines
