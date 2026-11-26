@@ -67,3 +67,9 @@ One pass on plan sha1 0a96639ab672. The record's accept mark (o1000, set by the 
 ### Reviews
 
 All six plan reviews said build with changes; none rejected. The goal's record keeps each verdict cut at 200 characters (a tool limit); the Claude engineering verdict is the one cut.
+
+### Added during the build
+
+- Build: the two toys and the row filter no longer pass the caller's git environment.
+- Red for line 2 (RT17; run on the same patch as 4da454609): "FAIL: a row never inherits a lane's note, queued or started path".
+- Red for line 3 (RT17; run on the same patch as 5425fb21b): "FAIL: d: with no free session a new one is refused with the reason" and "FAIL: d: a free (archived) session is woken, renamed and sent the goal".
