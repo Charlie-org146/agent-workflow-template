@@ -752,7 +752,7 @@ refused there with a line naming `relevel`.
 | File | Columns (tab-separated) |
 |---|---|
 | `.loop/regression-relevel.tsv`, the record | `id, old, level, risk, covers, seconds, cmdhash, reason`: one line per row, in table order. `old` is the word at the row's first entry; `covers` the proving rows of a covered row; `seconds` and `cmdhash` (sha1 of the command) only for L0; `reason` a comma list of `default`, `time:<s>`, `risk:<tag>`, `covers`, `limits-file`, `excepted:<record>`, `owner:<record id>` and `src:<hash>` (a defect row's link, goal and category). Never a link or a repository name |
-| `.loop/regression-risk.tsv`, the risk data | `kind, key, tag, why`: `requirement` (a Principle 6 requirement and the ids it absorbs; `-`, tag `none`, if there is none), `row` (a listed row, or a tag given with `--risk`, whose why starts `given with`), `label` (a word in an issue label's name that means a tag), `removed` and `off` (what was removed, its why holding `owner:<id>`) |
+| `.loop/regression-risk.tsv`, the risk data | `kind, key, tag, why`: `requirement` (a Principle 6 requirement and the ids it absorbs; `-`, tag `none`, if there is none), `row` (a listed row), `given` (a tag given with `--risk` or `--risk-for`), `label` (a word in an issue label's name that means a tag), `removed` and `off` (what was removed, its why holding `owner:<id>`) |
 | `.loop/regression-relevel-input.tsv`, read by `relevel` | `id, value`: a covered row's comma list, or `own N` for a defect link that is a bare or `#N` number of this repository |
 
 **Risk.** A row guards a requirement when its goal cell or its id names a listed requirement id (any case, the inner
@@ -784,9 +784,9 @@ pull-request check runs rows through `run`, so it refuses too.
 | `LEVELS_L0_TIME` | an L0 entry with no positive seconds, or a command that changed since it was measured |
 | `LEVELS_BAD_COVERS` | a covered row whose list is empty, names itself, an unknown or covered row, or a tagged covered row with an untagged proving row |
 | `LEVELS_STALE_RISK` | a defect row whose link, goal or category changed since its tag was read: `level ID --refresh` |
-| `LEVELS_BAD_RISK_DATA` | risk data missing, empty, or with a bad line |
+| `LEVELS_BAD_RISK_DATA` | risk data missing, empty, or with a bad or repeated line |
 | `LEVELS_BAD_FILE` | a malformed line, a conflict marker, or an unknown risk, old word or reason |
-| `LEVELS_LOWERED` | since the merge base: a tag or risk line removed or lowered, or the record and `lvl-armed` removed, with no `owner:` id covering it (checked against the owner records wherever this machine keeps them; elsewhere the id must be recorded) |
+| `LEVELS_LOWERED` | since the merge base: a tag or risk line removed or lowered, or the record and `lvl-armed` removed, with no `owner:` id covering it (checked against the owner records wherever this machine keeps them; elsewhere the id must be recorded). An id already there at the merge base covers no new change; a gone tagged row counts as renamed only into one new row with the same command, goal and tag. Also refused when there is no base branch to compare with. The base is the default branch's, not a branch's own setting |
 | `LEVELS_INTERRUPTED` | a write stopped between files: `levels --fill` completes it |
 
 Commands also refuse with `LEVELS_NEEDS_OWNER`, `LEVELS_NEEDS_RISK`, `LEVELS_NOT_LEVELLED`, `LEVELS_L0_TIME`,
@@ -799,8 +799,8 @@ its level is its proving rows' highest, L1 at least when tagged.
 way (a table that is not levelled takes no lock, and a reader that can't open the lock reads). A write of several files
 first leaves a mark in the worktree's git folder with each file before and after. `levels --fill` completes it only on
 the same branch with each file at one of those two states; otherwise it writes nothing and names the files and the mark,
-and `levels --discard` removes the mark. `level ID --rename NEW` moves the row, its entry, covers lists, risk-data line
-and the limits, known and red lists; `--remove` refuses while the row proves another, and a tagged row needs an owner
+and `levels --discard` removes the mark. `level ID --rename NEW` moves the row, its entry, covers lists, risk-data lines
+and the limits, known, red, skip and owed lists; `--remove` refuses while the row proves another, and a tagged row needs an owner
 record. After a merge that brought rows without entries (a clean merge, or a pull request that was green before), run
 `levels --fill`; the automatic repair of a conflicted table also joins the record by row id, refuses one id with two
 different lines, and fills; a conflict in the risk data is left to a person.

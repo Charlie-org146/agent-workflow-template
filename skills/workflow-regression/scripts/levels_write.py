@@ -6,8 +6,8 @@ import os
 import sys
 
 import slots
-from levels import (CODE, COLS, GIVEN, HEAD, LEVELS, RANK, RECORD, RHEAD, RISKS, TABLE, TAGS, State, covered_level, duplicates, excuse,
-                    file_of, fingerprint, floor, needs, sha, text_of, tokens, validate)
+from levels import (CODE, COLS, HEAD, L0_MS, LEVELS, RANK, RECORD, RHEAD, RISKS, TABLE, TAGS, State, covered_level, duplicates, excuse,
+                    file_of, fingerprint, floor, l0_total, needs, sha, text_of, tokens, validate)
 from levels_gate import covers_subject, excepted_lines, goal_slug, interrupted, ledger, lowered, mark_path, report
 
 
@@ -23,7 +23,8 @@ def owner_check(root, records, subject, what):
                  what, subject, subject))
 
 
-KEYED = ("regression-limits.tsv", "regression-known.tsv", "regression-red.tsv")  # keyed by row id, renamed with it
+KEYED = ("regression-limits.tsv", "regression-known.tsv", "regression-red.tsv", "regression-skips.tsv",
+         "regression-owed.tsv")  # keyed by row id, renamed and removed with it
 
 
 def disk(root, name):
@@ -58,7 +59,7 @@ def commit_files(root, files):
     except BaseException as error:
         sys.exit("LEVELS_UNEXPECTED: the write failed (%s). Written: %s. Fix: %s" % (
             type(error).__name__, ", ".join(written) or "none",
-            CODE + "levels --fill completes it" if written else "rerun the same command"))
+            CODE + "levels --fill completes it" if path and os.path.exists(path) else "rerun the same command"))
     if len(files) > 1 and path:
         os.remove(path)
 
@@ -110,11 +111,13 @@ def writer_gate(state, creating):
         sys.exit("REFUSED: nothing was written. Fix the lines above first")
 
 
-def settle(before, state, touched):
-    """Refuse a change that leaves a written row wrong or adds any problem; list the problems that were there."""
+def settle(before, state, touched, total=0):
+    """Refuse a change that leaves a written row wrong, adds any problem or raises an L0 total already over 45 s; list
+    the problems that were there."""
     old = {p.key() for p in before}
     found = validate(state) + lowered(state)
-    mine = [p for p in found if p.key() not in old or p.row in touched]
+    grew = l0_total(state) > max(total, L0_MS)
+    mine = [p for p in found if p.key() not in old or p.row in touched or grew and p.code == "LEVELS_L0_OVER"]
     if mine:
         report(mine)
         sys.exit("REFUSED: this change would leave the table wrong; nothing was written")
@@ -132,11 +135,15 @@ def update(root, change, creating=False):
         state = State(root)
         writer_gate(state, creating)
         before = [] if creating else validate(state) + lowered(state)
+        total = 0 if creating else l0_total(state)
         state.table_text, state.extra = None, []
         touched = change(state)
+        if state.table_text is not None:  # the record follows the table as it will be written
+            fresh = State(root, state.table_text, "", state.risk_text)
+            state.table, state.by_id = fresh.table, fresh.by_id
         text = record_text(state)
         after = State(root, state.table_text or text_of(root, TABLE), text, state.risk_text)
-        settle(before, after, touched)
+        settle(before, after, touched, total)
         commit_files(root, [(RECORD, text), (TABLE, state.table_text), (RISKS, state.risk_text)] + state.extra)
         for line in excepted_lines(after):
             print(line, file=sys.stderr)
@@ -157,20 +164,27 @@ def reasoned(entry, *add, drop=()):
     entry["reason"] = ",".join(keep + [a for a in add if a]) or "default"
 
 
+def set_line(state, kind, key, tag=None, why=""):
+    """Replace the risk data's one (kind, key) line, or drop it when no tag is given."""
+    kept = [x for x in (state.risk_text or RHEAD).rstrip("\n").split("\n") if x.split("\t")[:2] != [kind, key]]
+    state.risk_text = "\n".join(kept + (["\t".join((kind, key, tag, why))] if tag else [])) + "\n"
+    state.risks[kind].pop(key, None)
+    if tag:
+        state.risks[kind][key] = (tag, why)
+
+
 def pin(state, row_id, tag, why):
-    """A tag given by hand is also a risk-data row line, so a refill keeps it."""
-    if tag in ("security", "private") and RANK[state.risks["row"].get(row_id, ("none", ""))[0]] < RANK[tag]:
-        kept = [x for x in (state.risk_text or RHEAD).rstrip("\n").split("\n") if x.split("\t")[:2] != ["row", row_id]]
-        state.risk_text = "\n".join(kept + ["\t".join(("row", row_id, tag, why))]) + "\n"
-        state.risks["row"][row_id] = (tag, why)
+    """A tag given by hand also gets a `given` line, so a refill keeps it; a listed row's own line stays."""
+    held = max((state.risks[k].get(row_id, ("none", ""))[0] for k in ("row", "given")), key=lambda t: RANK[t])
+    if tag in ("security", "private") and RANK[held] < RANK[tag]:
+        set_line(state, "given", row_id, tag, why)
 
 
 def unpin(state, row_id, record):
-    """Drop the row line a --risk added, with the removal and its owner record kept for the merge-base comparison."""
-    if state.risks["row"].get(row_id, ("", ""))[1].startswith(GIVEN):
-        kept = [x for x in (state.risk_text or RHEAD).rstrip("\n").split("\n") if x.split("\t")[:2] != ["row", row_id]]
-        state.risk_text = "\n".join(kept + ["removed\trow:%s\tnone\tlowered with owner:%s" % (row_id, record)]) + "\n"
-        del state.risks["row"][row_id]
+    """Drop the line a --risk added, keeping the removal and its owner record for the merge-base comparison."""
+    if row_id in state.risks["given"]:
+        set_line(state, "given", row_id)
+        set_line(state, "removed", "given:" + row_id, "none", "lowered with owner:" + record)
 
 
 def derive(state, row, old_row, entry, opts):
@@ -215,7 +229,7 @@ def derive(state, row, old_row, entry, opts):
     if final != "none":
         reasoned(out, "risk:" + final, drop=("risk",))
         if asked == final:
-            pin(state, key, final, GIVEN + " --risk")
+            pin(state, key, final, "given with --risk")
         if row["level"] != "covered" and out["level"] != "L1":
             out.update(level="L1", seconds="", cmdhash="")
             reasoned(out, drop=("time", "limits-file"))

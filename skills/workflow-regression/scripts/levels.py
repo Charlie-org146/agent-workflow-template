@@ -20,11 +20,10 @@ HEAD = "# " + "\t".join(COLS) + "\n"
 RHEAD = "# kind\tkey\ttag\twhy\n"
 LEVELS, OLD, TAGS = ("L0", "L1", "L2"), ("land", "nightly", "draft", "covered"), ("security", "private", "none")
 RANK = {"": 0, "none": 0, "security": 1, "private": 2}
-KINDS = ("requirement", "row", "label", "removed", "off")
+KINDS = ("requirement", "row", "given", "label", "removed", "off")
 REASON = re.compile(r"^(default|covers|limits-file|time:\d+(\.\d+)?|risk:(security|private)|excepted:[A-Za-z0-9]+|"
                     r"owner:[A-Za-z0-9._-]+|src:[0-9a-f]{10})$")
 L0_MS, MARKER, SHOWN = 45000, "lvl-armed", 20
-GIVEN = "given with"  # the why cell of a row line that a --risk or --risk-for added
 OPERATION = "operation, in a pull request, when the row is already on the base; otherwise this branch's author"
 # A covered row with no proving row, tied to its id, goal and command; the last cell says what excuses it.
 EXCUSED = {
@@ -52,8 +51,8 @@ def file_of(root, name):
 def text_of(root, name):
     """The file's text, None when it is absent; an unreadable file reads as a conflict marker, so it is refused."""
     try:
-        with open(file_of(root, name), encoding="utf-8", newline="") as handle:
-            return handle.read().replace("\r\n", "\n")
+        with open(file_of(root, name), encoding="utf-8") as handle:  # universal newlines, as the runner reads the table
+            return handle.read()
     except FileNotFoundError:
         return None
     except (OSError, UnicodeError):
@@ -119,6 +118,8 @@ def parse_risks(text):
             why.append("line %d is not `kind, key, tag, why` with a known kind and tag" % n)
         elif cells[0] in ("removed", "off") and not re.search(r"owner:[A-Za-z0-9._-]+", cells[3]):
             why.append("line %d needs owner:<record id> in its why cell" % n)
+        elif cells[1] in got[cells[0]]:
+            why.append("line %d repeats the %s key %s: keep one line" % (n, cells[0], cells[1]))
         else:
             got[cells[0]][cells[1]] = (cells[2], cells[3])
     fix = "restore the file or repair the named line"
@@ -134,15 +135,15 @@ def needs(risks, row_id, goal):
             at = re.compile(r"(?<![a-z0-9])%s-?%s(?![0-9a-z])" % (re.escape(prefix), re.escape(number)), re.I)
             if at.search(row_id) or at.search(goal):
                 found.append((tag, "requirement " + name))
-    if row_id in risks["row"]:
-        found.append((risks["row"][row_id][0], "a listed row"))
+    for kind, what in (("row", "a listed row"), ("given", "a tag given with --risk")):
+        if row_id in risks.get(kind, {}):
+            found.append((risks[kind][row_id][0], what))
     return max(found, key=lambda f: RANK[f[0]], default=("none", ""))
 
 
 def floor(risks, row_id, goal):
-    """needs() without the row lines a --risk added: what no owner record can lower (a requirement or a hand tag)."""
-    kept = {k: v for k, v in risks["row"].items() if not v[1].startswith(GIVEN)}
-    return needs(dict(risks, row=kept), row_id, goal)
+    """needs() without the tags --risk pinned: what no owner record can lower (a requirement or a listed row)."""
+    return needs(dict(risks, given={}), row_id, goal)
 
 
 def fingerprint(row):
@@ -292,7 +293,7 @@ def validate(state):
         fix = (CODE + "level %s --rename %s, if the row was renamed" % (key, near[0]) if near else
                CODE + "level %s --remove, when the row is gone" % key)
         out.append(Problem("LEVELS_ORPHAN", key, "the entry's row is not in the table", fix, OPERATION, RECORD, numbers[key]))
-    for key in state.risks["row"]:
+    for key in list(state.risks["row"]) + list(state.risks["given"]):
         if key not in state.by_id:
             out.append(Problem("LEVELS_ORPHAN", key, "a risk-data row line names no table row",
                                CODE + "level %s --rename <new id>, or --remove with --owner-record" % key, name=RISKS))

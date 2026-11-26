@@ -27,9 +27,11 @@ def ledger(root):
     try:
         with open(os.path.join(common_dir(root) or "", "loop", "owner-words.tsv"), encoding="utf-8") as handle:
             rows = [line.rstrip("\n").split("\t") for line in handle if line.strip()]
-    except OSError:
+    except FileNotFoundError:
         return None
-    return {r[0]: r[4].split(",") for r in rows if len(r) >= 5} or None
+    except (OSError, UnicodeError):
+        return {}  # a ledger that can't be read covers nothing
+    return {r[0]: r[4].split(",") for r in rows if len(r) >= 5}
 
 
 def covers_subject(root, rows, record, subject):
@@ -37,47 +39,87 @@ def covers_subject(root, rows, record, subject):
     return subject in got or bool(goal_slug(root)) and goal_slug(root) in got
 
 
+def base_name(text):
+    try:
+        name = json.loads(text or "").get("base")
+    except (ValueError, AttributeError):
+        return None
+    return name if isinstance(name, str) and name else None
+
+
 def base_commit(root):
+    """The merge base with the base branch, named by the default branch's config (not by this branch's own)."""
+    head = (git(root, "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD") or "").strip()
+    named = next((n for n in (base_name(git(root, "show", "%s:.loop/config.json" % ref))
+                              for ref in (head, "origin/main", "main") if ref) if n), "main")
+    refs = ["origin/" + named, named]
     try:
         with open(os.path.join(root, ".loop", "config.json"), encoding="utf-8") as handle:
-            base = json.load(handle).get("base") or "main"
-    except (OSError, ValueError, AttributeError):
-        base = "main"
-    for ref in ("origin/" + base, base):
+            own = base_name(handle.read())
+    except (OSError, UnicodeError):
+        own = None
+    current = (git(root, "symbolic-ref", "--quiet", "--short", "HEAD") or "").strip()
+    if own and own != current:
+        refs += ["origin/" + own, own]  # only when the default branch's name resolves to nothing
+    for ref in refs:
         found = git(root, "merge-base", "HEAD", ref)
         if found:
             return found.strip()
     return None
 
 
+def renames(was, state, entries):
+    """Each tagged base row that is gone, matched to at most one new row with the same command, goal and tag."""
+    taken, out = set(), {}
+    for key, old in was.entries().items():
+        row = was.by_id.get(key)
+        if key in entries or not row or old["risk"] not in ("security", "private"):
+            continue
+        found = [new for new, entry in entries.items()
+                 if new not in was.by_id and new not in taken and new in state.by_id and entry["risk"] == old["risk"]
+                 and (state.by_id[new]["command"], state.by_id[new]["goal"]) == (row["command"], row["goal"])]
+        if any(key in was.risks[kind] for kind in ("row", "given")):  # the new row that took its line comes first
+            found.sort(key=lambda new: not any(new in state.risks[kind] for kind in ("row", "given")))
+        if found:
+            taken.add(found[0])
+            out[key] = found[0]
+    return out
+
+
 def lowered(state):
     """Tags, risk lines or the levelling itself that this branch removed or lowered since its merge base."""
     at = base_commit(state.root)
-    old_record = at and git(state.root, "show", "%s:.loop/%s" % (at, RECORD))
-    if old_record is None or old_record is False:
+    if not at:
+        return [Problem("LEVELS_LOWERED", "", "no base branch to compare with, so a lowered tag can't be seen",
+                        "fetch the base branch (a full clone), then " + CODE + "levels --check", name=RECORD)
+                ] if state.has_record and git(state.root, "rev-parse", "--verify", "-q", "HEAD") else []
+    if not (git(state.root, "ls-tree", at, "--", ".loop/" + RECORD) or "").strip():
         return []
+    old_record = git(state.root, "show", "%s:.loop/%s" % (at, RECORD))
+    if old_record is None:
+        return [Problem("LEVELS_LOWERED", "", "the merge base's record can't be read", "fetch the base branch, then " +
+                        CODE + "levels --check", name=RECORD)]
     was = State(state.root, git(state.root, "show", "%s:.loop/%s" % (at, TABLE)) or "", old_record,
                 git(state.root, "show", "%s:.loop/%s" % (at, RISKS)) or "")
     rows, out = ledger(state.root), []
 
-    def allowed(why, subject):
-        found = re.findall(r"owner:([A-Za-z0-9._-]+)", why)
+    def allowed(why, subject, before=""):
+        """An owner id this branch adds (one already there at the base was for an earlier change)."""
+        old = set(re.findall(r"owner:([A-Za-z0-9._-]+)", before))
+        found = [r for r in re.findall(r"owner:([A-Za-z0-9._-]+)", why) if r not in old]
         return any(rows is None or covers_subject(state.root, rows, r, subject) for r in found)
 
     def say(subject, what, name):
         out.append(Problem("LEVELS_LOWERED", subject, what + " since the merge base, with no owner record that covers it",
                            "restore it, or make the change with " + CODE + "level and --owner-record", name=name))
     if not state.levelled():
-        if not any(allowed(why, "levels") for _, why in state.risks["off"].values()):
+        was_off = " ".join(why for _, why in was.risks["off"].values())
+        if not any(allowed(why, "levels", was_off) for _, why in state.risks["off"].values()):
             say("levels", "the record and lvl-armed were removed", RECORD)
         return out
     entries = state.entries()
-
-    def moved(key, tag):
-        command = was.by_id.get(key, {}).get("command")
-        return any(e["risk"] == tag and k not in was.by_id and state.by_id.get(k, {}).get("command") == command
-                   for k, e in entries.items())
-    gone = state.risks["removed"]
+    moved = renames(was, state, entries)
+    gone, gone_before = state.risks["removed"], was.risks["removed"]
     for key, old in was.entries().items():
         if old["risk"] not in ("security", "private"):
             continue
@@ -85,17 +127,17 @@ def lowered(state):
         if new and RANK.get(new["risk"], 0) >= RANK[old["risk"]]:
             continue
         why = (new or {}).get("reason", "") + " " + gone.get("entry:" + key, ("", ""))[1]
-        if not allowed(why, key) and not (not new and moved(key, old["risk"])):
+        before = old["reason"] + " " + gone_before.get("entry:" + key, ("", ""))[1]
+        if not allowed(why, key, before) and not (not new and key in moved):
             say(key, "the %s tag was removed or lowered" % old["risk"], RECORD)
-    for kind in ("requirement", "row", "label"):
+    for kind in ("requirement", "row", "given", "label"):
         for key, (tag, _) in was.risks[kind].items():
             now = state.risks[kind].get(key)
             if RANK[tag] == 0 or now and RANK[now[0]] >= RANK[tag]:
                 continue
             why = gone.get("%s:%s" % (kind, key), ("", ""))[1]
-            renamed = kind == "row" and any(state.by_id.get(k, {}).get("command") == was.by_id.get(key, {}).get("command")
-                                            for k, v in state.risks["row"].items() if v[0] == tag and k not in was.by_id)
-            if not allowed(why, key) and not renamed:
+            renamed = kind in ("row", "given") and state.risks[kind].get(moved.get(key), ("",))[0] == tag
+            if not allowed(why, key, gone_before.get("%s:%s" % (kind, key), ("", ""))[1]) and not renamed:
                 say(key, "the risk-data %s line was removed or lowered" % kind, RISKS)
     return out
 

@@ -43,6 +43,8 @@ for value, name, word in ((["L1", "L2"], "leaves out L0", "L0"), (["L0", "L1", "
     status, said = read(with_levels("large", value))
     check(status != 0 and "SIZING_BAD_LEVELS" in said and "large" in said and word in said, "a list that %s is refused" % name,
           said)
+status, said = read(with_levels("small", None))
+check(status != 0 and "SIZING_BAD_LEVELS" in said and "small" in said, "a levels key set to null is refused", said)
 status, said = read(with_levels("small", ["L0", "L1"]))
 check(status == 0, "control: a size listing L0 and L1 is read", said)
 table, why = sizing.validate(with_levels("small", ["L0", "L1"]))

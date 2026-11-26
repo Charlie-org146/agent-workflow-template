@@ -147,7 +147,7 @@ status, said = repo.run(*ARGS, "--risk-for", "bug-pull=security", "--risk-for", 
                         "bug-bare=private")
 got = repo.entries()
 check(status == 0 and got.get("bug-pull", {}).get("risk") == "security" and
-      "row\tbug-two\tprivate\tgiven with --risk-for" in (repo.read(".loop/regression-risk.tsv") or ""),
+      "given\tbug-two\tprivate\tgiven with --risk-for" in (repo.read(".loop/regression-risk.tsv") or ""),
       "--risk-for raises without an owner record and pins the tag", said)
 repo.close()
 

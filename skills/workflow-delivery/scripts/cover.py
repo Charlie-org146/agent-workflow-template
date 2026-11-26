@@ -138,7 +138,7 @@ def select(root, cfg, names):
         plan = json.loads(out.splitlines()[-1])
     except (ValueError, IndexError):
         return [], [], "PLAN"
-    gone = set(plan["bad"]) | set(plan.get("l0") or ())  # L0 rows always run here; # GitHub reads the merge ref: a row on either the base's or this branch's list is not run there
+    gone = set(plan["bad"]) | set(plan.get("l0") or ())  # L0 rows always run here; GitHub reads the merge ref: a row on either the base's or this branch's list is not run there
     for ref in ("origin/%s" % base, "HEAD"):
         for name, only in (("skips", None), ("limits", "nightly")):
             rc, out = sh(["git", "show", "%s:.loop/regression-%s.tsv" % (ref, name)], root)

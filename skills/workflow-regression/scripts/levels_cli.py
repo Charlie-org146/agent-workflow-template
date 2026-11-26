@@ -8,10 +8,11 @@ import sys
 
 import completion
 import levels_read
-from levels import (CODE, LEVELS, RHEAD, RISKS, TABLE, TAGS, Problem, State, excuse, file_of, l0_total,
-                    sha, text_of)
+import slots
+from levels import (CODE, LEVELS, RISKS, TABLE, TAGS, Problem, State, excuse, file_of, fingerprint, l0_total,
+                    sha, text_of, tokens)
 from levels_gate import SHOWN, mark_path, problems, report
-from levels_write import KEYED, complete, derive, owner_check, reasoned, update
+from levels_write import KEYED, complete, derive, owner_check, reasoned, set_line, update
 
 ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,60}$")
 
@@ -47,10 +48,10 @@ def risk_lines(text, old, new=None):
     out = []
     for line in (text or "").split("\n"):
         cells = line.split("\t")
-        if cells[:2] == ["row", old]:
+        if len(cells) > 1 and cells[0] in ("row", "given") and cells[1] == old:
             if new is None:
                 continue
-            line = "\t".join(["row", new] + cells[2:])
+            line = "\t".join([cells[0], new] + cells[2:])
         out.append(line)
     return "\n".join(out)
 
@@ -97,7 +98,8 @@ def remove(root, key, records):
         users = sorted(k for k, e in entries.items() if k != key and key in e["covers"].split(","))
         if users:
             stop("LEVELS_BAD_COVERS", "%s proves %s. Fix: give them other covers first" % (key, ", ".join(users)))
-        entry, listed = entries.pop(key, None), key in state.risks["row"]
+        entry = entries.pop(key, None)
+        listed = [kind for kind in ("row", "given") if key in state.risks[kind]]
         tagged = listed or (entry or {}).get("risk") in ("security", "private")
         record = owner_check(root, records, key, "removing the tagged row %s" % key) if tagged else None
         if key in state.by_id:
@@ -105,9 +107,8 @@ def remove(root, key, records):
         keep(state, entries)
         state.risk_text = risk_lines(state.risk_text, key)
         if record:
-            marks = ["entry:" + key] + ["row:" + key] * listed
-            state.risk_text = (state.risk_text or RHEAD).rstrip("\n") + "\n" + "".join(
-                "removed\t%s\tnone\tremoved with owner:%s\n" % (m, record) for m in marks)
+            for mark in ["entry:" + key] + ["%s:%s" % (kind, key) for kind in listed]:
+                set_line(state, "removed", mark, "none", "removed with owner:" + record)
         state.extra = other_files(root, key)
         return set()
     update(root, change)
@@ -146,7 +147,8 @@ def cmd_level(root, args):
             if not measured:
                 seconds = levels_read.measured_run(root, row)
     opts = {"risk": args.risk, "covers": args.covers, "owner": args.owner_record}
-    if args.refresh:
+    stale = row["category"] == "defect" and "src:" + fingerprint(row) not in tokens(entry or {"reason": ""})
+    if args.refresh or stale and args.risk:  # a changed link is read again before a typed tag is taken
         if row["category"] != "defect":
             stop("LEVELS_BAD_FLAGS", "--refresh reads a defect row's link again")
         own = levels_read.read_input(file_of(root, "regression-relevel-input.tsv"))[1].get(args.id, ())
@@ -224,7 +226,10 @@ def page_differs(root, state):
     except OSError:
         return []
     if len(part) < 2:
-        return []
+        if not set(state.risks["requirement"]) - {"-"}:
+            return []
+        return [Problem("LEVELS_REQUIREMENTS", "", "the Principles page has no section 6 heading, so the requirement "
+                        "list can't be compared", "restore the heading", name=RISKS)]
     named = set()
     for line in re.split(r"(?m)^## ", part[1])[0].split("\n"):
         if line.startswith("| ["):
@@ -241,14 +246,17 @@ def page_differs(root, state):
 def cmd_levels(root, args):
     if args.discard:
         path = mark_path(root)
-        if not path or not os.path.exists(path):
-            print("no pending write")
-            return 0
-        os.remove(path)
-        print("DISCARDED the pending mark. Check the .loop files, then run %slevels --check" % CODE)
+
+        def discard():  # under the writers' lock: a live write's mark is never removed
+            if not path or not os.path.exists(path):
+                print("no pending write")
+            else:
+                os.remove(path)
+                print("DISCARDED the pending mark. Check the .loop files, then run %slevels --check" % CODE)
+        slots.edit(root, TABLE, discard)
         return 0
     if args.fill:
-        complete(root)
+        slots.edit(root, TABLE, lambda: complete(root))
         return fill(root)
     state = State(root)
     found = problems(state)

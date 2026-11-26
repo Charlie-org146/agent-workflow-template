@@ -15,6 +15,7 @@ os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="t
 
 ORDER = ("small", "medium", "large")
 BAD_LEVELS = "SIZING_BAD_LEVELS"
+ABSENT = object()  # a row with no `levels` key; `null` is not absent
 SIZE_LEVELS = {"small": ("L0", "L1"), "medium": ("L0", "L1"), "large": ("L0", "L1", "L2")}  # when a row has no `levels`
 FIXED = ("build-gate", "full-test-run", "leak-readers", "safety-classes")
 VARIABLE = ("plan-review", "red-team", "review")
@@ -89,7 +90,7 @@ def on(base=None):
 
 def levels_of(size, given):
     """The test levels a size runs: its row's list (L0, L1, L2; L0 and L1 always), else the second default."""
-    if given is None:
+    if given is ABSENT:
         return list(SIZE_LEVELS[size]), ""
     show = 'write "levels": ["L0","L1"] (with "L2" if wanted), or remove the key for the default'
     if not isinstance(given, list) or not all(isinstance(x, str) for x in given):
@@ -125,7 +126,7 @@ def _validate(raw):
         if not isinstance(row, dict):
             return None, "row %s is missing" % size
         row = dict(row)  # `levels` is read from a copy and is not a check
-        table["levels"][size], why = levels_of(size, row.pop("levels", None))
+        table["levels"][size], why = levels_of(size, row.pop("levels") if "levels" in row else ABSENT)
         if why:
             return None, why
         bad = [c for c in FIXED if row.get(c) != "full"] or [c for c in VARIABLE if c not in row]

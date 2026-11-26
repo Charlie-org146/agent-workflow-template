@@ -194,7 +194,7 @@ status, said = repo.run("level", "alpha", "--remove")
 check(status != 0 and "done-y" in said and repo.snapshot() == before, "a cover can't be removed", said)
 status, said = repo.run("level", "listed-guard", "--rename", "listed-guard-2")
 data = repo.read(".loop/regression-risk.tsv") or ""
-check(status == 0 and "listed-guard-2" in repo.rows() and ent(repo, "listed-guard-2", "risk") ==
+check(status == 0 and list(repo.entries()) == list(repo.rows()) and "listed-guard-2" in repo.rows() and ent(repo, "listed-guard-2", "risk") ==
       "security" and "row\tlisted-guard-2\t" in data, "a rename moves the row, entry and risk line", said)
 status, said = repo.run("level", "alpha", "--rename", "alpha2")
 check(status == 0 and ent(repo, "done-y", "covers") == "alpha2", "a rename moves the covers lists", said)
@@ -306,6 +306,104 @@ status, said = repo.run("sync")
 check(time.time() - began > 1.5 and "LEVELS_" not in said, "a read waits for a write under way", said)
 holder.wait()
 
+# lines the guard and the runner must read alike, and protections a write or a merge must not pass
+repo = Repo(BASE, good())
+repo.write(".loop/regression.tsv", repo.read(".loop/regression.tsv") + "# note\r" + "\t".join(
+    row("hidden-row", goal="GRD-6.1").values()) + "\n")
+repo.commit()
+ok, got = refused(repo, "LEVELS_NO_ENTRY", "hidden-row")
+check(ok, "a row after a bare carriage return is checked like the runner reads it", got)
+repo.close()
+expect("LEVELS_BAD_RISK_DATA", "a repeated risk-data line is refused", risks=RISKS + ["requirement\tGRD-6\tnone\twhy"])
+
+
+def branch(base_rows, base_entries, base_risks, rows, entries, risks, config=None, ledger_text=None):
+    """A levelled base on main, then a hand edit on a goal branch; what a refusing read says there."""
+    got = Repo(base_rows, base_entries, base_risks)
+    got.commit()
+    got.git("checkout", "-q", "-b", "loop/hand")
+    got.table(rows)
+    got.record(entries)
+    got.write(".loop/regression-risk.tsv", "".join(x + "\n" for x in risks))
+    if config:
+        got.write(".loop/config.json", json.dumps({"base": config}))
+    got.commit("hand edit")
+    if ledger_text is not None:
+        os.makedirs(os.path.join(got.path, ".git", "loop"), exist_ok=True)
+        with open(os.path.join(got.path, ".git", "loop", "owner-words.tsv"), "w") as out:
+            out.write(ledger_text)
+    ok, said = refused(got, "LEVELS_LOWERED")
+    got.close()
+    return ok, said
+
+
+twins = [row("twin-a", command="true twin"), row("twin-b", command="true twin")]
+tagged = [entry(r["id"], risk="security", reason="risk:security") for r in twins]
+lines = ["row\t%s\tsecurity\tlisted" % r["id"] for r in twins]
+ok, said = branch(BASE + twins, good() + tagged, RISKS + lines, BASE + [row("twin-c", command="true twin")],
+                  good() + [entry("twin-c", risk="security", reason="risk:security")],
+                  RISKS + ["row\ttwin-c\tsecurity\tlisted"])
+check(ok, "one new row doesn't account for two removed tagged rows", said)
+dropped = changed("listed-guard", risk="none", reason="default")
+without = [x for x in RISKS if "listed-guard" not in x]
+for name in ("nosuch", "loop/hand"):
+    ok, said = branch(BASE, good(), RISKS, BASE, dropped, without, config=name)
+    check(ok, "a branch that names base %r can't hide a lowering" % name, said)
+before = good() + [entry("old-tag", risk="security", reason="risk:security,owner:o404")]
+ok, said = branch(BASE + [row("old-tag")], before, RISKS + ["given\told-tag\tsecurity\tgiven with --risk"],
+                  BASE + [row("old-tag")], good() + [entry("old-tag", reason="owner:o404")], RISKS)
+check(ok, "an owner id from an earlier change doesn't cover a new lowering", said)
+ok, said = branch(BASE, good(), RISKS, BASE, changed("listed-guard", risk="none", reason="owner:o404"),
+                  without + ["removed\trow:listed-guard\tnone\towner:o404"], ledger_text="not a ledger line\n")
+check(ok, "a ledger that can't be read covers no owner id", said)
+
+repo = Repo(BASE, good())
+repo.commit()
+os.makedirs(os.path.join(repo.path, ".git", "loop"), exist_ok=True)
+with open(os.path.join(repo.path, ".git", "loop", "owner-words.tsv"), "w") as out:
+    out.write("o5\t2026-01-01T00:00:00Z\toperation\tyes\tlisted-guard\n")
+repo.run("level", "listed-guard", "--risk", "private")
+status, said = repo.run("level", "listed-guard", "--risk", "none", "--owner-record", "o5")
+check(status != 0 and ent(repo, "listed-guard", "risk") == "private",
+      "a tag given over a listed row keeps the listed minimum", said)
+repo.labels({"repos/o/r/issues/2": ["private"]})
+repo.run("add", "bugx", "--command", "true", "--category", "defect", "--link", "#1", "--risk", "security")
+repo.table([dict(r, link="https://github.com/o/r/issues/2") if r["id"] == "bugx" else r for r in repo.rows().values()])
+status, said = repo.run("level", "bugx", "--risk", "security")
+check(status != 0 and ent(repo, "bugx", "risk") == "security" and "repos/o/r/issues/2" in repo.calls(),
+      "a typed tag on a changed defect link reads the link first", said)
+repo.close()
+
+page = "# P\n\n## Six: renamed\n\n| R |\n|---|\n| [DEL-9 x](a) |\n"
+repo = Repo(BASE, good())
+repo.write("docs/wiki/Principles.md", page)
+repo.commit()
+status, said = repo.run("levels", "--check")
+check(status == 2 and "LEVELS_REQUIREMENTS" in said, "a Principles page that can't be compared is reported", said)
+repo.close()
+repo = Repo(BASE + many, good() + [entry(r["id"], level="L0", seconds="4.9", cmdhash=sha("true"), reason="time:4.9")
+                                   for r in many])
+repo.commit()
+status, said = repo.run("level", "alpha", "--retime")
+check(status != 0 and ent(repo, "alpha", "level") == "L1", "no write adds to an L0 total already over 45 s", said)
+repo.close()
+
+repo = Repo(BASE, good())
+repo.commit()
+crash(repo, "add", "late", "--command", "true")
+holder = subprocess.Popen([sys.executable, "-c", HOLD, REG, repo.path], stdout=subprocess.PIPE, env=repo.env, text=True)
+holder.stdout.readline()
+mark = os.path.join(repo.path, ".git", "loop-levels-pending.json")
+filling = subprocess.Popen([sys.executable, os.path.join(REG, "regression.py"), "levels", "--fill"], cwd=repo.path,
+                           env=repo.env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+time.sleep(1.5)
+held = os.path.exists(mark)  # the writer holding the lock is still writing: its mark must not be completed yet
+said = filling.communicate(timeout=60)[0]
+check(held and filling.returncode == 0 and not os.path.exists(mark),
+      "completing a stopped write waits for the writers' lock", said)
+holder.wait()
+repo.close()
+
 # the new modules are part of the cached-result fingerprint
 copy = tempfile.mkdtemp(prefix="lvl-scripts-")
 shutil.copytree(REG, os.path.join(copy, "s"))
@@ -346,7 +444,7 @@ cover.sh = lambda args, root: (1, "") if "ls-tree" in args and False else (
 got = cover.select(".", {"base": "main"}, ["x"])
 cover.sh = real
 check(got[0] == ["beta"] and "alpha" in got[1], "an L0 row stays on the local lane", got)
-repo.record(changed("alpha", level="L0", seconds="0.1", cmdhash=sha("true"), reason="time:0.1"))
+repo = Repo(BASE, changed("alpha", level="L0", seconds="0.1", cmdhash=sha("true"), reason="time:0.1"))
 repo.commit()
 plan = subprocess.run([sys.executable, "-B", "-c", cover.PLAN, REG], cwd=repo.path, env=repo.env, capture_output=True,
                       text=True)
@@ -399,6 +497,24 @@ status, said = repo.run("levels", "--check")
 check(merge.returncode != 0 and ".loop/regression-relevel.tsv" in files and fixed.returncode == 0 and status == 0
       and {"from-mine", "from-other"} <= set(repo.entries()), "two added rows merge with the record intact",
       "%s\n%s\n%s%s" % (files, fixed.stdout + fixed.stderr, said, merge.stdout))
+repo.close()
+repo = Repo(BASE, good())
+repo.commit()
+repo.git("checkout", "-q", "-b", "other")
+repo.run("add", "from-other", "--command", "true")
+repo.write(".loop/regression-risk.tsv", repo.read(".loop/regression-risk.tsv") + "broken line\n")
+repo.commit("other")
+repo.git("checkout", "-q", "main")
+repo.git("checkout", "-q", "-b", "loop/mine")
+repo.run("add", "from-mine", "--command", "true")
+repo.commit("mine")
+repo.git("merge", "--no-edit", "other", check_it=False)
+files = repo.git("diff", "--name-only", "--diff-filter=U").stdout.split()
+head = repo.git("rev-parse", "HEAD").stdout
+fixed = subprocess.run([sys.executable, "-c", MEND, DELIVERY] + files, cwd=repo.path, env=repo.env,
+                       capture_output=True, text=True)
+check(fixed.returncode != 0 and repo.git("rev-parse", "HEAD").stdout == head and "LEVELS" in fixed.stdout,
+      "a merge repair that can't fill the record stops and says why", fixed.stdout + fixed.stderr)
 repo.close()
 
 # the excused rows and the Principles page

@@ -20,7 +20,9 @@ def fill(top, git):
         return None
     done = subprocess.run([sys.executable, "-B", REGRESSION, "levels", "--fill"], cwd=top, capture_output=True, text=True)
     if done.returncode not in (0, 2):  # 2: filled what it could; a defect or covered row is left, and named
-        return None
+        print("LEVELS the record could not be filled, so the merge is left to you:")
+        print(((done.stdout or "") + (done.stderr or "")).strip()[-2000:])
+        return False
     for line in done.stdout.splitlines():
         if line.startswith(("FILLED", "NOT FILLED", "  ")):
             print("LEVELS " + line)

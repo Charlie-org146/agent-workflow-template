@@ -122,8 +122,8 @@ def affected(root, rows, paths, cache):
         elif path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped
             hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}
         elif path in lanes.LEVEL_FILES:
-            moved = table_changed(root, "regression-relevel.tsv") or ()
-            hit = {r["id"] for r in rows if lanes.level_change(root, r, path, r["id"] in moved, cache)}
+            moved = table_changed(root, "regression-relevel.tsv")  # None (no base): every entry may have moved
+            hit = {r["id"] for r in rows if lanes.level_change(root, r, path, moved is None or r["id"] in moved, cache)}
         else:
             hit = {r["id"] for r in rows if lanes.touches(root, r["command"], path, cache)}
         no_effect = path in (lanes.TABLE, ".loop/regression-known.tsv", *lanes.LEVEL_FILES) or lanes.no_effect(path)
