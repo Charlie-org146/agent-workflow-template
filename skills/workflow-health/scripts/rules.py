@@ -11,7 +11,7 @@ import time
 
 import issues as IS
 import report as _report
-from defects import LIVE, behind, pages, row, setting, table, wiki
+from defects import behind, pages, row, table, wiki
 
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")

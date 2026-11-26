@@ -20,7 +20,7 @@ import subprocess
 import sys
 import time
 
-from defects import SKILLS, clean, mod, read, table, tool
+from defects import SKILLS, clean, mod, read, tool
 
 # No prompts: git must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")

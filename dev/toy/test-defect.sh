@@ -254,7 +254,7 @@ workflow-delivery|merges the pull request, bumps the version once and publishes 
 workflow-docs|2. `## Problem`: who it's for and what it solves, at least one line;
 workflow-docs|5. `## Non-goals`: at least one line; `## Success metrics`: at least one measurable line;
 workflow-docs|   when no row passes; then the workflow tests, then the defect tests, in the same table.
-workflow-docs|`NONGOALS`, `METRICS`, `CRITERION`, `CAP`, `SCRIPT`, `USAGE`, `TESTS` (run `render`), `LOCKED`, `CHANGED`.
+workflow-docs|`NONGOALS`, `METRICS`, `CRITERION`, `SCRIPT`, `USAGE`, `TESTS` (run `render`), `LOCKED`, `CHANGED`.
 workflow-docs|the retired Usage print, still written and never reported). After it, a change to any of them is `LOCKED` (check, audit and release fail).
 workflow-docs|owner un-reviews that requirement and the PRD, then reviews both again.
 workflow-docs|`Given <context>, when <action>, then <outcome>.`; `audit` lists any other as `SCENARIO` and the release step blocks on

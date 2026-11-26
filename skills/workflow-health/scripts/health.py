@@ -116,8 +116,6 @@ def docs_rows(root):
     for line in lines:
         kind, _, rest = line.partition(" ")
         page, _, detail = rest.partition(": ")
-        if kind == "CAP":
-            continue
         rows.append(row("WARN" if kind == "STALE" else "FAIL", "docs", page, kind.lower(), detail[:120],
                         "update the page with workflow-docs"))
     return rows
