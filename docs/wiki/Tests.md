@@ -825,3 +825,8 @@
 | <a id="t-pkg-no-echo-2"></a>pkg-no-echo-2 | requirement | done line v110-pkg-secret-print:2 | PASS | 2026-11-26 | [CI 2026-11-26](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-26) | 2026-11-25 |
 | <a id="t-pkg-secret-print-4-sizes"></a>pkg-secret-print-4-sizes | requirement | done line v110-pkg-secret-print:4 | PASS | 2026-11-26 | [CI 2026-11-26](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-26) | 2026-11-25 |
 | <a id="t-done-pkg-secret-print-3"></a>done-pkg-secret-print-3 | workflow | done line v110-pkg-secret-print:3 | not run | - | local | no |
+| <a id="t-toy-leak-merge-where"></a>toy-leak-merge-where | requirement | done line v110-toy-leak-fixes:1 | not run | - | local | no |
+| <a id="t-done-toy-leak-fixes-2"></a>done-toy-leak-fixes-2 | workflow | done line v110-toy-leak-fixes:2 | not run | - | local | no |
+| <a id="t-done-toy-leak-fixes-3"></a>done-toy-leak-fixes-3 | workflow | done line v110-toy-leak-fixes:3 | not run | - | local | no |
+| <a id="t-toy-leak-entry-config"></a>toy-leak-entry-config | requirement | done line v110-toy-leak-fixes:4 | not run | - | local | no |
+| <a id="t-done-toy-leak-fixes-5"></a>done-toy-leak-fixes-5 | workflow | done line v110-toy-leak-fixes:5 | not run | - | local | no |
