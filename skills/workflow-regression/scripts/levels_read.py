@@ -14,6 +14,9 @@ from levels import L0_MS, RANK, State, excuse, file_of, fingerprint, ms, needs, 
 from levels_write import derive, entry_for, pin, reasoned, update, writer_gate
 from row_reach import references
 
+# A prompt from git or gh must fail, not block (DEL-10).
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
+
 CALL_SECONDS, ALL_SECONDS, ROW_LIMIT, UNDER = 20, 300, 300, 5
 URL = re.compile(r"^https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)/(?:issues|pull)/(\d+)/?(?:#[\w-]*)?$")
 CLASSES = (("401", "not signed in to gh"), ("gh auth login", "not signed in to gh"), ("rate limit", "rate limited"),

@@ -11,6 +11,9 @@ import os
 import re
 import subprocess
 
+# A prompt from git or gh must fail, not block (DEL-10).
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
+
 TABLE, RECORD, RISKS = "regression.tsv", "regression-relevel.tsv", "regression-risk.tsv"
 COLS = ("id", "old", "level", "risk", "covers", "seconds", "cmdhash", "reason")
 HEAD = "# " + "\t".join(COLS) + "\n"

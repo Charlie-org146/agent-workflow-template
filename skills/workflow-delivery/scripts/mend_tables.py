@@ -6,6 +6,9 @@ import subprocess
 import sys
 import tempfile
 
+# A prompt from git or gh must fail, not block (DEL-10).
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 RECORD = ".loop/regression-relevel.tsv"
 REGRESSION = os.path.join(HERE, "..", "..", "workflow-regression", "scripts", "regression.py")
