@@ -213,20 +213,6 @@ fi
 if want nothing; then fresh; export FAKE_GH_PRIVATE=false; r=$(toyrepo nt "$(cfgj actions)"); install "$r" >/dev/null; tick "$r" >/dev/null 2>&1; ( cd "$r" && python3 "$A" local status >/dev/null )
   check "install, status and a tick leave the repo clean and put no temp home path or token in any file of it" '[ -s "$LOOP_SCHEDULE_HOME/repos.json" ] && [ -s "$LOOP_SCHEDULE_HOME/log/tick.log" ] && [ -z "$(cd "$r" && git status --porcelain)" ] && ! grep -rIl -e "$HOME" -e "gh[pousr]_" -e "sk-ant-" "$r" --exclude-dir=.git'
 fi
-if want size; then
-  size_state() { if [ "$1" -gt 20480 ]; then echo FAIL; elif [ "$1" -ge 19000 ]; then echo WARN; else echo ok; fi; }  # GRD-20: warn at 19,000, fail above 20,480
-  sizefiles="skills/workflow-health/scripts/workflows.py skills/workflow-health/scripts/automation.py skills/workflow-health/scripts/rounds.py skills/workflow-delivery/scripts/private.py skills/workflow-delivery/scripts/goal.py skills/workflow-release/scripts/merge.py skills/workflow-release/scripts/autorelease.py skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/tiers.py skills/workflow-regression/scripts/lanes_cli.py skills/workflow-regression/scripts/actions.py skills/workflow-setup/scripts/seed.py skills/workflow-setup/scripts/setup.py skills/workflow-setup/scripts/settings.py skills/workflow-health/scripts/rules.py"
-  out=$(cd "$here" && for f in $sizefiles; do now=$(wc -c < "$f"); [ "$(size_state "$now")" = FAIL ] && echo "OVER $f -> $now"; done)
-  (cd "$here" && for f in $sizefiles; do now=$(wc -c < "$f"); [ "$(size_state "$now")" = WARN ] && echo "WARN $f $now"; done)
-  check "each touched script is at most 20,480 bytes (GRD-20: a warning from 19,000, a failure above 20,480)" '[ -z "$out" ]'
-  check "negative control: a 20,481-byte file fails, a 19,500-byte file only warns, 20,480 and 19,000 warn, 18,999 is fine" '[ "$(size_state 20481)" = FAIL ] && [ "$(size_state 19500)" = WARN ] && [ "$(size_state 20480)" = WARN ] && [ "$(size_state 19000)" = WARN ] && [ "$(size_state 18999)" = ok ]'
-  big=$(mktemp); head -c 20481 /dev/zero > "$big"; mid=$(mktemp); head -c 19500 /dev/zero > "$mid"
-  check "the same size rule applied to real files: a 20,481-byte file fails, a 19,500-byte file warns" '[ "$(size_state "$(wc -c < "$big")")" = FAIL ] && [ "$(size_state "$(wc -c < "$mid")")" = WARN ]'; rm -f "$big" "$mid"
-  if git -C "$here" rev-parse -q --verify origin/main >/dev/null; then
-    check "skills holds no more files than origin/main" '[ "$(git -C "$here" ls-files skills | wc -l)" -le "$(git -C "$here" ls-tree -r --name-only origin/main -- skills | wc -l)" ]'
-  else echo "SKIP size baseline (no origin/main)"; fi
-  check "the package holds at most 99 files" 'python3 "$here/dev/package.py" >/dev/null 2>&1 || true; [ "$(git -C "$here" ls-files skills listing.json README.md LICENSE | wc -l)" -le 99 ]'
-fi
 setup() { ( cd "$1" && shift && python3 "$here/skills/workflow-setup/scripts/setup.py" "$@" 2>&1 ); }
 bare() {  # NAME: a toy repo with no loop files yet, pushed
   "$here/dev/toy/make.sh" "$d/$1" >/dev/null || exit 1; echo "$d/$1/repo"

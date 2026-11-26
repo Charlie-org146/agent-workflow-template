@@ -92,24 +92,30 @@ for labels in (False, True):
         with open(os.path.join(repo, ".loop", "config.json"), "w") as f:
             json.dump({"base": "main", "feature_labels": labels}, f)
         with open(os.path.join(repo, ".loop", "docs.tsv"), "w") as f:
-            f.write("Calc\tskills/x\nHome\tREADME.md\n")
-        with open(os.path.join(repo, "skills", "x", "scripts", "near.py"), "w", newline="\n") as f:
-            f.write("# pad\n" * 3400)
+            f.write("Calc\tskills/x\n")
+        os.makedirs(os.path.join(repo, "docs", "wiki"))
+        with open(os.path.join(repo, "docs", "wiki", "Calc.md"), "w", newline="\n") as f:
+            f.write("<!-- workflow-docs -->\n# Calc\n\nThe calculator adds and prints the sum of the numbers given on the line.\n")
+        with open(os.path.join(repo, "skills", "x", "scripts", "calc.py"), "w", newline="\n") as f:
+            f.write("# calc\n")
         git("init", "-q", "-b", "main", repo)
         git("-C", repo, "config", "user.email", "t@example.test")
         git("-C", repo, "config", "user.name", "t")
         git("-C", repo, "config", "core.autocrlf", "false")
         git("-C", repo, "add", "-A")
-        git("-C", repo, "commit", "-qm", "A near-limit script")
+        git("-C", repo, "commit", "-qm", "Calc and its page")
+        with open(os.path.join(repo, "skills", "x", "scripts", "calc.py"), "a", newline="\n") as f:  # a stale page: one Docs WARN
+            f.write("X = 1\n")
+        git("-C", repo, "commit", "-qam", "Change calc")
         name = "feature_labels %s" % ("on" if labels else "off")
-        out, code = health(repo, "file", "--group", "size")
+        out, code = health(repo, "file", "--group", "docs")
         print(out)
         check("DONE open" in out and len(issues_of(d)) == 1, "%s: the first file opens one issue (%s)" % (name, out.strip()[:120]))
         if breaking:  # the dedupe broken: the issue list comes back empty
             os.environ["LOOP_HEALTH_GH_FIXTURE"] = os.path.join(tmp, "empty.json")
             with open(os.environ["LOOP_HEALTH_GH_FIXTURE"], "w") as f:
                 f.write("[]")
-        out, code = health(repo, "file", "--group", "size")
+        out, code = health(repo, "file", "--group", "docs")
         print(out)
         os.chdir(here)
         check("SAME #1" in out and len(issues_of(d)) == 1, "%s: a repeat prints SAME #1 and opens no second issue (%s)" % (name, out.strip()[:160]))

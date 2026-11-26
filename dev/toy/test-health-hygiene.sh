@@ -34,12 +34,12 @@ grep -q "/tmp\|/var/\|health-control-" <<<"$out" && bad "a control row shows a t
 #   that a rule ran, not that it reported; why_new=no test breaks a rule; seam=none; no_claim=none beyond protects
 broken="$d/broken/skills/workflow-health"; mkdir -p "$broken"; cp -R "$here/skills/workflow-health/scripts" "$broken/"
 for s in workflow-docs workflow-regression workflow-monitoring; do ln -s "$here/skills/$s" "$d/broken/skills/$s"; done
-sed -i.b 's/^LIMIT = 20 \* 1024$/LIMIT = 20 * 1024 * 1000/' "$broken/scripts/health.py" && rm "$broken/scripts/health.py.b"
-sed -i.b 's/^WARN = 19000 /WARN = 19000000 /' "$broken/scripts/health.py" && rm "$broken/scripts/health.py.b"
+sed -i.b 's/^FINDINGS_WARN = 5$/FINDINGS_WARN = 5000000/' "$broken/scripts/health.py" && rm "$broken/scripts/health.py.b"
+grep -q "^FINDINGS_WARN = 5000000$" "$broken/scripts/health.py" || bad "the health.py break did not apply"
 out=$(python3 "$broken/scripts/health.py" check --group controls); rc=$?
-grep -q "^FAIL controls scripts control: cannot fire" <<<"$out" && grep -q "controls.py run scripts --keep" <<<"$out" && [ $rc = 1 ] \
+grep -q "^FAIL controls findings control: cannot fire" <<<"$out" && grep -q "controls.py run findings --keep" <<<"$out" && [ $rc = 1 ] \
   && ok "a broken rule is reported as unable to fire, with how to look" || bad "cannot fire"
-grep -q "^PASS controls findings control" <<<"$out" && ok "the other rules' controls still fire" || bad "other controls"
+grep -q "^PASS controls waiting control" <<<"$out" && ok "the other rules' controls still fire" || bad "other controls"
 # Value: protects=a new rule cannot be added without its control; fails_when=the load check is dropped; why_new=new;
 #   seam=none; no_claim=none beyond protects
 sed -i.b 's/"worktrees", "local-branches", "idle-sessions")),$/"worktrees", "local-branches", "idle-sessions", "new-rule")),/' "$broken/scripts/report.py" && rm "$broken/scripts/report.py.b"
@@ -189,7 +189,7 @@ print([a['kind'] for a in file.plan(rows, {'hygiene:x:findings': {'number': 7, '
   && ok "an UNREAD report-only row never holds back closing a hygiene issue" || bad "report-only unread"
 python3 -c "
 import sys; sys.path.insert(0, '$S'); import file
-rows = [{'state': 'FAIL', 'family': 'controls', 'subject': 'size', 'rule': 'control', 'detail': 'cannot fire', 'fix': ''}]
+rows = [{'state': 'FAIL', 'family': 'controls', 'subject': 'findings', 'rule': 'control', 'detail': 'cannot fire', 'fix': ''}]
 print(file.plan(rows, {}, ['controls']))" | grep -qx "\[\]" && ok "a controls row is never filed" || bad "controls filed"
 
 echo "repo: $d/repo"

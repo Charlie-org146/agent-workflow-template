@@ -170,7 +170,8 @@ page "$USAGE"; edit "- The median is right for every list in the toy run." "- On
 - Two.
 
 - Three.
-- Four."; check | grep -q "^METRICS Delivery: Success metrics has 4 lines, want 1 to 3. Fix:" && ok "more than three Success metrics lines fail" || bad "metrics"
+- Four."; check | grep -q "^METRICS Delivery:" && bad "four Success metrics lines fail" || ok "four Success metrics lines pass: no upper bound (o988)"
+page "$USAGE"; edit "- The median is right for every list in the toy run." ""; check | grep -q "^METRICS Delivery: Success metrics is empty. Fix:" && ok "an empty Success metrics section still fails (the kept lower bound)" || bad "metrics empty"
 page "$USAGE"; edit "Review: **Unreviewed**" "Review: maybe"; check | grep -q "^REVIEW Delivery: a malformed Review line.*Fix:" && ok "a malformed Review line fails" || bad "review malformed"
 page "$USAGE"; edit "Review: **Unreviewed**
 

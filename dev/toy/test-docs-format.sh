@@ -28,7 +28,7 @@ reg="python3 $here/skills/workflow-regression/scripts/regression.py"
 cd "$d/repo" || exit 1
 python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null
 git switch -q main; git merge -q --no-edit workflow-setup
-python3 -c "import json; c = json.load(open('.loop/config.json')); c['criteria'] = True; c.pop('criteria_max', None); json.dump(c, open('.loop/config.json', 'w'), indent=2)"
+python3 -c "import json; c = json.load(open('.loop/config.json')); c['criteria'] = True; json.dump(c, open('.loop/config.json', 'w'), indent=2)"
 mkdir -p "$FAKE_GH_DIR" docs/wiki skills/toy
 printf '## Command map\n\n| Ask | Runs |\n|---|---|\n| `/toy median LIST` | `python3 scripts/calc.py median LIST` |\n' > skills/toy/SKILL.md
 printf 'Delivery\tcalc.py\nHome\tREADME.md\n' > .loop/docs.tsv
@@ -318,7 +318,7 @@ edit $P "- I want the median of my numbers" "- Owners want the median of their n
 edit $P "without working it out by hand." "without working it out by hand.
 - Two.
 - Three.
-- Four."; has "^FORMAT Delivery:[0-9]*: Problem: DOC-8 1 to 3 bullets (got 4 lines)" && ok "DOC-8 a Problem over problem_lines bullets fails" || bad "problem lines"; reset
+- Four."; check | grep -q "Problem: DOC-8 .*bullets (got" && bad "problem lines: a Problem of four bullets fails" || ok "DOC-8 a Problem of four bullets passes: no upper bound (o988)"; reset
 check | grep -q "Problem: DOC-8" && bad "good problem" || ok "DOC-8 a first-person Problem with no code passes"
 python3 -X dev -W always::ResourceWarning "$here/skills/workflow-docs/scripts/docs.py" check 2>&1 | grep -q ResourceWarning && bad "unclosed files" || ok "docs check closes every file it opens"
 edit $P "without working it out by hand." "without working it out by hand, via scripts."; has "^FORMAT Delivery:[0-9]*: Problem: DOC-8 the problem is said without code internals (got 'script')" && ok "DOC-8 a Problem with a banned word in the plural fails" || bad "problem plural"; reset
@@ -344,22 +344,14 @@ printf '# id\tstatus\tdate\trun\ndel-1a\tPASS\t%s\thttps://github.com/toy/repo/a
 git remote set-url origin https://github.com/toy/repo.git; $cri render >/dev/null; git remote set-url origin "$d/origin.git"
 grep -qF "| [run](https://github.com/toy/repo/actions/runs/42) |" $T && grep -qF "| [CI $day](https://github.com/toy/repo/actions/workflows/regression.yml?query=created%3A$day) |" $T && ok "DOC-10 a 4-column runs file links the Actions run, or for an empty cell that day's CI runs" || bad "4 columns: $(grep 'del-' $T)"; reset
 
-echo "== DOC-1 the cap default is 10 in criteria and setup"
-python3 - "$here" <<'PY' && ok "DOC-1 the cap default of 10 is the same in criteria and setup" || bad "cap default"
+echo "== DOC-1 the requirements cap is retired in criteria, setup and health (principle 5, o988)"
+python3 - "$here" <<'PY' && ok "DOC-1 no requirements cap is left in criteria, setup or health" || bad "cap retired"
 import os, sys
-sys.path[:0] = [os.path.join(sys.argv[1], "skills", s, "scripts") for s in ("workflow-docs", "workflow-setup")]
-import criteria, settings
-setup = next(default for key, _, default, _ in settings.TABLE if key == "criteria_max")
-assert criteria.CRITERIA_MAX_DEFAULT == setup == 10 == criteria.criteria_max("."), (criteria.CRITERIA_MAX_DEFAULT, setup)
-import tempfile
-sys.path.insert(0, os.path.join(sys.argv[1], "skills", "workflow-health", "scripts"))
-import rules
-root = tempfile.mkdtemp()
-os.makedirs(os.path.join(root, "docs", "wiki")), os.makedirs(os.path.join(root, ".loop"))
-open(os.path.join(root, ".loop", "config.json"), "w").write("{}")
-for name, count in (("Ten", 10), ("Eleven", 11)):
-    open(os.path.join(root, "docs", "wiki", name + ".md"), "w").write("## Requirements\n\n" + "".join("- AB-%d: **Unreviewed** x.\n" % i for i in range(1, count + 1)))
-assert {r["subject"] for r in rules.requirements_per_page(root)} == {"Eleven"}, "health's rule must default to 10 too"
+sys.path[:0] = [os.path.join(sys.argv[1], "skills", s, "scripts") for s in ("workflow-docs", "workflow-setup", "workflow-health")]
+import criteria, settings, rules
+assert not hasattr(criteria, "criteria_max") and not hasattr(criteria, "CRITERIA_MAX_DEFAULT"), "criteria still reads criteria_max"
+assert "criteria_max" not in [key for key, _, _, _ in settings.TABLE], "setup still has criteria_max"
+assert not hasattr(rules, "requirements_per_page"), "health still counts requirements per page"
 PY
 
 echo "== the format key in the rules block chooses the checks"

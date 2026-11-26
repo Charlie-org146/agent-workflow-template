@@ -4,7 +4,7 @@
 """OPS-1: the platform limits are counted before they are reached. In a throwaway git repo with a fake session tool: every
 send is counted with its time and the owner's words reset the count (a peer's do not); one event is one message per distinct
 worker session; at 15 of 20 the check-in says when the cap runs out, once; a worker comes only from a free (archived)
-session and a new one is refused; both scripts stay no larger than main and under the package gate."""
+session and a new one is refused."""
 import json
 import os
 import subprocess
@@ -118,14 +118,6 @@ with open(os.path.join(loop, "session-pool.json"), "w") as handle:
     json.dump(pool, handle)
 code, out = run(top, sessions, "assign", "d", **tool)
 check("d: a free (archived) session is woken, renamed and sent the goal", code == 0 and any(x.startswith("rename s9") for x in calls()) and any(x.startswith("send s9") for x in calls()))
-
-# (e) no larger than main, under the package gate (LF bytes)
-for path in (unattended, sessions):
-    with open(path, "rb") as handle:
-        size = len(handle.read().replace(b"\r\n", b"\n"))
-    old = subprocess.run(["git", "show", "origin/main:" + os.path.relpath(path, root).replace("\\", "/")], cwd=root, capture_output=True)
-    limit = len(old.stdout.replace(b"\r\n", b"\n")) if old.returncode == 0 and old.stdout else 20000
-    check("e: %s is %d bytes, no larger than main (%d) and under 20,000" % (os.path.basename(path), size, limit), size <= min(limit, 20000))
 
 print("PLATFORM LIMITS TOY " + ("OK" if not fails else "FAILED %d" % fails))
 sys.exit(1 if fails else 0)

@@ -92,6 +92,4 @@ FAKE_GH_PR_STATE=MERGED $OP run --board --once > "$T/third" 2>&1
 check "clearing an error counts as a change and reprints the board" 'grep -q "wiki_error" "$T/third" && grep -q "^LIVE BOARD" "$T/third"'
 check "every pass writes the check-in" '[ -f "$C/loop/checkin.json" ]'
 
-echo "== sizes"
-check "every script is under 20 KB" '[ -z "$(find "$here/skills" -name "*.py" -size +20479c)" ]'
 echo; [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

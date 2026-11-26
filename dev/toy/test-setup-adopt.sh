@@ -282,7 +282,7 @@ if want set9-from-borrows; then
   python3 - <<'PY' || no "the written config does not borrow, keep and hold right"
 import json
 c = json.load(open(".loop/config.json"))
-assert c["parallel"] == 4 and c["max_tries"] == 5 and c["criteria_max"] == 7 and c["feature_labels"] is True and c["risky_paths"] == ["^infra/"], c
+assert c["parallel"] == 4 and c["max_tries"] == 5 and "criteria_max" not in c and c["feature_labels"] is True and c["risky_paths"] == ["^infra/"], c
 assert c["base"] == "main" and c["agent_command"] == ["claude", "-p"] and c.get("version_file") != "V.txt", (c["base"], c["agent_command"])
 assert c["auto_merge"] is False and c["reply_hook"] is True and c["cadence"] == "12", (c["auto_merge"], c["reply_hook"])
 PY

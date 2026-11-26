@@ -293,9 +293,6 @@ def check(root, only=()):
         want = sorted(strings(btree))
         got = sorted(strings(ast.Module([n for n in ntree.body if ast.dump(n) in rest] + [n for n in mtree.body if isinstance(n, ast.FunctionDef)], [])))
         say(want == got, "%s and %s hold the base's string constants exactly" % (stem, move["module"]))
-        for label, text in ((stem, ntext), (move["module"], mtext)):
-            size = len(text.encode())
-            say(size <= 13000, "%s is %d bytes (at most 13,000, room to 19,000)" % (label, size))
         say(("subprocess" not in mtext) or "GIT_TERMINAL_PROMPT" in mtext, "%s carries the DEL-10 guard where it starts processes" % move["module"])
     if PIN[0] and not checked:
         say(False, "nothing was checked under this pin")

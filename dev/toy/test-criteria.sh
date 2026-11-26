@@ -124,7 +124,7 @@ $docs criteria Delivery | grep -q "NEXT DEL-2" && ok "criteria prints the next f
 ten=$(for n in 1 2 3 4 5 6 7 8 9 10; do echo "- DEL-$n: **Unreviewed** Point $n."; done)
 page Delivery "$ten"; $docs check | grep -q "^CAP" && bad "ten criteria over the limit" || ok "ten criteria pass"
 page Delivery "$ten
-- DEL-11: **Unreviewed** Point 11."; $docs check | grep -q "^CAP Delivery: has 11 requirements" && ok "an eleventh criterion fails" || bad "cap"
+- DEL-11: **Unreviewed** Point 11."; $docs check | grep -q "^CAP" && bad "an eleventh criterion hits a cap" || ok "an eleventh criterion passes: no requirements cap (o988)"
 for name in calc.py run.sh skills/x/scripts/tool.py app.js; do
   page Delivery "- DEL-1: **Unreviewed** Runs $name for more."
   $docs check | grep -q "^SCRIPT Delivery: DEL-1 names $name" && ok "script name fails: $name" || bad "script name: $name"
@@ -347,7 +347,7 @@ grep -qxF "| [del-1c](Tests#t-del-1c) | requirement | DEL-1 | Given a short list
 grep -qE "^\| <a id=\"t-del-1c\"></a>del-1c \| requirement \| DEL-1 \| PASS \| $day \| ([0-9a-f]{7}|local) \| 2026-01-02 \|$" docs/wiki/Tests.md && ok "the full Tests page carries the row's anchor, result, date, run and seen failing" || bad "row shape: $(cat docs/wiki/Tests.md)"
 
 
-echo "== criteria_max and the Usage section"
+echo "== a retired criteria_max and the Usage section"
 setmax() { python3 - "$1" <<'PY'
 import json, sys
 c = json.load(open(".loop/config.json"))
@@ -367,14 +367,11 @@ git add docs/wiki; git commit -qm "One criterion" >/dev/null; git push -q -f ori
 $docs check | grep -q "DOCS OK" && ok "a page with no commands passes without a Usage section" || bad "no usage passes"
 page Delivery "$one
 - DEL-2: **Unreviewed** The calculator prints a mean."
-$docs check | grep -q "^CAP" && bad "default limit rejects two criteria" || ok "no criteria_max means 10"
-setmax 1
-$docs check | grep -q "^CAP Delivery: has 2 requirements, over the limit of 1 (criteria_max in .loop/config.json)" && ok "criteria_max 1 fails a page of two" || bad "cap 1"
-python3 "$here/skills/workflow-health/scripts/health.py" check 2>&1 | grep -q "^FAIL size Delivery requirements-per-page: 2 requirements, over 1" && ok "health fails the same page" || bad "health cap"
+setmax 1  # principle 5 (o988): the key is retired and ignored, whatever its value
+out=$($docs check 2>&1 || true); ! grep -q "^CAP\|REFUSED" <<<"$out" && ok "a leftover criteria_max of 1 is ignored: a page of two has no CAP" || bad "retired cap: $out"
+python3 "$here/skills/workflow-health/scripts/health.py" check 2>&1 | grep -q "requirements-per-page" && bad "health still counts requirements per page" || ok "health counts no requirements per page"
 setmax '"six"'
-$docs check 2>&1 | grep -q "REFUSED: criteria_max is 'six'" && ok "a bad criteria_max refuses, naming the key" || bad "bad cap"
-setmax true
-$docs check 2>&1 | grep -q "REFUSED: criteria_max is True" && ok "a true criteria_max refuses" || bad "bool cap"
+$docs check 2>&1 | grep -q "REFUSED" && bad "a bad leftover criteria_max refuses" || ok "a bad leftover criteria_max is ignored, never refused"
 setmax unset; good
 mkdir -p skills/toy; printf '## Command map\n\n| Ask | Runs |\n|---|---|\n| `/toy median` | `python3 scripts/calc.py median` |\n' > skills/toy/SKILL.md
 usage_page '- `/toy median 1 2 3` — Prints the median of the numbers given (`2`). Refuses nothing.'

@@ -66,8 +66,7 @@ after a merge. Only a commit that changes the page clears `STALE`.
 With `"criteria": true` in the config, every feature page is a short PRD (`references/commands.md` holds the rules and
 an example page): the Review line, then Problem, Requirements, Non-goals, Success metrics, an
 optional Deployments (DOC-14: a Page table and/or a Delivery table for what the feature ships) and Tests, in that order
-and nothing else. Requirements are the owner's lines (`- DEL-1: **Unreviewed** text`, up to
-`criteria_max`, default 10); tests are for the machine: a regression row linked to one requirement by its goal column,
+and nothing else. Requirements are the owner's lines (`- DEL-1: **Unreviewed** text`); tests are for the machine: a regression row linked to one requirement by its goal column,
 described as one `Given ..., when ..., then ...` scenario, rendered under its requirement with its last result.
 
 ### Page states
@@ -249,20 +248,20 @@ Detail the skill's SKILL.md points to, kept word for word so no instruction is l
 ### The PRD page
 
 1. the title, an optional free-form `Milestone:` line, then `Review: **Unreviewed**` (or the owner's Reviewed line);
-2. `## Problem`: who it's for and what it solves, at most `problem_lines` lines;
+2. `## Problem`: who it's for and what it solves, at least one line;
 3. (no Usage section: the commands are in the skill's Command map and `references/commands.md`);
-4. `## Requirements`: up to `criteria_max` (default 10) lines `- DEL-3: **Unreviewed** what must hold`, short and plain,
+4. `## Requirements`: lines `- DEL-3: **Unreviewed** what must hold`, short and plain,
    no script names; ids are stable: take the next free id (`criteria PAGE` prints it), never reuse or renumber one;
-5. `## Non-goals`: at least one line; `## Success metrics`: one to `metrics_lines` measurable lines;
+5. `## Non-goals`: at least one line; `## Success metrics`: at least one measurable line;
 6. `## Tests`: written by `criteria.py render`, never by hand: under each requirement, one Given/When/Then scenario per
    regression row with its test, its kind, what it guards, when it runs, its last result and date and when it was seen failing; **not enforced**
    when no row passes; then the workflow tests, then the defect tests, in the same table.
 
-Lines: `SECTIONS` (wrong, extra or out-of-order sections, or text before the first one), `REVIEW`, `PROBLEM`,
-`NONGOALS`, `METRICS`, `CRITERION`, `CAP`, `SCRIPT`, `USAGE`, `TESTS` (run `render`), `LOCKED`, `CHANGED`.
+Lines: `SECTIONS` (wrong, extra or out-of-order sections, or text before the first one), `REVIEW`,
+`NONGOALS`, `METRICS`, `CRITERION`, `SCRIPT`, `USAGE`, `TESTS` (run `render`), `LOCKED`, `CHANGED`.
 
 Since the docs format (DOC-4..DOC-10), the shapes in `references/commands.md` win over items 2, 3, 4 and 6 above: Problem
-is 1 to `problem_lines` first-person bullets,
+is at least one first-person bullet,
 Requirements sit under `### Functional` and `### Non-functional` with `  - ` sub-bullets, and Tests is one table
 linking the generated Tests page. Their refusals are `FORMAT <Page>:<line>: <Section>: DOC-n ...` lines, and a
 generated Tests page behind a fresh render is `STALE Tests`.
@@ -350,7 +349,7 @@ mending a failed goal is `{mend}`, resuming after a usage limit is `{resume_on_l
 {watch_interval} seconds.
 
 ## Docs
-Feature pages live in `{wiki_dir}`, one PRD page per feature with numbered requirements, at most {criteria_max} each.
+Feature pages live in `{wiki_dir}`, one PRD page per feature with numbered requirements.
 The criteria contract is `{criteria}`. The docs command finds stale pages, and the release step rewrites them.
 
 ## Regression
@@ -384,8 +383,8 @@ With `"criteria": true` in `.loop/config.json`, every feature page (each page in
 free-form, and a guide: a how-to page with the line `<!-- workflow-docs guide -->` under the marker, kept fresh but
 with no PRD, Home row or README section, and not stale on a `.loop/config.json` change) is a short PRD and `check` enforces it, from the rules block of `references/commands.md`:
 
-the title, `Milestone:` and `Review:` lines, then `## Problem`, `## Requirements` (up to
-`criteria_max` lines like `- DEL-3: **Unreviewed** what must hold`; take the next free id from `criteria PAGE`, never
+the title, `Milestone:` and `Review:` lines, then `## Problem`, `## Requirements` (lines
+like `- DEL-3: **Unreviewed** what must hold`; take the next free id from `criteria PAGE`, never
 reuse or renumber one), `## Non-goals`, `## Success metrics` and `## Tests`, which only `criteria.py render` writes.
 The full list, and the lines `check` prints: `references/commands.md` (The PRD page).
 
@@ -432,8 +431,6 @@ them refuse.
 
 ```rules
 sections: Problem, Requirements, Non-goals, Success metrics, Tests
-problem_lines: 3
-metrics_lines: 3
 runbook_section: Runbook
 runbook_fields: Serves, Schedule, Steps, Full run, Output, Never, Check
 deployments_section: Deployments
@@ -460,7 +457,7 @@ default all; each refusal reads `FORMAT <Page>:<line>: <Section>: DOC-n <what> (
   written by `criteria.py review PAGE --user`: one 8-hex fingerprint each for Problem, Requirements, Non-goals, Success
   metrics (Usage was dropped on 2026-11-13; a trailing `U=` is still read, never reported). Only the owner reviews a PRD. While it is Reviewed, a change to Problem, Requirements, Non-goals
   or Success metrics fails the check (`LOCKED`). Requirement stamps are not part of the fingerprints; sub-bullets are.
-- **Problem** (`problem`, DOC-8): 1 to `problem_lines` bullets (`- `), the user's problem in their words, at least one
+- **Problem** (`problem`, DOC-8): at least one bullet (`- `), the user's problem in their words, at least one
   in the first person (I, my, me). No backticks, no path (`/x/`), no file extension (`.py`, `.sh`, `.json`, `.tsv`,
   `.md`) and no word from `problem_banned` (whole word, any case).
 - **Usage** is gone (the owner, 2026-11-13): a page with a `## Usage` section fails with `USAGE`. A feature has no API, so the commands are in each skill's `## Command map` and `references/commands.md`, and the README's "How to use" table is the front door.
@@ -475,14 +472,13 @@ default all; each refusal reads `FORMAT <Page>:<line>: <Section>: DOC-n <what> (
 - **Requirements** (`bullets`, DOC-7): grouped under exactly the `requirement_groups` headings, in order:
   `### Functional` (what it does), then `### Non-functional` (qualities and limits: privacy, safety, reliability,
   performance, size and time limits), with nothing before the first. A group with no requirement holds the single line
-  `None`. Up to the repo's limit (`criteria_max` in `.loop/config.json`, default 10) counted over both groups, one
-  line each, `- ID: **Unreviewed** text` or `- ID: **Reviewed DATE** text`, and under each at least one sub-bullet:
+  `None`. One line each, `- ID: **Unreviewed** text` or `- ID: **Reviewed DATE** text`, and under each at least one sub-bullet:
   exactly two spaces, `  - `, each one checkable behavior. An Unreviewed line
   is a title of at most 20 words; a Reviewed line's wording is locked (DOC-2), and its stamp covers the line only, never
   its sub-bullets. Words are whitespace tokens after `[text](url)` becomes text and backticks are stripped. An orphan
   or deeper-nested sub-bullet is always refused. No script names.
 - **Non-goals**: at least one line: what the feature deliberately won't do.
-- **Success metrics**: one to `metrics_lines` lines: how we know it works, each measurable.
+- **Success metrics**: at least one line: how we know it works, each measurable.
 - **Deployments** (optional, `deployments`, DOC-14): for a feature that ships something people open or receive. Only
   tables and blank lines: at most one Page table `| Page | Link | Access | Shows | Live build |` (`deployments_page`) and
   at most one Delivery table `| Delivery | Channel | Recipients | What's sent | Status |` (`deployments_delivery`), each
