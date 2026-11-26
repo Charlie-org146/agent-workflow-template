@@ -39,5 +39,4 @@ merge_two() {  # $1 = the entry.py that writes START.md, $2 = a name for the wor
 merge_two "$entry" new && ok "two branches adding different public_origins entries merge with no conflict" || bad "the merge conflicts"
 python3 "$entry" write --repo "$t/new" >/dev/null 2>&1; python3 "$entry" check --repo "$t/new" 2>&1 | tail -1 | grep -qx "ENTRY OK" && ok "the merged START.md regenerates and passes entry check" || bad "entry check fails after the merge"
 merge_two "$t/src/skills/workflow-docs/scripts/entry.py" old; [ $? -eq 1 ] && ok "negative control: main's one-line list conflicts" || bad "negative control: main's entry.py did not conflict"
-[ "$(tr -d '\r' < "$entry" | wc -c)" -le "$(git -C "$here" show origin/main:skills/workflow-docs/scripts/entry.py | tr -d '\r' | wc -c)" ] && ok "entry.py is no larger than main's" || bad "entry.py grew past main"
 [ $fails -eq 0 ] && echo "ALL PASS"

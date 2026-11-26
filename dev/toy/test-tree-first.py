@@ -3,7 +3,7 @@
 # reads: skills/workflow-regression/scripts/lanes.py skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes_cli.py
 # reads: skills/workflow-regression/scripts/tiers.py
 """tree-rules-first (TD494, TD497, TD504): the rows whose command runs a whole-repo script (dev/package.py, test-tree.sh through tree-once.sh,
-test-portable.sh, size-check.py) run once, in one process, in the PR workflow's ninth cell `tree`, not in the 8 shards; a row that runs
+test-portable.sh) run once, in one process, in the PR workflow's ninth cell `tree`, not in the 8 shards; a row that runs
 such a script only inside its own fixture stays in the shards;
 a red whole-tree row fails the tree cell and so the required `affected` job; the full runs keep them in their shards; a row a run cut for its budget goes first next time.
 
@@ -56,18 +56,17 @@ with tempfile.TemporaryDirectory() as tmp:
     write(repo, "dev/package.py", "import os, sys\nopen(os.environ['ORDER'], 'a').write('tree\\n')\nsys.exit(1 if os.environ.get('TREE_RED') else 0)\n")
     write(repo, "dev/toy/wrap.sh", "#!/bin/bash\n# runs dev/package.py only inside its own fixture\necho wrap >> \"$ORDER\"\n")
     write(repo, "dev/toy/plain.sh", "#!/bin/bash\necho \"$1\" >> \"$ORDER\"\n")
-    write(repo, "dev/toy/size-check.py", "print('ok')\n")
     write(repo, "dev/toy/test-portable.sh", "echo ALL PASS\n")
     with open(os.path.join(repo, ".loop", "regression.tsv"), "w") as handle:
         handle.write("# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\n")
         for rid, cmd in (("r1", "sleep 2; bash dev/toy/plain.sh r1"), ("tree-row", "python3 dev/package.py --static"), ("wrap-row", "bash dev/toy/wrap.sh"), ("r3", "bash dev/toy/plain.sh r3"),
-                         ("size-row", "python3 dev/toy/size-check.py --control x"), ("portable-row", "bash dev/toy/test-portable.sh")):
+                         ("portable-row", "bash dev/toy/test-portable.sh")):
             handle.write("%s\tland\t%s\t\t2026-01-01\tx\tcriterion\t\n" % (rid, cmd))
     git(repo, "add", "-A")
     git(repo, "commit", "-q", "-m", "rows")
     rows = lanes_cli.rows_of(repo, "land")
-    check(sorted(r["id"] for r in rows if lanes.whole(repo, r, {})) == ["portable-row", "size-row", "tree-row"],
-          "the rows that run package.py, size-check.py or test-portable.sh are whole-tree; the others, a script that wraps package.py among them, are not")
+    check(sorted(r["id"] for r in rows if lanes.whole(repo, r, {})) == ["portable-row", "tree-row"],
+          "the rows that run package.py or test-portable.sh are whole-tree; the others, a script that wraps package.py among them, are not")
     env = dict(os.environ, LOOP_FREE_GB="100", LOOP_ROLE="", ORDER=order, LOOP_ROW_TIMES=os.path.join(tmp, "t.tsv"))
     env.pop("TREE_RED", None)
 

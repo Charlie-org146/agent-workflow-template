@@ -88,7 +88,9 @@ printf '{"leak_prefixes": ["zzprivate", "qq-[0-9]+"]}\n' > "$HOME/leak.json"
 export LOOP_FLOW="$HOME/leak.json"
 python3 dev/package.py --root "$d/pk" --out "$d/ok2.zip" >/dev/null || no "package refused with no match"
 echo 'see QQ-42 here' >> "$d/pk/skills/workflow-setup/SKILL.md"
-python3 dev/package.py --root "$d/pk" --out "$d/bad.zip" | grep -q "FAIL Safety: private prefix 'qq-\[0-9\]+'" || no "second prefix not blocked"
+out=$(python3 dev/package.py --root "$d/pk" --out "$d/bad.zip"); n=$(grep -n 'QQ-42' "$d/pk/skills/workflow-setup/SKILL.md" | head -1 | cut -d: -f1)
+printf '%s\n' "$out" | grep -qxF "FAIL Safety: private prefix #2 in skills/workflow-setup/SKILL.md, line $n" || no "second prefix not blocked"
+! printf '%s\n' "$out" | grep -qiF -e 'qq-[0-9]+' -e 'qq-42' -e 'zzprivate' || no "a private pattern or its match was printed"
 # Mixed versions (the updater keeps an edited file on its own): the previous release's setup.py beside the new modules adopts,
 # and the new setup.py beside an old agents.py refuses by name. The release comes from local git history (no network).
 cd "$here"; prev=""

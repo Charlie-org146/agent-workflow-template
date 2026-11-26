@@ -78,14 +78,14 @@ def waits(where, slug):
     return "| %s | WAITS |" % slug in log(where)
 
 
-# 1. routine, owner (un-review, row cap, budget), no kind: answered with the rule and the revert words; security waits.
+# 1. routine, owner (un-review, suite cap, budget), no kind: answered with the rule and the revert words; security waits.
 w = repo("answers")
 rule = words(w, "take every recommendation unless it is a safety question", "full-auto-rule")
 cases = {"r1": ("Which helper name should the toy use?", "routine"),
          "o1": ("Un-review the Monitoring page so MON-11 wording can change?", "owner"),
-         "o2": ("Raise max_regression_rows from 1200 to 1300?", "owner"),
+         "o2": ("Raise max_suite_seconds from 1900 to 2000?", "owner"),
          "o3": ("Raise the token budget from 3000000 to 4000000 for this goal?", "owner"),
-         "o4": ("Raise criteria_max from 18 to 19?", "owner"),
+         "o4": ("Raise max_tries from 3 to 4?", "owner"),
          "u1": ("Use the shorter log line?", ""),
          "s1": ("Allow the worker to read the credential file?", "security")}
 for slug, (text, kind) in cases.items():

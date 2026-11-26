@@ -17,6 +17,7 @@ import tempfile
 
 from defects import PROTOCOLS, SKILLS, clean, mod, read, table, tool
 
+RETIRED = ("scripts", "skill-lines", "requirements-per-page", "rows-cap")  # principle 5 (o988): recognized, never errors
 GRACE = 7  # days a Reviewed requirement may stay not enforced (HLT-2: "none stays not enforced over 7 days")
 
 
@@ -144,7 +145,9 @@ def repo_load(root):
         else:
             good.append(dict(rule, name=name))
     for key, why in off.items():
-        if key not in G.RULES or not (isinstance(why, str) and why.strip()):
+        if key in RETIRED:
+            rows.append(mine_row("INFO", key, "retired rule; nothing to turn off; the entry can go", "remove it from off", "repo", "repo"))
+        elif key not in G.RULES or not (isinstance(why, str) and why.strip()):
             rows += [mine_row("UNREAD", key, "cannot be turned off: %s" % ("not a default rule" if key not in G.RULES else "it needs a reason"),
                               "name a default rule and give a reason in off", "repo", "repo")]
     off = {k: v.strip() for k, v in off.items() if k in G.RULES and isinstance(v, str) and v.strip()}
@@ -252,7 +255,7 @@ def docs_gaps(root, g):
     for line in out:
         kind, _, rest = line.partition(" ")
         page, _, detail = rest.partition(": ")
-        if kind in ("LAG", "SKIPPED", "CHANGED", "CAP") or line.startswith(("DOCS OK", "NO PAGES")) or "ENTRY_" in detail or page in ("Settings", "Automation", "README line"):
+        if kind in ("LAG", "SKIPPED", "CHANGED") or line.startswith(("DOCS OK", "NO PAGES")) or "ENTRY_" in detail or page in ("Settings", "Automation", "README line"):
             continue
         what, _, fix = detail.partition(". Fix: ")
         g("MIG_RUNBOOK" if "Runbook: DOC-16" in detail else "MIG_FORMAT", clean(page), clean(what), clean(fix) or tool("workflow-docs", "docs.py", "audit"))

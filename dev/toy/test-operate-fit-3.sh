@@ -99,6 +99,4 @@ b.DOCS = os.path.join(sys.argv[2], "none"); assert lb.issues([], set(), sys.argv
 assert lb.plain("see /srv/me/x/y.md and ~/z.txt but https://a.test/p/1") == "see y.md and z.txt but https://a.test/p/1"
 PY
 
-echo "== sizes"
-check "every script is under 20 KB" '[ -z "$(find "$here/skills" -name "*.py" -size +20479c)" ]'
 echo; [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

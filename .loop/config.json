@@ -30,7 +30,6 @@
   "resume_on_limit": false,
   "workers": "app",
   "criteria": true,
-  "criteria_max": 24,
   "max_suite_seconds": 2800,
   "auto_approve": true,
   "auto_merge": true,
@@ -43,11 +42,9 @@
   "routines": [],
   "time_budget_minutes": 240,
   "token_budget": 3000000,
-  "max_regression_rows": 1300,
   "review_depth": "full",
   "_help": {
     "review_depth": "full runs the plan and review skills' whole pipeline and refuses a condensed one; condensed allows a shorter run.",
-    "criteria_max": "Most criteria a wiki page may hold, 1 to 50, default 10; docs check and health fail a page over it.",
     "checks_by_size": "One table of which checks each goal size runs (small, medium, large), each check in a named form. Fixed checks stay full in every row. Only the owner's words change it; it is read from the base branch."
   },
   "full_auto": true,
@@ -83,8 +80,6 @@
   "merge_batch": true,
   "max_active_goals": 20,
   "plan_pause_percent": 80,
-  "health_script_bytes": 20480,
-  "health_skill_lines": 150,
   "public_origins": [
     "https://12factor.net",
     "https://adr.github.io",

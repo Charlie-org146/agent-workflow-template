@@ -230,6 +230,22 @@ def cmd_new(args):
     return 0
 
 
+def revoked_stop(slug):
+    """TSK-1.3: a revoked workaround restores the wait, enforced for step, record and pr: every revoked fix must have merged; a fix whose run
+    record is absent, torn or of an odd shape counts as unmerged. Exit 3, never a traceback."""
+    try:
+        state = load(slug)
+    except (OSError, ValueError, SystemExit):
+        return  # an unknown or unreadable goal is the command's own refusal
+    fixes = state.get("schedule_revoked_fixes") if isinstance(state, dict) else None
+    for fix in fixes if isinstance(fixes, list) else []:
+        try:
+            merged = bool(pods and os.path.exists(state_path(fix)) and pods.merged(load(fix)))
+        except (Exception, SystemExit):
+            merged = False
+        merged or sys.exit(print("REFUSED: %s waits for %s to merge: its workaround was revoked. Fix: let %s merge, then run this again (SCHED_REVOKED)" % (slug, fix, fix), file=sys.stderr) or 3)
+
+
 def cmd_step(args):
     state = load(args.slug)
     args.name == "build" and guards.plan_gate(ME, state)
@@ -275,8 +291,8 @@ def main():
         for flag, kinds in options:
             item.add_argument(flag, **kinds)
     goal = (("--goal", {"required": True}), ("--done", {"action": "append", "default": []}),
-            ("--touches", {"default": ""}))
-    add("new", cmd_new, *goal, ("--release", {"default": ""}), ("--here", {"action": "store_true"}))
+            ("--touches", {"default": ""}), ("--release", {"default": ""}))
+    add("new", cmd_new, *goal, ("--here", {"action": "store_true"}))
     add("queue", cmd_queue, *goal, ("--depends-on", {"default": ""}))
     add("adopt", cmd_adopt)
     add("step", cmd_step, ("name", {}), ("--note", {"default": ""}), ("--tokens", {"type": int, "default": 0}))
@@ -295,6 +311,7 @@ def main():
     if args.command in ("step", "record", "pr"):
         role.guard(args.command, args.slug)
         role.inbox(os.path.abspath(git("rev-parse", "--git-common-dir")), args.slug)
+    args.command in ("step", "record", "pr") and revoked_stop(args.slug)
     return args.func(args)
 
 

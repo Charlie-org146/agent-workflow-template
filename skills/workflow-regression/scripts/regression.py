@@ -41,6 +41,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
 import actions, completion, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
 from runs import chosen, clean, criteria_ids, criterion_rows, done_lines, lines_of, today  # noqa: E402,F401
+from lanes import merged  # noqa: E402,F401
 
 # A prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -245,15 +246,6 @@ def cmd_red(args):
     return 0
 
 
-def merged(path, results=(), left=(), limit=0):
-    """{id: [seconds, state]} from a times file (`id TAB seconds TAB state`), then this shard's results."""
-    rows = {}
-    try:
-        rows.update({c[0]: [float(c[1]), "CUT" if c[2:3] == ["CUT"] else ""] for c in (x.split("\t") for x in open(path).read().splitlines()) if len(c) > 1})
-    except (OSError, ValueError):
-        pass
-    rows.update({r["id"]: [r["seconds"], ""] for r in results}, **{k: [limit, "LEFT"] for k in left})
-    return rows
 
 
 def split(ids, times, n):
@@ -273,8 +265,12 @@ def cmd_run(args):
     if not rows:
         print("NO ROWS: nothing to run" if args.reuse else "NO ROWS: run add first")
         return 0 if args.reuse else 1
+    ids = [i for i in (args.ids or "").split(",") if i]
+    bad = [i for i in ids if i not in rows]
+    bad and sys.exit("REFUSED: no row called %s." % ", ".join(bad))
+    args.reuse = args.reuse or bool(ids)  # an ids lane (SKP-1.1) reuses and keeps the record, never writes a tracked file
     expected, picked = known(root), []
-    for row in tiers.kinds(chosen(rows, tiers.target(root, args)), args.kind):
+    for row in tiers.kinds([rows[i] for i in ids] if ids else chosen(rows, tiers.target(root, args)), args.kind):
         if row["level"] in ("draft", "covered"):
             print("SKIP %s: %s" % (row["id"], row["level"]))
         else:
@@ -309,9 +305,9 @@ def cmd_run(args):
         mine = split(todo, {k: v[0] for k, v in seen.items() if v[0] > 0}, n)
         print("SPLIT %d/%d: %d of %d rows" % (i, n, len(mine[i]), len(todo)))
         todo = [key for key in todo if key in mine[i]]
-    if todo and args.target in ("land", "nightly"):
+    if todo and (args.target in ("land", "nightly") or ids):
         lanes_cli.wait_memory(root)
-    if todo and args.target in ("land", "nightly") and (why or not args.reuse):
+    if todo and (args.target in ("land", "nightly") or ids) and (why or not args.reuse or ids):
         slot = slots.acquire(root, os.environ.get("_LOOP_LANE_LABEL") or os.path.basename(root) + " by hand", head, unclean)
     else:
         slots.started()
@@ -412,6 +408,7 @@ def main():
     item.add_argument("--kind", choices=tuple(tiers.KINDS))
     item.add_argument("--tree", action="store_true")
     item.add_argument("--budget", type=int, default=0, help="seconds a --reuse run may take (-1: no limit)")
+    item.add_argument("--ids", help="run exactly these row ids (comma-separated) as one lane")
     item.set_defaults(func=cmd_run)
     item = sub.add_parser("workflow")
     item.add_argument("--visibility", choices=("public", "private"), help="skip the probe")

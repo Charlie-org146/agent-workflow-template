@@ -421,7 +421,4 @@ import json;p=json.load(open(\"$POOL\"));r=json.load(open(\"$R/wb.json\"))
 assert r[\"status\"]==\"waiting\" and r[\"waiting\"][\"ask\"]==\"Q?\" and r[\"session\"][\"id\"]==\"sw2\" and p[\"sw2\"][\"state\"]==\"busy\" and p[\"sw1\"][\"state\"]==\"free\""'
 cp "$T/pool.keep" "$POOL"
 
-echo "== sizes"
-check "watch.py and sessions.py stay under the health rule's 20 KB" '[ $(wc -c < "$S/watch.py") -le 20480 ] && [ $(wc -c < "$S/sessions.py") -le 20480 ]'
-
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

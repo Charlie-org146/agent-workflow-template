@@ -1,4 +1,4 @@
-"""Freshness, Tests, Adoption, Security, Size, Performance, Hygiene and principle-map rules. Read-only."""
+"""Freshness, Tests, Adoption, Security, Performance, Hygiene and principle-map rules. Read-only."""
 import datetime
 import glob
 import importlib.util
@@ -11,7 +11,7 @@ import time
 
 import issues as IS
 import report as _report
-from defects import LIVE, behind, pages, row, setting, table, wiki
+from defects import behind, pages, row, table, wiki
 
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -206,7 +206,6 @@ FUNCTIONS = {"nightly": nightly, "unreleased": unreleased, "finding-age": findin
 
 
 
-SKILL_LINES = 150
 CHECK_SECONDS = 60
 
 
@@ -266,28 +265,6 @@ def workflow_permissions(root):
             out.append(row("WARN", "security", name, "workflow-permissions", "no top-level permissions:",
                            "declare the least permissions it needs", name))
     return out
-
-
-def skill_lines(root):
-    out, cap = [], setting(root, "health_skill_lines", SKILL_LINES)
-    for path in sorted(glob.glob(os.path.join(root, "skills", "*", "SKILL.md"))):
-        with open(path, "rb") as handle:
-            count = len(handle.read().replace(b"\r\n", b"\n").splitlines())
-        if count >= cap:
-            name = os.path.relpath(path, root)
-            out.append(row("FAIL", "size", name, "skill-lines", "%d lines, %d or more" % (count, cap),
-                           "move detail into references/", name))
-    return out
-
-
-def requirements_per_page(root):
-    try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
-            limit = int(json.load(handle).get("criteria_max", 10))
-    except (OSError, ValueError, TypeError, AttributeError):
-        limit = 10
-    return [row("FAIL", "size", name, "requirements-per-page", "%d requirements, over %d" % (n, limit), "merge requirements, or raise criteria_max", name)
-            for name, text in pages(root).items() for n in [len(LIVE.findall(text))] if n > limit]
 
 
 def check_time(root):
@@ -356,7 +333,7 @@ def eta(root, name):
 
 
 GUARD_FUNCTIONS = {"private": private, "scan-hook": scan_hook, "workflow-permissions": workflow_permissions,
-             "skill-lines": skill_lines, "requirements-per-page": requirements_per_page, "check-time": check_time,
+             "check-time": check_time,
              "idle-sessions": idle_sessions}
 
 

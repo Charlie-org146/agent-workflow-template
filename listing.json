@@ -46,6 +46,8 @@
     "leave",
     "ask",
     "show",
+    "order",
+    "workaround",
     "set",
     "new",
     "step",

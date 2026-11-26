@@ -27,6 +27,7 @@ import sizing
 import lanekit
 import proctree
 import role
+import cover
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 if not sys.stdin or not sys.stdin.isatty():
@@ -173,7 +174,7 @@ def main():
     if args.step in fit.STEPS:
         role.recorded_gate(args, runs, job)
     if args.step in ("qa", "ship") and not os.path.exists(job) and not os.path.exists(base + ".asked"):
-        status, line, ids = role.lane(runs, args.slug, args.step, flow(), repo_config(), args.wait)
+        status, line, ids = cover.lane(role.lane, runs, args.slug, args.step, flow(), repo_config(), args.wait)
         print(line)
         if status == "running":
             return 0

@@ -103,7 +103,7 @@ def review_of(text, rule):
 
 
 def trouble(root, page, text, parts, rule):
-    found, body, top = [], dict(parts), rule["metrics_lines"]
+    found, body = [], dict(parts)
     nongoals, metrics = rule["sections"][2:4]
     line, why = review_of(text, rule)
     if why:
@@ -111,10 +111,8 @@ def trouble(root, page, text, parts, rule):
     if not paras(body.get(nongoals)):
         found.append(("NONGOALS", page, "%s is empty. Fix: write at least one line on what the feature deliberately "
                                         "won't do" % nongoals))
-    count = len(paras(body.get(metrics)))
-    if not 1 <= count <= top:
-        found.append(("METRICS", page, "%s has %d lines, want 1 to %d. Fix: write one to %d measurable lines on how we "
-                      "know it works" % (metrics, count, top, top)))
+    if not paras(body.get(metrics)):
+        found.append(("METRICS", page, "%s is empty. Fix: write at least one measurable line on how we know it works" % metrics))
     match = REVIEW.match(line or "")
     if why or not match or not match.group(2):
         return found

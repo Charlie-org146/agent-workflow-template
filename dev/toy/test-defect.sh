@@ -16,7 +16,7 @@ unset LOOP_BATCH
 export LOOP_ROLE=worker  # goal.py and flow.py run only in a worker
 here=$(cd "$(dirname "$0")/../.." && pwd)
 . "$here/dev/toy/reap.sh"
-cases="home-sandbox wording flow-steps categories defect-owed closing-keywords closing-unaffected health-closed worker-release pr-body pr-body-criterion no-hang known-defects skill-size skill-kept size-139 size-140 size-141"
+cases="home-sandbox wording flow-steps categories defect-owed closing-keywords closing-unaffected health-closed worker-release pr-body pr-body-criterion no-hang known-defects skill-kept size-139 size-140 size-141"
 if [ $# = 0 ]; then
   fails=0
   for c in $cases; do
@@ -238,9 +238,6 @@ PY
       awk -F'\t' -v id="$1" -v link="$2" '$7 == "defect" && $8 ~ link && $5 != "" {ok = 1} END {exit !ok}' "$here/.loop/regression.tsv" || no "no defect row $1 linked to $2, seen failing"
     done
     exit 0;;
-  skill-size) # issue 116: every SKILL.md stays under test-board's 150-line limit
-    for f in "$here"/skills/*/SKILL.md; do [ "$(wc -l < "$f")" -lt 150 ] || no "$f is $(wc -l < "$f") lines"; done
-    exit 0;;
   skill-kept) # issue 116: what left the two SKILL.md files is kept word for word in their references, and they point there
     while IFS='|' read -r skill phrase; do
       grep -qF -- "$phrase" "$here/skills/$skill/references/commands.md" || no "$skill/references lost: $phrase"
@@ -254,10 +251,10 @@ workflow-delivery|With `pr_bumps_version` on, it moves the last number of the ve
 workflow-delivery|branch already changed it. It retries a failed push twice, then prints git's full error.
 workflow-delivery|- `"auto_approve": true`: `record` approves what a step leaves for the owner, logs it as auto-approved, and goes on.
 workflow-delivery|merges the pull request, bumps the version once and publishes a GitHub release with a CHANGELOG entry.
-workflow-docs|2. `## Problem`: who it's for and what it solves, at most `problem_lines` lines;
-workflow-docs|5. `## Non-goals`: at least one line; `## Success metrics`: one to `metrics_lines` measurable lines;
+workflow-docs|2. `## Problem`: who it's for and what it solves, at least one line;
+workflow-docs|5. `## Non-goals`: at least one line; `## Success metrics`: at least one measurable line;
 workflow-docs|   when no row passes; then the workflow tests, then the defect tests, in the same table.
-workflow-docs|`NONGOALS`, `METRICS`, `CRITERION`, `CAP`, `SCRIPT`, `USAGE`, `TESTS` (run `render`), `LOCKED`, `CHANGED`.
+workflow-docs|`NONGOALS`, `METRICS`, `CRITERION`, `SCRIPT`, `USAGE`, `TESTS` (run `render`), `LOCKED`, `CHANGED`.
 workflow-docs|the retired Usage print, still written and never reported). After it, a change to any of them is `LOCKED` (check, audit and release fail).
 workflow-docs|owner un-reviews that requirement and the PRD, then reviews both again.
 workflow-docs|`Given <context>, when <action>, then <outcome>.`; `audit` lists any other as `SCENARIO` and the release step blocks on
@@ -272,14 +269,14 @@ KEPT
     grep -qiE "governance only|one session governs" "$here/skills/workflow-delivery/SKILL.md" || no "workflow-delivery/SKILL.md lost its governance line"
     grep -q "Never review or unreview on a goal's own initiative" "$here/skills/workflow-docs/SKILL.md" "$here/skills/workflow-docs/references/commands.md" || no "workflow-docs lost its review rule (SKILL.md and its commands reference)"
     exit 0;;
-  size-139) # issue 139: criteria.py's page rules moved unchanged into deployments.py; it stays under health's size warning
+  size-139) # issue 139: criteria.py's page rules moved unchanged into deployments.py
     python3 -B "$here/dev/toy/split-check.py" "$here" skills/workflow-docs/scripts/criteria.py deployments \
-      CRITERIA_MAX_DEFAULT,SHEET,criteria_max,rules || exit 1
+      SHEET,rules || exit 1
     exit 0;;
-  size-140) # issue 140: docs.py's page map moved unchanged into counting.py; it stays under health's size warning
+  size-140) # issue 140: docs.py's page map moved unchanged into counting.py
     python3 -B "$here/dev/toy/split-check.py" "$here" skills/workflow-docs/scripts/docs.py counting map_path,read_map,write_map || exit 1
     exit 0;;
-  size-141) # issue 141: regression.py's row and page readers moved unchanged into runs.py; under health's size warning
+  size-141) # issue 141: regression.py's row and page readers moved unchanged into runs.py
     python3 -B "$here/dev/toy/split-check.py" "$here" skills/workflow-regression/scripts/regression.py runs \
       chosen,clean,criteria_ids,criterion_rows,done_lines,lines_of,today path_of || exit 1
     exit 0;;

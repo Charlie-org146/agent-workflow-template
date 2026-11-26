@@ -65,7 +65,7 @@ suggests is applied only by the owner. `judge` (alias `suggest`) is the older ch
 
 ```bash
 python3 scripts/health.py preview
-python3 scripts/health.py file --group size,docs
+python3 scripts/health.py file --group hygiene,docs
 python3 scripts/health.py file --review review.json --feature Health
 ```
 
