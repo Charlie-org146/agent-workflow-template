@@ -15,7 +15,8 @@ import tempfile
 top = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 ROWS = ("tasks-rows-only-added", "guards-null-report-nofiles", "full-auto-no-new-file")
 TOYS = ("dev/toy/test-tasks.py", "dev/toy/test-guards-null-report.sh", "dev/toy/test-full-auto-files.py")
-TOUCHED = ("skills/workflow-regression/scripts/actions.py",) + TOYS + ("dev/toy/hist.py", "dev/toy/test-history-rows.py")
+TOUCHED = ("skills/workflow-regression/scripts/actions.py",) + TOYS + ("dev/toy/hist.py", "dev/toy/test-history-rows.py",
+           "dev/toy/test-codex.sh", "dev/toy/codexrun.py")
 LIMIT = 20 * 1024  # dev/package.py's MAX_SCRIPT
 WORD = "plantedname" + "qzx"  # a made-up private name, listed only in this test's own list
 

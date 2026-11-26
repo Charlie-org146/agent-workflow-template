@@ -39,15 +39,19 @@ TEXT = {
 
 
 def screen(text):
-    """Text from git, fit to print: one line, cut, addresses and paths as their kind, withheld if the loop's screen refuses it."""
-    text = " ".join(str(text).split())
+    """Text from a child command, fit to print: one line, screened, cut."""
+    return redact(" ".join(str(text).split()))[:200]
+
+
+def redact(text):
+    """Addresses and paths as their kind; the whole text withheld if the loop's private-name and secret screen refuses it."""
     text = re.sub(r"[A-Za-z][A-Za-z0-9+.-]*://\S+|\b[\w.-]+@[\w.-]+:\S+", "[address]", text)
     text = re.sub(r"(?<![\w.])(?:~|[A-Za-z]:)?[\\/](?:[^\s'\":\\/]+[\\/])*[^\s'\":]*", "[local path]", text)
     folder = os.path.join(top, "skills", "workflow-delivery", "scripts")
     if folder not in sys.path:
         sys.path.append(folder)  # at the end, so a test's own imports are never shadowed
     import dlf
-    return dlf.safe(top, text)[:200]
+    return dlf.safe(top, text)
 
 
 def line(code, what, detail=""):
