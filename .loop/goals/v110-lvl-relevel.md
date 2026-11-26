@@ -60,3 +60,12 @@ Red-team dispositions for the final plan (plan file sha1 27b4c303f4e8): its 26 n
 | 26 | 1 | b26p110cac9 | deliver-first line |
 
 Correction to the plan, which is not edited: where it says the excuse entry for done-pkg-secret-print-3 names an owner record, the entry names TD2022, which is a top decision and not an owner record.
+
+Pull request notes:
+
+- The new level and risk rules apply to this repository's re-levelled table.
+- Adding a defect row with an issue or pull request address now reads that address's labels (gh, signed in). On a re-levelled table, `add --level covered` takes `--covers`; the other documented `add` commands work as before.
+- A covered row's record names the rows that prove it. It does not say they prove every word of its line, and this goal computes no proven state.
+- The one re-levelling kept all 745 rows, each at L0, L1 or L2 (L0: 3 rows, 0.5 s of 45). The build record beside this file holds its command, output and counts. All 149 linked addresses are this repository's, and none of its label names holds security, private or privacy.
+- Left to later goals: running rows by level and using a size's levels (G2), the scheduled run (G3), and retiring the old words and the draft state column (G4). Until then a side record file holds each row's level in place of a table column.
+- To make room under the packaged-script limit, the work is in five new modules in workflow-regression and one in workflow-delivery, and three functions moved whole: split, merge_runs and mend.
