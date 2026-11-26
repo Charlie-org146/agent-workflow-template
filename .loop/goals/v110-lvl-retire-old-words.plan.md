@@ -1,6 +1,6 @@
 # Plan: v110-lvl-retire-old-words (G4 of Test levels), on origin/main 7c6d69ffd
 
-DRAFT. Not yet reviewed. It carries OPEN items that wait for a ruling; no review or red team starts before top answers, and the build does not start before every open item is ruled.
+DRAFT. Not yet reviewed. TD2014 ruled two items; one is STOPPED (O3) and one is open (O4). The build does not start before every item is ruled.
 
 Goal: one set of level words, L0, L1 and L2. Done lines (frozen, in the goal file): (1) the goal_levels setting, the PR workflow's level map and the Regression runbook's labels use L0, L1, L2 and none of land, nightly, covered, draft; (2) a draft row's mark is in its own state column, it carries the level it will have, every level lists it as "not run: draft", and a requirement held only by drafts shows "not enforced"; (3) a covered row takes the highest level of the rows its list names, is green when they all are, and a list that doesn't resolve to row IDs is refused; (4) every script stays under 20,480 bytes, no test is loosened, no row turns red, committed text never names the service repo; (5) a release cut waits for a green full (L2) run.
 
@@ -14,24 +14,28 @@ Classes: security (workflow files, including a new read permission in release.ym
 
 .loop/START.md and .loop/regression-relevel.tsv are outside the frozen touches; the operation widens them before the build.
 
-## OPEN items (a ruling is pending; each reading states what the build does)
+## Rulings and open items
 
-### O1, owner ruling pending: done line 5, "a release cut"
-The line is unqualified. LVL-1.2, verbatim: "A minor or major release cut waits for a green L2 on its commit or a later one. A per-push patch release shows the latest L2 result and doesn't wait." release.yml releases on every push to main.
-- Reading A (recommended, LVL-1.2): minor and major cuts wait; a patch release prints the latest L2 result and does not wait. It narrows the line's words.
-- Reading B (the line's words alone): every cut waits, patches too; each merge's release then waits for a later L2 run.
-Design D5 is written for A. Under B the same check also gates every patch path.
+### Line 5: TD2014's reading (under o1014)
+"Release cut" is read in the vocabulary of the owner-approved LVL-1.2: the cuts that wait are the minor and major ones; a per-push patch release is not one. LVL-1.2, verbatim: "A minor or major release cut waits for a green L2 on its commit or a later one. A per-push patch release shows the latest L2 result and doesn't wait." So a minor or major waits, and a patch shows the latest L2 result and does not wait. Top lists this reading in its next check-in so the owner can revert it. Design D5 builds this reading.
 
-### O3, owner ruling pending: done line 3 and the row done-pkg-secret-print-3
-It is covered, and its proof is a run record, not a row: "proved by the 90-day search recorded in the goal's run record (ids kept in the git dir, not committed)". It has no list of row IDs, so line 3 refuses it, while line 4 allows no row to turn red. main has 24 covered rows; G1's plan assumes 23. No recommendation: every fix changes the row or reads line 3 around it. Choices: (a) the owner rules how a row proved by a record is marked; (b) a new row that really proves it, which the covered row then lists; (c) the row is retired with the owner's words.
+### Line 3 STANDS (TD2014)
+A covered row takes the highest level of the rows its list names. G1's plan (its line 79) forces a covered row tagged security or private to L1 and checks its covers only to resolve: a plan-wrong item for G1's build record. One edge remains for the reviewers: LVL-1.3 gives tagged rows a MINIMUM of L1, so this plan takes the highest level of the covers and never goes below that minimum; the two differ only when every cover of a tagged covered row is L0.
 
-### O4, ruling pending: done line 4, "every script"
+### O3, STOPPED: the row done-pkg-secret-print-3 (TD2014 (3))
+TD2014: it is plan-wrong for G4, fixed in G4's build under o1074 by giving the row its proper proof kind in place of "covered", with an approved-row-changes line citing TD2014, ON CONDITION that its proof stays checked exactly as strictly as now; if no proof kind keeps it that strict, the worker stops.
+No such kind exists on 7c6d69ffd: the level values are land, nightly, draft and covered (regression.py:51) and the categories are criterion, workflow and defect. What checks this row today: it is never run (regression.py:274), exempt from the description rule (regression.py:183), never unmet in criteria (regression.py:205), shown as "by a person" (tests.py:35) and skipped by the major gate (review.py:123). Nothing in code reads its proof. Its command is prose: "proved by the 90-day search recorded in the goal's run record (ids kept in the git dir, not committed)". As land or nightly, no command can check a record that is not committed: it would be red or skipped on GitHub. This part of the plan waits for a new ruling.
+
+### O4, open: done line 4, "every script"
 Read as written it is false on main today and on no-size-cap A's head: 27 scripts in dev/toy and dev/package.py are 20,480 bytes or more. No packaged script (skills/) is.
 - Reading A (recommended; the rule A keeps, "20 KB per packaged script"): every packaged script is under 20,480 bytes, checked by dev/package.py, which fails at 20,480 or more. The build record lists every toy this goal edits with its size.
 - Reading B (the words, literally, all scripts): the line cannot be met without splitting 28 files that this goal has no reason to touch.
 
-## Ruled: done line 3 stands (operation-mac 19:39)
-A covered row takes the highest level of the rows its list names. G1's plan (its line 79) forces a covered row tagged security or private to L1 and checks its covers only to resolve; this is flagged for G1's build record. One edge remains for the reviewers: LVL-1.3 gives tagged rows a MINIMUM of L1, so this plan takes the highest level of the covers and never goes below that minimum; the two differ only when every cover of a tagged covered row is L0.
+## SECURITY class: the owner's own words before the build
+Relayed words do not count (TD2002). New in release.yml:
+- the permission "actions: read" (a NEW workflow permission);
+- a new trigger: release.yml also runs when a scheduled regression run completes on main.
+Any other new workflow permission the build finds it needs is added to this list and asked the same way.
 
 ## Order and dependencies
 The build waits for: no-size-cap A; G1 (the record file and levels.py); G3 (the L2 run and its verdict); and G2 too. The G2 dependency is real: G2 owns the L0 and L1 selection that goal_levels maps to, and its golden toy asserts that the PR template keeps "run @LEVELS@", which D2 changes. This plan is written against those three PLANS; before the build, every name below is re-read on main, and a changed interface stops the build for a plan amendment.
@@ -51,14 +55,14 @@ One existing assertion changes: dev/toy/test-regression.sh:117 fails today if a 
 
 D4. Line 3, covered rows. The list is the record's covers column. In an armed table, reading refuses a covered row whose list is empty, or holds anything that is not a row ID of the table, naming the row and the entry. Its level is the highest stage among the covers (see Ruled). It is green only when every cover's latest recorded result is a pass (or known); otherwise it shows the worst of them. That result replaces "by a person" wherever covered rows are shown (tests.py's Runs column, criteria.py, render.py) and review.py's major gate, which today skips covered rows. An unreadable or missing result is not green.
 
-D5. Line 5, the release wait (reading O1-A). A new module l2wait.py answers one question: is there a green L2_VERDICT for this commit or a later one on the base branch? It reads the scheduled workflow's runs and their l2-verdict artifact. No verdict, red, incomplete or unreadable all mean "wait": it fails closed and prints the commit, what it found and the command that starts a full run.
+D5. Line 5, the release wait (TD2014's reading). A new module l2wait.py answers one question: is there a green L2_VERDICT for this commit or a later one on the base branch? It reads the scheduled workflow's runs and their l2-verdict artifact. No verdict, red, incomplete or unreadable all mean "wait": it fails closed and prints the commit, what it found and the command that starts a full run.
 - merge.py's path (autorelease.finish): a minor waits; a patch prints the latest L2 result.
 - release.py cut: a minor waits.
 - review.py promote (major): requires it in addition to today's local suite run.
 - release.yml (push to main): it gains the permission "actions: read". For a minor or major it ends green, publishes nothing and says "held: waiting for L2 (sha)". So that a held minor is not lost on the next push, the part becomes the highest release label among the pull requests merged since the last release tag, not only the pushed commit's. So that a held release is not stuck when no further push comes, release.yml also runs when a scheduled regression run completes on main.
-The permission and the new trigger are safety changes: they need the owner's own words before the build.
+The permission and the new trigger are listed under SECURITY class above.
 
-D6. Room under the package limit. On 7c6d69ffd: regression.py has 45 bytes, lanes_cli.py 32, criteria.py 25 (705 on A's head), milestone.py 87, survey.py 109, settings.py 194; G1 to G3 spend some. Where an edit would reach 20,480, whole functions move, bodies unchanged, into a sibling module (level_words.py in regression). These moves are consequences of the package rule (TD1987) and are named that way in the build record and the PR body. No file is reformatted to fit.
+D6. Room under the package limit. On 7c6d69ffd: regression.py has 45 bytes, lanes_cli.py 32, criteria.py 25 (705 on A's head), milestone.py 87, survey.py 109, settings.py 194; G1 to G3 spend some. Where an edit would reach 20,480, whole functions move, bodies unchanged, into a sibling module (level_words.py in regression). These moves are consequences of the package rule (TD1987) and are named that way in the build record and the PR body. There is no byte-shaving (TD1246): no file is reformatted or trimmed to fit.
 
 D7. Existing rows. goal-levels-nightly carries the old words, and del-16-linked tests for "covered" in column 2. A row line changes only if its meaning changes; each changed line gets its approved-row-changes line (the tasks-rows-only-added guard), stricter or equal, never looser.
 
