@@ -367,6 +367,10 @@
 | <a id="t-known-no-block-opens-issue"></a>known-no-block-opens-issue | requirement | HLT-4 | not run | - | local | 2026-11-22 |
 | <a id="t-wiki-front-stable"></a>wiki-front-stable | requirement | HLT-2 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-23 |
 | <a id="t-release-skill-no-size-4172"></a>release-skill-no-size-4172 | defect | [#4172](https://github.com/jcl2018/agent-workflow-template/issues/4172) state unknown | not run | - | local | 2026-11-26 |
+| <a id="t-docs-skill-no-size-4171"></a>docs-skill-no-size-4171 | defect | [#4171](https://github.com/jcl2018/agent-workflow-template/issues/4171) state unknown | not run | - | local | 2026-11-26 |
+| <a id="t-regression-skill-no-size-3983"></a>regression-skill-no-size-3983 | defect | [#3983](https://github.com/jcl2018/agent-workflow-template/issues/3983) state unknown | not run | - | local | 2026-11-26 |
+| <a id="t-regression-skill-no-size-3815"></a>regression-skill-no-size-3815 | defect | [#3815](https://github.com/jcl2018/agent-workflow-template/issues/3815) state unknown | not run | - | local | 2026-11-26 |
+| <a id="t-docs-skill-no-size-1403"></a>docs-skill-no-size-1403 | defect | [#1403](https://github.com/jcl2018/agent-workflow-template/issues/1403) state unknown | not run | - | local | 2026-11-26 |
 
 ## Machines
 
