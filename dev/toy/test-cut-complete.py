@@ -303,7 +303,9 @@ if case("tree-skip"):  # a whole-tree row that skips goes through the same list 
 
 if case("tree-timeout"):
     here = tree_project("import time; time.sleep(30)", known="ts")  # a known whole-tree row that never finishes within its row limit
-    step = shard_step("tree").replace("--timeout 200", "--timeout 2")
+    step = shard_step("tree")
+    check("--timeout 300" in step, "the tree step carries the 300 s row limit the case replaces")
+    step = step.replace("--timeout 300", "--timeout 2")
     temp = tempfile.mkdtemp(prefix="cut-complete-tt-")
     done = subprocess.run(["bash", "--noprofile", "--norc", "-e", "-c", step], cwd=here, capture_output=True, text=True, env=dict(env, TEMP_DIR=temp))
     check(done.returncode != 0, "a known whole-tree row that passes its row limit fails the tree job (exit %d)" % done.returncode)
