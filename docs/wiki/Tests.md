@@ -366,6 +366,7 @@
 | <a id="t-known-no-block-job-skip"></a>known-no-block-job-skip | requirement | HLT-4 | not run | - | local | 2026-11-22 |
 | <a id="t-known-no-block-opens-issue"></a>known-no-block-opens-issue | requirement | HLT-4 | not run | - | local | 2026-11-22 |
 | <a id="t-wiki-front-stable"></a>wiki-front-stable | requirement | HLT-2 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-23 |
+| <a id="t-release-skill-no-size-4172"></a>release-skill-no-size-4172 | defect | [#4172](https://github.com/jcl2018/agent-workflow-template/issues/4172) state unknown | not run | - | local | 2026-11-26 |
 
 ## Machines
 

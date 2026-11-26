@@ -9,7 +9,8 @@ Each case builds a throwaway git repo, writes the repo's own rules and runs the 
 run (rows land in their group with their feature), control (a rule's break makes Controls see it fail), refuse (a rule with
 no break exits 2), off (a default turned off shows its reason, one without a reason stays on and is UNREAD), setup (fill-repo
 writes the file once and keeps an edited one). usage: test-health-repo-rules.py [CASE ...] [--break]
-CASE is one of run, control, refuse, off, retired or setup (default all). --break leaves the rules file out of every repo, to see the rows red."""
+CASE is one of run, control, refuse, off, retired,
+long-skill or setup (default all). --break leaves the rules file out of every repo, to see the rows red."""
 import json
 import os
 import subprocess
@@ -150,6 +151,18 @@ with tempfile.TemporaryDirectory() as tmp:
         done = sh([py, health, "check", "--group", "size"], g)
         check(done.returncode != 2 and "size: no rules (retired by principle 5)" in done.stdout and "PASS size" not in done.stdout,
               "--group size runs: the empty group says why and counts no passed check")
+    if run_it('long-skill'):
+        # issue 4172, as principle 5 settles it (o988): health once filed a size finding on the release skill's SKILL.md; it files none
+        h = os.path.join(tmp, "h")
+        os.makedirs(h)
+        repo(h)
+        os.makedirs(os.path.join(h, "skills", "workflow-release"))
+        with open(os.path.join(h, "skills", "workflow-release", "SKILL.md"), "w") as handle:
+            handle.write("line\n" * 150)
+        found, _ = rows(h, "size,security")
+        check(bool(found), "health runs on a repo whose release SKILL.md has 150 lines")
+        check(bool(found) and not [r for r in found if r["rule"] == "skill-lines" or (r["family"] == "size" and r["state"] in ("FAIL", "WARN"))],
+              "a release SKILL.md of 150 lines gets no size finding (issue 4172)")
     if run_it('setup'):
         # setup: fill-repo writes the file once and keeps an edited one
         f = os.path.join(tmp, "f")

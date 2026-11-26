@@ -98,3 +98,4 @@ known:size-140	o988, o1007, TD1958	known reason only: drops the retired size-war
 known:rel-major-refused	o988, o1007, TD1958	known reason only: drops the retired byte-cap cause; restates the remaining red (the Release page check misses REL-3, REL-12, REL-13), red on base 37417a6d9 singly
 known:ls-size-budget	o988, o1007, TD1958	known reason only: drops the retired size case; restates the remaining red (scheduledrule: a leftover health.yml is a WARN naming git rm), red on base 37417a6d9 singly; its CI skip stays
 settings-reference	o988 (done line 3), TD1962	adds the case: an adopted config with leftover retired keys gets no START.md row; its other clauses stay
+release-skill-no-size-4172	o988 (done line 5), v110-no-size-cap-a, TD2065	added: the defect row for issue 4172, which had no other once skill-lines-release-4172 went; it checks that health files no size finding on a 150-line release SKILL.md; every other row unchanged
