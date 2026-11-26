@@ -178,7 +178,10 @@ states which rows prove a covered row; it does not state that they prove every w
 says so.
 
 **done-gap-wave1-small-4:** it is excused by ID like `done-pkg-secret-print-3` (section 3), naming o988, the record
-that removed the rules it states.
+that removed the rules it states (operation, TD2082).
+Drafted deliver-first line to retire the row (not posted; filed only through the tool, after its leak read): "The
+covered row done-gap-wave1-small-4 states size and row-count rules that no longer exist, and is excused by its ID.
+Settle with: retire the row. Recommend: retire it at the release."
 
 ## 10. Rollout and merges
 - Once G1 is on main, a branch that adds rows carries their record entries.
