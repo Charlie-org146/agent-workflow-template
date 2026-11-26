@@ -23,8 +23,7 @@ def owner_check(root, records, subject, what):
                  what, subject, subject))
 
 
-KEYED = ("regression-limits.tsv", "regression-known.tsv", "regression-red.tsv", "regression-skips.tsv",
-         "regression-owed.tsv")  # keyed by row id, renamed and removed with it
+KEYED = ("regression-limits.tsv", "regression-known.tsv", "regression-red.tsv", "regression-skips.tsv")  # by row id
 
 
 def disk(root, name):

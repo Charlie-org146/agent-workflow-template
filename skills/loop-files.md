@@ -786,7 +786,7 @@ pull-request check runs rows through `run`, so it refuses too.
 | `LEVELS_STALE_RISK` | a defect row whose link, goal or category changed since its tag was read: `level ID --refresh` |
 | `LEVELS_BAD_RISK_DATA` | risk data missing, empty, or with a bad or repeated line |
 | `LEVELS_BAD_FILE` | a malformed line, a conflict marker, or an unknown risk, old word or reason |
-| `LEVELS_LOWERED` | since the merge base: a tag or risk line removed or lowered, or the record and `lvl-armed` removed, with no `owner:` id covering it (checked against the owner records wherever this machine keeps them; elsewhere the id must be recorded). An id already there at the merge base covers no new change; a gone tagged row counts as renamed only into one new row with the same command, goal and tag. Also refused when there is no base branch to compare with. The base is the default branch's, not a branch's own setting |
+| `LEVELS_LOWERED` | since the merge base: a tag or risk line removed or lowered, or the record and `lvl-armed` removed, with no `owner:` id covering it (checked against the owner records wherever this machine keeps them; elsewhere the id must be recorded). An id already there at the merge base covers no new change; a gone tagged row counts as renamed only into one new row with the same command, goal and tag. Also refused when there is no base branch to compare with. Merge bases are taken against GitHub's base ref, the default branch, main, master and the base their settings name; a branch's own setting is added, never used alone to compare it with itself |
 | `LEVELS_INTERRUPTED` | a write stopped between files: `levels --fill` completes it |
 
 Commands also refuse with `LEVELS_NEEDS_OWNER`, `LEVELS_NEEDS_RISK`, `LEVELS_NOT_LEVELLED`, `LEVELS_L0_TIME`,
@@ -800,7 +800,7 @@ way (a table that is not levelled takes no lock, and a reader that can't open th
 first leaves a mark in the worktree's git folder with each file before and after. `levels --fill` completes it only on
 the same branch with each file at one of those two states; otherwise it writes nothing and names the files and the mark,
 and `levels --discard` removes the mark. `level ID --rename NEW` moves the row, its entry, covers lists, risk-data lines
-and the limits, known, red, skip and owed lists; `--remove` refuses while the row proves another, and a tagged row needs an owner
+and the limits, known, red and skip lists; `--remove` refuses while the row proves another, and a tagged row needs an owner
 record. After a merge that brought rows without entries (a clean merge, or a pull request that was green before), run
 `levels --fill`; the automatic repair of a conflicted table also joins the record by row id, refuses one id with two
 different lines, and fills; a conflict in the risk data is left to a person.

@@ -404,6 +404,60 @@ check(held and filling.returncode == 0 and not os.path.exists(mark),
 holder.wait()
 repo.close()
 
+# where no default branch resolves, or a stale one does
+def alone(lower):
+    """A levelled goal branch with no other branch, then a hand change; what a refusing read says there."""
+    got = Repo(BASE, good())
+    got.commit()
+    got.git("checkout", "-q", "-b", "loop/hand")
+    got.git("branch", "-q", "-D", "main")
+    lower(got)
+    got.write(".loop/config.json", json.dumps({"base": "refs/heads/loop/hand"}))
+    got.commit("hand change")
+    ok, said = refused(got, "LEVELS_LOWERED")
+    got.close()
+    return ok, said
+
+
+def drop_tag(got):
+    got.record(changed("listed-guard", risk="none", reason="default"))
+    got.write(".loop/regression-risk.tsv", "".join(x + "\n" for x in RISKS if "listed-guard" not in x))
+
+
+ok, said = alone(drop_tag)
+check(ok, "a base that leads back to the branch under another name can't hide a lowering", said)
+ok, said = alone(lambda got: os.remove(os.path.join(got.path, ".loop", "regression-relevel.tsv")))
+check(ok, "with no base, removing the record is refused", said)
+tagged_before = changed("listed-guard", reason="risk:security,owner:o5")
+ok, said = branch(BASE, tagged_before, RISKS, BASE, tagged_before,
+                  [x for x in RISKS if "listed-guard" not in x] + ["removed\trow:listed-guard\tnone\towner:o5"])
+check(ok, "an owner id the base holds for the row covers no new removal through another line", said)
+repo = Repo(BASE, None, None)
+repo.commit()
+repo.git("checkout", "-q", "-b", "develop")
+repo.write(".loop/regression-risk.tsv", "".join(x + "\n" for x in RISKS))
+repo.record(good())
+repo.write(".loop/config.json", json.dumps({"base": "develop"}))
+repo.commit("levelled")
+repo.git("checkout", "-q", "-b", "loop/x")
+drop_tag(repo)
+repo.commit("hand change")
+ok, said = refused(repo, "LEVELS_LOWERED")
+check(ok, "a stale main branch doesn't hide a lowering against the real base", said)
+repo.close()
+repo = Repo(BASE, good())
+repo.write(".loop/config.json", json.dumps({"base": "master"}))
+repo.commit()
+repo.git("branch", "-q", "-m", "master")
+status, said = repo.run("run", "alpha")
+check(status == 0, "a levelled repository whose base is master reads on master", said)
+repo.close()
+repo = Repo(BASE, good())
+os.makedirs(os.path.join(repo.path, "docs", "wiki", "Principles.md"))
+status, said = repo.run("levels", "--check")
+check(status == 2 and "LEVELS_REQUIREMENTS" in said, "a Principles page that can't be read is reported", said)
+repo.close()
+
 # the new modules are part of the cached-result fingerprint
 copy = tempfile.mkdtemp(prefix="lvl-scripts-")
 shutil.copytree(REG, os.path.join(copy, "s"))

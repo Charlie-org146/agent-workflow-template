@@ -223,8 +223,11 @@ def page_differs(root, state):
     try:
         with open(os.path.join(folder, "Principles" + ".md"), encoding="utf-8") as handle:
             part = re.split(r"(?m)^## 6\..*$", handle.read(), maxsplit=1)
-    except OSError:
+    except FileNotFoundError:
         return []
+    except (OSError, UnicodeError) as error:
+        return [Problem("LEVELS_REQUIREMENTS", "", "the Principles page can't be read (%s), so the requirement list "
+                        "can't be compared" % type(error).__name__, "make the page readable", name=RISKS)]
     if len(part) < 2:
         if not set(state.risks["requirement"]) - {"-"}:
             return []

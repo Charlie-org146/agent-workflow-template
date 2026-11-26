@@ -47,25 +47,39 @@ def base_name(text):
     return name if isinstance(name, str) and name else None
 
 
-def base_commit(root):
-    """The merge base with the base branch, named by the default branch's config (not by this branch's own)."""
+def base_commits(root):
+    """Every merge base a lowering is looked for against. The trusted ones are GitHub's base ref, the default branch,
+    main, master and the base their configs name: more bases only find more. This branch's own `base` setting counts
+    too, unless it leads back to this branch."""
     head = (git(root, "symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD") or "").strip()
-    named = next((n for n in (base_name(git(root, "show", "%s:.loop/config.json" % ref))
-                              for ref in (head, "origin/main", "main") if ref) if n), "main")
-    refs = ["origin/" + named, named]
+    current = (git(root, "symbolic-ref", "--quiet", "--short", "HEAD") or "").strip()
+    here = (git(root, "rev-parse", "--verify", "-q", "HEAD") or "").strip()
+    trusted = [r for r in (head,) if r and r != "origin/" + current]
+    trusted += ["origin/main", "main", "origin/master", "master"]
+    if os.environ.get("GITHUB_BASE_REF"):
+        trusted.insert(0, "origin/" + os.environ["GITHUB_BASE_REF"])
+    for ref in list(trusted):
+        named = base_name(git(root, "show", "%s:.loop/config.json" % ref))
+        if named:
+            trusted += ["origin/" + named, named]
+    out = []
+    for ref in trusted:
+        if ref == current and current.startswith("loop/"):
+            continue
+        found = (git(root, "merge-base", "HEAD", ref) or "").strip()
+        if found and found not in out:
+            out.append(found)
     try:
         with open(os.path.join(root, ".loop", "config.json"), encoding="utf-8") as handle:
             own = base_name(handle.read())
     except (OSError, UnicodeError):
         own = None
-    current = (git(root, "symbolic-ref", "--quiet", "--short", "HEAD") or "").strip()
-    if own and own != current:
-        refs += ["origin/" + own, own]  # only when the default branch's name resolves to nothing
-    for ref in refs:
-        found = git(root, "merge-base", "HEAD", ref)
-        if found:
-            return found.strip()
-    return None
+    alone = (git(root, "for-each-ref", "--format=%(refname:short)", "refs/heads") or "").split() == [current]
+    for ref in ("origin/%s" % own, own) if own else ():
+        found = (git(root, "merge-base", "HEAD", ref) or "").strip()
+        if found and found not in out and (found != here or ref == current and alone):
+            out.append(found)
+    return out
 
 
 def renames(was, state, entries):
@@ -88,24 +102,46 @@ def renames(was, state, entries):
 
 def lowered(state):
     """Tags, risk lines or the levelling itself that this branch removed or lowered since its merge base."""
-    at = base_commit(state.root)
-    if not at:
-        return [Problem("LEVELS_LOWERED", "", "no base branch to compare with, so a lowered tag can't be seen",
-                        "fetch the base branch (a full clone), then " + CODE + "levels --check", name=RECORD)
-                ] if state.has_record and git(state.root, "rev-parse", "--verify", "-q", "HEAD") else []
-    if not (git(state.root, "ls-tree", at, "--", ".loop/" + RECORD) or "").strip():
-        return []
-    old_record = git(state.root, "show", "%s:.loop/%s" % (at, RECORD))
-    if old_record is None:
-        return [Problem("LEVELS_LOWERED", "", "the merge base's record can't be read", "fetch the base branch, then " +
-                        CODE + "levels --check", name=RECORD)]
+    def blind(what):
+        return [Problem("LEVELS_LOWERED", "", what + ", so a lowered tag can't be seen",
+                        "fetch the base branch (a full clone), then " + CODE + "levels --check", name=RECORD)]
+    bases = base_commits(state.root)
+    if not bases:
+        levelled_before = state.has_record or os.path.exists(file_of(state.root, RISKS)) or (git(
+            state.root, "log", "-1", "--format=%h", "HEAD", "--", ".loop/" + RECORD) or "").strip()
+        return blind("no base branch to compare with") if levelled_before and git(
+            state.root, "rev-parse", "--verify", "-q", "HEAD") else []
+    out, seen = [], set()
+    for at in bases:
+        listed = git(state.root, "ls-tree", at, "--", ".loop/" + RECORD)
+        if listed is None:
+            return blind("a merge base can't be read")
+        if not listed.strip():
+            continue
+        old_record = git(state.root, "show", "%s:.loop/%s" % (at, RECORD))
+        if old_record is None:
+            return blind("the merge base's record can't be read")
+        for item in against(state, at, old_record):
+            if item.key() not in seen:
+                seen.add(item.key())
+                out.append(item)
+    return out
+
+
+def against(state, at, old_record):
+    """What this tree removed or lowered since the one merge base `at`."""
     was = State(state.root, git(state.root, "show", "%s:.loop/%s" % (at, TABLE)) or "", old_record,
                 git(state.root, "show", "%s:.loop/%s" % (at, RISKS)) or "")
     rows, out = ledger(state.root), []
 
-    def allowed(why, subject, before=""):
-        """An owner id this branch adds (one already there at the base was for an earlier change)."""
-        old = set(re.findall(r"owner:([A-Za-z0-9._-]+)", before))
+    def allowed(why, subject):
+        """An owner id this branch adds: one the base already holds for the subject, in its entry or any removed line,
+        was for an earlier change."""
+        held = was.entries().get(subject, {}).get("reason", "") + " " + " ".join(
+            text for key, (_, text) in was.risks["removed"].items() if key.split(":", 1)[-1] == subject)
+        if subject == "levels":
+            held = " ".join(text for _, text in was.risks["off"].values())
+        old = set(re.findall(r"owner:([A-Za-z0-9._-]+)", held.replace(",", " ")))
         found = [r for r in re.findall(r"owner:([A-Za-z0-9._-]+)", why) if r not in old]
         return any(rows is None or covers_subject(state.root, rows, r, subject) for r in found)
 
@@ -113,13 +149,12 @@ def lowered(state):
         out.append(Problem("LEVELS_LOWERED", subject, what + " since the merge base, with no owner record that covers it",
                            "restore it, or make the change with " + CODE + "level and --owner-record", name=name))
     if not state.levelled():
-        was_off = " ".join(why for _, why in was.risks["off"].values())
-        if not any(allowed(why, "levels", was_off) for _, why in state.risks["off"].values()):
+        if not any(allowed(why, "levels") for _, why in state.risks["off"].values()):
             say("levels", "the record and lvl-armed were removed", RECORD)
         return out
     entries = state.entries()
     moved = renames(was, state, entries)
-    gone, gone_before = state.risks["removed"], was.risks["removed"]
+    gone = state.risks["removed"]
     for key, old in was.entries().items():
         if old["risk"] not in ("security", "private"):
             continue
@@ -127,8 +162,7 @@ def lowered(state):
         if new and RANK.get(new["risk"], 0) >= RANK[old["risk"]]:
             continue
         why = (new or {}).get("reason", "") + " " + gone.get("entry:" + key, ("", ""))[1]
-        before = old["reason"] + " " + gone_before.get("entry:" + key, ("", ""))[1]
-        if not allowed(why, key, before) and not (not new and key in moved):
+        if not allowed(why, key) and not (not new and key in moved):
             say(key, "the %s tag was removed or lowered" % old["risk"], RECORD)
     for kind in ("requirement", "row", "given", "label"):
         for key, (tag, _) in was.risks[kind].items():
@@ -137,7 +171,7 @@ def lowered(state):
                 continue
             why = gone.get("%s:%s" % (kind, key), ("", ""))[1]
             renamed = kind in ("row", "given") and state.risks[kind].get(moved.get(key), ("",))[0] == tag
-            if not allowed(why, key, gone_before.get("%s:%s" % (kind, key), ("", ""))[1]) and not renamed:
+            if not allowed(why, key) and not renamed:
                 say(key, "the risk-data %s line was removed or lowered" % kind, RISKS)
     return out
 
