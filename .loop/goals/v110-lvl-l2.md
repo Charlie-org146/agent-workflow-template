@@ -1,7 +1,7 @@
 # Test levels G3 (LVL-1.2; owner o980, o985; split TD1749): L2 full runs every row and a skipped row is red
 
 - Slug: v110-lvl-l2
-- Touches: skills/workflow-regression, .github/workflows, dev/toy, .loop/regression.tsv
+- Touches: skills/workflow-regression, .github/workflows, dev/toy, .loop/regression.tsv, skills/loop-files.md, .loop/regression-relevel.tsv
 - ETA: 385 active minutes (estimate 306m plus a 25% margin)
 
 ## Done lines
