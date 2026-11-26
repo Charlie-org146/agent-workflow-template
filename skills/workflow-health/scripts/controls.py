@@ -82,11 +82,6 @@ def run_record(root, slug, state):
         json.dump(dict({"slug": slug}, **state), handle)
 
 
-def f_size(root):
-    repo(root)
-    write(root, "skills/x/scripts/big.py", "# pad\n" * 3600)
-
-
 def f_criteria_rows(root):
     repo(root)
     write(root, "docs/wiki/Calc.md", "# Calc\n\n## Requirements\n\n- CAL-1: **Unreviewed** calc adds.\n")
@@ -144,7 +139,7 @@ def f_test_time(root):
 
 def f_caps(root):
     f_test_time(root)
-    write(root, ".loop/config.json", '{"base": "main", "max_regression_rows": 2, "max_suite_seconds": 100}')
+    write(root, ".loop/config.json", '{"base": "main", "max_suite_seconds": 100}')
     commit(root, "caps")
 
 
@@ -288,16 +283,6 @@ def f_workflow_permissions(root):
     write(root, ".github/workflows/x.yml", "on: push\njobs: {}\n")
 
 
-def f_skill_lines(root):
-    repo(root)
-    write(root, "skills/x/SKILL.md", "line\n" * 150)
-
-
-def f_requirements_per_page(root):
-    repo(root, {"criteria_max": 1})
-    write(root, "docs/wiki/One.md", "# One\n\n## Requirements\n\n- AB-1: **Unreviewed** a.\n- AB-2: **Unreviewed** b.\n")
-
-
 def f_check_time(root):
     repo(root)
     os.environ["LOOP_HEALTH_T0"] = "1"
@@ -335,7 +320,6 @@ def f_auto(root):
 
 # rule -> (group, label, fixture)
 CONTROLS = {
-    "scripts": ("size", "scripts", f_size),
     "rows": ("requirements", "rows", f_criteria_rows),
     "proof": ("requirements", "proof", f_proof),
     "done": ("requirements", "done", f_criteria_done),
@@ -347,7 +331,7 @@ CONTROLS = {
     "branches": ("hygiene", "branches", f_branches),
     "cost": ("performance", "cost", f_cost),
     "test-time": ("performance", "test-time", f_test_time),
-    "rows-cap": ("performance", "rows-cap", f_caps), "suite-cap": ("performance", "suite-cap", f_caps),
+    "suite-cap": ("performance", "suite-cap", f_caps),
     "worktrees": ("hygiene", "worktrees", f_worktrees),
     "local-branches": ("hygiene", "local-branches", f_local_branches),
     "hooks": ("security", "hooks", f_hooks),
@@ -363,8 +347,6 @@ CONTROLS = {
     "prompt-pointer": ("adoption", "prompt-pointer", f_prompt_pointer),
     "private": ("security", "private", f_private), "scan-hook": ("security", "scan-hook", f_scan_hook),
     "workflow-permissions": ("security", "workflow-permissions", f_workflow_permissions),
-    "skill-lines": ("size", "skill-lines", f_skill_lines),
-    "requirements-per-page": ("size", "requirements-per-page", f_requirements_per_page),
     "check-time": ("performance", "check-time", f_check_time),
     "idle-sessions": ("hygiene", "idle-sessions", f_idle_sessions),
 }
@@ -503,10 +485,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
     item = sub.add_parser("run")
-    item.add_argument("rule", choices=sorted(CONTROLS))
+    sys.path.insert(0, HERE)
+    from enforce import RETIRED
+    item.add_argument("rule", choices=sorted(set(CONTROLS) | set(RETIRED)))
     item.add_argument("--keep", action="store_true")
     args = parser.parse_args()
-    sys.path.insert(0, HERE)
+    if args.rule in RETIRED:
+        print("RETIRED controls %s: retired by principle 5 (o988); nothing to run" % args.rule)
+        return 0
     import health
     functions = health.rule_functions()
     result, kept = one(args.rule, functions[args.rule], HERE, keep=args.keep)

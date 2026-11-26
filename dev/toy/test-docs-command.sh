@@ -87,34 +87,28 @@ cp -r "$here/skills/workflow-docs" "$d/skill"
 page "Short." "- DEL-1: **Unreviewed** One.
 - CAL-2: **Unreviewed** Two."
 $cri render >/dev/null
-python3 "$d/skill/scripts/docs.py" check | grep -q "^CAP" && bad "two criteria are over the default limit of ten" || ok "the default limit of 10 lets two criteria pass"
+python3 "$d/skill/scripts/docs.py" check | grep -q "^CAP" && bad "a page of two criteria hits a cap" || ok "a page of two criteria passes: no requirements cap (o988)"
 grep -q max_criteria "$d/skill/references/commands.md" && bad "the sheet still holds max_criteria" || ok "the sheet no longer holds the limit"
 python3 - <<'PY'
 import json
 c = json.load(open(".loop/config.json")); c["criteria_max"] = 1; json.dump(c, open(".loop/config.json", "w"))
 PY
-python3 "$d/skill/scripts/docs.py" check | grep -q "^CAP Delivery: has 2 requirements, over the limit of 1 (criteria_max" && ok "criteria_max in the config changes the check" || bad "cap from config"
+python3 "$d/skill/scripts/docs.py" check 2>&1 | grep -q "^CAP\|REFUSED" && bad "a leftover criteria_max changes the check" || ok "a leftover criteria_max in the config is ignored"
 sed -i.bak '/^```rules/,/^```$/d' "$d/skill/references/commands.md"
 python3 "$d/skill/scripts/docs.py" check 2>&1 | grep -q "REFUSED: the rules block" && ok "no rules block: the check refuses" || bad "refuse without sheet"
 
 echo "== 2. one command fixes the mechanical, lists the wording, and the release step runs it"
-page "One.
-
-Two.
-
-Three.
-
-Four, which is one too many." "- DEL-1: **Unreviewed** It prints a median."
-git add -A; git commit -qm "Long problem"
+page "- I want the median of my numbers." "- DEL-1: **Unreviewed** It runs calc.py for a median."  # wording to rewrite: a script name (principle 5 retired the Problem line cap, o988)
+git add -A; git commit -qm "A script name"
 out=$($docs audit --dry-run); echo "$out"
 grep -q "^WOULD FIX docs/wiki/Delivery.md: re-render the Tests table" <<<"$out" && [ -z "$(git status --porcelain)" ] && ok "dry run says what it would fix and writes nothing" || bad "dry run"
 out=$($docs audit); rc=$?; echo "$out"
 grep -q "^FIXED docs/wiki/Delivery.md: re-render" <<<"$out" && grep -q '| not enforced |$' docs/wiki/Delivery.md && ok "the Tests table is fixed" || bad "fix tables"
-grep -q "^REWRITE Delivery: PROBLEM is over 3 lines" <<<"$out" && [ "$rc" = 1 ] && ok "wording to rewrite is listed and the exit is 1" || bad "rewrite"
-[ -f docs/wiki/Delivery.md ] && grep -q "Four, which" docs/wiki/Delivery.md && ok "it deletes and rewrites no page" || bad "kept page"
+grep -q "^REWRITE Delivery: SCRIPT DEL-1 names calc.py" <<<"$out" && [ "$rc" = 1 ] && ok "wording to rewrite is listed and the exit is 1" || bad "rewrite"
+[ -f docs/wiki/Delivery.md ] && grep -q "It runs calc.py for a median" docs/wiki/Delivery.md && ok "it deletes and rewrites no page" || bad "kept page"
 git add -A; git commit -qm "Rendered" >/dev/null
 trouble=$(cd "$here/skills/workflow-release/scripts" && python3 -c "import release; print(release.docs_trouble('$repo', 'main'))")
-grep -q "PROBLEM" <<<"$trouble" && ok "the release step reads the audit and sees the trouble" || bad "release hook"
+grep -q "SCRIPT" <<<"$trouble" && ok "the release step reads the audit and sees the trouble" || bad "release hook"
 page "- I want the median of my numbers." "$GOOD"; $cri render >/dev/null; git add -A; git commit -qm "Short" >/dev/null
 trouble=$(cd "$here/skills/workflow-release/scripts" && python3 -c "import release; print(release.docs_trouble('$repo', 'main'))")
 [ "$trouble" = "[]" ] && ok "a clean page passes the release step" || bad "release clean: $trouble"

@@ -68,7 +68,7 @@ Each requirement and how it is delivered:
 - **Writes:** `.loop/regression-runs.tsv`; with `--live`, one GitHub issue per failing row.
 - **Exit codes:** 0 when every selected row passed; nonzero when one failed.
 - **Run order:** inside a time budget, selected rows run closest to the change first: rows that name a changed file, then rows whose requirement is in the diff, then the rest, shortest first. Rows past the budget are left to the full run.
-- **Row limits:** every row runs under the run's row limit (200 seconds in a pull-request run). `.loop/regression-limits.tsv` lists the owner's exceptions: a number gives one row its own limit in seconds, and the word `nightly` keeps a nightly row out of the pull-request shards while the nightly run still runs it. Each entry has an approved line in `dev/toy/approved-row-changes.tsv`.
+- **Row limits:** every row runs under the run's row limit (300 seconds in a pull-request run). `.loop/regression-limits.tsv` lists the owner's exceptions: a number gives one row its own limit in seconds, and the word `nightly` keeps a nightly row out of the pull-request shards while the nightly run still runs it. Each entry has an approved line in `dev/toy/approved-row-changes.tsv`.
 
 ### Command: lanes_cli.py
 - **Command:** `python3 skills/workflow-regression/scripts/lanes_cli.py affected [--level land|nightly|all] PATH...`

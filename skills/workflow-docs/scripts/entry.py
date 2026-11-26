@@ -19,6 +19,7 @@ When the installed skills are newer than the repo's template_version, a differen
 (the narrative and the block's skill list) is LAG, not STALE: ask for workflow-setup update. Features and Settings are always checked.
 """
 import argparse
+import importlib.util
 import json
 import os
 import re
@@ -101,9 +102,20 @@ def reference():
     return out
 
 
+def retired():
+    """settings.RETIRED: keys a config may still hold (principle 5); () without workflow-setup beside this skill."""
+    path = os.path.join(SKILLS, "workflow-setup", "scripts", "settings.py")
+    if not os.path.exists(path):
+        return ()
+    spec = importlib.util.spec_from_file_location("loop_settings", path)
+    found = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(found)
+    return getattr(found, "RETIRED", ())
+
+
 def settings(cfg):
     known, helps = reference(), cfg.get("_help") if isinstance(cfg.get("_help"), dict) else {}
-    keys = sorted((set(known) - {"topics"}) | {k for k in cfg if not k.startswith("_")})  # topics: once set
+    keys = sorted((set(known) - {"topics"}) | {k for k in cfg if not k.startswith("_") and k not in retired()})  # topics: once set
     return [(k, cfg[k] if k in cfg else known[k][0], helps.get(k) or known.get(k, ("", ""))[1]) for k in keys]
 
 

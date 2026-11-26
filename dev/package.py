@@ -15,6 +15,19 @@ PACKAGE_TIMEOUT, else 300 seconds): when it is hit, package.py kills any child, 
 `TIMEOUT: package.py stopped after N seconds waiting on <what>` and exits 3. SIGTERM, SIGINT and SIGHUP also kill the
 child's group before exiting, and the ZIP is written to a .part file beside --out and renamed, so a stopped run leaves no
 half ZIP. An inherited ignore of SIGINT or SIGHUP (nohup) is kept.
+
+Safety output: no line ever prints matched text, a private pattern or a path holding a match. A Safety failure reads
+`FAIL Safety: <kind> in <where>, line <n>`: kind is secret, obfuscation or encoded text, instruction aimed at the agent,
+dangerous command, or private prefix #k (k: entry k of leak_prefixes in $LOOP_FLOW, else ~/.workflow-loop/flow.json);
+where is the path, or `a path matching <kind>` when the path itself matches (one `private prefix #k in a path` line
+names the lowest k). Any other failure keeps its rule text and withholds the part read from a file or a child when it,
+or the text it was cut from, holds a match: find it locally with the lists below and your leak_prefixes, fix it, rerun.
+A TIMEOUT or STOPPED label names a matching path as `a path matching <kind>` (else `a shipped file (name withheld)`);
+a private pattern's own text counts as a match too. An unexpected error prints its
+type on stderr and exits 4, never a traceback. A leak_prefixes setting that is not a list, or an entry that is not a
+valid pattern, refuses as `FAIL Private list: ...`, naming the entry by number only. Exit codes: 0 pass, 1 refused,
+3 timeout, 4 unexpected error. Changed in v1.1.0: this Safety form (before, the match and the pattern were printed),
+one line for a path matching several prefixes, the withheld notices, the Private list refusal and exit 4.
 """
 import argparse
 import ast
@@ -55,7 +68,7 @@ STOP_SIGNALS = [getattr(signal, n) for n in ("SIGALRM", "SIGTERM", "SIGINT", "SI
 
 
 def wait_on(what):
-    waiting["on"] = what
+    waiting["on"] = "a shipped file (name withheld)" if hit(what) else what
 
 
 def stop(line, code):
@@ -144,9 +157,51 @@ def run_alone(cmd, cwd, what):
         waiting["child"] = None
 
 
-def fail(rule, text):
-    failures.append((rule, text))
-    print("FAIL %s: %s" % (rule, text), flush=True)  # flushed, so a stopped run keeps the failures it found
+PRIVATE = []  # (k, compiled pattern), loaded once by load_private before any check
+WITHHELD = "(withheld: it held a %s match%s; find it locally with the lists in dev/package.py and your leak_prefixes, fix it, then rerun; see --help)"
+
+
+def groups():
+    return (("secret", SECRETS), ("obfuscation or encoded text", OBFUSCATION), ("instruction aimed at the agent", AGENT_AIMED + INJECTION),
+            ("dangerous command", DANGEROUS))
+
+
+def hit(text):
+    """The kind of the first Safety match in text (the private list first), else None."""
+    for k, rx in PRIVATE:
+        if rx.search(text) or rx.pattern.lower() in text.lower():  # the pattern's own text is private too
+            return "private prefix #%d" % k
+    for group, patterns in groups():
+        if any(re.search(p, text) for p in patterns):
+            return group
+    return None
+
+
+def where(rel):
+    """The path, or its kind when the path itself holds a match: no path, hash or other locator (a hash of a tracked
+    path can be reversed over the tracked paths). A line number stays: in a hidden file it narrows nothing to open."""
+    kind = hit(rel)
+    return "a path matching " + kind if kind else rel
+
+
+def line_of(text, match):
+    return text.count("\n", 0, match.start()) + 1
+
+
+def fail(rule, text, derived="", after="", source=None, origin=""):
+    """Every failure line goes through here. The derived part (read from a shipped file or a child) is withheld whole
+    when it, or the uncut source it was cut from, holds a match: masking part of it would leak through length and
+    context. The rule text stays, so a line keeps its form."""
+    sources = source if isinstance(source, tuple) else (source,) if source else ()
+    kind = hit(derived) or next((k for k in map(hit, sources) if k), None)  # each source alone: anchored patterns keep their start
+    if kind:
+        derived = WITHHELD % (kind, " from " + origin if origin else "")
+    kind = (hit(text + after) or hit(text + derived + after)  # the body, so a pattern anchored at its start still matches
+            or hit("FAIL %s: %s%s%s" % (rule, text, derived, after)))  # and the whole printed line
+    if kind:
+        text, derived, after = "", WITHHELD % (kind, ""), ""
+    failures.append((rule, text + derived + after))
+    print("FAIL %s: %s%s%s" % (rule, text, derived, after), flush=True)  # flushed, so a stopped run keeps the failures it found
 
 
 def tracked(root):
@@ -173,7 +228,7 @@ def walk(root):
         return sorted(set(out))
     for base in SHIPPED:
         path = os.path.join(root, base)
-        wait_on("the walk of " + path)
+        wait_on("the walk of " + where(path))
         if os.path.isfile(path):
             out.append(base)
         for here, dirs, names in os.walk(path):
@@ -212,14 +267,16 @@ def check_frontmatter(root, files):
     if not skills:
         fail("Frontmatter", "no skills/<name>/SKILL.md found")
     for rel in skills:
-        fields = frontmatter(read(root, rel).decode("utf-8", "replace"))
+        doc = read(root, rel).decode("utf-8", "replace")
+        fields = frontmatter(doc)
         folder = rel.split("/")[1]
         if not fields.get("name"):
-            fail("Frontmatter", "%s has no name" % rel)
+            fail("Frontmatter", "%s has no name" % where(rel))
         elif fields["name"] != folder:
-            fail("Frontmatter", "%s name %r does not match folder %r" % (rel, fields["name"], folder))
+            fail("Frontmatter", "%s name " % where(rel), "%r does not match folder %r" % (fields["name"], folder),
+                 source=("%s\n%s\n%s" % (fields["name"], folder, rel), doc))  # the parsed values, and the whole SKILL.md
         if not fields.get("description"):
-            fail("Frontmatter", "%s has no description" % rel)
+            fail("Frontmatter", "%s has no description" % where(rel))
     return skills
 
 
@@ -227,7 +284,7 @@ def load_listing(root):
     try:
         return json.loads(read(root, "listing.json"))
     except (OSError, ValueError) as error:
-        fail("Listing fields", "listing.json unreadable: %s" % error)
+        fail("Listing fields", "listing.json unreadable: ", str(error))
         return {}
 
 
@@ -248,21 +305,21 @@ def check_files(root, files):
     total = 0
     for rel in files:
         if rel.endswith("/"):
-            fail("Files", "forbidden folder " + rel)
+            fail("Files", "forbidden folder " + where(rel))
             continue
         path = os.path.join(root, rel)
         data = read(root, rel)
         total += len(data)
         if os.stat(path).st_mode & 0o111:
-            fail("Files", "%s is executable" % rel)
+            fail("Files", "%s is executable" % where(rel))
         if rel.endswith((".pyc", ".pyo", ".so", ".dylib", ".exe", ".class", ".jar", ".whl")):
-            fail("Files", "%s is a compiled or bundled file" % rel)
+            fail("Files", "%s is a compiled or bundled file" % where(rel))
         try:
             text = data.decode("utf-8")
             if "\0" in text:
                 raise ValueError
         except ValueError:
-            fail("Files", "%s is not text" % rel)
+            fail("Files", "%s is not text" % where(rel))
     if len(files) > MAX_FILES:
         fail("Size", "%d files, at most %d allowed" % (len(files), MAX_FILES))
     if total >= MAX_BYTES:
@@ -275,7 +332,7 @@ def check_scripts(root, files):
         text = data.decode("utf-8", "replace")
         size = len(data.replace(b"\r\n", b"\n"))  # committed (LF) bytes: a Windows CRLF checkout reads the same
         if size >= MAX_SCRIPT:
-            fail("Scripts", "%s is %d bytes, under 20 KB allowed" % (rel, size))
+            fail("Scripts", "%s is %d bytes, under 20 KB allowed" % (where(rel), size))
         modules = set()
         siblings = {n[:-3] for n in os.listdir(os.path.dirname(os.path.join(root, rel))) if n.endswith(".py")}
         try:
@@ -285,63 +342,69 @@ def check_scripts(root, files):
                 elif isinstance(node, ast.ImportFrom) and node.module and not node.level:
                     modules.add(node.module.split(".")[0])
         except SyntaxError as error:
-            fail("Scripts", "%s does not parse: %s" % (rel, error))
+            fail("Scripts", "%s does not parse: " % where(rel), str(error), source=text)
         for name in sorted(modules - set(sys.stdlib_module_names) - siblings):
-            fail("Scripts", "%s imports %s, which is not in the standard library" % (rel, name))
+            fail("Scripts", "%s imports " % where(rel), name, ", which is not in the standard library", source=text)
         if re.search(r"skills/|\.\./", text.replace("../loop-files.md", "")) and re.search(r"open\([^)]*(skills/|\.\./)", text):
-            fail("Scripts", "%s opens another package file" % rel)
+            fail("Scripts", "%s opens another package file" % where(rel))
         if STATIC:
             continue
         with tempfile.TemporaryDirectory() as lone:  # a copy of its own scripts folder only: siblings, nothing else
             waiting["lone"] = lone
-            wait_on("the copy of %s's folder" % rel)
+            wait_on("the copy of %s's folder" % where(rel))
             shutil.copytree(os.path.dirname(os.path.join(root, rel)), os.path.join(lone, "scripts"), symlinks=True)
             rc, err = run_alone([sys.executable, "-E", "-s", "-X", "utf8", os.path.join(lone, "scripts", os.path.basename(rel)), "--help"],
-                                lone, "%s --help" % rel)
+                                lone, "%s --help" % where(rel))
             if rc is None:
-                fail("Scripts", "%s --help did not finish in %d seconds with no stdin (it waits on input or a child)" % (rel, CHILD_SECONDS))
+                fail("Scripts", "%s --help did not finish in %d seconds with no stdin (it waits on input or a child)" % (where(rel), CHILD_SECONDS))
             elif rc:
-                fail("Scripts", "%s does not run alone: %s" % (rel, err.strip()[-200:]))
+                fail("Scripts", "%s does not run alone: " % where(rel), err.strip()[-200:], source=err)
             waiting["lone"] = None
 
 
-def private_prefixes():
-    """The private leak_prefixes setting (flow file, outside the repo): case-insensitive regexes the local leak hook blocks."""
+def load_private():
+    """The private leak_prefixes setting (flow file, outside the repo): case-insensitive regexes the local leak hook
+    blocks, compiled once; k is the 1-based raw position. The path is never printed."""
     path = os.environ.get("LOOP_FLOW") or os.path.expanduser("~/.workflow-loop/flow.json")
     try:
         with open(path, encoding="utf-8") as handle:
-            return [p for p in json.load(handle).get("leak_prefixes", []) if isinstance(p, str) and p]
+            raw = json.load(handle).get("leak_prefixes", [])
     except (OSError, ValueError, AttributeError):
-        print("NOTE: no leak_prefixes in %s; only the built-in scans ran" % path)
-        return []
+        print("NOTE: no leak_prefixes loaded; only the built-in scans ran")
+        return
+    if not isinstance(raw, list):
+        fail("Private list", "leak_prefixes is not a list")
+        return
+    for k, pattern in enumerate(raw, 1):
+        try:
+            if isinstance(pattern, str) and pattern:  # an empty pattern would match everything
+                PRIVATE.append((k, re.compile(pattern, re.I)))
+                continue
+        except (re.error, OverflowError, RecursionError, ValueError, TypeError):  # any compile failure refuses
+            pass
+        fail("Private list", "leak_prefixes entry #%d is not a valid pattern" % k)
 
 
 def check_safety(root, files):
-    private = private_prefixes()
     for rel in files:
-        for prefix in private:
-            if re.search(prefix, rel, re.I):
-                fail("Safety", "private prefix %r in the file name %s" % (prefix, rel))
+        named = [k for k, rx in PRIVATE if rx.search(rel)]
+        if named:
+            fail("Safety", "private prefix #%d in a path" % named[0])
         if rel.endswith("/"):
             continue
         text = read(root, rel).decode("utf-8", "replace")
-        for prefix in private:
-            match = re.search(prefix, text, re.I)
+        found = [("private prefix #%d" % k, rx.search(text)) for k, rx in PRIVATE]
+        found += [(group, re.search(p, text)) for group, patterns in groups() for p in patterns]
+        for kind, match in found:
             if match:
-                fail("Safety", "private prefix %r in %s: %r" % (prefix, rel, match.group(0)[:40]))
-        for group, patterns in (("secret", SECRETS), ("obfuscation or encoded text", OBFUSCATION), ("instruction aimed at the agent", AGENT_AIMED + INJECTION),
-                               ("dangerous command", DANGEROUS)):
-            for pattern in patterns:
-                match = re.search(pattern, text)
-                if match:
-                    fail("Safety", "%s in %s: %r" % (group, rel, match.group(0)[:40]))
+                fail("Safety", "%s in %s, line %d" % (kind, where(rel), line_of(text, match)))
 
 
 def note_shell(root, files):
     """Agensi's scan fails shell=True. Check commands are the repo's own strings, so it stays, and the listing says so."""
     hits = [rel for rel in files if rel.endswith(".py") and "shell=True" in read(root, rel).decode("utf-8", "replace")]
     if hits:
-        print("NOTE: Agensi's scan will flag shell=True in: " + ", ".join(hits))
+        print("NOTE: Agensi's scan will flag shell=True in: " + ", ".join(where(h) for h in hits))
 
 
 def check_pack(root):
@@ -354,23 +417,27 @@ def check_pack(root):
 
 def check_disclosure(root, files, listing):
     said = " ".join(listing.get("commands", [])).split()
-    wanted = set()
+    wanted, hosts, texts = {}, {}, {}
     for rel in files:
+        if rel.endswith("/"):
+            continue
+        texts[rel] = text = read(root, rel).decode("utf-8", "replace")
         if rel.endswith(".py"):
-            wanted |= set(re.findall(r"add_parser\(\"([a-z-]+)\"", read(root, rel).decode("utf-8", "replace")))
+            for name in re.findall(r"add_parser\(\"([a-z-]+)\"", text):
+                wanted.setdefault(name, []).append(rel)
         if re.fullmatch(r"skills/[^/]+/SKILL\.md", rel):
-            wanted |= set(re.findall(r"^## `([a-z-]+)", read(root, rel).decode("utf-8", "replace"), re.M))
-    for name in sorted(wanted):
-        if name not in said:
-            fail("Disclosure", "command %r is not in listing.commands" % name)
-    hosts = set()
-    for rel in files:
-        if not rel.endswith("/") and rel != "listing.json":
-            hosts |= set(re.findall(r"https?://([A-Za-z0-9.-]+)", read(root, rel).decode("utf-8", "replace")))
-    hosts -= {"example.com", "example.test"}
-    for host in sorted(hosts):
-        if host not in " ".join(listing.get("network", [])):
-            fail("Disclosure", "host %s is not in listing.network" % host)
+            for name in re.findall(r"^## `([a-z-]+)", text, re.M):
+                wanted.setdefault(name, []).append(rel)
+        if rel != "listing.json":
+            for host in re.findall(r"https?://([A-Za-z0-9.-]+)", text):
+                hosts.setdefault(host, []).append(rel)
+    for kind, values, after in (("command", wanted, " is not in listing.commands"), ("host", hosts, " is not in listing.network")):
+        for value in sorted(values):
+            if (value in said if kind == "command" else value in {"example.com", "example.test"} or value in " ".join(listing.get("network", []))):
+                continue
+            bad = [r for r in values[value] if hit(texts[r])]  # withheld when a file it came from holds a match; that file is named
+            fail("Disclosure", kind + " ", repr(value) if kind == "command" else value, after, source=texts[bad[0]] if bad else None,
+                 origin=where(bad[0]) if bad else "")
     if not listing.get("writes"):
         fail("Disclosure", "listing.writes is empty")
     if not listing.get("network"):
@@ -383,7 +450,7 @@ def version_of(root):
     except OSError:
         text = ""
     if not re.fullmatch(r"\d+\.\d+\.\d+", text):
-        fail("Version", "VERSION must hold one number like 1.2.3, not %r" % text[:20])
+        fail("Version", "VERSION must hold one number like 1.2.3, not ", repr(text[:20]), source=text)
     return text
 
 
@@ -391,7 +458,7 @@ def check_inventory(root, files):
     """Every skill folder in the tree ships a SKILL.md, so none is left out of the package."""
     for name in sorted(os.listdir(os.path.join(root, "skills"))):
         if os.path.isdir(os.path.join(root, "skills", name)) and "skills/%s/SKILL.md" % name not in files:
-            fail("Frontmatter", "skills/%s has no SKILL.md, so it would not ship as a skill" % name)
+            fail("Frontmatter", "%s has no SKILL.md, so it would not ship as a skill" % where("skills/" + name))
 
 
 def manifest(root, files, version):
@@ -455,6 +522,7 @@ def main():
         print("REFUSED: the time bound must be 1 to 86400 seconds, not %d" % seconds)
         return 2
     arm(seconds)
+    load_private()
     root = os.path.abspath(args.root)
     files = walk(root)
     wait_on('the frontmatter checks')
@@ -465,10 +533,10 @@ def main():
     check_listing(listing)
     wait_on('reading the shipped files')
     check_files(root, files)
+    wait_on('the safety scans')
+    check_safety(root, files)  # before the scripts run, so a hanging or failing script can't hide a match
     wait_on('the script checks')
     check_scripts(root, files)
-    wait_on('the safety scans')
-    check_safety(root, files)
     wait_on('the disclosure checks')
     check_disclosure(root, files, listing)
     check_pack(root)
@@ -479,12 +547,27 @@ def main():
         print("PASS: %d files, the static rules hold" % len(files))
         return 0
     out = args.out or "dist/agent-workflow-template-v%s.zip" % version
-    wait_on("writing the ZIP " + out)
+    wait_on("writing the ZIP " + where(out))
     build(root, files, out, version)
     note_shell(root, files)
-    print("PASS: %d files, ZIP at %s (%d bytes), version %s" % (len(files), os.path.abspath(out), os.path.getsize(out), version))
+    print("PASS: %d files, ZIP at %s (%d bytes), version %s" % (len(files), where(os.path.abspath(out)), os.path.getsize(out), version))
     return 0
 
 
+def unexpected(error):
+    """An uncaught error's one stderr line: its type, and its message only when that holds no match and no absolute
+    path (a traceback carries local paths and file text, so none is ever printed)."""
+    try:
+        text = str(error)
+        shown = text if text and not hit(text) and not re.search(r"(^|[\s'\"(=])(/|~/|[A-Za-z]:[\\/])", text) else "details withheld"
+        return "ERROR (unexpected): %s: %s" % (type(error).__name__, shown)
+    except Exception:  # the scan itself failed: a constant line
+        return "ERROR (unexpected): details withheld"
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception as error:  # not BaseException: SystemExit (argparse) and os._exit in stop() pass through
+        print(unexpected(error), file=sys.stderr, flush=True)
+        sys.exit(4)

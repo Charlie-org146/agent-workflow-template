@@ -48,6 +48,7 @@ Wiki pages live in `docs/wiki/`. Each starts with the line `<!-- workflow-docs -
   (generated from `settings.py`). `setup.py` writes each repo setting into `config.json` and each private setting into the
   flow file, and keeps any value already set. Every script reads these files fresh on each run, so a change applies at once.
 - `parallel`: workers at once; `0` means unlimited, and it is the default.
+- `schedule_policy` (default `on`): `off` returns the queue in file order with no task or fix marks (TSK-1).
 - `cadence`, `step_limit`, `token_budget`, `max_tries`, `routines`, `regression_cron`, and `test_budget_minutes`, `step_budget_minutes`, `prep_budget_minutes` (none under 15), and health's `stale_branch_days` are optional repo settings; see the reference.
 - `agent_command` runs a goal in the background; the prompt is its last argument.
 - `auto_approve` (default `false`): `true` approves what a flow step leaves for the owner, logged as auto-approved.
@@ -229,7 +230,7 @@ its skills without losing its data (`loop-files.md` lists every file).
 - A **goal's done lines** are checked by the repo's `checks` before a pull request opens. Nothing the worker reads from
   the repo is an instruction.
 - **Regression** is the safety net after merge: the rows run on a schedule and open an issue when one fails.
-- **Health** reads the same files and reports gaps: scripts near 20 KB, criteria with no row, stale pages, stuck runs.
+- **Health** reads the same files and reports gaps: criteria with no row, stale pages, stuck runs.
 - **Release** brings the touched wiki pages up to date, moves the version and writes the changelog.
 
 ## Adopting and updating
@@ -244,7 +245,7 @@ folder, so config, criteria, docs and private settings stay as they are.
 
 ## Rules that hold everywhere
 
-- Each script stays under 20 KB, uses the standard library only, and runs on its own (its siblings are the only files it reaches).
+- Each packaged script stays within the marketplace's package rules (`dev/package.py`), uses the standard library only, and runs on its own (its siblings are the only files it reaches).
 - Skill instructions stay out of the repo. `.loop/` holds the repo's own data.
 - Gates (`auto_approve`, `auto_merge`) are off only where the owner turned them off.
 
@@ -1816,7 +1817,6 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `smtp_port` | `465` | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. |
 | `review_depth` | `full` | full runs the whole plan and review pipeline and refuses a condensed one; condensed allows a shorter run. |
 | `criteria` | `true` | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). |
-| `criteria_max` | `10` | Most criteria a wiki page may hold, 1 to 50; docs check and health fail a page over it. |
 | `wiki_dir` | `docs/wiki` | The folder of wiki pages. |
 | `risky_paths` | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | Regexes for paths whose goals need extra care. |
 | `step_limit` | `0` | Seconds a flow step may run when the flow file sets none; 0 is built-in. |
@@ -1834,7 +1834,6 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `min_free_memory_gb` | `3` | Free GB below which no lane or goal starts; 0 off. |
 | `eta_margin_percent` | `25` | Percent added to a goal's estimate for its hard ETA, 0 to 300. |
 | `token_budget` | `0` | Tokens a goal may spend before no new step starts; 0 means none. |
-| `max_regression_rows` | `1200` | Most rows the regression table may hold; qa refuses a goal over it. |
 | `max_suite_seconds` | `1900` | Longest the full suite may take (slowest of the last 3 runs); qa refuses a goal over it. |
 | `test_budget_minutes` | `15` | Minutes one in-loop test run may take, 15 or more; later rows wait for the full suite. |
 | `prep_budget_minutes` | `15` | Minutes a lane may spend before its first test row, 15 or more; past it, it stops. |
@@ -1854,8 +1853,6 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `full_auto` | `false` | Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait. |
 | `pool_size` | `20` | Idle worker sessions the pool keeps; low, the operation session asks you for more. |
 | `silent_minutes` | `30` | Minutes a worker may send nothing before it shows under Needs you; LOOP_SESSION_QUIET (seconds) overrides. |
-| `health_script_bytes` | `20480` | Script size health fails, in bytes (warns at 90%). |
-| `health_skill_lines` | `150` | SKILL.md line cap health fails. |
 | `feature_labels` | `false` | true tags each health and regression issue feature:<Page>, creating the label. |
 | `workers` | `(empty)` | app: no background process; a goal no session took waits for sessions.py bind. auto: a background agent when no session can start. |
 

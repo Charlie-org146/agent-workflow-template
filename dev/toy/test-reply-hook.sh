@@ -284,7 +284,6 @@ rm -rf .claude
 WT="$C/loop/worktrees/copy"; rm -rf "$WT"; mkdir -p "$WT"; cp -R "$here/skills" "$WT/skills"
 python3 "$WT/skills/workflow-setup/scripts/setup.py" --reply-hook > "$F/i6.out" 2>&1; i6=$?
 check "setup refuses to install a hook from a goal worktree's copy" '[ $i6 = 1 ] && grep -q "^REFUSED: .*worktree" "$F/i6.out" && [ ! -e .claude/settings.local.json ]'
-check "every script stays under 20 KB" '[ $(wc -c < "$H") -lt 20480 ] && [ $(wc -c < "$SETUP") -lt 20480 ]'
 
 [ $fails = 0 ] && echo "ALL PASS" || echo "$fails FAILED"
 [ $fails = 0 ]

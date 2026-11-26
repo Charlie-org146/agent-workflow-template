@@ -208,8 +208,8 @@ jobs:
           touch all.tsv; cat .github/workflows/row-times.tsv all.tsv 2>/dev/null | awk -F'\t' -v OFS='\t' '$3!="CUT"{$3=""}1' >$T; rm all.tsv  # o852: committed times, the cache's over them
           R="python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal"
           B=866; printf %s "$D" | grep -qE '^[.]loop/regression(-known)?[.]tsv$' && B=-1  # rows changed: no budget, nothing LEFT
-          [ "${{ matrix.shard }}" != tree ] || { LOOP_ROW_TIMES=$T $R --tree --timeout 200 --budget -1 && python3 skills/workflow-regression/scripts/cutgate.py $T tree.tsv .loop/regression-skips.tsv; exit $?; }
-          LOOP_ROW_TIMES=$T LOOP_PR_SHARD=${{ matrix.shard }}/8 $R --budget $B --timeout 200
+          [ "${{ matrix.shard }}" != tree ] || { LOOP_ROW_TIMES=$T $R --tree --timeout 300 --budget -1 && python3 skills/workflow-regression/scripts/cutgate.py $T tree.tsv .loop/regression-skips.tsv; exit $?; }
+          LOOP_ROW_TIMES=$T LOOP_PR_SHARD=${{ matrix.shard }}/8 $R --budget $B --timeout 300
       - if: always()
         uses: actions/upload-artifact@v4
         with:

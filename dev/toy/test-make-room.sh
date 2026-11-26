@@ -235,12 +235,4 @@ for pair in "fit fit.py" "delivery_fit fit.py" "routing routing.py" "role role.p
   out="$(diff <(grep -v '^extra:' <<<"$bl") <(grep -v '^extra:' <<<"$hl") | head -4)"
   check "loader toy: $2 loaded as '$1' without registration gives the base's results, its lazy import works, every imported module lies in its tree, and the sibling module loaded" '[ "$(grep -v "^extra:" <<<"$hl")" = "$(grep -v "^extra:" <<<"$bl")" ] && grep -q "inside:True" <<<"$hl" && grep -q "^extra:sibling:True" <<<"$hl" && ! grep -q "Traceback\|Error" <<<"$hl" && { [ "$2" != fit.py ] || grep -q "^monitor:module" <<<"$hl"; }'
 done
-for f in $(python3 - "$MAN" <<'PY'
-import json, sys
-for m in json.load(open(sys.argv[1]))["moves"]:
-    if m.get("base"):
-        print(m["script"], m["script"].rsplit("/", 1)[0] + "/" + m["module"] + ".py")
-PY
-); do out="$f $(wc -c < "$here/$f")"; check "$f is at most 13,000 bytes and under 20,480" '[ "$(wc -c < "$here/$f")" -le 13000 ]'; done
-check "move-check.py stays inside its byte budget (at most 18,500)" '[ "$(wc -c < "$here/dev/toy/move-check.py")" -le 18500 ]'
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

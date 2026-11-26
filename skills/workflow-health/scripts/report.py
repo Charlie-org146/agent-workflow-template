@@ -20,10 +20,10 @@ GROUPS = (
     ("freshness", "Freshness", "my angle when I come back: is anything out of date?", ("nightly", "unreleased", "finding-age")),
     ("tests", "Tests", "a skeptic's angle: do the tests prove anything?", ("seen-red", "skipped", "network")),
     ("performance", "Performance", "my clock's and my wallet's angle: is it fast and cheap enough?",
-     ("cost", "test-time", "rows-cap", "suite-cap", "check-time")),
+     ("cost", "test-time", "suite-cap", "check-time")),
     ("security", "Security and privacy", "a leak's angle: can anything private escape?",
      ("private", "scan-hook", "hooks", "workflow-permissions")),
-    ("size", "Size", "a maintainer's angle: can someone still read this?", ("scripts", "skill-lines", "requirements-per-page")),
+    ("size", "Size", "a maintainer's angle: can someone still read this?", ()),  # principle 5: no rules by design
     ("hygiene", "Hygiene", "a janitor's angle: is anything left lying around?",
      ("findings", "waiting", "branches", "eta-missing", "eta-extended", "eta-overrun", "eta-unmarked", "eta-missed", "eta-rate", "statement-wrong", "worktrees", "local-branches", "idle-sessions")),
     ("adoption", "Adoption", "another repo's angle: would this work installed fresh?",
@@ -44,7 +44,7 @@ RULES = tuple(rule for g in GROUPS for rule in g[3])  # every rule; each needs a
 ALIASES = {"criteria": "requirements", "cost": "performance"}  # older --group names, kept for one release
 # older row labels -> their rule
 LABELS = {"sync": "rows", "done-lines": "done", "open": "findings", "run": "waiting", "merged": "branches",
-          "branch": "branches", "time": "cost", "tokens": "cost", "limit": "scripts"}
+          "branch": "branches", "time": "cost", "tokens": "cost"}
 
 
 MATRIX_DAYS = 7
@@ -185,6 +185,8 @@ def build(rows, asked=None, ran_rules=None):
         if group:
             out.append(heading(name, name not in ran))
             out += [line_of(item) for item in group]
+        elif name == "size" and name in ran:  # never counted as a passed check
+            out += [heading(name), "size: no rules (retired by principle 5)"]
     return out + [verdict], counts, green, verdict, [shown(n) for n in ran], [shown(n) for n, _ in skipped], rows
 
 

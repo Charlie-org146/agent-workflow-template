@@ -19,6 +19,7 @@ import board_lines
 from board_lines import gather, shown
 import govern_hook
 import graph
+import schedule_load as sl
 import live_board as lb
 import machines
 import mend
@@ -108,7 +109,7 @@ def render(root=None, at=None, stamp=None):
         "folder", "cfg", "runs", "found", "why", "taken", "states", "live", "queue"))
     broken = []
     pod = [mine] + others(bd.followed(), root, at, stamp, broken)
-    ready, _ = graph.ready(queue, {r["slug"]: r for r in runs}, graph.parallel_of(cfg), taken, why)
+    ready, _ = sl.apply(graph.ready(queue, {r["slug"]: r for r in runs}, graph.parallel_of(cfg), taken, why), None)
     rows = lb.tally(pod, at)
     counts = lambda *names, live=None: sum(s in names and live in (None, v) for _, s, v in rows)
     parked, old = counts("running", "held", "silent", "waiting", live=False), [k for k, s, v in rows if s in ("failed", "stopped") and not v]  # TD481, TD502
@@ -156,14 +157,14 @@ def render(root=None, at=None, stamp=None):
         out += ["", "Archived (worker sessions freed):"] + ["- " + line for line in gone[-8:]]
     blocks = []
     for g in pod:
-        held = {w["slug"]: why for w, why in graph.ready(g["queue"], {r["slug"]: r for r in g["runs"]}, graph.parallel_of(g["cfg"]), g["taken"], g["why"])[1]}
+        held = {w["slug"]: why for w, why in sl.apply(graph.ready(g["queue"], {r["slug"]: r for r in g["runs"]}, graph.parallel_of(g["cfg"]), g["taken"], g["why"]), None)[1]}
         item = lambda r, **kw: dict(slug=r["slug"], machine=r.get("machine") or graph.machine_name(), release=release_of(g["root"], r["slug"]),
                                     feature=feature_of(g["root"], r.get("goal"), r), **kw)
         items = [item(r, mark=g["states"][r["slug"]] if g["states"][r["slug"]] != "done" else "awaiting merge", depends=list(r.get("waits_on") or []),
                       owner=graph.foreign(r), left=bs.left_time(r, g["runs"], at), hard=auto.eta_left(auto.eta_seen(g["root"], r), at),
                       row="%s | %s | %s %d/8" % ("PR " + r["pr"].rsplit("/", 1)[-1] if r.get("pr") else "no PR yet", cell(lb.worker_of(r, g["taken"]), 30), lb.FLOW[lb.current(r)], lb.current(r) + 1),
                       bars=board_lines.progress(g["root"], r["slug"], r, lb.current(r), [])) for r in g["live"]]
-        blocks.append((g["name"], items + [item(q, mark="queued", depends=q["depends"], left=bs.left_time(dict(q, status="queued"), g["runs"], at), why=held.get(q["slug"]), bars=board_lines.progress(g["root"], q["slug"], None, 0, q["done"])) for q in g["queue"]]))
+        blocks.append((g["name"], items + [item(q, mark="queued", depends=q["depends"], left=bs.left_time(dict(q, status="queued"), g["runs"], at), why=held.get(q["slug"]), cell=q.get("cell", ""), bars=board_lines.progress(g["root"], q["slug"], None, 0, q["done"])) for q in g["queue"]]))
     out += ["", "Dependencies"]
     spot = len(out)
     out += ["", "Needs you"]
@@ -302,6 +303,7 @@ def main():
     args = parser.parse_args()
     args.since and bs.timed(args.since, "--since %r")
     lines = render(stamp=args.since or None)
+    lines[1:1] = sl.load(bs.git("rev-parse", "--show-toplevel"))["banner"]
     print("\n".join(lines))
     try:  # an op-tokens.tsv row (proctree.op_append) for the quiet hook; never fail a check-in
         import proctree
@@ -314,4 +316,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main() or sl.STATUS)

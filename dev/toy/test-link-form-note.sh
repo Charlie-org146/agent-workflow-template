@@ -60,7 +60,7 @@ EOF
 }
 python3 "$here/skills/workflow-setup/scripts/setup.py" --bare >/dev/null
 git switch -q main; git merge -q --no-edit workflow-setup
-python3 -c "import json; c = json.load(open('.loop/config.json')); c['criteria'] = True; c.pop('criteria_max', None); json.dump(c, open('.loop/config.json', 'w'), indent=2)"
+python3 -c "import json; c = json.load(open('.loop/config.json')); c['criteria'] = True; json.dump(c, open('.loop/config.json', 'w'), indent=2)"
 mkdir -p "$FAKE_GH_DIR" docs/wiki skills/toy
 printf '## Command map\n\n| Ask | Runs |\n|---|---|\n| `/toy median LIST` | `python3 scripts/calc.py median LIST` |\n' > skills/toy/SKILL.md
 printf 'Delivery\tcalc.py\nHome\tREADME.md\n' > .loop/docs.tsv
