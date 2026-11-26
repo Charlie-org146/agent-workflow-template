@@ -1,6 +1,6 @@
 # Plan: v110-lvl-retire-old-words (G4 of Test levels), on origin/main 7c6d69ffd
 
-The owner ruled the two open readings (o1034, "approve the G4 readings by ID"): line 5 holds minor and major releases only, and line 3's one record-proved row is excused by its ID. The build still waits for the owner-pending safety items and for A, G1, G2 and G3.
+The owner ruled the two open readings (o1034, "approve the G4 readings by ID"): line 5 holds minor and major releases only, and line 3's one record-proved row is excused by its ID. The build still waits for the owner's record on the safety items below and for A, G1, G2 and G3.
 
 Goal: one set of level words, L0, L1 and L2. Done lines (frozen, in the goal file): (1) the goal_levels setting, the PR workflow's level map and the Regression runbook's labels use L0, L1, L2 and none of land, nightly, covered, draft; (2) a draft row's mark is in its own state column, it carries the level it will have, every level lists it as "not run: draft", and a requirement held only by drafts shows "not enforced"; (3) a covered row takes the highest level of the rows its list names, is green when they all are, and a list that doesn't resolve to row IDs is refused; (4) every script stays under 20,480 bytes, no test is loosened, no row turns red, committed text never names the service repo; (5) a release cut waits for a green full (L2) run.
 
@@ -39,13 +39,20 @@ Toys this goal edits or adds, with their size on 7c6d69ffd:
 - dev/toy/test-release-ci.py: 5,370 bytes
 - dev/toy/test-level-words.py and dev/toy/test-l2-wait.py: new
 
-## Owner-pending safety items: the owner's own words before the build
-Relayed words do not count (TD2002). All of these are pending:
-- release.yml's new permission "actions: read" (a NEW workflow permission);
-- release.yml's new trigger: it also runs when a regression run completes on main (a scheduled or a dispatched run; D5.5 a);
-- this goal's DESTRUCTIVE class (the release path; o996 is tagged destructive). D5 also changes what may publish a release: autorelease.py, release.py cut, promote and release.yml;
-- this goal's SECURITY class (workflow files).
-Any other new workflow permission the build finds it needs is added to this list and asked the same way.
+## Safety items for the owner: the owner's own words before the build
+Staged when the plan is recorded (TD2066); relayed words do not count (TD2002). No build before that owner record exists. One line each:
+- S1 (.github/, security): release.yml gets a new permission, "actions: read", to read the full test run's result.
+- S2 (.github/, security): release.yml also starts when a regression run completes on main, scheduled or dispatched, and in that run it can create a release with the write permission it already has (D5.5 a).
+- S3 (.github/, destructive): release.yml changes when it publishes: a minor or major waits for its own green full run, the release's size comes from every pull request merged since the last release, and the job fails if it can't read them.
+- S4 (destructive): the merge step's own release (autorelease.py) creates a minor or major at a commit with its own green full run, or stops without publishing.
+- S5 (destructive): release.py cut refuses a minor from a goal branch.
+- S6 (destructive): review.py promote refuses a major whose commit has no green full run of its own.
+- S7 (.github/, security): regression-pr.yml, the pull request check, runs the L1 level under its new name, and ci_levels no longer changes it.
+- S8 (.github/, security): regression.yml, the scheduled test workflow, is regenerated so it knows the new level names and drafts; this goal changes none of its triggers or permissions.
+Any other new workflow permission, trigger or release behavior the build finds it needs is added to this list and asked the same way.
+
+## Reviewed pages
+A page holds a Reviewed requirement when a requirement line on it is marked "**Reviewed <date>**". On 7c6d69ffd none of the wiki pages in Files has one: Regression.md, How-to-use-Regression.md and How-to-use-Setup.md; the generated Tests page, which new rows change, has none either. The new rows name this goal's own done lines, so no requirement page's tests table gains a row; the changed row goal-levels-nightly is shown on Regression.md, and del-16-linked on no requirement page. So no Reviewed page is expected in the diff. If the diff would change one, the build stops and says so, and the pull request then also waits for the owner at merge.
 
 ## Order and dependencies
 The build waits for no-size-cap A and comes after G1 (the record file and levels.py), G2 and G3 (the L2 run and its verdict) (TD2015). The G2 dependency is real: G2 owns the L0 and L1 selection that goal_levels maps to, and its golden toy asserts that the PR template keeps "run @LEVELS@", which D2 changes. This plan is written against those three PLANS; before the build, every name below is re-read on main, and a changed interface stops the build for a plan amendment.
