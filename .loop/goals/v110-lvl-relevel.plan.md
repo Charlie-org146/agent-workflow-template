@@ -12,10 +12,10 @@ Lines: 1100
 Gates: reading the regression table (new refusals), the one re-levelling, reading the size table
 Classes: none
 
-**Outside the frozen touches (operation adds them, one reason each):** `.loop/regression-relevel.tsv`,
-`.loop/regression-risk.tsv` and `.loop/regression-relevel-input.tsv` (the record and its two inputs),
-`skills/loop-files.md` (the file formats and refusal codes), `listing.json` (the new commands must be listed),
-`docs/wiki/Tests.md` (re-rendered when rows are added).
+**Added to the frozen touches by operation:** `.loop/regression-relevel.tsv`, `.loop/regression-risk.tsv` and
+`.loop/regression-relevel-input.tsv` (the record and its two inputs), `skills/loop-files.md` (the file formats and
+refusal codes), `listing.json` (the new commands must be listed), `docs/wiki/Tests.md` (re-rendered when rows are
+added).
 
 ## 1. Data files
 - `.loop/regression.tsv` keeps its eight columns. G1 adds rows only; it edits no existing row.
@@ -28,7 +28,8 @@ Classes: none
   Example: `eta-freeze  land  L1  none            default`.
 - **Risk data**, `.loop/regression-risk.tsv`, read on every table read: `kind, key, tag, why`.
   `kind` is `requirement` (a Principle 6 requirement id, including the ids it absorbs), `row` (a hand-tagged row
-  id) or `label` (an issue label that means security or private). Section 8 lists the first two.
+  id) or `label` (an issue label that means security or private). Section 8 lists them. A repository with no
+  Principle 6 requirement says so with one line, `requirement`, `-`, `none` and why.
 - **Re-levelling input**, `.loop/regression-relevel-input.tsv`, read only by `relevel`: the `covers` list of each
   covered row (section 7), and for a defect row whose link is a bare number, `own <number>` (an issue of this
   repository). It never holds another repository's name or address.
@@ -58,13 +59,14 @@ row, the file and line, the value, the fix and who makes it.
 An unexpected failure prints one redacted line and says nothing was written. One bad entry stops every command that
 reads the table; the repair commands of section 5 still run.
 
-**A covered row's level** is the highest level among its covers (at least L1 when the row is tagged). Reads use the
-computed value; every write by the tool records it again.
+**A covered row's level** is the highest level among its covers (at least L1 when the row is tagged; every cover of
+a tagged covered row is tagged too). Reads use the computed value; every write by the tool records it again. A covered
+row never runs: it carries no seconds or command hash, and the L0 total and time rules skip it.
 
 **A covered row with no proving row** is excused only by a fixed entry in the new module, tied to the row's id, goal
 and command (TD2022, by ID). The entry names the owner record, records the row at L1, and prints
-`EXCEPTED <id>: covered with no row list, by <record>` each time it applies. The entry is `done-pkg-secret-print-3`.
-`done-gap-wave1-small-4` (section 9, open point 1) takes the same form once ruled.
+`EXCEPTED <id>: covered with no row list, by <record>` each time it applies. One such entry is
+`done-pkg-secret-print-3`; section 9 says what holds for `done-gap-wave1-small-4`.
 
 ## 4. Which readers enforce it
 The central reader (`regression.read_rows`) enforces sections 2 and 3: every `regression.py` command reads through
@@ -74,7 +76,7 @@ changed by G1 and do not refuse (section 11 names who takes them).
 
 ## 5. Writing and repairing
 - The table and the record are one update under the table's one write lock: read again, build both, check both, then
-  write the record first and the table second. No reader sees half of it. An interrupted write is completed by running
+  write the record first and the table second. No reader sees half of it, including one that reads while the write is under way. An interrupted write is completed by running
   the same command again, and the refusal that follows says so.
 - Drafting a row (`sync --write`) writes its row and its entry in that same update.
 - Repair and list commands read without refusing, check only what they change, and list what is still wrong.
@@ -88,25 +90,31 @@ All new parsers and handlers live in the new module and register through one cal
 with what it writes, and `SKILL.md` shows one example each.
 - `relevel [--dry-run] [--input FILE] [--risk-for ROW=TAG --owner-record ID]...` (the last pair may repeat).
 - `level ID [--test-level L] [--risk R] [--covers A,B] [--remove] [--rename NEW] [--retime]`.
-- `levels` (lists levels and problems), `levels --check` (offline: exit 0 when every entry is valid, exit 2 listing
-  what is missing or wrong; it reads no issue and writes nothing) and `levels --fill` (adds missing entries of
-  non-defect rows offline, from the same rules).
+- `levels` (lists levels and problems), `levels --check` (offline; it reads no issue and writes nothing; exit 0 with
+  "valid" when every entry is valid, or "not levelled" for a table that is not; exit 2 listing what is missing or
+  wrong, each marked as a missing entry to fill or a stored entry to repair) and `levels --fill` (adds missing entries
+  of non-defect rows offline, from the same rules). `relevel --dry-run` previews a full fill, defect labels included.
 - `add` gains `--test-level`, `--risk` and `--covers`. Every documented `add` command keeps working: a new row that
   is not a defect gets L1 and the derived risk, and the command prints what it chose. Adding or relinking a defect
   reads its labels or refuses. `add --level` keeps its meaning (the old words, which still select what runs); its
-  help says so.
+  help says so, it is checked as before, and the record's `old` word is the word at the row's first entry and does
+  not follow later edits. On a table that is not levelled, `add` writes no record and behaves as before.
+- One L0 rule (section 7) applies to `relevel`, `add`, `level` and `level --retime`.
 - **Changing a row's command** moves it from L0 to L1. L0 again needs a new measurement of that command
   (`level ID --retime` runs it and records seconds and `cmdhash`). A script that slows down while its command stays
   the same is not detected.
 - A change to goal, category or link derives the risk again and never lowers it silently.
 
 ## 7. The re-levelling
-Run once by the build, on the table as it is then, with its output and command committed in the build record; every
-row gets an entry, none is dropped, reordered or edited. Running it again fills only missing entries.
+Run once by the build, on the table as it is then, with its command, output and counts committed in the build
+record; every row gets an entry, none is dropped, reordered or edited. Running it again fills only missing entries.
+That run is the proof of done line 3 on the real table; it depends on that day's table, times and issue labels and is
+not repeated by a check.
 - `land` becomes L1 by default. A row is **eligible for L0** when its measured time is above zero and under 5
   seconds, its command and the scripts it names (followed three deep, by a word list in the module) use no network
   and no toy repository, and it is not tagged. Eligible rows are taken fastest first (ties by id) while the total
-  stays at 45 seconds or less. The output gives the count excluded by each rule and the L0 ids.
+  stays at 45 seconds or less. The output gives the count excluded by each rule, why each otherwise eligible row was
+  excluded (the matched word or rule), and the L0 ids.
 - `nightly` becomes L1 when its measured time fits the pull-request check's per-row time limit (the setting the
   check uses) or the row has a limits-file entry; otherwise L2.
 - `covered` takes the highest level of its covers. A row without a measured time starts at L1.
@@ -120,7 +128,9 @@ row gets an entry, none is dropped, reordered or edited. Running it again fills 
 
 ## 8. Risk data (Principle 6)
 Requirement rules: DEL-9 (and the ids it absorbs) means `private`; GRD-4, GRD-5 and GRD-6 (and the ids they absorb)
-mean `security`; `private` wins when both apply. The list is pinned in the risk data, not read from the wiki on each
+mean `security`; `private` wins when both apply, including between a requirement tag and a defect label. One
+function derives a row's tag for every command. A label whose name holds "security" means `security`; one holding
+"private" or "privacy" means `private`; the labels found are written into the risk data. The list is pinned in the risk data, not read from the wiki on each
 read; one check compares it with the Principles page, so a change to the page alone is caught only when that check
 runs. Defect rows take their tag from the pinned label list.
 
@@ -162,14 +172,13 @@ A listed id no longer in the table at the build is removed from the list and nam
 | done-docs-v2-5 | doc18-howto-missing |
 | done-agent-routing-1 | agent-routing |
 | done-pkg-secret-print-3 | none: excused by ID (section 3) |
-| done-gap-wave1-small-4 | none: open point 1 |
+| done-gap-wave1-small-4 | none: see the sentence below |
 `apply-rerender-blocks` is on the known-red list; a row it covers is not counted as proven while it is red. The record
 states which rows prove a covered row; it does not state that they prove every word of its line, and the pull request
 says so.
 
-**Open points for operation before the reviews:**
-1. `done-gap-wave1-small-4` states rules that the no-size-cap goal has since removed, and no row proves it.
-   Recommended: excuse it by ID like `done-pkg-secret-print-3`, naming the record that removed those rules (o988).
+**done-gap-wave1-small-4:** it is excused by ID like `done-pkg-secret-print-3` (section 3), naming o988, the record
+that removed the rules it states.
 
 ## 10. Rollout and merges
 - Once G1 is on main, a branch that adds rows carries their record entries.
@@ -187,10 +196,11 @@ read refuses once with `SIZING_BAD_LEVELS`, naming the size and the missing leve
 The release cut's own read of the table is unchanged and still reports its read-failure code beside the reason. The
 sizing script imports no regression module.
 
-**Left to later goals, and named in the pull request:** the record file instead of the page's column, with two sets of
-level words until the old ones are retired; the old words in the `goal_levels` setting, the pull-request level map
-and the runbook labels; the draft state column; "a covered row is green when all its covers are"; anything that uses
-a size's levels, including the large goal's one L2 run; the scheduled run's selection and the other readers.
+**Left to later goals, and named in the pull request** (G2: running rows by level and the cover; G3: the scheduled
+run; G4: retiring the old words): the record file instead of the page's column, with two sets of level words until G4;
+the old words in the `goal_levels` setting, the pull-request level map and the runbook labels (G4); the draft state
+column (G4); "a covered row is green when all its covers are" (G2); anything that uses a size's levels, including the
+large goal's one L2 run (G2); the scheduled run's selection (G3); the other readers that parse the table (G2 to G4).
 
 ## 12. Stale results and the local cover
 The new module is added to the runner's list of files whose change makes cached results and plans invalid. The local
@@ -198,7 +208,8 @@ cover never skips a row recorded at L0: L0 always runs locally.
 
 ## 13. Modules and size
 New module `levels.py`; a second new module `levels_read.py` (the re-levelling and the evidence reading) only if the
-first would reach the 20,480-byte limit. Every packaged script stays under it. `regression.py` is nearly full: the
+first would reach the 20,480-byte limit. Each runs on its own and imports only the standard library or its own
+folder. Every packaged script stays under it. `regression.py` is nearly full: the
 `split` function moves whole to `completion.py` with an import back; the build measures every touched script before
 and after, and if the hooks do not fit it moves another whole function and names it. No text is trimmed to make
 room. `lanes.merged` is not changed and `narrow.py` is not touched.
@@ -209,11 +220,13 @@ isolated clones with their own `.git` and HOME (TD1965). Fixtures name no other 
 | Row | Proves |
 |---|---|
 | `lvl-armed` | this repository's table and record are valid (`levels --check`) |
-| `lvl-table-refused` | done lines 1 and 2 and every refusal of section 3, including a missing entry and a missing record; repairs that run on a refused table; no tag lowered without a record; an interrupted write completed by running again; commands in section 6 |
+| `lvl-table-refused` | done lines 1 and 2 and every refusal of section 3, including a missing entry and a missing record; repairs that run on a refused table; no tag lowered without a record; an interrupted write completed by running again; a read during a write; a table that is not levelled reading as before; a change to the new module making cached results invalid; an L0 row never skipped by the local cover; the commands of section 6 |
 | `lvl-relevel-record` | done lines 3 and 4: every row of the input kept, each with one level and its old word and reason; the L0 limit with the total named; the L0 eligibility rules one by one; covered levels; defect evidence failures without any network; nothing partial written; no link or repository name in any written file |
 | `lvl-sizing-levels` | done line 5; the existing sizing check passes unedited |
 | package line | done line 6: package gate after every code commit, scripts under the limit, no test loosened, no row red, no committed text naming the service repository |
-Each new row has its own record entry (L1) and its first red date. The record run on the real table (done line 3) is
+Each new row names this goal's done line in its goal cell (`v110-lvl-relevel:N`), has its own record entry (L1) and
+its first red date; each new toy declares what it reads, and `lvl-armed` is chosen by a change to the table, the
+record, the risk data or the Principles page. The record run on the real table (done line 3) is
 done once in the build and committed with its command, output and counts; the check on fixtures stays reproducible.
 
 ## 15. Docs
@@ -221,10 +234,14 @@ done once in the build and committed with its command, output and counts; the ch
 re-rendered test page. No reviewed requirement text is edited.
 
 ## 16. Verify by hand (for the goal file at the pull request)
-In a disposable copy with no record and a stand-in for the issue reader: re-level it, break one entry's level and one
-Principle 6 tag, and read the table; then in the real repository run `levels --check` and compare the record's row
-count with the table's. For the size table: in a disposable clone, drop L1 from one size on its base branch and read
-the sizes.
+Commands run from `skills/workflow-regression/scripts/` as `python3 regression.py <command>`.
+1. In a disposable copy with no record and a stand-in for the issue reader: `relevel`, then clear one entry's level
+   and one Principle 6 tag and run `sync` (without `--write` it only reads and lists). Expect both rows refused by
+   name.
+2. In the real repository: `levels --check`. Expect "valid"; the record has as many lines as the table has rows.
+3. In a disposable clone: drop L1 from one size in the settings on its base branch, then run
+   `python3 skills/workflow-delivery/scripts/sizing.py size <slug>` with that goal's plan file and record present.
+   Expect a `SIZING_BAD_LEVELS` refusal naming the size and L1.
 
 ## 17. Time
 ETA 425 active minutes, time budget 240.
