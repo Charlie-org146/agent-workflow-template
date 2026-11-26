@@ -207,9 +207,9 @@
 | <a id="t-goal-commands-page"></a>goal-commands-page | requirement | DEL-19 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-21 |
 | <a id="t-goal-pr-push-retried"></a>goal-pr-push-retried | requirement | DEL-19 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-21 |
 | <a id="t-goal-pr-push-error"></a>goal-pr-push-error | requirement | DEL-19 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-21 |
-| <a id="t-cut-fails-checks"></a>cut-fails-checks | requirement | DEL-26 | PASS | 2026-11-24 | [CI 2026-11-24](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-24) | 2026-11-23 |
-| <a id="t-shard-fits-budget"></a>shard-fits-budget | requirement | DEL-26 | PASS | 2026-11-24 | [CI 2026-11-24](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-24) | 2026-11-23 |
-| <a id="t-cut-complete"></a>cut-complete | requirement | DEL-26 | PASS | 2026-11-24 | [CI 2026-11-24](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-24) | 2026-11-23 |
+| <a id="t-cut-fails-checks"></a>cut-fails-checks | requirement | DEL-26 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-23 |
+| <a id="t-shard-fits-budget"></a>shard-fits-budget | requirement | DEL-26 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-23 |
+| <a id="t-cut-complete"></a>cut-complete | requirement | DEL-26 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-23 |
 | <a id="t-skip-list-approved"></a>skip-list-approved | requirement | DEL-26 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-23 |
 
 ## Documentation
@@ -800,8 +800,8 @@
 | <a id="t-checkin-live-count"></a>checkin-live-count | requirement | done line checkin-live-count:1 | not run | - | local | 2026-11-20 |
 | <a id="t-pool-reconcile-ghosts"></a>pool-reconcile-ghosts | requirement | done line pool-reconcile:1 | not run | - | local | 2026-11-20 |
 | <a id="t-pool-ghost-health"></a>pool-ghost-health | requirement | done line pool-reconcile:2 | not run | - | local | 2026-11-20 |
-| <a id="t-tree-rules-first"></a>tree-rules-first | requirement | done line tree-rules-first:1 | not run | - | local | 2026-11-20 |
-| <a id="t-rows-pr-full"></a>rows-pr-full | requirement | done line rows-pr-full:1 | not run | - | local | 2026-11-20 |
+| <a id="t-tree-rules-first"></a>tree-rules-first | requirement | done line tree-rules-first:1 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-20 |
+| <a id="t-rows-pr-full"></a>rows-pr-full | requirement | done line rows-pr-full:1 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-20 |
 | <a id="t-root-ff-guard"></a>root-ff-guard | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
 | <a id="t-operation-id-not-worker"></a>operation-id-not-worker | requirement | done line restart-safe-3to5:1 | not run | - | local | 2026-11-20 |
 | <a id="t-release-fix-pr-releases"></a>release-fix-pr-releases | requirement | done line release-hold-race:1 | not run | - | local | 2026-11-20 |
