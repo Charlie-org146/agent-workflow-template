@@ -56,4 +56,15 @@ with tempfile.TemporaryDirectory() as tmp:
     check(tiers.closeness(tmp, rows, None, {}) == {k: (2, 0, 0) for k in ids}, "with no merge-base every row is the rest, in file order")
 os.environ["LOOP_ROW_TIMES"] = "/nowhere/t.tsv"  # a row that runs regression.py itself must not write this shard's times file
 check("LOOP_ROW_TIMES" not in actions.row_env(), "a row never inherits the shard's times file, so no row can overwrite its marks")
+handoff = ("_LOOP_LANE_NOTE", "_LOOP_LANE_QUEUED", "_LOOP_LANE_STARTED")  # lane.py sets these for the lane's own runner
+kept_before = {name: os.environ.get(name) for name in handoff + ("_LOOP_LANE_LABEL",)}
+os.environ.update({name: "/nowhere/lane" for name in handoff}, _LOOP_LANE_LABEL="x/g qa")
+given = actions.row_env()
+check(not [name for name in handoff if name in given], "a row never inherits a lane's note, queued or started path")
+check(given.get("_LOOP_LANE_LABEL") == "x/g qa", "and a row still gets the lane's label")
+for name, value in kept_before.items():
+    if value is None:
+        del os.environ[name]
+    else:
+        os.environ[name] = value
 sys.exit(1 if failed else 0)
