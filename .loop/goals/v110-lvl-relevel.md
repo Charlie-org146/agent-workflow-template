@@ -17,7 +17,14 @@ Frozen. A wrong done line needs a new goal.
 
 ## Verify by hand
 
-<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+Work in a throwaway copy: `git clone . /tmp/lvl-try && cd /tmp/lvl-try && git remote set-url --push origin DISABLED`. Never push from it.
+
+1. Run `python3 skills/workflow-regression/scripts/regression.py levels --check`.
+   Expect: a line starting `valid:` with the row count and the L0 seconds, under 45.
+2. In `.loop/regression-relevel.tsv`, empty the third cell (level) of the `eta-freeze` line and change the fourth cell (risk) of the `grd6-head-moved` line to `none`. Run `python3 skills/workflow-regression/scripts/regression.py sync`, then `git checkout -- .loop`.
+   Expect: `LEVELS_BAD_LEVEL eta-freeze` naming L0, L1 or L2, and `LEVELS_NO_RISK grd6-head-moved`.
+3. In `.loop/config.json`, add `"levels": ["L0"]` to the `medium` row of `checks_by_size`. Commit it, run `git update-ref refs/remotes/origin/main HEAD && git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main`, then run `python3 -c "import sys; sys.path.insert(0, 'skills/workflow-delivery/scripts'); import sizing; sys.excepthook = lambda k, e, t: print(e.args[0]); sizing.read_table()"`.
+   Expect: a line with `SIZING_BAD_LEVELS` naming size medium and L1.
 
 ## Notes
 
