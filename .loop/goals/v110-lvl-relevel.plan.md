@@ -7,7 +7,7 @@ Rulings built in: done line 3's rows are the table's rows when G1 builds, every 
 no new table column (no done line names one); a new module is allowed under the 20,480-byte packaged-script limit;
 the plan is rewritten with a new red team (o1032), planned now (o1036). This text replaces the earlier plan whole.
 
-Files: skills/workflow-regression/scripts/levels.py, skills/workflow-regression/scripts/levels_read.py (only if needed), skills/workflow-regression/scripts/regression.py, skills/workflow-regression/scripts/completion.py, skills/workflow-regression/scripts/lanes.py, skills/workflow-regression/scripts/lanes_cli.py, skills/workflow-regression/scripts/tiers.py, skills/workflow-delivery/scripts/sizing.py, skills/workflow-delivery/scripts/cover.py, skills/workflow-delivery/scripts/lanekit.py, skills/workflow-delivery/SKILL.md, skills/workflow-regression/SKILL.md, .loop/regression.tsv, .loop/regression-relevel.tsv, .loop/regression-risk.tsv, .loop/regression-relevel-input.tsv, dev/toy/lvl_fixture.py, dev/toy/lvl-armed.py, dev/toy/test-lvl-table.py, dev/toy/test-lvl-relevel.py, dev/toy/test-lvl-sizing.py, skills/loop-files.md, listing.json, docs/wiki/Tests.md
+Files: skills/workflow-regression/scripts/levels.py, skills/workflow-regression/scripts/levels_read.py (only if needed), skills/workflow-regression/scripts/regression.py, skills/workflow-regression/scripts/completion.py, skills/workflow-regression/scripts/lanes.py, skills/workflow-regression/scripts/lanes_cli.py, skills/workflow-regression/scripts/tiers.py, skills/workflow-delivery/scripts/sizing.py, skills/workflow-delivery/scripts/cover.py, skills/workflow-delivery/scripts/lanekit.py, skills/workflow-delivery/SKILL.md, skills/workflow-regression/SKILL.md, .loop/regression.tsv, .loop/regression-relevel.tsv, .loop/regression-risk.tsv, .loop/regression-relevel-input.tsv, dev/toy/lvl_fixture.py, dev/toy/test-lvl-armed.sh, dev/toy/test-lvl-table.py, dev/toy/test-lvl-relevel.py, dev/toy/test-lvl-sizing.py, skills/loop-files.md, listing.json, docs/wiki/Tests.md
 Lines: 1300
 Gates: reading the regression table (new refusals), the one re-levelling, reading the size table
 Classes: none
@@ -74,7 +74,7 @@ and command (TD2022, by ID). The entry names the owner record, records the row a
 | `regression.py` command | On a levelled table with problems |
 |---|---|
 | `run` (every form, so the pull-request check's shards too), `criteria`, `sync` and `sync --write`, `red` (every form) | refuses |
-| `add`, `level`, `levels --fill`, `relevel`, `relevel --dry-run` | reads without refusing, checks the rows it writes, refuses its own change if that row would be wrong, and lists the rest |
+| `add`, `level`, `levels --fill`, `relevel`, `relevel --dry-run` | reads without refusing, checks the rows it writes, refuses its own change if that row would be wrong, and lists the rest; `levels --fill` completes a pending write first, and the other writers refuse while one is left over, naming it |
 | `levels`, `levels --check` | reads without refusing and reports (`--check` exits 2) |
 | `workflow`, `reads` | do not use the table's rows and are unchanged |
 The runner and the local cover read through the refusing reader. The other readers that parse the table themselves,
@@ -85,8 +85,11 @@ including the scheduled run's embedded selection by the old words, are not chang
 - The table and the record are one update under the table's one lock: writers hold it alone and refusing readers wait
   for a write under way, so no reader sees half of it. One operation takes the lock once, also inside the existing
   edit path.
-- The record is written first and the table second. A write stopped between them is reported as
-  `LEVELS_INTERRUPTED`, told apart from an orphan, and running the same command again completes it.
+- The record is written first and the table second. Under the lock, a writer first leaves a pending mark in the git
+  folder, keyed by the worktree, that holds what it is writing; it removes the mark after the second file. While a
+  mark is left over, refusing reads report `LEVELS_INTERRUPTED` instead of an orphan or a missing entry, and name
+  `levels --fill`, which first completes the pending write and then fills. This covers every tool write: `add`,
+  `level` (rename and remove too), `relevel`, `sync --write` and `red`.
 - Drafting a row (`sync --write`) writes its row and its entry in that same update.
 - Nothing silently drops or lowers a tag: an orphan's message offers a rename when a likely new id exists, and
   removal only for a row that is gone; identical duplicate entries are dropped, other duplicates ask for a choice;
@@ -99,21 +102,22 @@ including the scheduled run's embedded selection by the old words, are not chang
 ## 6. Commands
 All new parsers and handlers live in the new module and register through one call; each is listed in `listing.json`
 with what it writes, and `SKILL.md` shows one example each.
-- `relevel [--dry-run] [--input FILE] [--risk-for ROW=TAG --owner-record ID]...` (the last pair may repeat).
-- `level ID [--test-level L] [--risk R] [--covers A,B] [--remove] [--rename NEW] [--retime]`.
+- `relevel [--dry-run] [--input FILE] [--times FILE] [--row-limit N] [--risk-for ROW=TAG --owner-record ID]...` (the
+  last pair may repeat).
+- `level ID [--test-level L] [--risk R] [--covers A,B] [--remove] [--rename NEW] [--retime] [--owner-record ID]`.
 - `levels` (lists levels and problems), `levels --check` (offline; it reads no issue and writes nothing; exit 0 with
   "valid" when every entry is valid, or "not levelled" for a table that is not; exit 2 listing what is missing or
   wrong, each marked as a missing entry to fill or a stored entry to repair) and `levels --fill` (adds missing entries
   of non-defect rows offline, from the same rules; defect rows are filled by `relevel`, which reads their labels and
   fills only missing entries). `relevel --dry-run` previews a full fill, defect labels included. `levels --check` also
   compares the risk data's requirement list with the Principles page where the repository has that page.
-- `add` gains `--test-level`, `--risk` and `--covers`. Every documented `add` command keeps working: a new row that
+- `add` gains `--test-level`, `--risk`, `--covers` and `--owner-record`. Every documented `add` command keeps working: a new row that
   is not a defect gets L1 and the derived risk, and the command prints what it chose.
 - **Defect rows in `add`:** a `finding:SLUG` link takes its risk from the requirement rules, or `--risk`; no label is
-  read. Issue addresses have their labels read, all of them, and the strongest tag wins. An address that cannot be
-  read (offline, no access), a bare or `#N` number and any other link form need `--risk` with `--owner-record`.
-  `--test-level` never replaces the label read. The docs and the pull request name the one new need: adding a defect
-  with an issue address reads that issue.
+  read. Issue and pull request addresses have their labels read, all of them, and the strongest tag wins. An address
+  that cannot be read (offline, no access), a bare or `#N` number and any other link form need `--risk` with
+  `--owner-record`. `--test-level` never replaces the label read. The docs and the pull request name the one new
+  need: adding a defect with an issue or pull request address reads it.
 - `add --level` keeps its meaning (the old words, which still select what runs); its help says so, it is checked as before, and the record's `old` word is the word at the row's first entry and does
   not follow later edits. On a table that is not levelled, `add` writes no record and behaves as before.
 - One L0 rule (section 7) applies to `relevel`, `add`, `level` and `level --retime`.
@@ -143,7 +147,7 @@ not repeated by a check.
 - `covered` takes the highest level of its covers. A row without a measured time starts at L1, unless the limits file
   marks it `nightly`.
 - A `draft` row (none today) keeps its old word in the record; the separate draft state belongs to a later goal.
-- **Defect evidence:** labels of every linked issue are read once, at the build, with a per-call and an overall time
+- **Defect evidence:** labels of every linked issue or pull request are read once, at the build, with a per-call and an overall time
   limit, one retry and one read per address; a missing tool, sign-in, access, not-found, rate-limit, timeout and
   unreadable answer are told apart; nothing partial is written; path segments `.` and `..` are refused; no raw
   tool output or address is printed or written to any file. Access is checked before the build starts. A defect row
@@ -232,9 +236,10 @@ large goal's one L2 run (G2); the scheduled run's selection (G3); the other read
 ## 12. Stale results and the local cover
 Each new module is added to the runner's list of files whose change makes cached results and plans invalid. The local
 cover never skips a row recorded at L0: L0 always runs locally.
-**Which rows a record change selects:** a change to the record selects the way a table change does: the rows whose
-entries changed, plus the rows that read the table, and not every row that reaches the runner. Both places that pick
-rows apply it. `lvl-armed` runs through a small script whose reads header names the record, the risk data and the
+**Which rows a record change selects:** the rows whose entries changed, the rows that read the table, and the rows
+whose declared reads header names the record; not every row that reaches the runner. Every place that picks rows
+applies it, including the one `run --reuse` uses without a tier. `lvl-armed` runs through a shell script,
+`dev/toy/test-lvl-armed.sh`, whose reads header lists the runner, the table, the record, the risk data and the
 Principles page, so a change to any of them picks it. The file-format doc's selection rules say so.
 
 ## 13. Modules and size
@@ -252,8 +257,8 @@ isolated clones with their own `.git` and HOME (TD1965). Fixtures name no other 
 | Row | Proves |
 |---|---|
 | `lvl-armed` | this repository's table and record are valid (`levels --check`) |
-| `lvl-table-refused` | done lines 1 and 2 and every refusal of section 3, including a missing entry and a missing record; repairs that run on a refused table; no tag lowered without a record; an interrupted write completed by running again; a read during a write; a table that is not levelled reading as before; a change to the new module making cached results invalid; an L0 row never skipped by the local cover; the commands of section 6 and the command table of section 4; a row guarding a requirement through its id only; two branches that each add a row merging with the record intact; a one-row change selecting that row, the table readers and `lvl-armed` only |
-| `lvl-relevel-record` | done lines 3 and 4: every row of the input kept, each with one level and its old word and reason; the L0 limit with the total named; the L0 eligibility rules one by one; the nightly rules, including a row the limits file keeps nightly and a cut time; covered levels; defect evidence failures without any network; nothing partial written; no link or repository name in any written file |
+| `lvl-table-refused` | done lines 1 and 2 and every refusal of section 3, including a missing entry and a missing record; repairs that run on a refused table; no tag lowered without a record; an interrupted write of each writer reported as such and completed by `levels --fill`; a read during a write; a table that is not levelled reading as before; a change to the new module making cached results invalid; an L0 row never skipped by the local cover; the commands of section 6 and the command table of section 4; a row guarding a requirement through its id only; two branches that each add a row merging with the record intact; a one-row change selecting that row, the table readers and `lvl-armed` only |
+| `lvl-relevel-record` | done lines 3 and 4: every row of the input kept, each with one level and its old word and reason; the L0 limit with the total named; the L0 eligibility rules one by one; a pull request address read like an issue address; the nightly rules, including a row the limits file keeps nightly and a cut time; covered levels; defect evidence failures without any network; nothing partial written; no link or repository name in any written file |
 | `lvl-sizing-levels` | done line 5; the existing sizing check passes unedited |
 | package line | done line 6: package gate after every code commit, scripts under the limit, no test loosened, no row red, no committed text naming the service repository |
 Each new row names this goal's done line in its goal cell (`v110-lvl-relevel:N`), has its own record entry (L1) and
