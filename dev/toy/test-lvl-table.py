@@ -63,6 +63,8 @@ for key, how in (("gdel", "its goal cell"), ("grd6-pins", "its id alone"), ("lis
     for value in ("none", ""):
         expect("LEVELS_NO_RISK", "a row guarding a requirement by %s with risk %r is refused by name" % (how, value),
                entries=changed(key, risk=value), names=(key,))
+expect("LEVELS_NO_RISK", "a row guarding a private requirement tagged only security is refused by name",
+       entries=changed("gdel", risk="security", reason="risk:security"), names=("gdel", "private"))
 repo = Repo(BASE + [row("pkg-secret-grd-60"), row("print-6-sizes")], good() + [
     entry("pkg-secret-grd-60"), entry("print-6-sizes")])
 repo.commit()

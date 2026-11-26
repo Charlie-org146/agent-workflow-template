@@ -231,8 +231,8 @@ def check_entry(state, n, row, entry, levels_by_id):
     if entry["level"] not in LEVELS:
         say("LEVELS_BAD_LEVEL", "the level %r is not L0, L1 or L2" % entry["level"], edit + "--test-level L1")
     tag, why = needs(state.risks, key, row["goal"])
-    if tag != "none" and entry["risk"] in ("", "none"):
-        say("LEVELS_NO_RISK", "the row guards a Principle 6 requirement (%s) and has no risk tag" % why,
+    if tag != "none" and (entry["risk"] in ("", "none") or entry["risk"] in TAGS and RANK[entry["risk"]] < RANK[tag]):
+        say("LEVELS_NO_RISK", "the row guards a Principle 6 requirement (%s) and has no %s risk tag" % (why, tag),
             edit + "--risk " + tag)
     elif entry["risk"] not in TAGS:
         say("LEVELS_BAD_FILE", "the risk %r is not security, private or none" % entry["risk"], edit + "--risk <tag>")

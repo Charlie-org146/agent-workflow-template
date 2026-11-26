@@ -776,7 +776,7 @@ pull-request check runs rows through `run`, so it refuses too.
 | `LEVELS_NO_ENTRY` | a row with no entry. A plain row: `levels --fill`; a defect row: `relevel`; a covered row: `level ID --covers A,B` |
 | `LEVELS_BAD_LEVEL` | a stored level that is blank or not L0, L1 or L2 |
 | `LEVELS_BAD_OLD_WORD` | a table `level` cell that is not land, nightly, draft or covered |
-| `LEVELS_NO_RISK` | a row guarding a requirement with a blank or none tag |
+| `LEVELS_NO_RISK` | a row guarding a requirement with a blank or none tag, or a weaker one than it requires |
 | `LEVELS_RISK_LEVEL` | a security or private row at L0 or L2 |
 | `LEVELS_ORPHAN` | an entry, or a risk-data row line, whose row is not in the table: `level OLD --rename NEW` or `--remove` |
 | `LEVELS_DUPLICATE` | an id twice in the table or the record |
