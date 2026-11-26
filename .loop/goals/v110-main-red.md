@@ -1,7 +1,7 @@
 # Make the four rows that are red on main pass on main in the clean env, by finding and fixing each cause, with no row loosened, skipped or added to a known list (owner o1015, ledger o961; done lines and the regression.yml full-history change approved by owner o1026, ledger o966; issues #5870, #5871, #5872, #5895; a patch, no version task)
 
 - Slug: v110-main-red
-- Touches: dev/toy, .loop/regression.tsv, .github/workflows/regression.yml
+- Touches: dev/toy, .loop/regression.tsv, .github/workflows/regression.yml, skills/workflow-regression/scripts
 - ETA: 450 active minutes (estimate 357m plus a 25% margin)
 
 ## Done lines
