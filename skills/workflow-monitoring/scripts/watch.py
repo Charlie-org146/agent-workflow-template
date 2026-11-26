@@ -24,6 +24,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
+import schedule_load as sl  # noqa: E402
 import replan as lim  # noqa: E402
 import proctree  # noqa: E402
 from batch import agent_command  # noqa: E402
@@ -148,22 +149,7 @@ def runs():
 
 
 def parse_queue():
-    try:
-        with open(os.path.join(root(), ".loop", "queue.md")) as handle:
-            lines = handle.read().splitlines()
-    except OSError:
-        return []
-    goals, seen = [], set()
-    for line in lines:
-        item = graph.parse(line)
-        if not item:
-            continue
-        if not SLUG.match(item["slug"]) or item["slug"] in seen or not item["goal"] or not item["done"]:
-            print("SKIPPED queue line: " + line[:60])
-            continue
-        seen.add(item["slug"])
-        goals.append(item)
-    return goals
+    return sl.warn(sl.load(root(), True))["goals"]
 
 
 def alive(pid):
@@ -259,7 +245,7 @@ def freeze(goal, cfg):
              "branch": branch, "worktree": tree, "touches": goal["touches"], "pid": None, "pr": "", "batch": True,
              "done_sha": hashlib.sha256("\n".join(lines).encode()).hexdigest(),
              "release": goal.get("release", ""), "waiting": None, "finding": "", "log": [],
-             "waits_on": goal["depends"], "rules_at": {"idea": known_rules()}}
+             "waits_on": goal["depends"], "rules_at": {"idea": known_rules()}, **({"schedule": goal["sched"]} if goal.get("sched") else {})}
     graph.stamp(state)
     save(state, "queued")
     git("worktree", "add", *([tree, branch] if git("rev-parse", "--verify", "--quiet", "refs/heads/" + branch, check=False) else ["-b", branch, tree, base]))
@@ -292,7 +278,11 @@ def taken():
 
 def plan(limit):
     found, why = pool()
-    return graph.ready(parse_queue(), {state["slug"]: state for state in runs()}, limit, graph.assigned(found), why)
+    sched = sl.warn(sl.load(root(), True))
+    keep, held = sl.split(sched)
+    recs = {state["slug"]: state for state in runs()}
+    start, wait = graph.ready(keep, recs, limit, graph.assigned(found), why)
+    return start, [h for h in held if h[0]["slug"] not in recs] + wait
 
 
 def limit_of(args, cfg):
@@ -474,4 +464,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main() or sl.STATUS)

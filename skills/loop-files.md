@@ -48,6 +48,7 @@ Wiki pages live in `docs/wiki/`. Each starts with the line `<!-- workflow-docs -
   (generated from `settings.py`). `setup.py` writes each repo setting into `config.json` and each private setting into the
   flow file, and keeps any value already set. Every script reads these files fresh on each run, so a change applies at once.
 - `parallel`: workers at once; `0` means unlimited, and it is the default.
+- `schedule_policy` (default `on`): `off` returns the queue in file order with no task or fix marks (TSK-1).
 - `cadence`, `step_limit`, `token_budget`, `max_tries`, `routines`, `regression_cron`, and `test_budget_minutes`, `step_budget_minutes`, `prep_budget_minutes` (none under 15), and health's `stale_branch_days` are optional repo settings; see the reference.
 - `agent_command` runs a goal in the background; the prompt is its last argument.
 - `auto_approve` (default `false`): `true` approves what a flow step leaves for the owner, logged as auto-approved.
@@ -1824,6 +1825,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `regression_runs` | `(empty)` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. |
 | `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |
 | `automation` | `[]` | Routines the Automation table lists: {name, does, cadence, runs}. |
+| `deliver_first` | `{}` | Deliver first, default on: {goal: {ID: false}, task: {...}, release: {...}} turns it off for a scope (most specific wins); set only with an owner reference: dlf.py set deliver_first off --scope S --id ID --owner-record R. |
 | `topics` | `{}` | Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column. |
 | `ci_levels` | `nightly` | Target of scheduled and tag regression runs: nightly (every row) or land. |
 | `time_budget_minutes` | `240` | Active minutes before no new step starts; 0 is none. |

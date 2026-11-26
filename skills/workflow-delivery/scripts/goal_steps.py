@@ -4,6 +4,8 @@ import os
 import re
 import sys
 
+import cover
+
 
 def cmd_record(args):
     slug, step = args.slug, args.step
@@ -13,7 +15,7 @@ def cmd_record(args):
     ran = os.path.join(_s.state_dir(), "%s.%s.ran" % (slug, step))
     if args.in_session:
         args.file = _s.role.session_reply(state, slug, step, args.file, _s.state_dir(), _s.FLOW)
-    lane = _s.role.need_lane(_s.state_dir(), slug, args.file, step) if step in ("qa", "ship") else None
+    lane = cover.need(_s.role.need_lane, _s.role.over_caps, _s.state_dir(), slug, args.file, step) if step in ("qa", "ship") else None
     if lane:
         _s.guards.refuse_no_try(state, *lane, _s.save)
     reply = os.path.realpath(args.file)
@@ -31,7 +33,7 @@ def cmd_record(args):
                              "STEP: done|skipped|pending|failed line, then record again", _s.guards.NO_STEP_LINE, _s.save)
     stamp, cfg = "", _s.config()
     wait = pending or result == "pending"
-    auto, ok = wait and (cfg.get("auto_approve") is True or _s.fit.plan_ahead(state, _s.state_dir(), step)), result in ("done", "skipped")
+    auto, ok = wait and (_s.dlf.autoapprove(_s.ME, state, pending, step, cfg, result, why)), result in ("done", "skipped")
     if ok or auto:
         stamp, refusal, ask, skipped = _s.guards.check_record(state, step, text, cfg, result)
         for line in skipped:
@@ -49,7 +51,7 @@ def cmd_record(args):
     if ok or auto:
         _s.fit.keep(_s.ME, state, step, text)
     if auto:
-        took = "; ".join(pending) or why or "the step's pending gate"
+        took = _s.dlf.safe(_s.root(), "; ".join(pending) or why or "the step's pending gate")
         state["flow"][step] = "done: auto-approved: " + took[:200] + stamp
         state["step"] = _s.role.after(step)
         state["note"] = {"text": "auto-approved at %s: %s" % (step, took[:240]), "at": _s.now()}
@@ -60,7 +62,7 @@ def cmd_record(args):
         return 0
     if wait:
         state["flow"][step] = "pending"
-        ask = "%s left this for you: %s" % (step, "; ".join(pending) or why or "see its reply")
+        ask = _s.dlf.held_ask(_s.root(), step, pending, why)
         _s.guards.hold(state, ask[:600])
         _s.save(state, "%s pending: %s" % (step, ask[:200]))
         print("WAITING %s: %s" % (slug, ask))
@@ -121,7 +123,7 @@ def cmd_pr(args):
         print("NOTE: uncommitted files stay out")
     head = _s.role.bump_version(_s.ME, state, head)
     head = _s.fit.regen(_s.ME, slug)
-    gate, line, ids = _s.role.lane(_s.state_dir(), slug, "pr", _s.role.flow_spec(), cfg)
+    gate, line, ids = cover.lane(_s.role.lane, _s.state_dir(), slug, "pr", _s.role.flow_spec(), cfg)
     print(line)
     if gate == "running":
         return 0
@@ -129,7 +131,21 @@ def cmd_pr(args):
         if _s.queue("ahead", base):
             return _s.queue("moved", _s.ME, state, "lane failed while %s moved" % base, "run pr")
         return _s.fit.pr_fail(_s.ME, state, head, line, ids)
+    tested = _s.git("rev-parse", "HEAD")
     _s.role.record(state, base)
+    late_check(state, slug, tested)
+    if cover.late(_s.state_dir(), slug, cfg):
+        cover.save(_s.state_dir(), slug, dict(cover.load(_s.state_dir(), slug), late=True))  # checked at every record until one is clean
+        gate, line, ids = cover.lane(_s.role.lane, _s.state_dir(), slug, "pr", _s.role.flow_spec(), cfg)
+        print(line)
+        if gate == "running":
+            return 0
+        if gate == "fail":
+            return _s.fit.pr_fail(_s.ME, state, head, line, ids)
+        tested = _s.git("rev-parse", "HEAD")
+        _s.role.record(state, base)
+        late_check(state, slug, tested)
+    state["pr_lane"] = cover.pr_part(_s.state_dir(), slug, state["pr_lane"])
     known = _s.run(["gh", "pr", "view", state["branch"], "--json", "url,state"])
     info = json.loads(known.stdout) if not known.returncode else {}
     body = _s.fit.pr_text(_s.ME, state)
@@ -138,6 +154,7 @@ def cmd_pr(args):
     state["step"] = "pr"
     _s.save(state, "pr")
     url = _s.fit.pr_open(_s.ME, state, base, info, body)
+    cover.refresh(_s, state, info, body)
     state.update(pr=url, statuses="ok" if _s.private.pr_result(_s.root(), base, _s.git("rev-parse", "HEAD"), state["branch"], True) else "failed")
     state.update(step="release", status="done")
     _s.save(state, "pull request " + url)
@@ -149,17 +166,30 @@ def cmd_pr(args):
     return 5 * (state["statuses"] == "failed")
 
 
-def round_stop(g, state, what):
-    limit, count = g.config().get("max_merge_rounds"), state.get("merge_rounds", 0) + 1
-    limit = limit if isinstance(limit, int) and not isinstance(limit, bool) and limit > 0 else 8
-    if what not in ("merged", "conflict"):
+def late_inputs(root, tested):
+    """Late loss (plan): the second bookkeeping commit may touch only the regression tool's no-effect and bookkeeping files (read by a child: no cross-skill import)."""
+    rc, keep = cover.sh([sys.executable, "-B", "-c", "import sys; sys.path.insert(0, sys.argv[1]); import lanes; print(chr(10).join(lanes.BOOKKEEPING + lanes.NO_EFFECT))",
+                         cover.REG], root)
+    got, out = cover.sh(["git", "diff", "--name-only", tested, "HEAD"], root)
+    if rc or got or not keep:
+        return ["(the diff or the no-effect list is unread)"]
+    return [n for n in out.split() if not n.startswith(tuple(keep.split("\n")))]
+
+
+def late_check(state, slug, tested):
+    """After a late cover loss (marked in the cover file), a bookkeeping commit may change no tested input; a clean one clears the mark."""
+    data = cover.load(_s.state_dir(), slug)
+    if not data.get("late"):
         return
-    over = count > limit
-    state["merge_rounds"] = 0 if over else count
-    ask = "merge round %d would pass max_merge_rounds (%d). Fix: land it when main is quiet or raise it, then goal.py answer %s (MERGE_ROUNDS)" % (count, limit, state["slug"])
-    over and _s.guards.hold(state, ask)
-    g.save(state, ask if over else None)
-    over and g.no(ask)
+    if left := late_inputs(_s.root(), tested):
+        _s.guards.refuse_no_try(state, "the bookkeeping commit after the late cover loss changes tested inputs: %s" % ", ".join(left[:5]),
+                                "goal.py pr %s runs the whole lane on the new head" % slug, "LATE_INPUTS", _s.save)
+    data.pop("late")
+    cover.save(_s.state_dir(), slug, data)
+
+
+def round_stop(g, state, what):
+    return _s.dlf.round_stop(g, state, what)
 
 
 import goal as _s  # noqa: E402

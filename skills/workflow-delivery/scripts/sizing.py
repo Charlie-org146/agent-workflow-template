@@ -254,7 +254,8 @@ def rule(step, state):
     if not state.get("sized"):
         return "NOT SIZED: run sizing.py size " + state["slug"]
     try:
-        return "CHECKS at %s (size %s):\n%s" % (step or "every step", state["sized"]["size"], block(state["sized"], read_table()[0], step))
+        import cover
+        return cover.rule_fix("CHECKS at %s (size %s):\n%s" % (step or "every step", state["sized"]["size"], block(state["sized"], read_table()[0], step)), runs(), state["slug"])
     except Refusal as err:
         return "REFUSED: %s (%s)" % (err.args[0], err.args[2])
     except KeyError:
