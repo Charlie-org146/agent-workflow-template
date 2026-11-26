@@ -52,6 +52,16 @@ fr=$(python3 "$here/skills/workflow-setup/scripts/settings.py" fill-repo --repo 
 hc=$(python3 "$here/skills/workflow-health/scripts/health.py" check 2>&1); hrc=$?
 dc=$(python3 "$here/skills/workflow-docs/scripts/docs.py" check 2>&1)
 check "a config carrying the four retired keys loads, and setup, health and docs run with no error" '[ $frc = 0 ] && [ $hrc != 2 ] && ! grep -qE "REFUSED|Traceback|criteria_max|max_regression_rows|health_script_bytes|health_skill_lines" <<<"$fr$hc$dc"'
+# an adopted repo keeps the old _help line too: its START.md rows must not list a retired key as if it still capped anything (o988)
+rows=$(python3 - "$here" <<'PY'
+import json, sys
+sys.path.insert(0, sys.argv[1] + "/skills/workflow-docs/scripts")
+import entry
+c = json.load(open(".loop/config.json")); c["_help"] = dict(c.get("_help") or {}, criteria_max="docs check and health fail a page over it")
+print(" ".join(k for k, _, _ in entry.settings(c)))
+PY
+)
+check "an adopted config with leftover retired keys and their old _help line gets no START.md row for any of them" '! grep -qwE "criteria_max|max_regression_rows|health_script_bytes|health_skill_lines" <<<"$rows" && grep -qw "max_suite_seconds" <<<"$rows"'
 check "setup writes the private half outside the repo, owner only" '[ -f "$HOME/.workflow-loop/flow.json" ] && [ "$(stat -f %Lp "$HOME/.workflow-loop/flow.json" 2>/dev/null || stat -c %a "$HOME/.workflow-loop/flow.json")" = 600 ] && grep -q "_help" "$HOME/.workflow-loop/flow.json" && [ -f "$HOME/.workflow-loop/health.json" ] && [ -f "$HOME/.workflow-loop/repos" ] && ! git ls-files | grep -q flow.json'
 python3 - <<'PY'
 import json, os

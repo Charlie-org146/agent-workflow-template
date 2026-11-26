@@ -96,3 +96,4 @@ prd-section-order	o1007, TD1943	the metrics case greps 'four Success metrics lin
 known:size-140	o988, o1007, TD1958	known reason only: drops the retired size-warning cause; restates the remaining red (docs.py imports back sources, which the moved-names list doesn't name), red on base 37417a6d9 singly
 known:rel-major-refused	o988, o1007, TD1958	known reason only: drops the retired byte-cap cause; restates the remaining red (the Release page check misses REL-3, REL-12, REL-13), red on base 37417a6d9 singly
 known:ls-size-budget	o988, o1007, TD1958	known reason only: drops the retired size case; restates the remaining red (scheduledrule: a leftover health.yml is a WARN naming git rm), red on base 37417a6d9 singly; its CI skip stays
+settings-reference	o988 (done line 3), TD1962	adds the case: an adopted config with leftover retired keys gets no START.md row; its other clauses stay
