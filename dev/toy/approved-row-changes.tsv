@@ -38,6 +38,7 @@ task-first-2	TD1679 (v110-tsk-1: each TSK-1 case on its own row)	added: a row fo
 task-first-3	TD1679 (v110-tsk-1: each TSK-1 case on its own row)	added: a row for one TSK-1 requirement; no existing row changed or removed
 task-first-4	TD1679 (v110-tsk-1: each TSK-1 case on its own row)	added: a row for one TSK-1 requirement; no existing row changed or removed
 task-first-5	TD1679 (v110-tsk-1: each TSK-1 case on its own row)	added: a row for one TSK-1 requirement; no existing row changed or removed
+setup-fit	TD1847 (v110-pkg-secret-print: the setup-fit toy edit, seen red with the base checker)	date field only, re-dated by its seen-red proof; command and text unchanged
 test-caps-controls	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1879	runs only the suite-cap control and greps that it fires; the rows-cap control is retired with the rule
 test-caps-settings	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1879	greps the max_suite_seconds setting line only; max_regression_rows is retired
 test-caps-qa-refused	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1880	rewritten: greps the max_suite_seconds refusal with the seconds and its control (suite under the cap passes); the rows half is retired

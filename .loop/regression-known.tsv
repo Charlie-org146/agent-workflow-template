@@ -34,3 +34,4 @@ del5-patch-default	local-lane only; green on main 45110588623; #5860; removed by
 scripts-no-hang	local-lane only; green on main 45236323222; #5860; removed by lane-home-isolation
 defect-flow-steps	local-lane only; green on main 45236323222; #5860; removed by lane-home-isolation
 defect-closing-keywords	local-lane only; green on main 45236323222; #5860; removed by lane-home-isolation
+codex-ro-home	Mac-local red on main f7f86150d (fresh clone, clean env); #5925; TD1898
