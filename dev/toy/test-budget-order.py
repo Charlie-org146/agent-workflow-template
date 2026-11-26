@@ -10,6 +10,8 @@ import subprocess
 import sys
 import tempfile
 
+for name in [n for n in os.environ if n.startswith("GIT_")]:  # the caller's git environment is not passed on
+    del os.environ[name]
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 sys.path.insert(0, os.path.join(root, "skills", "workflow-regression", "scripts"))
 sys.dont_write_bytecode = True
@@ -67,4 +69,45 @@ for name, value in kept_before.items():
         del os.environ[name]
     else:
         os.environ[name] = value
+theirs = {"GIT_DIR": "/nowhere/git", "GIT_INDEX_FILE": "/nowhere/index", "GIT_WORK_TREE": "/nowhere/tree", "GIT_CONFIG_COUNT": "0"}
+kept_before = {name: os.environ.get(name) for name in theirs}
+os.environ.update(theirs)
+given = actions.row_env()
+check(not [name for name in theirs if name in given], "a row never inherits the caller's git environment")
+check([given.get(name) for name in ("GIT_TERMINAL_PROMPT", "GIT_EDITOR", "GIT_ASKPASS")] == ["0", "true", "true"],
+      "and a row's git still never waits for a person")
+for name, value in kept_before.items():
+    if value is None:
+        del os.environ[name]
+    else:
+        os.environ[name] = value
+if sys.argv[1:] != ["--inner"]:
+    with tempfile.TemporaryDirectory() as tmp:
+        other = os.path.join(tmp, "second")
+        subprocess.run(["git", "init", "-q", "-b", "main", other], check=True, capture_output=True)
+        with open(os.path.join(other, "kept.txt"), "w") as handle:
+            handle.write("kept\n")
+        as_t = ["-c", "user.email=t@t", "-c", "user.name=t", "-c", "commit.gpgsign=false"]
+        for args in (["add", "kept.txt"], as_t + ["commit", "-q", "-m", "kept"]):
+            subprocess.run(["git", "-C", other] + args, check=True, capture_output=True)
+
+        def held():
+            found = {}
+            for folder, _, files in os.walk(other):
+                for name in files:
+                    with open(os.path.join(folder, name), "rb") as handle:
+                        found[os.path.relpath(os.path.join(folder, name), other)] = handle.read()
+            return found
+
+        before = held()
+        gitdir = os.path.join(other, ".git")
+        env = dict(os.environ, GIT_DIR=gitdir, GIT_INDEX_FILE=os.path.join(gitdir, "index"))
+        done = subprocess.run([sys.executable, os.path.abspath(__file__), "--inner"], env=env, capture_output=True,
+                              stdin=subprocess.DEVNULL, timeout=200)
+        same = held() == before
+    text = "run with a git environment naming a second repository, this toy passes and leaves that repository as it was"
+    if done.returncode or not same:
+        text += " (the second repository: %s; the inner run: %s)" % ("unchanged" if same else "changed",
+                                                                     "did not pass" if done.returncode else "passed")
+    check(not done.returncode and same, text)
 sys.exit(1 if failed else 0)

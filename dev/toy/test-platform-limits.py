@@ -13,6 +13,8 @@ import subprocess
 import sys
 import tempfile
 
+for name in [n for n in os.environ if n.startswith("GIT_")]:  # the caller's git environment is not passed on
+    del os.environ[name]
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 scripts = os.path.join(root, "skills", "workflow-monitoring", "scripts")
 unattended, sessions = os.path.join(scripts, "unattended.py"), os.path.join(scripts, "sessions.py")
@@ -140,6 +142,36 @@ with open(os.path.join(loop, "session-pool.json"), "w") as handle:
     json.dump(pool, handle)
 code, out = run(top, sessions, "assign", "d", **tool)
 check("d: a free (archived) session is woken, renamed and sent the goal", code == 0 and any(x.startswith("rename s9") for x in calls()) and any(x.startswith("send s9") for x in calls()))
+
+if sys.argv[1:] != ["--inner"]:
+    with tempfile.TemporaryDirectory() as tmp:
+        other = os.path.join(tmp, "second")
+        subprocess.run(["git", "init", "-q", "-b", "main", other], check=True, capture_output=True)
+        with open(os.path.join(other, "kept.txt"), "w") as handle:
+            handle.write("kept\n")
+        as_t = ["-c", "user.email=t@t", "-c", "user.name=t", "-c", "commit.gpgsign=false"]
+        for args in (["add", "kept.txt"], as_t + ["commit", "-q", "-m", "kept"]):
+            subprocess.run(["git", "-C", other] + args, check=True, capture_output=True)
+
+        def held():
+            found = {}
+            for folder, _, files in os.walk(other):
+                for name in files:
+                    with open(os.path.join(folder, name), "rb") as handle:
+                        found[os.path.relpath(os.path.join(folder, name), other)] = handle.read()
+            return found
+
+        before = held()
+        gitdir = os.path.join(other, ".git")
+        env = dict(os.environ, GIT_DIR=gitdir, GIT_INDEX_FILE=os.path.join(gitdir, "index"))
+        done = subprocess.run([sys.executable, os.path.abspath(__file__), "--inner"], env=env, capture_output=True,
+                              stdin=subprocess.DEVNULL, timeout=200)
+        same = held() == before
+    text = "run with a git environment naming a second repository, this toy passes and leaves that repository as it was"
+    if done.returncode or not same:
+        text += " (the second repository: %s; the inner run: %s)" % ("unchanged" if same else "changed",
+                                                                     "did not pass" if done.returncode else "passed")
+    check(text, not done.returncode and same)
 
 print("PLATFORM LIMITS TOY " + ("OK" if not fails else "FAILED %d" % fails))
 sys.exit(1 if fails else 0)
