@@ -159,17 +159,19 @@ doc19-readme-links	PASS	2026-11-16
 docs-block-split	PASS	2026-11-26	
 docs-check-same	PASS	2026-11-24	
 docs-check-speed	PASS	2026-11-24	
-docs-counts-issue-39	PASS	2026-11-12	
+docs-counts-issue-39	PASS	2026-11-26	
 docs-guide-page-issue-125	PASS	2026-11-26	
 docs-import-rows-pass	PASS	2026-11-25		00e75af405b2
 docs-locked-hint-issue-133	PASS	2026-11-26	
 docs-milestone-line-issue-130	PASS	2026-11-26	
 docs-no-plain-dunder-import	PASS	2026-11-16	
 docs-release-scripts-under-19000	PASS	2026-11-25	
-docs-scripts-import-by-name	PASS	2026-11-24	
+docs-scripts-import-by-name	PASS	2026-11-26	
 docs-scripts-under-19000	PASS	2026-11-25	
+docs-skill-no-size-1403	PASS	2026-11-26	
+docs-skill-no-size-4171	PASS	2026-11-26	
 docs-v2-repo-passes	PASS	2026-11-25	
-done-line-rows-128	PASS	2026-11-12	
+done-line-rows-128	PASS	2026-11-26	
 done-lines-warning-143	PASS	2026-11-12	
 entry-stale	PASS	2026-11-26	
 est-area	PASS	2026-11-22	
@@ -252,7 +254,7 @@ held-time-owner-wait	PASS	2026-11-14
 held-time-pr-queue	PASS	2026-11-25	
 held-time-session-hold	PASS	2026-11-25	
 held-time-stopped	PASS	2026-11-14	
-hlt1-same-answer	PASS	2026-11-26		291e5ea24031
+hlt1-same-answer	PASS	2026-11-26	
 hlt2-twelve-groups	PASS	2026-11-19	
 hlt4-feature-milestones	PASS	2026-11-26	
 hlt6-branches	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -287,13 +289,14 @@ known-recorded	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lane-affected-memory	PASS	2026-11-24	
 lane-env-states	PASS	2026-11-24	
 lane-last-152	PASS	2026-11-25	
-lane-limit-150	PASS	2026-11-25	
+lane-limit-150	PASS	2026-11-26	
 lane-messages-table	PASS	2026-11-11	
 lane-order	PASS	2026-11-24	
 lane-over-minutes	PASS	2026-11-25	
 lane-ports-tmpdir	PASS	2026-11-16		b8a343107016
 lane-rows-judge-own-diff	PASS	2026-11-26	
 lane-start-mark-once	PASS	2026-11-25	
+lane-tmpdir-outside-repo	PASS	2026-11-26	
 lane-walk-skips-git	PASS	2026-11-24	
 lane-walk-skips-node-modules	PASS	2026-11-24	
 lanes-abs-not-walked	PASS	2026-11-14	
@@ -327,22 +330,22 @@ ls-private-tick	PASS	2026-11-26
 ls-size-budget	FAIL	2026-11-25	
 ls-usage-steps	PASS	2026-11-26	
 mac-rows-skip-77	PASS	2026-11-13	
-machine-apply-installs	PASS	2026-11-24	
-machine-done-10	PASS	2026-11-24	
-machine-done-11	PASS	2026-11-24	
+machine-apply-installs	PASS	2026-11-26	
+machine-done-10	PASS	2026-11-26	
+machine-done-11	PASS	2026-11-26	
 machine-done-12	PASS	2026-11-26	
-machine-done-3	PASS	2026-11-24	
-machine-done-4	PASS	2026-11-24	
-machine-done-5	PASS	2026-11-24	
-machine-done-6	PASS	2026-11-24	
-machine-done-7	PASS	2026-11-24	
-machine-done-8	PASS	2026-11-24	
-machine-done-9	PASS	2026-11-24	
-machine-guide-monitoring	PASS	2026-11-24	
-machine-health-rule	PASS	2026-11-24	
-machine-hook-state	PASS	2026-11-24	
-machine-no-private	PASS	2026-11-24	
-machine-no-prompt-mode	PASS	2026-11-24	
+machine-done-3	PASS	2026-11-26	
+machine-done-4	PASS	2026-11-26	
+machine-done-5	PASS	2026-11-26	
+machine-done-6	PASS	2026-11-26	
+machine-done-7	PASS	2026-11-26	
+machine-done-8	PASS	2026-11-26	
+machine-done-9	PASS	2026-11-26	
+machine-guide-monitoring	PASS	2026-11-26	
+machine-health-rule	PASS	2026-11-26	
+machine-hook-state	PASS	2026-11-26	
+machine-no-private	PASS	2026-11-26	
+machine-no-prompt-mode	PASS	2026-11-26	
 machine-status-live-workers	PASS	2026-11-20	
 machine-task-layout	PASS	2026-11-26	
 machines-handover	PASS	2026-11-18	
@@ -467,10 +470,10 @@ pr-waits-owed	PASS	2026-11-13
 prd-audit-ignores-changed	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 prd-copy-no-reader	PASS	2026-11-26	
 prd-copy-rows-list	PASS	2026-11-26	
-prd-lock-four	PASS	2026-11-18	
+prd-lock-four	PASS	2026-11-26	
 prd-no-dunder-import-3800	PASS	2026-11-16	
 prd-repo-green	PASS	2026-11-10	
-prd-scenarios	PASS	2026-11-25	
+prd-scenarios	PASS	2026-11-26	
 prd-section-order	PASS	2026-11-26	
 prd-usage-changed	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 preview-writes-nothing	PASS	2026-11-26	
@@ -483,9 +486,9 @@ pull-ff-only-passes	PASS	2026-11-26
 queue-use	PASS	2026-11-24	
 readme-commands-in-command-map	PASS	2026-11-26	
 record-in-session	PASS	2026-11-12	
-red-race-135	PASS	2026-11-25	
+red-race-135	PASS	2026-11-26	
 refuse-replace	PASS	2026-11-20	
-refused-unmet	PASS	2026-11-25	
+refused-unmet	PASS	2026-11-26	
 reg-defect-label	PASS	2026-11-24	
 reg-local-relabel	PASS	2026-11-12	
 reg-same-env	PASS	2026-11-24	
@@ -495,11 +498,14 @@ reg7-prep-setting	PASS	2026-11-26
 reg7-unmapped-tier	PASS	2026-11-24	
 reg7-unrun-warn-cost	PASS	2026-11-24	
 regression-issue-no-milestone	PASS	2026-11-12	
+regression-skill-no-size-3815	PASS	2026-11-26	
+regression-skill-no-size-3983	PASS	2026-11-26	
 rel-ci-release	PASS	2026-11-24	
 rel-update-asset	PASS	2026-11-24	
 release-hold-red	PASS	2026-11-24	
 release-lists-fixes	PASS	2026-11-24	
 release-scripts-under-19000	PASS	2026-11-25	
+release-skill-no-size-4172	PASS	2026-11-26	
 release-static-rules	PASS	2026-11-26	
 reopened-shows-failing	PASS	2026-11-11	
 repeat-no-second	PASS	2026-11-24	
@@ -516,7 +522,7 @@ report-header	PASS	2026-11-26
 rerun-both-touched	PASS	2026-11-24	
 retired-id-exists	PASS	2026-11-26	
 retired-leaves-waiting	PASS	2026-11-09	
-review-dated	FAIL	2026-11-20	
+review-dated	PASS	2026-11-26	
 review-findings-skill-lines	PASS	2026-11-26	
 review-findings-wording	PASS	2026-11-26	
 review-help-runs-alone	PASS	2026-11-24	
@@ -556,7 +562,7 @@ settings-refresh	PASS	2026-11-26
 settings-render-fresh	PASS	2026-11-25	
 settings-start-fresh	PASS	2026-11-16	
 settings-template-line	PASS	2026-11-26	
-setup-both-halves	PASS	2026-11-25	
+setup-both-halves	PASS	2026-11-26	
 setup-fit	PASS	2026-11-25	
 setup-owner-words-up-front	PASS	2026-11-24	
 setup-refusal-writes-120	PASS	2026-11-18	
@@ -661,7 +667,7 @@ unattended-checkin-line	PASS	2026-11-25
 unattended-loop-recreate	PASS	2026-11-24	
 unattended-sends-warn	PASS	2026-11-19	
 unproven-blocks	PASS	2026-11-26	
-untested-listed	PASS	2026-11-25	
+untested-listed	PASS	2026-11-26	
 update-in-place	PASS	2026-11-12	
 usage-agent-requests	PASS	2026-11-12	
 usage-empty-backticks	PASS	2026-11-10	

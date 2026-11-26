@@ -9,7 +9,8 @@ Each case builds a throwaway git repo, writes the repo's own rules and runs the 
 run (rows land in their group with their feature), control (a rule's break makes Controls see it fail), refuse (a rule with
 no break exits 2), off (a default turned off shows its reason, one without a reason stays on and is UNREAD), setup (fill-repo
 writes the file once and keeps an edited one). usage: test-health-repo-rules.py [CASE ...] [--break]
-CASE is one of run, control, refuse, off, retired or setup (default all). --break leaves the rules file out of every repo, to see the rows red."""
+CASE is one of run, control, refuse, off, retired,
+long-skill, long-skill-4171, long-skill-3983, long-skill-3815, long-skill-1403 or setup (default all). --break leaves the rules file out of every repo, to see the rows red."""
 import json
 import os
 import subprocess
@@ -150,6 +151,23 @@ with tempfile.TemporaryDirectory() as tmp:
         done = sh([py, health, "check", "--group", "size"], g)
         check(done.returncode != 2 and "size: no rules (retired by principle 5)" in done.stdout and "PASS size" not in done.stdout,
               "--group size runs: the empty group says why and counts no passed check")
+    # issues 4172, 4171, 3983, 3815 and 1403, as principle 5 settles them (o988): health once filed a size finding on each
+    # skill's SKILL.md at that length; it files none
+    for case, issue, skill, count in (("long-skill", "4172", "release", 150), ("long-skill-4171", "4171", "docs", 155),
+                                      ("long-skill-3983", "3983", "regression", 151), ("long-skill-3815", "3815", "regression", 151),
+                                      ("long-skill-1403", "1403", "docs", 155)):
+        if not run_it(case):
+            continue
+        h = os.path.join(tmp, case)
+        os.makedirs(h)
+        repo(h)
+        os.makedirs(os.path.join(h, "skills", "workflow-" + skill))
+        with open(os.path.join(h, "skills", "workflow-" + skill, "SKILL.md"), "w") as handle:
+            handle.write("line\n" * count)
+        found, _ = rows(h, "size,security")
+        check(bool(found), "health runs on a repo whose %s SKILL.md has %d lines" % (skill, count))
+        check(bool(found) and not [r for r in found if r["rule"] == "skill-lines" or (r["family"] == "size" and r["state"] in ("FAIL", "WARN"))],
+              "a %s SKILL.md of %d lines gets no size finding (issue %s)" % (skill, count, issue))
     if run_it('setup'):
         # setup: fill-repo writes the file once and keeps an edited one
         f = os.path.join(tmp, "f")

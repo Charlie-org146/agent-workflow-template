@@ -3,6 +3,11 @@
 - Slug: v110-no-size-cap-a
 - Touches: skills, dev, docs/wiki, .loop, dev/toy/test-prd.sh, skills/workflow-docs/scripts/entry.py, dev/toy/test-entry-config.sh
 - ETA: 385 active minutes (estimate 305m plus a 25% margin)
+- Fixes #4172
+- Fixes #4171
+- Fixes #3983
+- Fixes #3815
+- Fixes #1403
 
 ## Done lines
 
