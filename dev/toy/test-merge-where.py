@@ -6,7 +6,9 @@ or the installed skills: wiki.where() refuses a script inside the repo's own goa
 checkout behind origin/<base> (CHECKOUT_BEHIND, naming how far and the git merge --ff-only fix); a script outside the repo
 is not checked. A merge refused for a moved head or base leaves the goal running at step pr, not done.
 
-Builds a throwaway repo with a bare origin and a second clone that moves origin. usage: test-merge-where.py"""
+Builds a throwaway repo with a bare origin and a second clone that moves origin. The release code saves its run record
+where git finds the common folder of the current directory, so the toy works from a stand-in caller repo in its own temp
+folder, never from the checkout it was started in. usage: test-merge-where.py"""
 import contextlib
 import io
 import json
@@ -15,6 +17,8 @@ import subprocess
 import sys
 import tempfile
 
+for name in [n for n in os.environ if n.startswith("GIT_")]:  # an inherited GIT_DIR would point git at the caller's repo
+    del os.environ[name]
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 sys.path.insert(0, os.path.join(root, "skills", "workflow-release", "scripts"))
 os.environ["LOOP_ROLE"] = "worker"
@@ -37,7 +41,10 @@ def git(*args, cwd):
 
 
 tmp = tempfile.mkdtemp(prefix="merge-where-")
-origin, repo, other = (os.path.join(tmp, n) for n in ("origin.git", "repo", "other"))
+origin, repo, other, caller = (os.path.join(tmp, n) for n in ("origin.git", "repo", "other", "caller"))
+if git("init", "-q", "-b", "main", caller, cwd=tmp).returncode:
+    sys.exit("FAIL: setup (the stand-in caller repo)")
+os.chdir(caller)
 git("init", "-q", "--bare", "-b", "main", origin, cwd=tmp)
 git("clone", "-q", origin, repo, cwd=tmp)
 open(os.path.join(repo, "a.txt"), "w").write("a\n")
@@ -119,11 +126,16 @@ try:
         code = merge.main()
 finally:
     subprocess.run = real_run
-    os.chdir(old)
 state = json.load(open(record))
 check("a merge refused for HEAD_MOVED exits 4", code == 4 and "HEAD_MOVED" in out.getvalue(), out.getvalue())
 check("and leaves the goal running at step pr, not done", state["status"] == "running" and state["step"] == "pr", str(state))
 check("the goal is not mergeable until goal.py pr finishes it again", not autorelease.mergeable(state))
 state["status"] = "done"
 check("reopen gives the BASE_MOVED exit the same way", autorelease.reopen(state, 2) == 2 and state["status"] == "running" and state["step"] == "pr")
+os.chdir(old)  # only now: the last in-process call has returned
+# line 1: nothing reached the caller, and the fixture's own record on disk holds what reopen saved
+stray = sorted(os.path.join(d, f) for d, _, files in os.walk(os.path.join(caller, ".git", "loop")) for f in files)
+noted = any("merge refused (exit 2)" in entry for entry in json.load(open(record)).get("log", []))
+check("no run record lands in the checkout the toy was started from", not stray and noted,
+      "(the stand-in caller holds %d file(s) under .git/loop; the fixture's record %s reopen's note)" % (len(stray), "holds" if noted else "lacks"))
 sys.exit(1 if fails else 0)
