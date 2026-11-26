@@ -113,14 +113,21 @@ with tempfile.TemporaryDirectory() as tmp:
         json.dump({"base": "main"}, f)
     with open(os.path.join(repo, ".loop", "docs.tsv"), "w") as f:
         f.write("Calc\tskills/x\nZed\tskills/z\nHome\tREADME.md\n")
-    with open(os.path.join(repo, "skills", "x", "scripts", "near.py"), "w", newline="\n") as f:
-        f.write("# pad\n" * 3400)
+    os.makedirs(os.path.join(repo, "docs", "wiki"))
+    for page in ("Calc", "Zed", "Home"):  # every mapped page exists, so the only Docs finding is Calc's stale page
+        with open(os.path.join(repo, "docs", "wiki", page + ".md"), "w", newline="\n") as f:
+            f.write("<!-- workflow-docs -->\n# %s\n\nThe %s page says what the feature does and how a person would use it day to day.\n" % (page, page))
+    with open(os.path.join(repo, "skills", "x", "scripts", "calc.py"), "w", newline="\n") as f:
+        f.write("# calc\n")
     git("init", "-q", "-b", "main", repo)
     git("-C", repo, "config", "user.email", "t@example.test")
     git("-C", repo, "config", "user.name", "t")
     git("-C", repo, "config", "core.autocrlf", "false")
     git("-C", repo, "add", "-A")
-    git("-C", repo, "commit", "-qm", "A near-limit script")
+    git("-C", repo, "commit", "-qm", "Pages and code")
+    with open(os.path.join(repo, "skills", "x", "scripts", "calc.py"), "a", newline="\n") as f:  # Calc's page goes stale: a Docs WARN
+        f.write("X = 1\n")
+    git("-C", repo, "commit", "-qam", "Change calc")
 
     # SET-17: the standing milestones, one per feature page (Home is not one) and Other
     out, _ = script(os.path.join(health, "milestone.py"), repo, "backlog")
@@ -153,23 +160,23 @@ with tempfile.TemporaryDirectory() as tmp:
         F.home = lambda item, page: ("backlog", "Backlog: " + page if page else "Backlog: Other")
     row = lambda state, family, rule: {"state": state, "family": family, "rule": rule, "subject": "x", "detail": "d", "fix": "f", "evidence": "x"}
     check(F.home(row("FAIL", "traceability", "rows"), "Calc") == ("defect", ""), "a FAIL is a defect on no milestone")
-    check(F.home(row("FAIL", "size", "scripts"), "Calc") == ("defect", ""), "a size FAIL is a defect")
-    check(F.home(row("WARN", "size", "scripts"), "Calc") == ("backlog", "Backlog: Calc"), "a size WARN is a backlog item on its feature's milestone")
+    check(F.home(row("FAIL", "docs", "missing"), "Calc") == ("defect", ""), "a docs FAIL is a defect")
+    check(F.home(row("WARN", "docs", "stale"), "Calc") == ("backlog", "Backlog: Calc"), "a docs WARN is a backlog item on its feature's milestone")
     check(F.home(row("FAIL", "performance", "cost"), "Calc") == ("backlog", "Backlog: Calc"), "a performance FAIL is a backlog item")
     check(F.home(row("WARN", "docs", "docs-check"), None) == ("backlog", "Backlog: Other"), "a WARN that fits no feature is a backlog item on Backlog: Other")
     check(F.home(row("WARN", "review", "conflict"), "Zed") == ("defect", ""), "a review conflict is a defect")
     check(F.home(row("WARN", "review", "gap"), "Zed") == ("backlog", "Backlog: Zed"), "a review gap is a backlog item")
     sys.path.pop(0)
-    out, _ = script(os.path.join(health, "health.py"), repo, "preview", "--group", "size")
+    out, _ = script(os.path.join(health, "health.py"), repo, "preview", "--group", "docs")
     check("as backlog on Backlog: Calc" in out, "the preview says where the issue would go (%s)" % out.strip()[:200])
-    out, _ = script(os.path.join(health, "health.py"), repo, "file", "--group", "size")
+    out, _ = script(os.path.join(health, "health.py"), repo, "file", "--group", "docs")
     got = issues_of(d)
     check(len(got) == 1 and "backlog" in labels(got[0]) and stone(got[0]) == "Backlog: Calc" and "defect" not in labels(got[0]),
-          "file opens one size finding labelled backlog on Backlog: Calc (%s)" % [(labels(i), stone(i)) for i in got])
+          "file opens one docs finding labelled backlog on Backlog: Calc (%s)" % [(labels(i), stone(i)) for i in got])
     got[0]["milestone"] = {"title": "v1.0"}  # the owner moved it
     with open(os.path.join(d, "issues.json"), "w") as f:
         json.dump(got, f)
-    out, _ = script(os.path.join(health, "health.py"), repo, "file", "--group", "size")
+    out, _ = script(os.path.join(health, "health.py"), repo, "file", "--group", "docs")
     check(len(issues_of(d)) == 1 and stone(issues_of(d)[0]) == "v1.0", "a repeat opens no second issue and leaves the owner's milestone (%s)" % out.strip()[:120])
 
     # HLT-4: a defect, end to end through plan and apply
@@ -208,7 +215,7 @@ with tempfile.TemporaryDirectory() as tmp:
     # DEL-14: a ship reply's FILE lines, once each, only behind --live
     reply = os.path.join(tmp, "ship.txt")
     with open(reply, "w") as f:
-        f.write("All good.\nFILE backlog calc: the size rule could name the largest function\nFILE defect Zed: the page lies about ZED-1\n"
+        f.write("All good.\nFILE backlog calc: the stale-page rule could name the changed file\nFILE defect Zed: the page lies about ZED-1\n"
                 "FILE backlog Nowhere: an idea that fits no feature\nFILE backlog Zed: mail me at someone@example.test\nSTEP: done\n")
     before = len(issues_of(d))
     out, _ = script(os.path.join(health, "milestone.py"), repo, "leftovers", reply)

@@ -2,7 +2,7 @@
 """The optional Deployments section of a feature page (DOC-14): a Page table and/or a Delivery table, nothing else.
 commands.md's rules block names the section, headers and Access words, and each column's rule. Pure: lines in, FORMAT
 findings out (pageformat.bad's shape); a secret-bearing value is never echoed: links read <link>, addresses <address>.
-criteria.py's page rules (rules, criteria_max, SHEET) sit at the end, moved here unchanged.
+criteria.py's page rules (rules, SHEET) sit at the end, moved here unchanged.
 """
 import importlib.util
 import json
@@ -87,7 +87,6 @@ def deployments(page, name, lines, page_cols=PAGE_COLS, delivery_cols=DELIVERY_C
 
 
 # The page rules of criteria.py, moved here unchanged; criteria.py imports them back.
-CRITERIA_MAX_DEFAULT = 10
 SHEET = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "commands.md")
 
 
@@ -217,8 +216,7 @@ def rules():
         on = listed("format", ",".join(pf.CHECKS))
         if set(on) - set(pf.CHECKS):
             raise ValueError
-        return {"sections": listed("sections", found["sections"]), "problem_lines": int(found["problem_lines"]),
-                "metrics_lines": int(found["metrics_lines"]), "usage": found.get("usage_section", "Usage"),
+        return {"sections": listed("sections", found["sections"]), "usage": found.get("usage_section", "Usage"),
                 "review": found["review_line"], "milestone": found["milestone_line"], "format": on,
                 "banned": listed("problem_banned", pf.BANNED),
                 "groups": listed("requirement_groups", ", ".join(pf.GROUPS)),
@@ -229,20 +227,6 @@ def rules():
                 "delivery_cols": listed("deployments_delivery", ", ".join(DELIVERY_COLS))}
     except (OSError, AttributeError, KeyError, ValueError):
         sys.exit("REFUSED: the rules block of skills/workflow-docs/references/commands.md is missing or broken.")
-
-
-def criteria_max(root):
-    """`criteria_max` in .loop/config.json, CRITERIA_MAX_DEFAULT when absent. A bad value refuses."""
-    path = os.path.join(root, ".loop", "config.json")
-    try:
-        with open(path) as handle:
-            value = json.load(handle).get("criteria_max", CRITERIA_MAX_DEFAULT)
-    except (OSError, ValueError, AttributeError):
-        value = CRITERIA_MAX_DEFAULT
-    if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 50:
-        sys.exit("REFUSED: criteria_max is %r in %s. Fix: set it to a whole number from 1 to 50, or remove it for the default %d."
-                 % (value, path, CRITERIA_MAX_DEFAULT))
-    return value
 
 
 # --- the owner's recorded words (criteria.py review|unreview --owner-record ID), written by the operation session, never a worker:

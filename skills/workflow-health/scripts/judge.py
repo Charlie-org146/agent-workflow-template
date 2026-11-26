@@ -374,6 +374,9 @@ def principles(rows):
         return ["PRINCIPLE: UNREAD (the principle list is not installed)"]
     out, fired = [], {r.get("subject") for r in rows if r["family"] == "controls" and r["state"] == "PASS"}
     for n, name, groups in re.findall(r"^\| (\d) \| ([^|]+) \| [^|]+ \| ([a-z,]+) \|$", text, re.M):
+        if groups == "none":
+            out.append("PRINCIPLE %s %s: n/a (no rules by design)" % (n, name.strip()))
+            continue
         mine = [r for r in rows if r["family"] in groups.split(",")]
         states = [r["state"] for r in mine] + [r["state"] for r in rows if r.get("rule") == "principle-map" and r.get("subject") == "principle " + n]
         dead = bool(mine and fired) and not any(r.get("rule") in fired for r in mine)

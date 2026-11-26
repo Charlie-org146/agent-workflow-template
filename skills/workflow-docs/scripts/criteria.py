@@ -16,8 +16,7 @@ usage: criteria.py <command> [options]
 
 A feature page is a short PRD (references/commands.md): Review, Problem, Requirements, Non-goals, Success metrics, Tests.
 A requirement is '- ID: **Unreviewed** text' or '- ID: **Reviewed DATE** text <!-- reviewed HASH -->' (seal_of its text
-and sub-bullets; docs.py check fails when either changes), at most criteria_max lines (default
-CRITERIA_MAX_DEFAULT, .loop/config.json). An argument shaped like an ID is a requirement; any other is a page, whose PRD
+and sub-bullets; docs.py check fails when either changes). An argument shaped like an ID is a requirement; any other is a page, whose PRD
 review prd.py writes. A row whose goal is '-' proves no requirement yet and is left out. render writes each Tests table and
 the full Tests page (render.py), printing WROTE per file. It runs git only.
 """
@@ -43,7 +42,7 @@ SCENARIO = re.compile(r"^Given .+, when .+, then .+", re.I)
 DAY = re.compile(r"^\d{4}-\d\d-\d\d$")
 SCRIPT_FILE = re.compile(r"[\w./-]*\w\.(?:py|sh|bash|zsh|js|mjs|cjs|ts|rb|pl|php|ps1|bat)\b", re.I)
 import deployments  # noqa: E402
-from deployments import CRITERIA_MAX_DEFAULT, SHEET, criteria_max, rules  # noqa: E402,F401
+from deployments import SHEET, rules  # noqa: E402,F401
 link_of, link_page, owner_words, safety, slurp = deployments.link_of, deployments.link_page, deployments.owner_words, deployments.safety, deployments.slurp
 
 
@@ -187,7 +186,7 @@ def contract(root, names, seen):
     import prd
     import render
     found, rule, unread, moves, done, local = [], rules(), False, [], 0, 0
-    limit, on = criteria_max(root), rule["format"]
+    on = rule["format"]
     linked, loose = test_rows(root)
     head, books = rule["sections"], {page: [] for page in names}
     for page in names:
@@ -239,12 +238,6 @@ def contract(root, names, seen):
             if mark != "Unreviewed" and mine != seal_of(text, below):
                 found.append(("LOCKED", page, "%s was reviewed and its wording or sub-bullets changed. Fix: restore the reviewed text (git log "
                               "-p), or the owner un-reviews it (/workflow-docs unreview %s --user) and reviews it again" % (key, key)))
-        if len(ids) > limit:
-            found.append(("CAP", page, "has %d requirements, over the limit of %d (criteria_max in .loop/config.json). Fix: merge "
-                          "requirements, or raise criteria_max" % (len(ids), limit)))
-        if len(prd.paras(body[head[0]])) > rule["problem_lines"]:
-            found.append(("PROBLEM", page, "is over %d lines. Fix: say who it is for and what it solves in %d lines or fewer"
-                          % (rule["problem_lines"], rule["problem_lines"])))
         found += pf.bullets(page, head[1], numbered[head[1]][1], LINE, "bullets" in on, rule["groups"])
         rl = [x for _, x in numbered[rule["revs"]][1]] if rule["revs"] in numbered else None
         found += pf.revcheck(page, units, rl, base_of(page, body, rule))
@@ -258,7 +251,7 @@ def contract(root, names, seen):
         elif "runbook" in on and books[page]:
             found += deployments.howto_runbook(root, page, rule, books[page])
         if "problem" in on:
-            found += pf.problem(page, head[0], numbered[head[0]][1], rule["problem_lines"], rule["banned"])
+            found += pf.problem(page, head[0], numbered[head[0]][1], rule["banned"])
         if "tests" in on:
             found += [x for x in [pf.stale(page, "Tests", numbered["Tests"][0], numbered["Tests"][1], table(root, ids, linked))] if x]
     if "runbook" in on:

@@ -207,7 +207,6 @@ hands-off-fallback	0.1
 hands-off-feature	0.1	
 hands-off-pressure	0.2	
 hands-off-queued	0.2	
-hands-off-size	0.1	
 hands-off-start	0.5	
 hands-off-timer	0.4	
 head-moved-168	107.8	
@@ -429,7 +428,6 @@ plan-seconds-nightly	38.3
 plan-sizes	8.4	
 platform-sends-counted	1.7	
 pods-blocks	1.2	
-pods-caps-3919	0.0	
 pods-docs	3.1	
 pods-independent	6.3	
 pods-lock	12.2	
@@ -504,7 +502,6 @@ reply-hook-mon5-wording	0.0
 reply-hook-scope	6.5	
 repo-rules-run	2.5	
 repo-rules-setup	0.2	
-repo-rules-threshold	0.2	
 report-done-final	7.1	
 report-header	2.9	
 rerun-both-touched	0.1	
@@ -566,14 +563,8 @@ setup-zero-tests-119	9.2
 shard-balance	26.2	
 size-140	0.5	
 size-lf-crlf	0.3	
-size-warn-band	0.1	
 skill-criteria-in-references	0.0	
 skill-kept	0.2	
-skill-lines-docs-1403	0.0	
-skill-lines-docs-4171	0.0	
-skill-lines-regression-3815	0.0	
-skill-lines-regression-3983	0.0	
-skill-lines-release-4172	0.0	
 skill-refusals-in-references	0.0	
 skill-size-116	1.3	
 skill-workflow-in-references	0.0	
@@ -613,7 +604,6 @@ template-in-commands	0.0
 template-sheet	5.6	
 test-caps-consolidate-allowed	0.4	
 test-caps-controls	0.2	
-test-caps-health	0.4	
 test-caps-qa-refused	0.4	
 test-caps-settings	0.4	
 tests-links-workflow-3839	0.1	
@@ -634,7 +624,6 @@ toys-no-leak-schedule	3.1
 toys-set-userprofile	3.0	
 tree-once-lock	0.4	
 tree-rules-first	15.4	
-trim-monitoring-4-size	0.1	
 trim-package-98	0.1	
 unattended-checkin-line	0.1	
 unattended-loop-recreate	2.4	

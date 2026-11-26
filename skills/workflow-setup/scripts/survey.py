@@ -205,7 +205,7 @@ def guards(repo, files):
     return [f for f in dict.fromkeys(cands) if ".tsv" in (read(repo, f) or "")]
 
 
-PORTABLE = ("parallel", "max_tries", "cadence", "criteria", "criteria_max", "review_depth", "token_budget", "step_limit", "goal_levels",
+PORTABLE = ("parallel", "max_tries", "cadence", "criteria", "review_depth", "token_budget", "step_limit", "goal_levels",
             "ci_levels", "pool_size", "digest_mail", "regression_cron", "health_cron", "feature_labels", "stale_branch_days",
             "silent_minutes", "test_budget_minutes", "prep_budget_minutes", "step_budget_minutes", "risky_paths")
 HELD = ("auto_approve", "auto_merge", "full_auto", "mend", "resume_on_limit", "pr_bumps_version", "reply_hook", "govern_hook",
@@ -220,8 +220,6 @@ def fits(key, value, default):
         return False
     if key in ENUMS:
         return value in ENUMS[key]
-    if key == "criteria_max":
-        return 1 <= value <= 50
     if key.endswith("_budget_minutes"):
         return value >= 15
     if key == "risky_paths":

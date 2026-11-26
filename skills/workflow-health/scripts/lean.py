@@ -2,8 +2,8 @@
 
 test-time: the land rows' lane time (this branch's loop/tests record in the git common folder, else the newest readable one)
 against test_budget_minutes (default and floor 15), naming the slowest rows and scripts; goal steps that hit their budget.
-rows-cap, suite-cap: the table's rows and the slowest full (non --reuse) run recorded here against max_regression_rows
-(default 1200) and max_suite_seconds (default 1900): WARN from 90%, FAIL over; a cap of 0 is off.
+suite-cap: the slowest full (non --reuse) run recorded here against max_suite_seconds (default 1900): WARN from 90%,
+FAIL over; a cap of 0 is off. (Principle 5 retired the rows cap, o988.)
 worktrees, local-branches: loop worktrees no live run names, and branches with no upstream, checked out nowhere, unmerged and
 older than stale_branch_days (default 14), each with its removal command; nothing is removed; file.py never files them.
 hooks (DEL-9, SET-8): `setup.py --git-hooks --check --json` WARNs on a missing, foreign or gone private-name hook; skipped on
@@ -20,7 +20,7 @@ import subprocess
 import sys
 import time
 
-from defects import SKILLS, clean, mod, read, table, tool
+from defects import SKILLS, clean, mod, read, tool
 
 # No prompts: git must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -132,10 +132,6 @@ def cap(root, rule, value, key, default, unit):
     found = row(state, key, rule, "%d %s of %d (%d%%)" % (value, unit, limit, 100 * value // limit),
                 "merge or drop rows that test the same thing, or the owner raises %s in .loop/config.json" % key)
     return [dict(found, family="performance")]
-
-
-def rows_cap(root):
-    return cap(root, "rows-cap", len(table(root)), "max_regression_rows", 1200, "rows")
 
 
 def suite_cap(root):

@@ -116,7 +116,5 @@ $health suggest | grep -q "^JUDGE UNAVAILABLE" && ok "suggest is kept as an alia
 
 echo "== no model in the rules"
 grep -qn "claude\|anthropic\|urllib\|http" "$here/skills/workflow-health/scripts/milestone.py" && bad "model or network in milestone.py" || ok "cost.py calls no model"
-echo "== size"
-for f in "$here"/skills/workflow-health/scripts/*.py; do [ "$(wc -c < "$f")" -lt 20480 ] || bad "size of $f"; done; ok "every health script is under 20 KB"
 echo "repo: $d/repo"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

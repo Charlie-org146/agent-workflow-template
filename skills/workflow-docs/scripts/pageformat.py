@@ -284,7 +284,7 @@ def bullets(page, name, lines, line_re, strict, groups_want=GROUPS):
     return out
 
 
-def problem(page, name, lines, most, banned):
+def problem(page, name, lines, banned):
     out, said = [], [(n, x) for n, x in lines if x.strip()]
     no = lambda n, what, got, fix: out.append(bad(page, n, name, 8, what, got, fix))
     first = said[0][0] if said else 1
@@ -295,8 +295,8 @@ def problem(page, name, lines, most, banned):
             (w for w in banned if re.search(r"\b%ss?\b" % re.escape(w), line, re.I)), None)
         if hit:
             no(number, "the problem is said without code internals", short(hit), "say what goes wrong for the person")
-    if not 1 <= len(said) <= most:
-        no(first, "1 to %d bullets" % most, "%d lines" % len(said), "say the problem in 1 to %d bullets" % most)
+    if not said:
+        no(first, "at least one bullet", "0 lines", "say the problem in at least one bullet")
     if said and not any(ME.search(line) for _, line in said):
         no(first, "at least one bullet in the first person", "none", "say it from the user's side: 'I can't ...'")
     return out

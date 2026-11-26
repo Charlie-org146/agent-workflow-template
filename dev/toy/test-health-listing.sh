@@ -63,9 +63,6 @@ buf = io.StringIO()
 with contextlib.redirect_stdout(buf):
     rc = issues.close("r6", "size", "fixed by 3776", yes=False, most=50)
 print("triage", rc, "DRY RUN: 30 would close" in buf.getvalue())
-for name in ("issues.py",):
-    size = len(open(os.path.join(sys.argv[1], name), "rb").read().replace(b"\r\n", b"\n"))
-    print(name, size <= 20480, size)  # GRD-20 (TD482): over 19,000 warns, only over 20,480 fails
 PY
 )
 echo "$out" | grep -qx "health 30 1 True" && ok "triage reads the open health issues from one filtered page" || bad "health: $out"
@@ -73,5 +70,4 @@ echo "$out" | grep -qx "open 3230 33 True 100" && ok "the open issues are read a
 echo "$out" | grep -qx "held 3235 1 34" && ok "file's listing adds the health issues of every state to the open ones, still paged" || bad "held: $out"
 echo "$out" | grep -qx "fail True True True True" && ok "a failed page refuses with one line naming the page" || bad "fail: $out"
 echo "$out" | grep -qx "triage 0 True" && ok "triage --close previews 30 findings on a repo with over 3,000 open issues" || bad "triage: $out"
-echo "$out" | grep -q "^issues.py True " && ok "issues.py is within the 20,480-byte cap (GRD-20)" || bad "size: $out"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "FAILED $fails"; exit 1; }

@@ -61,12 +61,11 @@ if want SET-3; then
   unzip -p "$d/v1.zip" PACKAGE.json | grep -q '"version": "1.0.0"' || no "no version in the package"
   for skill in "$here"/skills/workflow-*; do unzip -l "$d/v1.zip" | grep -q "skills/$(basename $skill)/SKILL.md" || no "$(basename $skill) missing"; done
   unzip -l "$d/v1.zip" | grep -q "shared/loop-files.md" || no "no design guide"
-  big=$(find "$here/skills" -name '*.py' -size +20479c); [ -z "$big" ] || no "script over 20 KB: $big"
   # installed by copying, then a skill runs from the copy: every skill's scripts compile, and setup plans a dry run
   mkdir -p "$d/x3" "$d/agent3"; unzip -q "$d/v1.zip" -d "$d/x3"; cp -R "$d/x3/skills/." "$d/agent3/"
   for py in "$d"/agent3/workflow-*/scripts/*.py; do python3 -c "import sys;compile(open(sys.argv[1],'rb').read(),sys.argv[1],'exec')" "$py" 2>/dev/null || no "an installed script does not compile: $py"; done
   dry=$(python3 "$d/agent3/workflow-setup/scripts/setup.py" --dry-run 2>&1) && echo "$dry" | grep -q "DRY RUN" || no "the installed setup skill does not run: $dry"
-  echo "PASS SET-3: versioned package, every skill, scripts under 20 KB, installs by copying and a skill runs"
+  echo "PASS SET-3: versioned package, every skill, installs by copying and a skill runs"
 fi
 
 # SET-4: update --check shows what is new and writes nothing; update applies the skills, then the repo half on its own
