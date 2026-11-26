@@ -35,12 +35,12 @@ Red-team dispositions for the final plan (plan file sha1 27b4c303f4e8): its 26 n
 | 1 | 7 | b1p75ca911 | accepted (o1000): fixed in the build, item I1 |
 | 2 | 2 | b2p2b24e49 | accepted (o1000): fixed in the build, item I5 |
 | 3 | 6 | b3p60d1b76 | accepted (o1000): fixed in the build, item I5 |
-| 4 | 6 | b4p6671eeb | limit, accepted (o1000): fixed in the build, items I3 and I17 |
-| 5 | 6 | b5p62dfb43 | limit, accepted (o1000): fixed in the build, item I13 |
+| 4 | 6 | b4p6671eeb | accepted (o1000): a limit. The approval record number is checked on our machines before merge, where the records are kept |
+| 5 | 6 | b5p62dfb43 | accepted (o1000): a limit. The approval record number is checked on our machines before merge, where the records are kept |
 | 6 | 6 | b6p696c194 | accepted (o1000): fixed in the build, item I2 |
 | 7 | 6 | b7p65e9275 | accepted (o1000): fixed in the build, item I9 |
 | 8 | 6 | b8p67997c6 | accepted (o1000): fixed in the build, item I10 |
-| 9 | 6 | b9p6fa8cdf | limit, accepted (o1000): fixed in the build, item I13 |
+| 9 | 6 | b9p6fa8cdf | accepted (o1000): a limit. The approval record number is checked on our machines before merge, where the records are kept |
 | 10 | 2 | b10p2e401c5 | accepted (o1000): fixed in the build, item I16 |
 | 11 | 3 | b11p3edf761 | accepted (o1000): fixed in the build under operation's ruling, item I17 |
 | 12 | 7 | b12p7f43981 | deliver-first line |
@@ -49,13 +49,13 @@ Red-team dispositions for the final plan (plan file sha1 27b4c303f4e8): its 26 n
 | 15 | 6 | b15p6293519 | accepted (o1000): fixed in the build, item I20 |
 | 16 | 6 | b16p617a4c0 | accepted (o1000): fixed in the build, item I2 |
 | 17 | 6 | b17p68f40fd | accepted (o1000): fixed in the build, item I2 |
-| 18 | 6 | b18p6eb9245 | limit, accepted (o1000): fixed in the build, items I13 and I8 |
-| 19 | 6 | b19p6d58146 | limit, accepted (o1000): fixed in the build, item I3 |
+| 18 | 6 | b18p6eb9245 | accepted (o1000): a limit. The approval record number is checked on our machines before merge, where the records are kept |
+| 19 | 6 | b19p6d58146 | accepted (o1000): a limit. The approval record number is checked on our machines before merge, where the records are kept |
 | 20 | 6 | b20p6f14de9 | accepted (o1000): fixed in the build, item I9 |
 | 21 | 8 | b21p80640ce | accepted (o1000): fixed in the build under operation's ruling, item I17 |
-| 22 | 2 | b22p208bb65 | accepted (o1000): fixed in the build under operation's ruling, item I11 |
+| 22 | 2 | b22p208bb65 | accepted (o1000): a deliver-first line |
 | 23 | 2 | b23p2a556df | deliver-first line |
-| 24 | 2 | b24p27148ea | limit, accepted (o1000); a deliver-first line goes with it |
+| 24 | 2 | b24p27148ea | accepted (o1000): a limit. No broken table reaches main past the PR check and the release run; a deliver-first line covers the scheduled run's reading |
 | 25 | 7 | b25p7c1a042 | deliver-first line |
 | 26 | 1 | b26p110cac9 | deliver-first line |
 
