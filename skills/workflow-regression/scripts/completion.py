@@ -47,3 +47,14 @@ def tree_timeouts(results):
     for r in results:
         if r["state"] == "KNOWN" and r["rc"] == 124:
             r["state"] = "FAIL"
+
+
+def split(ids, times, n):
+    """n shards of ids: longest time first to the least-loaded shard; no time weighs the median."""
+    seen = sorted(times[k] for k in ids if k in times)
+    weight, load, shards = {k: times.get(k, seen[len(seen) // 2] if seen else 1) for k in ids}, [0] * n, [[] for _ in range(n)]
+    for key in sorted(ids, key=lambda k: (-weight[k], k)):
+        j = min(range(n), key=lambda x: (load[x], x))
+        shards[j].append(key)
+        load[j] += weight[key]
+    return shards
