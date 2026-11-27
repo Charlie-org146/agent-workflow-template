@@ -276,7 +276,33 @@ def syncdraft():
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft}
+def enforced():
+    print("== R7: a requirement held only by drafts or covered rows is not enforced")
+    # Value: protects=health says "not enforced" for a requirement no run-able row holds, whatever the sync line is; fails_when=health
+    #   shows such a requirement as a draft FAIL or drops it, or a requirement with a land row is reported not enforced
+    import subprocess
+    from lvl_fixture import Repo, entry, row, ROOT
+    page = "# Page\n\n## Requirements\n\n- ABC-1: **Unreviewed** held by a draft\n- ABC-2: **Unreviewed** held by a covered row\n- ABC-3: **Unreviewed** held by a land row\n"
+    rows = [row("ABC-1", level="draft"), row("ABC-2", level="covered", command="read by a person"), row("ABC-3"), row("cov-src")]
+    ents = [entry("ABC-1", old="draft"), entry("ABC-2", old="covered", covers="cov-src"), entry("ABC-3"), entry("cov-src")]
+    repo = Repo(rows, ents, ["label\tsecurity\tsecurity\tfixture label"])
+    repo.write("docs/wiki/Page.md", page)
+    repo.write(".loop/config.json", "{}")
+    repo.commit()
+    health = os.path.join(ROOT, "skills", "workflow-health", "scripts", "health.py")
+    got = subprocess.run([sys.executable, health, "check", "--json"], cwd=repo.path, env=repo.env, capture_output=True, text=True, timeout=300)
+    try:
+        found = {r["subject"]: r for r in json.loads(got.stdout)["rows"] if r.get("subject", "").startswith("ABC-")}
+    except ValueError:
+        found = {}
+    for key, want in (("ABC-1", "not enforced"), ("ABC-2", "not enforced")):
+        item = found.get(key, {})
+        check(item.get("state") == "WARN" and want in item.get("detail", ""), "%s shows WARN, not enforced" % key, item or "no row for %s among %s" % (key, sorted(found)))
+    check("ABC-3" not in found or "not enforced" not in found["ABC-3"].get("detail", ""), "a requirement with a land row is not reported not enforced")
+    repo.close()
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
