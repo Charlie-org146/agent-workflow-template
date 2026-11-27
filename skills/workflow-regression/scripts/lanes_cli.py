@@ -24,7 +24,7 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import tiers, lanes, narrow  # noqa: E401,E402
+import level_words, tiers, lanes, narrow  # noqa: E401,E402
 from completion import merge_runs, table_changed  # noqa: E402
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -309,7 +309,8 @@ def workflow(root, given, write_main):
         sys.exit("REFUSED: %s exists, and this tool didn't write it. Fix: merge by hand." % path)
     else:
         os.makedirs(base, exist_ok=True)
-        open(path, "w").write(NARROW.replace("@BASE@", str(cfg.get("base") or "main")).replace("@LEVELS@", str(cfg.get("ci_levels") or "nightly")))
+        levels = level_words.pr_target(root, cfg)  # read before open() empties the file armed() reads
+        open(path, "w").write(NARROW.replace("@BASE@", str(cfg.get("base") or "main")).replace("@LEVELS@", levels))
         print("WROTE " + path)
         import completion
         completion.write_flaky_workflow(base, ours)

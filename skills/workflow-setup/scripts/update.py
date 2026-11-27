@@ -340,6 +340,15 @@ def apply_skills(skills, manifest, read, old, fixes, take, where):
     print("UPDATED skills to %s in %s" % (manifest["version"], skills))
 
 
+def old_workflow(repo):
+    """Lines naming an old generated pull request workflow, its fix and the rows that stop running: the regression skill answers (levels --old-workflow)."""
+    script = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "..", "workflow-regression", "scripts", "regression.py")
+    if not os.path.isfile(script):
+        return []
+    done = subprocess.run([sys.executable, script, "levels", "--old-workflow"], cwd=repo, capture_output=True, text=True)
+    return done.stdout.splitlines() if not done.returncode else []
+
+
 def locked(skills):
     handle = open(os.path.join(skills, ".workflow-update.lock"), "w")
     stop = time.time() + 10
@@ -401,6 +410,8 @@ def main():
         return 0
     target = manifest["version"] if version_key(manifest["version"]) > version_key(ours) else ours
     behind = sync.report(repo, base_cfg, target) if repo else False
+    for line in old_workflow(repo) if repo else []:
+        print(line)
     changed, dropped = check(skills, manifest, old, fixes, ours) if not tree else ([], [])
     if not args.apply:
         up = not changed and not dropped and not behind and not args.take and (tree or manifest["version"] == ours)

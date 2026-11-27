@@ -7,6 +7,7 @@ import re
 import sys
 
 import completion
+import level_words
 import levels_read
 import slots
 from levels import (CODE, LEVELS, RISKS, TABLE, TAGS, Problem, State, excuse, file_of, fingerprint, l0_total,
@@ -119,6 +120,9 @@ def remove(root, key, records):
 def cmd_level(root, args):
     state = State(root)
     need_levelled(state)
+    if args.ready:
+        any([args.test_level, args.risk, args.covers, args.retime, args.refresh, args.rename, args.remove]) and stop("LEVELS_BAD_FLAGS", "--ready goes alone")
+        return level_words.ready(root, args)
     edits = [args.test_level, args.risk, args.covers, args.retime, args.refresh]
     if args.rename or args.remove:
         if any(edits) or args.rename and args.remove:
@@ -127,6 +131,7 @@ def cmd_level(root, args):
     row, entry = state.by_id.get(args.id), state.entries().get(args.id)
     if not row:
         stop("LEVELS_NO_ROW", "no row %s" % args.id)
+    level_words.draft_guard(row, args)
     if not any(edits):
         print("LEVEL %s: %s" % (args.id, "no entry" if not entry else ", ".join(
             "%s %s" % (k, entry[k]) for k in ("old", "level", "risk", "covers", "seconds", "reason") if entry[k])))
@@ -247,6 +252,10 @@ def page_differs(root, state):
 
 
 def cmd_levels(root, args):
+    if args.old_workflow:
+        found = level_words.old_workflow(root)
+        found and print("\n".join(found))
+        return 0
     if args.discard:
         path = mark_path(root)
 
@@ -288,8 +297,8 @@ def cmd_levels(root, args):
 
 def old_word(text):
     if re.fullmatch(r"[Ll]\d", text):
-        raise argparse.ArgumentTypeError("%s is a test level: give it with --test-level; --level takes land, nightly, "
-                                         "draft or covered" % text)
+        raise argparse.ArgumentTypeError("%s is a test level: give it with --test-level; --level takes the old words land, nightly, "
+                                         "draft or covered (the levels are L0, L1 and L2)" % text)
     return text
 
 
@@ -311,6 +320,7 @@ def register(sub, top):
     item.add_argument("--risk", choices=TAGS)
     item.add_argument("--covers")
     item.add_argument("--remove", action="store_true")
+    item.add_argument("--ready", action="store_true")
     item.add_argument("--rename", metavar="NEW")
     item.add_argument("--retime", action="store_true", help="runs the row's committed command in a throwaway clone; L0")
     item.add_argument("--refresh", action="store_true", help="read a defect row's link labels again")
@@ -318,7 +328,7 @@ def register(sub, top):
     item.set_defaults(func=lambda a: cmd_level(top(), a))
     item = sub.add_parser("levels", help="list levels and problems; check, fill or discard a pending write")
     pick = item.add_mutually_exclusive_group()
-    for flag in ("--check", "--fill", "--discard"):
+    for flag in ("--check", "--fill", "--discard", "--old-workflow"):
         pick.add_argument(flag, action="store_true")
     item.set_defaults(func=lambda a: cmd_levels(top(), a))
     item = sub.add_parser("relevel", help="give every row a level and a risk tag (run once)")
