@@ -65,6 +65,7 @@ The other build items are listed under Build list below.
   - o1048 (v110-one-review, DLF-1, Deliver-first, OPS-1, Operation): the DLF-1 revise to the TD2136 unit and the Operation page lines B, C and D rest on it.
   - o1046 (v110-one-review, DEL-3, TD2128-A): the DEL-3 edit rests on it.
   - Each record counts once per command, so each is used in one revise call.
+- Order (operation): the o1047 unreview of DLF-1 runs only when v110-no-leak-gate's build starts, after this goal merges, because that goal's build and its line 4 wait for the merge. This goal's DLF-1 revise therefore starts from the Reviewed unit the TD2136 text was checked against.
 
 ### Spec check of E1 to E3: rulings and clarifications
 
