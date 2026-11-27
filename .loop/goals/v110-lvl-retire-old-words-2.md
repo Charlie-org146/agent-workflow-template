@@ -34,3 +34,7 @@ Frozen. A wrong done line needs a new goal.
 - test-level-words.py, the settings case: its expected config word is changed to match (L0 to L1), not weakened; that one assertion edit was not seen red on its own.
 - Departure: `setup update` does not rewrite an old goal_levels word yet; the sync commit's only seams are sync.py (private-scans A's file, TD1609) and settings.py (no room, TD1987). The run-time GOAL_LEVELS_OLD line names the value to set. Filed as a deliver-first line.
 - skills/workflow-regression/scripts/tiers.py is 19,163 B after this goal: over the 19,000 B warning, under the 20,480 B limit.
+- dev/toy/test-regression.sh line 117 (TD162): it was `$reg run nightly | grep -q add-median && bad "ran a draft"` and is now: no line naming add-median other than `not run: draft add-median-[12]` may appear, and `not run: draft add-median-1` is required. It is as strict about running a draft; the not-run line names the id, so the old "no line at all" could not stay.
+- R6: "not run: draft <id>" repeats once per shard in the scheduled runner's log (cosmetic).
+- R6: not_run is also copied into the summary job's l2 text (regression.yml, second copy) without a call there; it is dead text from the shared copied block. It is called once, in the run step, before the row loop.
+- R6: actions.py is 20,466 B, 14 B under the 20,480 B cap.
