@@ -176,7 +176,7 @@ os.makedirs(os.path.join(own, ".workflow-loop"))
 shutil.copy(names, os.path.join(own, ".workflow-loop", "private-names"))
 where = copy("%s-own-list" % WORD)
 leaky = fake_git("leaky-own-list", history_diff(ROWS[0], "%s-own-list" % WORD), "fatal: cannot read %s/repo for %s" % (work, WORD))
-out = toy_output(ROWS[0], where, {"HOME": own, "LOOP_PRIVATE_NAMES": os.devnull}, leaky)[1]
+out = toy_output(ROWS[0], where, {"HOME": own, "USERPROFILE": own, "LOOP_PRIVATE_NAMES": os.devnull}, leaky)[1]
 line = first_fail(out)
 check("HIST-E03" in line and WORD not in line and work not in line,
       "%s: its error line is screened with the runner's own private-name list although the test moves HOME" % ROWS[0], line)
