@@ -502,6 +502,12 @@ def coveredid():
     check(code != 0 and "REFUSED (COVERED_ROW)" in said and "covered by l1; run those" in said and ran == [], "target = a covered row's id is refused: covered by l1; run those, and nothing ran", (code, said[-300:], ran))
     code, said, results, calls = step(top, "l1")
     check(code == 0 and "l1" in open(os.path.join(top, "ran.log")).read().split(), "a plain row's id still runs", (code, said[-200:]))
+    os.remove(os.path.join(top, ".loop", "regression-relevel.tsv"))
+    open(os.path.join(top, "ran.log"), "w").close()
+    code, said, results, calls = step(top, "cov")
+    ran = open(os.path.join(top, "ran.log")).read().split()
+    check(code != 0 and "REFUSED (COVERED_ROW)" in said and "(levels record unreadable)" in said and ran == [],
+          "a covered row asked for by id is refused even when the levels record is missing, and nothing ran (fail closed)", (code, said[-300:], ran))
 
 
 def draftrun():
