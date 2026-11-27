@@ -68,11 +68,15 @@ budget-fair-failed-stays	PASS	2026-11-15
 budget-order-first	PASS	2026-11-27	
 budgets-agree	PASS	2026-11-27	
 builtin-flow	PASS	2026-11-26	
-capture-row-ci	FAIL	2026-11-13	
+capture-row-ci	PASS	2026-11-27	
+capture-row-mac	PASS	2026-11-27	
 changelog-bracket-no-gh	PASS	2026-11-17	
 changelog-no-heading-gh	PASS	2026-11-17	
+ci-block-skip-file	PASS	2026-11-27	
 ci-issue-backlog	PASS	2026-11-10	
 ci-summary	PASS	2026-11-27	
+ci-summary-fail-output	PASS	2026-11-27	
+ci-summary-passing-left-out	PASS	2026-11-27	
 ci-target-input	PASS	2026-11-27	
 codex-key-commands	FAIL	2026-11-25	
 codex-ro-home	PASS	2026-11-27	
@@ -283,8 +287,11 @@ issue-milestone-passes	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 issue-no-milestone-fails	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 issue-states	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 issue-truncated-unread	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+issues-live-only-ci	PASS	2026-11-27	
+issues-main-only	PASS	2026-11-27	
 issues-no-rows	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-issues-one-open-ci	PASS	2026-11-15	
+issues-one-open-ci	PASS	2026-11-27	
+issues-rest-fallback	PASS	2026-11-27	
 judge-cause-158	PASS	2026-11-26	
 judge-section-format	PASS	2026-11-19	
 known-no-block	PASS	2026-11-27	
@@ -292,6 +299,7 @@ known-recorded	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lane-affected-memory	PASS	2026-11-24	
 lane-died-signal	PASS	2026-11-27	
 lane-env-states	PASS	2026-11-24	
+lane-fail-text	PASS	2026-11-27	
 lane-last-152	PASS	2026-11-27	
 lane-limit-150	PASS	2026-11-27		b62ca9627eb0
 lane-messages-table	PASS	2026-11-11	
@@ -550,6 +558,7 @@ rows-pr-full	PASS	2026-11-27
 rowtail-block-in-workflow	PASS	2026-11-27	
 runs-sha	PASS	2026-11-27	
 same-lines	PASS	2026-11-27	
+scan-fail-closed	PASS	2026-11-27	
 schedule-setting	PASS	2026-11-20	
 scripts-a-monitoring-under-19000	PASS	2026-11-25	
 scripts-a-under-19000	PASS	2026-11-15	
