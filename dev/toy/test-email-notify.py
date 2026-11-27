@@ -65,6 +65,10 @@ with tempfile.TemporaryDirectory() as tmp:
     state = os.path.join(root, ".git", "loop", "notified.json")
     env = dict(os.environ, HOME=tmp, USERPROFILE=tmp, LOOP_FLOW=flow, LOOP_MAIL_ENV=env_file, DIGEST_MAIL_RETRY_SECONDS="0",
                DIGEST_MAIL_API="http://127.0.0.1:%d" % server.server_address[1])
+    names = os.path.join(tmp, "private-names.txt")  # BOARD-5: a mail is scanned first; a list of only comments passes
+    with open(names, "w") as f:
+        f.write("# no names" + chr(10))
+    env["LOOP_PRIVATE_NAMES"] = names
     for name in ("DIGEST_TO", "DIGEST_FROM", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_EMAIL_TOKEN", "DIGEST_SMTP_TEST_PORT", "LOOP_ROLE"):
         env.pop(name, None)
 
