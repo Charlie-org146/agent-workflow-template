@@ -67,7 +67,7 @@ budget-fair-base-moved	PASS	2026-11-25
 budget-fair-failed-stays	PASS	2026-11-15	
 budget-order-first	PASS	2026-11-27	
 budgets-agree	PASS	2026-11-27	
-builtin-flow	PASS	2026-11-26	
+builtin-flow	PASS	2026-11-27	
 capture-row-ci	PASS	2026-11-27	
 capture-row-mac	PASS	2026-11-27	
 changelog-bracket-no-gh	PASS	2026-11-17	
@@ -122,7 +122,7 @@ del9-pr-refuses	PASS	2026-11-27
 dependency-held	PASS	2026-11-09	
 deploy-section-optional	PASS	2026-11-26	
 deployments-counts-pages	PASS	2026-11-26	
-deps-graph-94	PASS	2026-11-25	
+deps-graph-94	PASS	2026-11-27	
 depth-auto-approve-gate	PASS	2026-11-18	
 depth-base-branch	PASS	2026-11-18	
 depth-condensed-refused	PASS	2026-11-25	
@@ -399,7 +399,7 @@ merge-batch-split	PASS	2026-11-24
 merge-guard-base-head	PASS	2026-11-11	
 merge-reach-fail-closed	PASS	2026-11-25	
 merge-refuses-worktree	PASS	2026-11-27	
-merged-frees-175	PASS	2026-11-25	
+merged-frees-175	PASS	2026-11-27	
 migration-base-config	PASS	2026-11-27	
 migration-clean	PASS	2026-11-27	
 migration-fix-sched-task	PASS	2026-11-27	
@@ -412,8 +412,8 @@ milestone-v1-free-form	PASS	2026-11-26
 milestone-wording-unreviewed	PASS	2026-11-27	
 milestones-once	PASS	2026-11-27	
 mon-stray-runs	PASS	2026-11-14	
-mon11-full-auto	PASS	2026-11-25	
-mon12-pool	PASS	2026-11-25	
+mon11-full-auto	PASS	2026-11-27	
+mon12-pool	PASS	2026-11-27	
 mon13-two-layers	PASS	2026-11-27	
 mon14-map-finish	PASS	2026-11-20	
 mon14-release-eta	PASS	2026-11-16	
@@ -421,11 +421,11 @@ mon14-repo-blocks	PASS	2026-11-27
 mon15-pod-owner	PASS	2026-11-27	
 mon16-checkin-grouped	PASS	2026-11-18	
 mon16-machine-line	PASS	2026-11-19	
-mon4-checkin-no-board	PASS	2026-11-25	
+mon4-checkin-no-board	PASS	2026-11-27	
 mon5-checkin-machine-line	PASS	2026-11-16	
 mon5-for-cell-sentence	PASS	2026-11-16	
-mon6-merged-frees	PASS	2026-11-25	
-mon7-govern-blocks	PASS	2026-11-25	
+mon6-merged-frees	PASS	2026-11-27	
+mon7-govern-blocks	PASS	2026-11-27	
 mon9-board-fast	PASS	2026-11-10	
 monitor-stray-runs-3862	PASS	2026-11-14	
 narrow-root-172	PASS	2026-11-24	
@@ -440,8 +440,8 @@ one-link	PASS	2026-11-27
 one-way-to-run	PASS	2026-11-27	
 operate-10-under-load	PASS	2026-11-11	
 operate-all	PASS	2026-11-25	
-operate-toy-no-check	PASS	2026-11-25	
-operate-wait-99	PASS	2026-11-25	
+operate-toy-no-check	PASS	2026-11-27	
+operate-wait-99	PASS	2026-11-27	
 ops-findings-filed	PASS	2026-11-19	
 orv-checkin-revert	PASS	2026-11-27	
 orv-checks-stay	PASS	2026-11-27	
@@ -622,7 +622,7 @@ skill-refusals-in-references	PASS	2026-11-26
 skill-size-116	PASS	2026-11-27	
 skill-workflow-in-references	PASS	2026-11-26	
 skip-list-approved	PASS	2026-11-25	
-slot-pool-112	PASS	2026-11-25	
+slot-pool-112	PASS	2026-11-27	
 spec-decisions-log	PASS	2026-11-13	
 spec-decisions-wording	PASS	2026-11-27	
 stale-comments-only-3122	PASS	2026-11-15	
