@@ -28,7 +28,7 @@ Anything beyond the four rows (OPS-1.10); no new rows; no change to product code
 - Causes are hypotheses until step 1 names the failing line of each row. Step 1 also names which `bash` ran (Git Bash or the System32 launcher) and captures each red run's output into the PR notes as the red evidence for done line 4.
 - test-shard-balance.py: the fix is `Path(...).as_posix()` for the cutgate.py path inside the bash command text only; `cwd=work` stays native. If `all.tsv` is still missing, the cause is elsewhere and step 1's capture says where.
 - test-one-review-start.py, likely cause: the fixture's `put()` (lines 50 to 52) and `commit()` (55 to 58) and the owner-words writes (about 445 and 465) use text-mode `open()` with no `newline`, so autocrlf turns the page into CRLF: the fix is `newline="
-"` in the fixture, a line-ending fix, not a changed comparison and not a path normaliser. The backslash in "docs/wiki\F.md" is built in product code (`skills/workflow-delivery/scripts/start_answer.py:313`, from `safety_scan.read_diff`): if step 1 shows the refusal text still carries a backslash after the fixture writes LF, that is a product defect outside Touches and the goal STOPS and reports to the operation session; it does not narrow done line 2 and it does not patch around it in the toy.
+"` in the fixture, a line-ending fix, not a changed comparison and not a path normaliser. The earlier STOP for a product-code backslash is superseded by the Red team revisions below (the cause is criteria.py, now in scope).
 - toy-leak-row-setup: step 4 is gated on step 1 naming the failing step of the borrowed `toy-leak-config-keep` command (it runs test-budget-order.py, test-merge-where.py and under it test-entry-config.sh). `dev/toy/test-entry-config.sh` joins Files conditionally; a failing layer outside dev/toy or `.loop/regression.tsv` stops the goal the same way. Any edit to the `toy-leak-config-keep` command is shown by a diff read to change handling only, never what it checks. If a CRLF-tolerant staged-file check is needed it uses `tr -d '
 '` on the output, never a looser pattern. Done line 3's wording ("CRLF") may not match the root cause; the true cause is recorded.
 - Neighbours to rerun on Windows by row name after each fix: shard-balance, budget-order-first, toy-leak-merge-where, toy-leak-row-merge, toy-leak-config-keep, and the toys beside the edited ones (test-shard-budget.py, test-one-review-decide.py, test-one-review-findings.py).
@@ -47,6 +47,13 @@ Anything beyond the four rows (OPS-1.10); no new rows; no change to product code
 - The PR's affected rows must select `toy-leak-row-setup` on Linux; if they do not, run it explicitly and put that run in the PR's CI evidence.
 - Build notes: line cites (test-shard-balance.py 112, 119, 122; test-one-review-start.py 348, 445, 569); CRLF comes from text-mode `open`, not from autocrlf; done line 3's CRLF premise is a deliver-first line, since the row compares names only.
 - Files adds `skills/workflow-docs/scripts/criteria.py` (and its Windows-red neighbours: milestones.py, deployments.py are read, not edited, unless step 1 names them); `dev/toy/test-shard-balance.py` and `dev/toy/test-one-review-start.py` stay.
+
+## Last read and operation notes
+- Which bash: the toy resolves Git Bash explicitly (the `bash.exe` beside the `git` it runs, under the Git install's usr/bin or bin folder) and STOPS the toy with a clear message if it cannot find it; it never takes the first `bash` on PATH.
+- Done line 2 and the literal expected strings: done line 2's "compared the same with / or \" is met by the product producing "/" paths (criteria.pages() joins with "/"), so the toy's literal "docs/wiki/F.md" expectations are stricter than a tolerant comparison, not looser.
+- criteria.py (operation notes, top confirms it stays in this goal with no split): its fix is shown red first on Windows (the row failing before the change), and its LF byte count after the change is pasted and must be under 20,480 bytes.
+- Done line 3: if toy-leak-row-setup passes on Windows with no change, the line is met as written; the PR notes say why (the row compares names only) and it goes to the owner as a deliver-first line.
+- Touches: the goal file's Touches line is the operation session's to extend (it said it added skills/workflow-docs/scripts/criteria.py); the build waits on that line showing it.
 
 ## PENDING
 PENDING: 1. Whether test-one-review-start.py's failure is a fixture line-ending problem (in scope) or a backslash built in product code (stop and report): resolved by step 1.
