@@ -263,6 +263,12 @@ def cmd_queue(g, args):
     return monitor("batch").cmd_queue(g, args)
 
 
+def start_review():
+    """Loaded only where a goal's start is checked, so a missing script stops no other command."""
+    import start_review as found
+    return found
+
+
 def cmd_adopt(g, args):
     return monitor("batch").cmd_adopt(g, args)
 

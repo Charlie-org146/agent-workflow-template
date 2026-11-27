@@ -33,6 +33,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 MON = os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts")
 
 
+def one_review_unanswered(state):
+  """DLF-1.3: a marked goal, or one needing a start review, merges only once its answer is saved."""
+  if not (state.get("one_review") or state.get("start_required")):
+    return ""
+  spec = importlib.util.spec_from_file_location("one_review_start", os.path.join(MON, "..", "..", "workflow-delivery", "scripts", "start_review.py"))
+  found = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(found)
+  return found.unanswered(state)
+
+
 def _pods():  # MON-15: workflow-monitoring's graph.py, or None
   sys.path.append(MON)  # graph's proctree
   try:
@@ -187,6 +197,8 @@ def main():
     sys.exit("REFUSED: no goal named %s." % slug)
   if not ar.mergeable(state):
     sys.exit("REFUSED: %s has no finished pull request. Fix: run goal.py pr first." % slug)
+  held = one_review_unanswered(state)
+  held and sys.exit("REFUSED: %s Nothing was merged. (ONE_REVIEW_UNANSWERED)" % held)
   if pods:
     pods.refuse(state)
     pods.pr_queue("wait", runs, slug)  # an earlier pr lane holds the slot
