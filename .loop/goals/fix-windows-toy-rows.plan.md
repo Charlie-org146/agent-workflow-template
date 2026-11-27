@@ -49,7 +49,7 @@ Anything beyond the four rows (OPS-1.10); no new rows; the one product-code fix 
 - Files adds `skills/workflow-docs/scripts/criteria.py` (and its Windows-red neighbours: milestones.py, deployments.py are read, not edited, unless step 1 names them); `dev/toy/test-shard-balance.py` and `dev/toy/test-one-review-start.py` stay.
 
 ## Last read and operation notes
-- Which bash: the toy resolves Git Bash explicitly (the `bash.exe` beside the `git` it runs, under the Git install's usr/bin or bin folder) and STOPS the toy with a clear message if it cannot find it; it never takes the first `bash` on PATH.
+- Which bash: superseded by the Round 3 revisions (one rule).
 - Done line 2 and the literal expected strings: done line 2's "compared the same with / or \" is met by the product producing "/" paths (criteria.pages() joins with "/"), so the toy's literal "docs/wiki/F.md" expectations are stricter than a tolerant comparison, not looser.
 - criteria.py (operation notes, top confirms it stays in this goal with no split): its fix is shown red first on Windows (the row failing before the change), and its LF byte count after the change is pasted and must be under 20,480 bytes.
 - Done line 3: if toy-leak-row-setup passes on Windows with no change, the line is met as written; the PR notes say why (the row compares names only) and it goes to the owner as a deliver-first line.
@@ -61,13 +61,24 @@ Anything beyond the four rows (OPS-1.10); no new rows; the one product-code fix 
 - test-shard-balance.py: one `BASH` constant, `shutil.which("bash")` when `os.name == "nt"`, else `"bash"`, used at all five call sites (about lines 119, 137, 165, 170, 193); it resolves Git Bash on Windows and there is no bash.exe lookup on Linux.
 - The fixed rule is widened: a toy edit may change how a fixture is written or how the runner is called (the BASH constant, `shlex.quote`), never an expected value or a comparison.
 - The `newline="\n"` fixture edit is dropped unless step 1 shows it is needed (the compare strips a carriage return).
-- toy-leak-config-keep: if it is red on its own, STOP and report; fixing a fifth row is a new goal. Any edit to test-budget-order.py, test-merge-where.py or test-entry-config.sh is a STOP too.
+- toy-leak-config-keep: superseded by the Round 3 revisions (its command may be fixed for path handling). Any edit to test-budget-order.py, test-merge-where.py or test-entry-config.sh is still a STOP.
 - Deliver-first lines for the owner, listed in the PR notes: (1) the root-cause fix is in product code (criteria.py), not the toy; (2) the bash resolution is a runner change; (3) done line 2 is met by the producer emitting "/", and the compare stays exact.
 - The scrub of red output replaces the repo root, the account folder and the temp root with `<repo>`, `<home>` and `<tmp>`.
 - Housekeeping: one Files line; add the `# windows: ok` header to test-shard-balance.py once it passes there.
 - Guard definition (last read): the guard compares tokens, not lines. A changed line passes when its only difference is a runner token (`"bash"` becoming `BASH`, a `shlex.quote(...)` around a path) and its check or assert text, its expected operands and every PASS or FAIL literal are token-for-token the same as before; a line fails the guard if any of those tokens was removed or changed. "Expected string" means any string literal that is an operand of a check, assert or comparison.
-- If toy-leak-row-setup is red and the cause lies outside Files, the build STOPS and reports; done line 3 then stays unmet in this goal (nothing is loosened).
+- If toy-leak-row-setup is red and the cause lies outside Files and outside the Round 3 allowance, the build STOPS and reports; done line 3 then stays unmet in this goal (nothing is loosened).
 - Done line 2 is read as "Windows output equals Linux output": the producer emits "/" paths and the compare stays exact, which is stricter than the literal "compared the same with / or \", and it is a deliver-first line.
+
+## Round 3 red team revisions (3 BREAKs; this section wins over every section above; condensed re-plan)
+- Done line 4 guard, strengthened with an outcome check as well as the token check: each changed toy is run on base and on head, on Windows and on Linux (the Linux half is GitHub's run on the PR head). The set of check names printed on head must equal the base set, with zero FAIL lines and exit 0. The guard fails on any added `sys.exit`, any `try`/`except` around a check, and any rebinding of `check` or `failed`. It also reads the `.loop/regression.tsv` row diff: a row command may only change path handling, or get stricter.
+- Row `rows-pr-full` is made stricter: its command also requires the toy's exit 0 and no "FAIL" line (stricter is allowed; done line 4 forbids only loosening). It is shown red on base on Windows first.
+- Before any PR body, comment or notes text leaves the machine: it goes through the private-name scan and a check for every path form (`C:\Users\`, `C:/Users/`, `/c/Users/`, the worktree path and the main-checkout path); separators are normalised first, then scrubbed; any hit stops the post.
+- Done line 3 reversed from the earlier STOP: the likely cause is the config-keep row's MSYS hooksPath (`.loop/regression.tsv:753`). The row command of `toy-leak-config-keep` may be changed for path handling only (for example `cygpath -m` when on Windows), shown red first, and listed as a deliver-first line ("a fifth row fixed as toy-leak-row-setup's dependency"). It is still a STOP if test-budget-order.py, test-merge-where.py or test-entry-config.sh need edits.
+- Bash, one rule only: on `os.name == "nt"` use `shutil.which("bash")`, and refuse with a clear message if it is None or sits under System32 (WSL); on Linux plain `"bash"`. No lookup beside git.
+- The `newline="\n"` fixture edit is applied to test-shard-balance.py's fixtures (about lines 114 to 117) only if step 1 shows CRLF red there.
+- Linux evidence: add `skills/workflow-docs/scripts/criteria.py` to test-one-review-start.py's `# reads:` header so the PR's lanes select the orv rows; use `lanes_cli.py affected` on the criteria.py diff to choose the Windows reruns. If toy-leak-row-setup is not selected on the PR, the PR notes say so and say whether its result on GitHub came from a fresh run or a reused one.
+- Run test-one-review-start.py on Windows after only the criteria.py fix, before any toy edit, and record the result.
+- criteria.py's entry in Touches lives in the tool's extra.json, not in the goal file; the goal file stays uncommitted as the tool wrote it.
 
 ## PENDING
 PENDING: 1. Whether test-one-review-start.py's failure is a fixture line-ending problem (in scope) or a backslash built in product code (stop and report): resolved by step 1.
