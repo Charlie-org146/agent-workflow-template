@@ -219,6 +219,8 @@ check(sc.OUTSIDE not in sc.changed_units(base, base) and sc.changed_units(base, 
       "R13 a requirement that loses its Reviewed mark counts as changed, so its text can't be rewritten in two steps")
 check("other line" in text and units == [("docs/wiki/P.md", "AB-1")], "the diff is read with external tools off: %s" % (units,))
 check("ONE_REVIEW_DIFF" in refused(lambda: sc.read_diff(repo, "0" * 40, "HEAD")), "an unreadable diff refuses")
+check("ONE_REVIEW_DIFF" in refused(lambda: sc.diff_classes("diff --git x y\n--- x\n+++ y\n@@ -1 +1 @@\n-a\n+b\n")),
+      "R12 a diff whose file headers can't be read refuses instead of reading as empty")
 
 # an unmarked goal saves as today
 record("u", status="stopped")
