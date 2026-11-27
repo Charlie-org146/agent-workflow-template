@@ -132,6 +132,10 @@ def requirement_gate(g, slug):
     if loose or (done and done.returncode):
         g.no("[FIND-FILE] %s not filed on its Backlog milestone. Fix: run goal.py finding again" % ", ".join(sorted(t.split()[0] for t in loose))
              if loose else (done.stderr or done.stdout).strip())
+    state = g.load(slug)
+    more = g.fit.start_answer().unapproved(g.root(), g.state_dir(), state, "origin/" + g.config()["base"], "HEAD") if state.get("one_review") else []
+    more and g.no("this changes a Reviewed requirement the start review didn't approve as it reads now: %s. Fix: use the approved "
+                  "text, or take that change out (ONE_REVIEW_UNAPPROVED)" % ", ".join(more))
 
 
 def session_reply(state, slug, step, path, runs, flow):

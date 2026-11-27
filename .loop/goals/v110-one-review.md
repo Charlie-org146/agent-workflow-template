@@ -282,3 +282,11 @@ safety_scan.py has one rule set for a stop's words and one for a diff. Nothing c
 
 As first committed (234b981d4), the scan did not read a Reviewed requirement in the pages' own form, which carries a date and a seal. Its toy used a form no page has. The "changed Reviewed text 0" and "30 open no finding" figures above are wrong. Fixed, with the toy now using the real form and a real page, and rerun on the same 100 merges: 24 open no finding; changed Reviewed text 10; the other class counts are unchanged (test 65, security and settings 18, deletion 3, money 1, steward merge 1, private data 0). The counts over past break texts don't use this part.
 
+### E1, last part: the whole-unit comparison
+
+- One comparison, in start_answer.py. revise, review and the requirement guard ask it through its command; goal.py pr and merge.py call it on the head given. It compares the whole unit, sub-lines included, against the copy in the run record, and refuses when the base unit is no longer the one the owner was shown.
+- A start record is used once per ID and command at revise and review, reviews only approved IDs and no page, retires nothing, and is void while the goal is stopped or failed and for good after a reject, a permanent stop or a retire. On a marked goal neither a done line nor a plain record passes the guard.
+- Safe option taken for batches: a one-review goal always merges on its own; the combined-head check for batches is not built and is to be filed.
+- Not built, to be filed: voiding single items after a files revert (comes with revert, which is not built); refusing indented text left outside a unit.
+- Checks, one toy at a time under operation's load rule: both new toys, test-criteria.sh, test-merge-batch.sh, test-dlf-merge.py and test-goal.sh pass. test-milestones.sh fails one case ("setup mentions a milestone") the same way on untouched main.
+

@@ -270,7 +270,8 @@ def revise(args):
     (n, m), page, below = hit[0], os.path.basename(rel)[:-3], cr.subs(lines, hit[0][0])
     said = record(args.owner_record, slug_of(args), key, page)
     tab, ret, _ = pf.revs(dict(cr.sections(text)).get("Revisions") or [])
-    if not said or key not in tab:
+    started = not said and cr.deployments.started(cr.git("rev-parse", "--git-common-dir"), args.owner_record)
+    if not (said or started) or key not in tab:
         no("REV-RECORD" if not said else "REV-ROW", "need an owner record naming %s and %s or %s" % (slug_of(args), key, page) if not said else "%s has no table. Fix: criteria.py migrate" % key)
     rows, old = tab[key], pf.unit(m.group(4), below)
     if args.command == "retire":
@@ -286,12 +287,16 @@ def revise(args):
         if cr.delegated(root, args.owner_record, " ".join(body)) is False:
             no("REV-RECORD", "a delegated record can't revise this: its text or the asking words are in a safety class, or DOC-2 lacks its revision. Fix: the owner's own words")
         subs = ["  - " + re.sub(r"^\s*-\s*", "", x).strip() for x in body[1:] if x.strip()] if args.text_file else below
+        started and cr.deployments.start_use(args.owner_record, "revise", key, rel, "\n".join([body[0].strip()] + subs), slug_of(args))
         fresh = pf.unit(body[0].strip(), subs)
         if fresh == old:
             no("REV-NOOP", key + " already reads so")
+    started and args.command == "retire" and cr.deployments.start_use(args.owner_record, "retire", key)
+    said = said or "%s: \"start review\"" % args.owner_record
     rows.insert(0, ["r%d" % (len(rows) + 1), cr.today(), fresh, pf.enc(" ".join(args.why.split())), said])
     lines[n:n + 1 + len(below)] = [] if args.command == "retire" else ["- %s: **Unreviewed** %s" % (key, body[0].strip())] + subs
     save(join(root, rel), text, rput("\n".join(lines), tab, ret))
+    started and cr.deployments.log_use(cr.git("rev-parse", "--git-common-dir"), "revise", key, args.owner_record)
     print(("RETIRED %s as %s" % (key, ret[key])) if args.command == "retire" else "REVISED %s r%d->r%d (now Unreviewed, awaits review)" % (key, len(rows) - 1, len(rows)))
     return 0
 
@@ -327,6 +332,7 @@ def guard(args):
         sys.exit("[GUARD-BASE] cannot read %s (shallow: %s). Fix: git fetch origin main" % (base, cr.git("rev-parse", "--is-shallow-repository", check=False)))
     slug, rule, sec = args.slug or cr.git("branch", "--show-current").replace("loop/", "", 1), cr.rules(), cr.rules()["sections"][1]
     goal = cr.git("show", "HEAD:.loop/goals/%s.md" % slug, check=False).split("## Done lines", 1)[-1].split("\n## ", 1)[0]
+    one = re.search(r"^- Review: one\s*$", cr.git("show", "HEAD:.loop/goals/%s.md" % slug, check=False), re.M)
     goal = "\n".join(re.findall(r"^\d+\. .*$", goal, re.M))
     bad = []
     for rel in cr.git("diff", "--no-renames", "--name-only", base + "...HEAD", "--", cr.folder_of(root)).split():
@@ -336,8 +342,10 @@ def guard(args):
         have, rows = (pf.revs(d.get(rule["revs"]) or [])[0] for d in (now, was))
         for key, (mark, text) in old.items():
             fresh = have.get(key, [])[:len(have.get(key, [])) - len(rows.get(key, []))]
-            if mark == "Unreviewed" or new.get(key, ("", ""))[1] == text or re.search(r"(?<![A-Z0-9-])%s(?!\d)" % key, goal) or any(
-                    record(r[4].split(":")[0], slug, key, page) for r in fresh[:1] if len(r) == 5):
+            if mark == "Unreviewed" or new.get(key, ("", ""))[1] == text or not one and (re.search(r"(?<![A-Z0-9-])%s(?!\d)" % key, goal) or any(
+                    record(r[4].split(":")[0], slug, key, page) for r in fresh[:1] if len(r) == 5)):
+                continue
+            if one and key in new and any(cr.deployments.start_use(r[4].split(":")[0], "guard", key, rel, "", slug, True) for r in fresh[:1] if len(r) == 5):
                 continue
             bad.append("%s (%s): %s changed. Worker fix: revert it, or goal.py finding %s \"%s <gap>\" --requirement %s. Owner fix: an owner record "
                        "naming %s and %s or %s" % (key, page, "text" if key in new else "removed", slug, key, key, slug, key, page))

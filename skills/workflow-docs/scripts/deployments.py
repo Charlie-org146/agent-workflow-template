@@ -8,7 +8,9 @@ import importlib.util
 import json
 import os
 import re
+import subprocess
 import sys
+import time
 
 import pageformat as pf
 from pageformat import RULE, bad, short, tables
@@ -251,6 +253,26 @@ def safety(text):
 START_ANSWER = re.compile(r'"(\\[ntr]|\s)*(approve|reject)(\\[ntr]|\s)+start\b', re.I)  # DLF-1.3: no other permission (E15, M1)
 
 
+def start_use(rid, command, key, page="", text="", goal="", ask=False):
+    """DLF-1.3: delivery decides; `ask` only says whether."""
+    tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "start_answer.py")
+    done = os.path.exists(tool) and subprocess.run([sys.executable, tool, "approves", rid, command, key, page, goal], input=text, capture_output=True, text=True,
+                                                  env=dict(os.environ, GIT_TERMINAL_PROMPT="0"))
+    if done and not done.returncode or ask:
+        return bool(done) and not done.returncode
+    why = (done.stdout + done.stderr).strip()[-200:] if done else "start_answer.py is missing"
+    sys.exit("REFUSED: start answer %s doesn't cover this: %s. Unchanged (ONE_REVIEW_UNAPPROVED)." % (rid, why))
+
+
+def started(common, rid):
+    return any(len(r) == 5 and r[0] == rid and START_ANSWER.match(r[3]) for r in owner_rows(os.path.join(common, "loop", "owner-words.tsv")))
+
+
+def log_use(common, command, key, rid):
+    with open(os.path.join(common, "loop", "reviews.tsv"), "a", encoding="utf-8") as handle:
+        handle.write("%s\t%s\t%s\trecord %s: start review\n" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), command, key, rid))
+
+
 def owner_rows(path):
     try:
         with open(path, encoding="utf-8") as handle:
@@ -266,15 +288,15 @@ def owner_words(args, git):
         sys.exit("REFUSED: no owner-words record %s. Nothing was changed. Fix: the operation session records the owner's "
                  "message with sessions.py owner-words." % args.owner_record)
     record = found[-1]
-    if START_ANSWER.match(record[3]):
-        sys.exit("REFUSED: record %s answers a start review, and that is no other permission. Nothing was changed. Fix: the "
-                 "operation session records the owner's words for this (ONE_REVIEW_RECORD)." % args.owner_record)
+    started = START_ANSWER.match(record[3])
+    for ident in args.ids if started else []:  # review of an approved ID only; a page name matches no item
+        start_use(args.owner_record, args.command, ident)
     stand = args.command == "unreview" and "full-auto-rule" in record[4].split(",")
     left = [] if stand else sorted(set(args.ids) - set(record[4].split(",")))
     if left:
         sys.exit("REFUSED: record %s does not cover %s (it covers %s). Nothing was changed." % (
             args.owner_record, ", ".join(left), record[4]))
-    for row in [] if stand else owner_rows(os.path.join(common, "reviews.tsv")):
+    for row in [] if stand or started else owner_rows(os.path.join(common, "reviews.tsv")):
         if len(row) > 3 and row[1] == args.command and row[3].startswith("record %s:" % args.owner_record):
             sys.exit("REFUSED: record %s was already used for %s. Nothing was changed. Fix: the operation session "
                      "records the owner's message again." % (args.owner_record, args.command))

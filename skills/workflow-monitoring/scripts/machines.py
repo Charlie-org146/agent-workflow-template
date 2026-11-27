@@ -108,8 +108,8 @@ def batch_ready(M, top, base, state):
         return None, "not finished"
     if state.get("release") == "ask" or state.get("safety") or graph.foreign(state):
         return None, "safety class"
-    if M.one_review_unanswered(state):
-        return None, "its start review is not answered"
+    if state.get("one_review") or state.get("start_required"):  # its approved text is checked on its own head only
+        return None, "a one-review goal merges on its own"
     M.ar.stage_part(top, state)
     if state.get("release_part") == "major":
         return None, "major bump: the owner's cut"

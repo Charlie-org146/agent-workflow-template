@@ -474,7 +474,7 @@ acc = got.get("plan_accept") or ["", ""]
 check(acc[0].startswith("refused") and acc[1].startswith("got 'ACCEPTED"), "a start answer accepts no plan break: %s" % acc[0][:90])
 check("takes the owner's words" in got.get("approve", ""), "a start answer approves no plan round: %s" % got.get("approve", "")[:90])
 docs = got.get("docs") or ["", ""]
-check("ONE_REVIEW_RECORD" in docs[0] and docs[1].startswith("got 'record "), "the docs commands refuse it: %s" % docs[0][:110])
+check("ONE_REVIEW_UNAPPROVED" in docs[0] and docs[1].startswith("got 'record "), "the docs commands refuse it: %s" % docs[0][:110])
 check(got.get("delegated") in (False, None), "it is no delegated approval: %r" % got.get("delegated"))
 check(got.get("milestone") == [False, True], "it is no milestone record: %s" % got.get("milestone"))
 check(got.get("release") == [False, True], "it is no release record or waiver: %s" % got.get("release"))
@@ -534,6 +534,134 @@ check(len(posts) == 1 and "already mailed" in said, "the same code is not sent a
 items("mailed", [{"class": "money", "action": "buy one seat", "files": [], "recommend": "refuse"}])
 check(len(posts) == 2 and "buy one seat" in posts[-1].get("text", ""), "a new code is sent once more")
 server.shutdown()
+
+# an approved requirement change: one comparison of the whole unit at revise, review, guard, pr and merge (E1, B1, B2, M1, M3)
+sh(tmp, "reset", "-q", "--hard")
+sh(tmp, "switch", "-q", "-c", "pagebase", "origin/main")
+PAGE = ("# F\n\n## Requirements\n\n- AB-1: **Reviewed 2026-11-01** Old heading <!-- reviewed deadbeef -->\n  - old sub [AB-1]\n\n"
+        "- AB-2: **Reviewed 2026-11-01** Second one <!-- reviewed deadbeef -->\n\n## Revisions\n\n"
+        "### AB-1\n\n| rev | date | text | why | approved |\n|---|---|---|---|---|\n| r1 | 2026-11-01 | Old heading <br> old sub [AB-1] | x | o1 |\n\n"
+        "### AB-2\n\n| rev | date | text | why | approved |\n|---|---|---|---|---|\n| r1 | 2026-11-01 | Second one | x | o1 |\n")
+commit(tmp, "docs/wiki/F.md", PAGE, "a page")
+sh(tmp, "push", "-q", "origin", "HEAD:main")
+fresh("page")
+NEW = "New heading\n  - new sub [AB-1]"
+items("page", [{"class": "a change to what a feature promises", "action": "reword AB-1", "files": ["docs/wiki/F.md"], "recommend": "approve",
+                "page": "docs/wiki/F.md", "id": "AB-1", "text": NEW}])
+shown = tool("start-review", "page", role="operation")
+code = shown.split("approve start page ", 1)[1].split()[0] if "approve start page " in shown else "none"
+rid = words("approve start page " + code)
+rows = os.path.join(tmp, ".git", "loop", "owner-words.tsv")
+text = open(rows).read().split("\n")
+text = [line.rsplit("\t", 1)[0] + "\tpage,AB-1,AB-2,F" if line.startswith(rid + "\t") else line for line in text]
+open(rows, "w").write("\n".join(text))
+said = answer("page", rid)
+check("STARTED page" in said, "a requirement item is answered: " + said.strip()[:100])
+
+
+def docs(*args):
+    got = subprocess.run([sys.executable, os.path.join(root, "skills", "workflow-docs", "scripts", "criteria.py")] + list(args),
+                         capture_output=True, text=True, cwd=tmp, env=env)
+    return got.returncode, (got.stdout + got.stderr).strip()
+
+
+def revise(key, text, record_id=None):
+    put(home, "new.txt", text.replace("\n  - ", "\n- ") + "\n")
+    return docs("revise", key, "--owner-record", record_id or rid, "--why", "approved at the start", "--text-file", os.path.join(home, "new.txt"))
+
+
+def page():
+    return open(os.path.join(tmp, "docs", "wiki", "F.md")).read()
+
+
+for key, text, why in (("AB-1", "New heading\n  - another sub [AB-1]", "another sub-bullet"), ("AB-1", "Newer heading\n  - new sub [AB-1]", "another heading"),
+                       ("AB-1", "New heading", "a dropped sub-bullet"), ("AB-2", "Changed second", "an ID that wasn't approved")):
+    code_, said = revise(key, text)
+    check(code_ != 0 and "ONE_REVIEW_UNAPPROVED" in said and page() == PAGE, "revise refuses %s: %s" % (why, said[:110]))
+code_, said = docs("retire", "AB-1", "--owner-record", rid, "--why", "x", "--as", "retired")
+check(code_ != 0 and page() == PAGE, "the start record retires nothing: " + said[:90])
+code_, said = revise("AB-1", NEW)
+check(code_ == 0 and "**Unreviewed** New heading" in page() and "new sub [AB-1]" in page(), "revise takes exactly the approved unit: " + said[:130])
+kept = page()
+sh(tmp, "checkout", "-q", "--", "docs/wiki/F.md")
+code_, said = revise("AB-1", NEW)
+check(code_ != 0 and "already used" in said, "a record is used once for one ID and command: " + said[:110])
+put(tmp, "docs/wiki/F.md", kept)
+code_, said = docs("review", "F", "--user", "--owner-record", rid)
+check(code_ != 0 and page() == kept, "it reviews no whole page: " + said[:100])
+code_, said = docs("review", "AB-2", "--user", "--owner-record", rid)
+check(code_ != 0 and page() == kept, "it reviews no other ID: " + said[:100])
+code_, said = docs("review", "AB-1", "--user", "--owner-record", rid)
+check(code_ == 0 and "- AB-1: **Reviewed " in page() and "New heading" in page(), "it reviews the approved ID: " + said[:130])
+sh(tmp, "add", "docs/wiki/F.md")
+sh(tmp, "commit", "-qm", "AB-1 as approved")
+
+
+def guard():
+    return docs("guard", "origin/main", "page")
+
+
+def unapproved():
+    state = record("page")
+    return start_review_answer.unapproved(tmp, runs, state, "origin/main", "HEAD")
+
+
+import start_answer as start_review_answer  # noqa: E402
+os.chdir(tmp)
+code_, said = guard()
+check(code_ == 0 and unapproved() == [], "the guard and the comparison pass the approved unit: %s %s" % (said[:110], unapproved()))
+good = page()
+commit(tmp, "docs/wiki/F.md", good.replace("Second one <!--", "Second changed <!--"), "another promise, quietly")
+check(unapproved() == ["AB-2 on docs/wiki/F.md"], "a change outside the approval is found: %s" % unapproved())
+code_, said = guard()
+check(code_ != 0 and "AB-2" in said, "and the guard refuses it: " + said[:100])
+goal_file = ".loop/goals/page.md"
+commit(tmp, goal_file, open(os.path.join(tmp, goal_file)).read().replace("1. page works", "1. page works and AB-2 changes"), "name it in a done line")
+code_, said = guard()
+check(code_ != 0 and "AB-2" in said, "on a marked goal a done line naming the ID doesn't pass the guard: " + said[:100])
+sh(tmp, "reset", "-q", "--hard", "HEAD~2")
+commit(tmp, "docs/wiki/F.md", good.replace("new sub [AB-1]", "slipped sub [AB-1]"), "edit the approved unit")
+check(unapproved() == ["AB-1 on docs/wiki/F.md"], "an edit under the approved heading is found: %s" % unapproved())
+sh(tmp, "reset", "-q", "--hard", "HEAD~1")
+state = record("page")
+# pr and merge run the same comparison; the guard alone doesn't see a newly added Reviewed requirement
+commit(tmp, "docs/wiki/F.md", good.replace("\n## Revisions", "- AB-3: **Reviewed 2026-11-01** A new promise\n\n## Revisions"), "add a promise")
+wired = r"""
+import os, sys
+root, tmp = sys.argv[1:]
+for skill in ("workflow-delivery", "workflow-monitoring", "workflow-release"):
+    sys.path.append(os.path.join(root, "skills", skill, "scripts"))
+os.chdir(tmp)
+import goal, role_gate, merge, machines
+state = goal.load("page")
+for name, call in (("PR", lambda: role_gate.requirement_gate(goal, "page")),
+                   ("MERGE", lambda: merge.one_review_unapproved(state, tmp, os.path.join(tmp, ".git", "loop", "runs"), "main", "HEAD")),
+                   ("BATCH", lambda: machines.batch_ready(merge, tmp, "main", dict(state, status="done", step="ship", pr="u", release="", flow={s: "done" for s in goal.FLOW})))):
+    try:
+        print(name, call())
+    except SystemExit as stop:
+        print(name, "refused", stop.code)
+    except Exception as error:
+        print(name, "error", type(error).__name__, error)
+"""
+ran = subprocess.run([sys.executable, "-c", wired, root, tmp], capture_output=True, text=True, env=env)
+lines = {x.split(" ", 1)[0]: x for x in (ran.stdout + ran.stderr).splitlines() if x.split(" ", 1)[0] in ("PR", "MERGE", "BATCH")}
+check("ONE_REVIEW_UNAPPROVED" in lines.get("PR", "") and "AB-3" in lines.get("PR", ""), "pr refuses an unapproved Reviewed requirement: %s" % lines.get("PR", ran.stderr[-300:])[:160])
+check("AB-3" in lines.get("MERGE", "") and "ONE_REVIEW_UNAPPROVED" in lines.get("MERGE", ""), "merge's check refuses it on the head given: %s" % lines.get("MERGE", "")[:160])
+check("merges on its own" in lines.get("BATCH", ""), "a one-review goal never joins a batch: %s" % lines.get("BATCH", "")[:160])
+sh(tmp, "reset", "-q", "--hard", "HEAD~1")
+sh(tmp, "switch", "-q", "-c", "moved-base", "origin/main")
+commit(tmp, "docs/wiki/F.md", PAGE.replace("old sub [AB-1]", "someone else's newer sub [AB-1]"), "another goal changed AB-1")
+sh(tmp, "switch", "-q", "loop/page")
+check(start_review_answer.unapproved(tmp, runs, record("page"), "moved-base", "HEAD") == ["AB-1 on docs/wiki/F.md"],
+      "an approval doesn't overwrite a unit the base changed since the start message")
+for status in ("stopped", "failed", "retired"):
+    check(start_review_answer.unapproved(tmp, runs, dict(state, status=status), "origin/main", "HEAD") != [], "no use while the goal is %s" % status)
+sys.path.insert(0, delivery)
+import decisions as ledger_tool  # noqa: E402
+ledger_tool.stop(runs, "page", "t", "t")
+check(unapproved() != [], "a permanent stop voids the approval for good")
+os.chdir(root)
 
 os.environ.get("TOY_SHOW") and print(open(os.path.join(home, "last.txt")).read())
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))

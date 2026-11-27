@@ -44,6 +44,20 @@ def one_review_unanswered(state):
   return found.unanswered(state, os.getcwd())
 
 
+def one_review_unapproved(state, top, runs, base, head):
+  """DLF-1.3: the exact head being merged changes no Reviewed requirement beyond what its start review approved."""
+  if not state.get("one_review"):
+    return ""
+  path = os.path.join(MON, "..", "..", "workflow-delivery", "scripts", "start_answer.py")
+  if not os.path.exists(path):
+    return "start_answer.py is missing. Fix: reinstall the skills. (ONE_REVIEW_UNAPPROVED)"
+  spec = importlib.util.spec_from_file_location("one_review_answer", path)
+  found = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(found)
+  more = found.unapproved(top, runs, state, "origin/" + base, head)
+  return more and "the pull request changes a Reviewed requirement its start review didn't approve as it reads: %s. Nothing was merged. (ONE_REVIEW_UNAPPROVED)" % ", ".join(more) or ""
+
+
 def _pods():  # MON-15: workflow-monitoring's graph.py, or None
   sys.path.append(MON)  # graph's proctree
   try:
@@ -247,6 +261,8 @@ def main():
     if not state.get("branch") or run(["git", "fetch", "-q", "origin", state["branch"]], cwd=top).returncode:
       ar.fail(state, "could not fetch the goal branch %s to scan it; nothing was merged (PRIVATE_LIST)" % state.get("branch"))
     ar.check(state, top, "origin/" + base, {"release notes": ar.notes_text(state)}, True, head)
+    loose = one_review_unapproved(state, top, runs, base, tested or head)
+    loose and ar.fail(state, loose)
     held, noted = missing_ids(top, cfg, head)
     if held:
       ar.fail(state, "criterion rows name %s, which no wiki page on origin/%s names; nothing was merged. Fix: "

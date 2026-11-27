@@ -112,6 +112,8 @@ def cmd_items(g, args):
     except (OSError, ValueError) as error:
         refuse("the items file can't be read: %s" % error, "ONE_REVIEW_ITEMS")
     items = numbered(g, state, checked(g.root(), rows))
+    for item in [i for i in items if i.get("id")]:  # what the owner is shown the new text against
+        item["was"] = safety_scan.units(start_review.git(g.root(), "cat-file", "blob", "HEAD:" + item["page"]).stdout).get(item["id"], "")
     code = code_of(state, items)
     if (state.get("start_review") or {}).get("code") != code:
         state["start_review"] = {"items": items, "code": code, "at": decisions.stamp()}
@@ -244,3 +246,113 @@ def cmd_start(g, args):
         print("STARTED %s: %d of %d items approved%s. Nothing more is asked of the owner at this start." % (
             slug, len(items) - len(left), len(items), "; not approved: " + ", ".join(left) if left else ""))
     return 0
+
+
+# the one comparison of an approved requirement change (E1, B1, B2). revise, review and the guard ask it through the command
+# at the bottom; pr and merge call unapproved(). It compares against the copy in the run record, never a record number alone.
+
+def same_unit(one, other):
+    """Whether two units say the same: every line, the sub-bullets included, apart from list marks and spacing."""
+    def flat(text):
+        return [" ".join(re.sub(r"^\s*- ", "", line).split()) for line in str(text).split("\n") if line.strip()]
+    return bool(flat(one)) and flat(one) == flat(other)
+
+
+def void(runs, state):
+    """Why the start approval can't be used now ("" when it can): a reject, a permanent stop or a retire voids it for good;
+    a stopped or failed goal blocks it while that lasts."""
+    answer = state.get("start_answer") or {}
+    if answer.get("verdict") != "approve":
+        return "the start review is not approved"
+    if decisions.stopped(decisions.require(runs, state)):
+        return "the goal was stopped for good"
+    status = state.get("status")
+    return "the goal is %s" % status if status in ("retired", "stopped", "failed") else ""
+
+
+def approved_item(state, key, page=None):
+    items = (state.get("start_answer") or {}).get("items") or []
+    return next((i for i in items if i.get("approved") and i.get("id") == key and i.get("text") and (page is None or i.get("page") == page)), None)
+
+
+def answered_by(runs, rid):
+    """The one goal whose accepted start answer is this record, or None."""
+    found = []
+    for name in sorted(os.listdir(runs)) if os.path.isdir(runs) else []:
+        if name.endswith(".json") and name.count(".") == 1:
+            try:
+                with open(os.path.join(runs, name), encoding="utf-8") as handle:
+                    state = json.load(handle)
+            except (OSError, ValueError):
+                continue
+            (state.get("start_answer") or {}).get("record") == rid and found.append(state)
+    return found[0] if len(found) == 1 else None
+
+
+def uses(runs, rid, command, key):
+    try:
+        with open(os.path.join(os.path.dirname(runs), "reviews.tsv"), encoding="utf-8") as handle:
+            rows = [line.rstrip("\n").split("\t") for line in handle]
+    except OSError:
+        return False
+    return any(len(r) > 3 and r[1] == command and key in r[2].split(",") and r[3].startswith("record %s:" % rid) for r in rows)
+
+
+def allows(top, runs, state, rid, command, page, key, text, goal=""):
+    """"" when this start record may be used by `command` on that ID with that unit, else why not."""
+    if command not in ("revise", "review", "guard"):
+        return "a start answer covers revise, review and the guard's check only, not %s" % command
+    if goal and goal != state["slug"]:
+        return "it answered %s, not %s" % (state["slug"], goal)
+    why = void(runs, state)
+    if why:
+        return why
+    item = approved_item(state, key, page or None)
+    if not item:
+        return "no approved item names %s%s" % (key, " on " + page if page else "")
+    if command == "review":
+        with open(os.path.join(top, item["page"]), encoding="utf-8") as handle:
+            text = safety_scan.units(handle.read()).get(key, "")
+    elif command == "guard":
+        text = safety_scan.units(start_review.git(top, "cat-file", "blob", "HEAD:" + item["page"]).stdout).get(key, "")
+    if not same_unit(text, item["text"]):
+        return "the unit of %s is not the approved text, sub-lines included" % key
+    return "it was already used for %s of %s" % (command, key) if command != "guard" and uses(runs, rid, command, key) else ""
+
+
+def unapproved(top, runs, state, base, head):
+    """["ID on page"] for each Reviewed requirement that base...head changes without an approved item saying so exactly.
+    Only a marked goal is held; its done lines and plain records don't count."""
+    if not state.get("one_review"):
+        return []
+    changed = safety_scan.read_diff(top, base, head)[1]
+    held, out = void(runs, state) if changed else "", []
+    for page, key in changed:
+        item = approved_item(state, key, page)
+        before, after = (safety_scan.units(got.stdout if not got.returncode else "").get(key, "") for got in
+                         (start_review.git(top, "cat-file", "blob", "%s:%s" % (ref, page)) for ref in (base, head)))
+        fits = item and same_unit(after, item["text"]) and (before == item.get("was") or same_unit(before, item["text"]))
+        (held or not fits) and out.append("%s on %s" % (key, page))
+    return out
+
+
+def main(argv):
+    """start_answer.py approves RECORD COMMAND ID PAGE GOAL (unit text on stdin for revise): exit 0 allowed, 1 refused,
+    3 when no goal's start answer is that record."""
+    if len(argv) != 6 or argv[0] != "approves":
+        print(main.__doc__)
+        return 2
+    rid, command, key, page, goal = argv[1:]
+    top = start_review.must(".", "rev-parse", "--show-toplevel").strip()
+    runs = os.path.join(os.path.abspath(start_review.must(top, "rev-parse", "--git-common-dir").strip()), "loop", "runs")
+    state = answered_by(runs, rid)
+    if state is None:
+        print("no goal's start answer is %s here" % rid)
+        return 3
+    why = allows(top, runs, state, rid, command, page, key, sys.stdin.read() if command == "revise" else "", goal)
+    print(why or "approved by %s for %s" % (rid, key))
+    return 1 if why else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
