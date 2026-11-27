@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import decisions  # noqa: E402
 import dlf  # noqa: E402
 import outcomes  # noqa: E402
-os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
+QUIET_ENV = dict(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # for our own subprocess calls only
 
 GOAL_PY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "goal.py")
 
@@ -52,7 +52,8 @@ def merged(top, state, base):
     if not state.get("pr"):
         return False
     try:  # a squash or hand merge leaves no ancestor behind
-        got = subprocess.run(["gh", "pr", "view", state["pr"], "--json", "state"], cwd=top, capture_output=True, text=True, timeout=60)
+        got = subprocess.run(["gh", "pr", "view", state["pr"], "--json", "state"], cwd=top, capture_output=True, text=True, timeout=60,
+                             env=dict(os.environ, **QUIET_ENV))
         known = json.loads(got.stdout)["state"] if got.returncode == 0 else ""
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError):
         known = ""
@@ -72,7 +73,7 @@ def queue_removal(g, slug, number):
     name, files = held["removal_goal"], held["files"]
     try:
         g.fit.cmd_queue(g, argparse.Namespace(slug=name, goal="Take out what decision %d of %s let into %s" % (number, slug, ", ".join(files)),
-                                              done=[held["removal_done"]],
+                                              done=[held.get("removal_done") or removal_line(slug, number, files)],
                                               touches=",".join(files), depends_on="", release=""))
     except SystemExit as stop:
         print("NOT QUEUED %s: %s. Queue it by hand under that name; the release hold stands" % (name, stop.code))

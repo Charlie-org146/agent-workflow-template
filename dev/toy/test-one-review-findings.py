@@ -620,9 +620,15 @@ reverts.revert(tmp, runs, rec("c3"), c3n, "operation", "origin/main", cannot="ca
 check(decisions.stopped(decisions.entries(runs, "c3")) != "" and rec("c3")["status"] == "stopped", "CELL files-decision x cannot stops the goal for good")
 
 # reverts.py: git/gh settings only on its own subprocess calls, and an older hold row has no removal_done
-probe = subprocess.run([sys.executable, "-c", "import sys, os; sys.path.insert(0, %r); import reverts; print(os.environ.get('GIT_EDITOR', 'unset'))"
-                        % os.path.join(root, "skills", "workflow-delivery", "scripts")], capture_output=True, text=True, env={k: v for k, v in os.environ.items() if k != "GIT_EDITOR"})
-check(probe.stdout.strip() == "unset", "R14 importing reverts sets no process-wide git setting: %r %s" % (probe.stdout.strip(), probe.stderr.strip()[-80:]))
+src14 = open(os.path.join(root, "skills", "workflow-delivery", "scripts", "reverts.py")).read()
+seen14 = []
+real14 = reverts.subprocess.run
+reverts.subprocess.run = lambda cmd, *a, **k: (seen14.append(k.get("env") or {}), subprocess.CompletedProcess(cmd, 0, '{"state": "OPEN"}', ""))[1]
+os.environ.pop("GIT_EDITOR", None)
+reverts.merged(tmp, {"pr": "https://example.invalid/pull/14"}, "origin/main")
+reverts.subprocess.run = real14
+check("os.environ.update" not in src14 and seen14 and seen14[0].get("GIT_EDITOR") == "true" and "GIT_EDITOR" not in os.environ,
+      "R14 reverts sets the git and gh variables only on its own gh call, not process-wide: %s" % seen14[:1])
 add_hold = reverts.add_hold
 old_row = {"op": "hold", "slug": "old1", "decision": 7, "files": ["dev/toy/test-a.sh"], "classes": [], "removal_goal": "undo-old1-7"}
 reverts.add_hold(tmp, old_row)
