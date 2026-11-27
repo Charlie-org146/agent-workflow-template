@@ -31,3 +31,4 @@ Frozen. A wrong done line needs a new goal.
 
 - After the upgrade, every row is re-picked once by entry_moved (the 9th state cell makes each line differ); this runs more rows, never fewer.
 - This repo ran land (720 rows) before; L1 plans from 778 rows, a superset. nightly = L2 (747, the same set). D2a's reviewed table (land -> L0) was corrected under TD2334 because it planned from 3 rows.
+- test-level-words.py, the settings case: its expected config word is changed to match (L0 to L1), not weakened; that one assertion edit was not seen red on its own.
