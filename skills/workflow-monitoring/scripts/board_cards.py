@@ -124,6 +124,16 @@ def same(path, text):
         return False
 
 
+def saved(base, slug):
+    """A run's own record (its eta, finding and report), so its card keeps the ETA and limit lines; {} when unreadable."""
+    try:
+        with open(os.path.join(base, "loop", "runs", slug + ".json"), encoding="utf-8") as handle:
+            run = json.load(handle)
+        return {k: run[k] for k in ("eta", "eta_extend", "finding", "report", "machine", "preflight_answers", "started") if k in run}
+    except (OSError, ValueError, TypeError):
+        return {}
+
+
 def card_list(rows, deps, at, repos, setting_of):
     """The cards for board.json, per repo (repos: board.followed()): a failure to build them never stops the board."""
     try:
@@ -132,7 +142,7 @@ def card_list(rows, deps, at, repos, setting_of):
         for name, path, base in repos:
             mine = [r for r in rows if r["repo"] == name]
             items = [{"mark": r["status"], "slug": r["slug"], "left": r.get("left"), "machine": r.get("machine") or "", "bars": []} for r in mine]
-            runs = [{"slug": r["slug"], "status": r["status"], "updated": r.get("last") or ""} for r in mine]
+            runs = [dict({"slug": r["slug"], "status": r["status"], "updated": r.get("last") or ""}, **saved(base, r["slug"])) for r in mine]
             batches = {}
             for slug in [x["slug"] for x in mine] + [d["slug"] for d in deps if d["repo"] == name]:
                 batches.setdefault(board_status.release_of(path, slug), []).append(slug)

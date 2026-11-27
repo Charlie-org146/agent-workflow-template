@@ -149,10 +149,7 @@ def events(root, text):
 
 
 def save(path, state):
-    temp = path + ".tmp"
-    with open(temp, "w") as handle:
-        json.dump(state, handle, indent=1, sort_keys=True)
-    os.replace(temp, path)
+    gate.save(path, state)
 
 
 def cmd_send(args):

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """What notify.py checks before a mail goes out (BOARD-5, BOARD-8): the private-name scan and the check-in gate."""
 import importlib
+import json
 import os
 import re
 import sys
@@ -50,7 +51,6 @@ def checkin_event(state, text, needs, root, live):
     """[the check-in as one more event] when it is due, else []. The first check-in seen only becomes the baseline (nothing sent);
     live is False for a start review's own run."""
     import datetime
-    import json
     import board_cards
     lines = checkin_lines(text, needs)
     now = datetime.datetime.now(datetime.timezone.utc).timestamp()
@@ -74,3 +74,17 @@ def mark(state, text, needs, sent, key):
     import datetime
     checkin_sent(state, checkin_lines(text, needs), datetime.datetime.now(datetime.timezone.utc).timestamp())
     sent.pop(key, None)
+
+
+def save(path, state):
+    """Write notified.json only when it changed: a run that changed nothing writes nothing (BOARD-3)."""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            if json.load(handle) == state:
+                return
+    except (OSError, ValueError):
+        pass
+    temp = path + ".tmp"
+    with open(temp, "w") as handle:
+        json.dump(state, handle, indent=1, sort_keys=True)
+    os.replace(temp, path)
