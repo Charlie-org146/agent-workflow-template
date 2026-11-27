@@ -341,7 +341,7 @@ def main(argv):
     3 when no goal's start answer is that record."""
     if len(argv) != 6 or argv[0] != "approves":
         print(main.__doc__)
-        return 2
+        return 0 if "--help" in argv else 2
     rid, command, key, page, goal = argv[1:]
     top = start_review.must(".", "rev-parse", "--show-toplevel").strip()
     runs = os.path.join(os.path.abspath(start_review.must(top, "rev-parse", "--git-common-dir").strip()), "loop", "runs")
