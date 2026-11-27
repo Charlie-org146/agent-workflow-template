@@ -279,6 +279,11 @@ def outcomes():
     return found
 
 
+def reverts():
+    import reverts as found
+    return found
+
+
 def cmd_adopt(g, args):
     return monitor("batch").cmd_adopt(g, args)
 

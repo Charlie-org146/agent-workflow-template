@@ -322,3 +322,9 @@ Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans und
 - pr and merge refuse while a finding is open, open one for each uncovered class and file of the branch diff, and reopen a dropped one whose files changed again. goal.py finding-close (drop, not-taken, stop) and decide are operation-only. plan-accept refuses a safety-class break.
 - Not built yet: closing by fix (needs the finding's own row with a recorded red run, E14). Until then the safe option is drop or stop.
 - Toy: dev/toy/test-one-review-findings.py (not in the plan's Files list).
+
+### Plan core, second part: revert and release holds
+
+- New reverts.py. goal.py revert SLUG N (operation): a decision that let named files go on is reverted by taking them out (pr and merge hold until the branch has no change there and the done lines are recorded as met; the approved item then covers nothing); any other stops the goal. A repeat changes nothing. After the merge it records, files a line and, with named files, adds a release hold.
+- The manual cut, the automatic release (before any version is pushed, and before the release is created) and promote refuse while a hold's removal is not in the commit released. goal.py hold-clear SLUG N --commit SHA takes a commit that changes a held file.
+- Still open in this part: RT16's revert goal is not opened by the command (the output says to queue it); holds are kept on this machine only (E9 asks for them across machines); the check-in's "Decided for you" and the delivered mark.

@@ -307,6 +307,9 @@ def cmd_cut(args):
         sys.exit("REFUSED: uncommitted changes in %s. Fix: commit or set them aside first." % cwd)
     cfg = read_config(cwd)
     base = base_of(cwd, cfg)
+    import autorelease
+    held = autorelease.release_hold(cwd, "HEAD")
+    held and sys.exit(held)
     import release_docs
     steps = release_docs.verify_steps(cwd, slug)
     if not steps:

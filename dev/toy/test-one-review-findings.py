@@ -167,6 +167,81 @@ check("ONE_REVIEW_CLOSE" in close(999, "drop") and "ONE_REVIEW_CLOSE" in close(i
 check(close(ids[1], "stop") == "" and json.load(open(os.path.join(runs, "g.json")))["status"] == "stopped"
       and decisions.stopped(decisions.entries(runs, "g")), "closing by stop stops the goal for good")
 
+import reverts  # noqa: E402
+
+# revert (done line 4): a listed decision has a command that says what it stops, and reverting stops that part
+sh("update-ref", "refs/remotes/origin/main", "main")
+sh("switch", "-q", "-c", "loop/r", "main")
+commit("dev/toy/test-a.sh", "check one\n")
+record("r", branch="loop/r")
+diff_ = "diff --git a/dev/toy/test-a.sh b/dev/toy/test-a.sh\n--- a/dev/toy/test-a.sh\n+++ b/dev/toy/test-a.sh\n@@ -1 +1 @@\n-check two\n"
+dlf.settle(tmp, runs, "r", "test", "t1", "a test failed", "w", "update the test", diff=diff_)
+dlf.settle(tmp, runs, "r", "choice", "c1", "pick the shorter name", "w", "take it")
+
+
+def rec(slug):
+    return json.load(open(os.path.join(runs, slug + ".json")))
+
+
+def decided(slug):
+    return [e for e in decisions.entries(runs, slug) if e["kind"] == "decision"]
+
+
+def revert(slug, number, **more):
+    return refused(lambda: reverts.revert(tmp, runs, rec(slug), number, "operation", base="origin/main", **more))
+
+
+let_go, plain = [e["n"] for e in decided("r")]
+lines = reverts.listing(tmp, runs, rec("r"))
+check(len(lines) == 2 and all("goal.py revert r " in x[1] and "\n" not in x[1] for x in lines)
+      and "takes out dev/toy/test-a.sh" in lines[0][0] and "stops the goal" in lines[1][0],
+      "each decision is listed with one revert command that runs as printed and what it stops: %s" % lines)
+check(outcomes.blockers(tmp, runs, rec("r"), "origin/main", "HEAD") == [], "before a revert nothing holds the goal")
+check(revert("r", let_go) == "" and rec("r")["status"] == "running" and not decisions.stopped(decisions.entries(runs, "r")),
+      "reverting a decision that let files go on doesn't stop the goal")
+held = outcomes.blockers(tmp, runs, rec("r"), "origin/main", "HEAD")
+check(any("decision %d reverted" % let_go in x and "dev/toy/test-a.sh" in x for x in held) and any("finding" in x for x in held),
+      "pr and merge wait for the part to be taken out, and the approval no longer covers it: %s" % held)
+count = len(decisions.entries(runs, "r"))
+check(revert("r", let_go) == "" and len(decisions.entries(runs, "r")) == count, "a repeat changes nothing")
+sh("checkout", "-q", "main", "--", "dev/toy/test-a.sh")
+sh("commit", "-qm", "take the part out")
+held = outcomes.blockers(tmp, runs, rec("r"), "origin/main", "HEAD")
+check(any("done lines are still met" in x for x in held), "with the files back it still needs operation's record that the done lines are met: %s" % held)
+check(revert("r", let_go, met="done line 1 doesn't need the test change") == "", "operation records that")
+held = outcomes.blockers(tmp, runs, rec("r"), "origin/main", "HEAD")
+check(not [x for x in held if "reverted" in x], "then the revert holds nothing: %s" % held)
+check(revert("r", plain) == "" and rec("r")["status"] == "stopped" and decisions.stopped(decisions.entries(runs, "r")),
+      "reverting any other decision stops the goal without merging")
+check("ONE_REVIEW_REVERT" in revert("r", 999) and "ONE_REVIEW_REVERT" in revert("r", 1), "only a listed decision is reverted")
+
+# after the merge a revert takes nothing back: it records, files, and holds releases while named files stay shipped
+sh("switch", "-q", "-c", "loop/m", "main")
+commit("dev/toy/test-a.sh", "check one\n")
+record("m", branch="loop/m", status="done", release="merged")
+dlf.settle(tmp, runs, "m", "test", "t1", "a test failed", "w", "update the test", diff=diff_)
+shipped = decided("m")[0]["n"]
+before = len(filed)
+check(revert("m", shipped) == "" and rec("m")["status"] == "done" and len(filed) == before + 1 and "reverted" in filed[-1][2],
+      "after a merge the revert files a line and leaves the merged goal alone")
+holds = reverts.holds(tmp)
+check([(h["slug"], h["decision"]) for h in holds] == [("m", shipped)], "and holds releases until the removal is in: %s" % holds)
+check(refused(lambda: reverts.release_check(tmp, "HEAD")) .find("ONE_REVIEW_HOLD") >= 0, "a release refuses while a removal is pending")
+sh("switch", "-q", "main")
+commit("other.txt", "unrelated\n", "unrelated")
+check(refused(lambda: reverts.release_check(tmp, "HEAD")).find("ONE_REVIEW_HOLD") >= 0, "an unrelated commit clears no hold")
+sys.path.append(os.path.join(root, "skills", "workflow-release", "scripts"))
+import autorelease  # noqa: E402
+check("ONE_REVIEW_HOLD" in autorelease.release_hold(tmp, "HEAD"), "the release scripts read the hold")
+callers = {name: open(os.path.join(root, "skills", "workflow-release", "scripts", name)).read().count("release_hold(") for name in ("release.py", "autorelease.py", "review.py")}
+check(callers["release.py"] >= 1 and callers["autorelease.py"] >= 2 and callers["review.py"] >= 1, "the manual cut, the automatic release and promote each ask: %s" % callers)
+check(refused(lambda: reverts.clear_hold(tmp, "m", shipped, "0" * 40, "operation")).find("ONE_REVIEW_HOLD") >= 0, "a hold names a real removal commit")
+commit("dev/toy/test-a.sh", "check one\ncheck two\nremoved the shipped part\n", "the removal")
+reverts.clear_hold(tmp, "m", shipped, sh("rev-parse", "HEAD"), "operation")
+check(refused(lambda: reverts.release_check(tmp, "HEAD")) == "" and "ONE_REVIEW_HOLD" in refused(lambda: reverts.release_check(tmp, "HEAD~1")),
+      "once the removal is in the commit being released, the release goes on, and not before")
+sh("switch", "-q", "loop/g")
+
 # the two operation-only commands, and a safety break that nobody can accept away
 record("h")
 put("flow.json", "{}")

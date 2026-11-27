@@ -59,13 +59,19 @@ def within(path, names):
     return any(path == name.rstrip("/") or path.startswith(name.rstrip("/") + "/") for name in names)
 
 
-def covering(state, kind, files):
+def voided(entries):
+    """Approved items a files revert took back (B2): they cover nothing any more."""
+    return {n for e in entries if e["kind"] == "revert" and e["effect"] == "files"
+            for d in entries if d["kind"] == "decision" and d["n"] == e["decision"] for n in d.get("inside") or []}
+
+
+def covering(state, kind, files, gone=()):
     """The approved item that covers this class and every one of these files. A stop that names files is never inside an
     item that names none, and one that names no files is inside nothing: its action can't be matched by a program."""
     if (state.get("start_answer") or {}).get("verdict") != "approve" or not files:
         return None
     for item in state["start_answer"].get("items") or []:
-        if item.get("approved") and item.get("class") == kind and item.get("files") and all(within(f, item["files"]) for f in files):
+        if item.get("approved") and item["n"] not in gone and item.get("class") == kind and item.get("files") and all(within(f, item["files"]) for f in files):
             return item
     return None
 
@@ -98,7 +104,7 @@ def settle(top, runs, state, stop, occ, what, words, rec, ctx):
     private and classes.add(safety_scan.PRIVATE)
     classes = [name for name in dlf.SAFETY if name in classes]
     question, advice = (WITHHELD, WITHHELD) if private else (" ".join(what.split())[:300], " ".join(rec.split())[:300])
-    items = {name: covering(state, name, files.get(name) or []) for name in classes}
+    items = {name: covering(state, name, files.get(name) or [], voided(found)) for name in classes}
     outside = [name for name in classes if not items[name]]
     named = sorted({path for name in outside for path in files.get(name) or []})
     number = None
@@ -108,7 +114,8 @@ def settle(top, runs, state, stop, occ, what, words, rec, ctx):
     taken = ("safe option, finding %d: fix it in the build, or drop that part" % number if outside else
              "inside approved item %s: %s" % (", ".join(str(i["n"]) for i in items.values()), advice) if classes else advice)
     entry = decisions.add(runs, slug, "decision", key=key, stop=stop, question=question, taken=taken, safety=classes,
-                          inside=sorted({i["n"] for i in items.values() if i}), files=named, stops="the goal")
+                          inside=sorted({i["n"] for i in items.values() if i}),  # files: every one this decision is about, those let go on included
+                          files=sorted({path for name in classes for path in files.get(name) or []}))
     if classes:
         return "continue", "finding %d" % number if outside else "decision %d" % entry
     lid, status = dlf.file_line(top, runs, slug, dlf.brief(top, slug)[1], stop, "other", occ, question[:200], words, advice)
@@ -146,18 +153,26 @@ def blockers(top, runs, state, base, head):
     closes = {e["finding"]: e for e in entries if e["kind"] == "close"}
     for kind, paths in safety_scan.diff_classes(text, units).items():
         for path in paths if kind != safety_scan.PROMISE else []:  # requirement text is compared unit by unit above
-            held = covering(state, kind, [path]) or any(
+            held = covering(state, kind, [path], voided(entries)) or any(
                 kind in e["classes"] and path in (closes.get(e["n"], {}).get("files") or e["files"]) for e in known)
             if not held:
                 number = note(runs, slug, "diff:%s:%s" % (kind, path), classes=[kind], files=[path], question="the branch changes %s" % path,
                               source="pr diff", head=head_of(top, head))
                 decisions.add(runs, slug, "decision", key="diff:%s:%s" % (kind, path), stop="pr", question="%s in %s" % (kind, path),
                               taken="safe option, finding %d: fix it in the build, or drop that part" % number, safety=[kind],
-                              inside=[], files=[path], stops="the goal")
+                              inside=[], files=[path])
     still, closed = findings(decisions.entries(runs, slug))
     point = base_point(top, base, head)
     for number, item in sorted(still.items()):
         out.append("finding %d is open: %s%s" % (number, ", ".join(item["classes"]), " in " + ", ".join(item["files"]) if item["files"] else ""))
+    full = decisions.entries(runs, slug)
+    for item in [e for e in full if e["kind"] == "revert" and e["effect"] == "files"]:
+        back = changed(top, point, head, item["files"])
+        if back:
+            out.append("decision %d reverted: take out %s" % (item["decision"], ", ".join(back)))
+        elif not any(e["kind"] == "met" and e["decision"] == item["decision"] for e in full):
+            out.append("decision %d reverted: record that the done lines are still met (goal.py revert %s %d --met WHY)"
+                       % (item["decision"], slug, item["decision"]))
     for number, item in sorted(closed.items()):
         back = changed(top, point, head, item["files"]) if item["how"] in ("drop", "not-taken") else []
         back and out.append("finding %d is open again: %s changed after it was closed" % (number, ", ".join(back)))
@@ -223,6 +238,6 @@ def cmd_decide(g, args):
                   source="decide", head=head_of(g.root()))
     decisions.add(g.state_dir(), args.slug, "decision", key="decide:%d" % number, stop="report", question=text,
                   taken="safe option, finding %d: fix it in the build, or drop that part" % number, safety=[args.cls], inside=[],
-                  files=files, stops="the goal")
+                  files=files)
     print("FINDING %d opened on %s" % (number, args.slug))
     return 0
