@@ -65,6 +65,9 @@ Anything beyond the four rows (OPS-1.10); no new rows; the one product-code fix 
 - Deliver-first lines for the owner, listed in the PR notes: (1) the root-cause fix is in product code (criteria.py), not the toy; (2) the bash resolution is a runner change; (3) done line 2 is met by the producer emitting "/", and the compare stays exact.
 - The scrub of red output replaces the repo root, the account folder and the temp root with `<repo>`, `<home>` and `<tmp>`.
 - Housekeeping: one Files line; add the `# windows: ok` header to test-shard-balance.py once it passes there.
+- Guard definition (last read): the guard compares tokens, not lines. A changed line passes when its only difference is a runner token (`"bash"` becoming `BASH`, a `shlex.quote(...)` around a path) and its check or assert text, its expected operands and every PASS or FAIL literal are token-for-token the same as before; a line fails the guard if any of those tokens was removed or changed. "Expected string" means any string literal that is an operand of a check, assert or comparison.
+- If toy-leak-row-setup is red and the cause lies outside Files, the build STOPS and reports; done line 3 then stays unmet in this goal (nothing is loosened).
+- Done line 2 is read as "Windows output equals Linux output": the producer emits "/" paths and the compare stays exact, which is stricter than the literal "compared the same with / or \", and it is a deliver-first line.
 
 ## PENDING
 PENDING: 1. Whether test-one-review-start.py's failure is a fixture line-ending problem (in scope) or a backslash built in product code (stop and report): resolved by step 1.
@@ -73,7 +76,7 @@ PENDING: 2. Which layer of the `toy-leak-config-keep` command fails on Windows a
 ## Build notes (wording from the fixes read)
 - No fix is written before step 1's red capture for that row exists.
 - If the STOP for a product-code backslash fires, done line 2 stays unmet in this goal; no toy-side normaliser is added.
-- test-entry-config.sh is in Files only if step 1 names it as the failing layer.
+- test-entry-config.sh, test-budget-order.py and test-merge-where.py are not in Files: an edit to any of them is a STOP (round 2 red team revisions).
 
 Files: skills/workflow-docs/scripts/criteria.py, dev/toy/test-shard-balance.py, dev/toy/test-one-review-start.py, .loop/regression.tsv
 Lines: 60
