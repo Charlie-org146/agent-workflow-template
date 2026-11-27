@@ -778,3 +778,11 @@ lvl-l2-reach	land	L1	none				default
 lvl-l2-skip	land	L1	none				default
 lvl-l2-fail	land	L1	none				default
 done-lvl-l2-4	covered	L1	none	package-passes			covers
+board-views-cards	land	L1	none				default
+board-views-lines	land	L1	none				default
+board-views-nowrite	land	L1	none				default
+board-views-stale	land	L1	none				default
+board-views-scan	land	L1	none				default
+board-views-gate	land	L1	none				default
+board-views-repos	land	L1	none				default
+done-board-views-8	covered	L1	none	package-passes			covers
