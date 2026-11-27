@@ -116,8 +116,26 @@ def cmd_items(g, args):
     if (state.get("start_review") or {}).get("code") != code:
         state["start_review"] = {"items": items, "code": code, "at": decisions.stamp()}
         g.save(state, "start review items recorded, code %s" % code)
-    print(message(g, state))
+    text = message(g, state)
+    print(text)
+    send(g, state, text)  # only now: the items are final for this code
     return 0
+
+
+def send(g, state, text):
+    """Hand the message to the one mail sender, which mails each code once, tries a refused or over-budget one again, and
+    keeps one that may have gone out. A text the private-name scan doesn't pass is never stored for mailing (DX D12)."""
+    review, slug = state["start_review"], state["slug"]
+    scan = g.private.scan(g.root(), None, texts={"start review": text})["state"]
+    if scan not in ("clean", "off", "none"):
+        return print("NOT MAILED %s: the private-name scan said %s; show it with goal.py start-review %s" % (slug, scan, slug))
+    if review.get("mail") != text:
+        review["mail"] = text
+        g.save(state, "start review message ready, code %s" % review["code"])
+    sender = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts", "notify.py")
+    done = g.run([sys.executable, sender, "start-mail", slug, "--root", g.root()])
+    said = (done.stdout + done.stderr).strip()
+    print(said or "NOT MAILED %s: the mail sender said nothing (exit %d)" % (slug, done.returncode))
 
 
 def cmd_show(g, args):

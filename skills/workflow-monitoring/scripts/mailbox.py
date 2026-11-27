@@ -82,6 +82,8 @@ def options(kind, action):
 
 def compose(folder, key, kind, slug, action, repo):
     """The mail body: event, numbered options, reply how-to, question id."""
+    if kind == "start review":  # it carries its only answer forms; no other answer words go with it (DLF-1.3)
+        return "%s\n\nRepo: %s. Goal: %s. The operation session records your answer.\n" % (action, repo, slug)
     words, rec = options(kind, action)
     qa = qid(key)
     pending = read_json(os.path.join(folder, "mailbox.json"))

@@ -479,6 +479,62 @@ check(got.get("delegated") in (False, None), "it is no delegated approval: %r" %
 check(got.get("milestone") == [False, True], "it is no milestone record: %s" % got.get("milestone"))
 check(got.get("release") == [False, True], "it is no release record or waiver: %s" % got.get("release"))
 
+# the start mail: sent once per code, after the items are recorded, with no other answer words (E6, CEO B2, DX D1)
+import http.server  # noqa: E402
+import threading  # noqa: E402
+posts, refuse_mail = [], [False]
+
+
+class Stub(http.server.BaseHTTPRequestHandler):
+    def do_POST(self):
+        got = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")
+        refuse_mail[0] or posts.append(got)
+        body = b'{"success": false}' if refuse_mail[0] else b'{"success": true, "result": {}}'
+        self.send_response(400 if refuse_mail[0] else 200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+server = http.server.HTTPServer(("127.0.0.1", 0), Stub)
+threading.Thread(target=server.serve_forever, daemon=True).start()
+mail_env = os.path.join(home, "mail.env")
+open(mail_env, "w").write("DIGEST_TO=owner@example.invalid\nDIGEST_FROM=loop@example.invalid\nCLOUDFLARE_ACCOUNT_ID=a\nCLOUDFLARE_EMAIL_TOKEN=toy\n")
+os.chmod(mail_env, 0o600)
+env.update(LOOP_MAIL_ENV=mail_env, DIGEST_MAIL_RETRY_SECONDS="0", DIGEST_MAIL_API="http://127.0.0.1:%d" % server.server_address[1])
+sh(tmp, "reset", "-q", "--hard")
+for other in os.listdir(runs):  # only this goal's events are mailed in this part
+    os.remove(os.path.join(runs, other))
+fresh("mailed")
+
+
+def mail_on(on):
+    open(os.path.join(home, "flow.json"), "w").write(json.dumps({"notify_email": on, "steps": {s: "x" for s in ("idea", "plan", "review", "qa", "ship")}}))
+
+
+mail_on(False)
+said = items("mailed", [])
+check("NOT MAILED" in said and "mail is off" in said and not posts, "with mail off the command says it was not mailed and why: " + said.strip()[-120:])
+mail_on(True)
+refuse_mail[0] = True
+said = items("mailed", [])
+check("NOT MAILED" in said and not posts, "a refused send is reported: " + said.strip()[-120:])
+refuse_mail[0] = False
+said = items("mailed", [])
+text = posts[0].get("text", "") if posts else ""
+check(len(posts) == 1 and "MAILED mailed" in said and "approve start mailed " in text and "1. mailed works" in text
+      and "Reply with a number" not in text and '"approve"' not in text, "the next run sends the whole message once, with no other answer words: %s" % said.strip()[-90:])
+said = items("mailed", [])
+subprocess.run([sys.executable, os.path.join(root, "skills", "workflow-monitoring", "scripts", "notify.py"), "send", "--root", tmp], cwd=tmp, env=env, capture_output=True)
+check(len(posts) == 1 and "already mailed" in said, "the same code is not sent again: " + said.strip()[-90:])
+items("mailed", [{"class": "money", "action": "buy one seat", "files": [], "recommend": "refuse"}])
+check(len(posts) == 2 and "buy one seat" in posts[-1].get("text", ""), "a new code is sent once more")
+server.shutdown()
+
 os.environ.get("TOY_SHOW") and print(open(os.path.join(home, "last.txt")).read())
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)

@@ -271,3 +271,9 @@ safety_scan.py has one rule set for a stop's words and one for a diff. Nothing c
 - E15 and M1: a record in start-answer form is no other permission. The shared monitoring reader, plan-accept, plan-round approval, the docs commands, delegated and milestone records and the release records leave it out. The one exception, the approved requirement item at revise and review, comes with the unit comparison. eta_new moved from auto.py to the new review_view.py, which the plan names.
 - Checks for the E15 slice: the two new toys and test-owner-words.sh pass. A wider run was stopped for operation's load rule after 3 passing toys and is still owed.
 - TD2188 (trim for speed): keep the five done lines, E1 to E5 and what a done line or safety guarantee needs; defer the rest as deliver-first lines named in the pull request; a safety item that can't be built in time is dropped and filed, never waived.
+
+### E1, second part: the start mail
+
+- goal.py start-items records the items and then calls notify.py start-mail: one mail per code, tried again after a refused or over-budget send, kept when it may have gone out. The mail carries only its own answer forms. A text the private-name scan doesn't pass is not stored for mailing. The mail code moved to review_view.py (notify.py had no room).
+- Checks: the start toy, test-email-notify.py and test-mailbox.py pass (single toys, under operation's load rule). Still open in E1: the whole-unit comparison at revise, review, guard and merge, and the uses voided as B2 rules.
+- The KEEP/DEFER sort under TD2188 is in the shared session notes (spare-worker-a-one-review-KEEP-DEFER.md), with its flagged items for operation.

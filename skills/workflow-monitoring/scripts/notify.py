@@ -2,6 +2,7 @@
 """Mail the owner once per new check-in event (MON-5), so nobody has to watch the operation session.
 
 usage: notify.py send [--checkin FILE] [--root DIR]   what operate.py runs after each check-in it prints
+       notify.py start-mail SLUG [--root DIR]           goal.py start-items: that goal's start review, once per code (DLF-1.3)
        notify.py status [--root DIR]                  whether it is on here, mail.env is there, and how many events are seen
        notify.py ready [--root DIR]                   operate.py start: the readiness table of a new operation session (MON-1)
        notify.py timer [created] [--root DIR]         operate.py timer: the check-in timer to show the owner; created records it (MON-5)
@@ -133,6 +134,9 @@ def events(root, text):
         if status == "done" and run.get("release_version"):
             out.append(("released:%s:%s" % (slug, run["release_version"]), "released", slug,
                         "%s merged (%s) and released as v%s. Nothing to do." % (slug, run.get("pr") or "its pull request", run["release_version"])))
+    if any(r.get("start_review") for r in runs):
+        import review_view
+        out += review_view.start_events(runs)
     told = {slug for _, kind, slug, _ in out if kind in ("stopped", "past ETA")}
     return [(key, "covered" if kind == "needs you" and slug in told else kind, slug, action) for key, kind, slug, action in out]
 
@@ -155,10 +159,14 @@ def cmd_send(args):
     except OSError:
         pass
     found, path = events(args.root, text), os.path.join(folder, "notified.json")
+    only = getattr(args, "slug", None)
+    found = [e for e in found if not only or (e[1] == "start review" and e[2] == only)]
     if not os.path.exists(path):
-        save(path, {"sent": {key: "baseline" for key, _, _, _ in found}})
-        say("baseline %d events, nothing sent; from now on each new one is mailed" % len(found))
-        return 0
+        held = [e for e in found if e[1] != "start review"]  # a start review is never part of the baseline: it must go out
+        save(path, {"sent": {key: "baseline" for key, _, _, _ in held}})
+        only or say("baseline %d events, nothing sent; from now on each new one is mailed" % len(held))
+        if len(held) == len(found):
+            return 0
     state = read_json(path)
     sent = state.setdefault("sent", {})
     new = [e for e in found if e[0] not in sent]
@@ -208,6 +216,11 @@ def cmd_send(args):
             say("sent %s %s" % (kind, slug))
         save(path, state)
     return 0
+
+
+def cmd_start_mail(args):
+    import review_view
+    return review_view.start_mail(sys.modules[__name__], args)
 
 
 def approve(args, path, top, common):
@@ -346,12 +359,14 @@ def main():
         return plan_main(sys.argv[1:])
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
-    for name, func in (("send", cmd_send), ("status", cmd_status), ("ready", cmd_ready), ("timer", cmd_timer)):
+    for name, func in (("send", cmd_send), ("start-mail", cmd_start_mail), ("status", cmd_status), ("ready", cmd_ready), ("timer", cmd_timer)):
         item = sub.add_parser(name)
         item.add_argument("--root", default="")
         item.set_defaults(func=func)
         if name == "send":
             item.add_argument("--checkin", default="")
+        if name == "start-mail":
+            item.add_argument("slug")
         if name == "timer":
             item.add_argument("created", nargs="?", default="", choices=["", "created"])
     args = parser.parse_args()
