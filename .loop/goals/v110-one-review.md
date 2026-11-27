@@ -356,3 +356,8 @@ Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans und
 - criteria.py revise DLF-1 (o1048, the TD2136 unit), revise DEL-3 (o1046, TD2128 A) and revise OPS-1 (o1048, TD2128 B, the Full auto bullet): one call per ID. The Operation non-goal and metric (TD2128 C and D) and the DLF-1 metric under Success metrics are page lines outside a unit. The DLF-1 heading is copied into its README, Home and How-to rows. Generated blocks and START.md are rebuilt. The requirement guard passes.
 - DLF-1 now reads Unreviewed. No review mark was made; whether the re-review of RT9 rests on o1048 is asked of operation.
 - The edit was practised first in a throwaway clone with made-up owner records of the same IDs.
+
+### Review marks (TD2220, TD2221)
+
+- DLF-1: marked Reviewed with criteria.py review DLF-1 --user --owner-record o1048, printed "REVIEWED DLF-1", after a scripted diff against the TD2136 unit file showed 0 differing lines.
+- DEL-3 and OPS-1 stay Unreviewed, for the owner's list. Each changed line equals the approved text apart from the line's own tag. A review mark covers the whole unit, which has 6 (DEL-3) and 13 (OPS-1) lines no approval covers, and neither was Reviewed on main. The Operation non-goal and metric lines (outside a unit) equal TD2128 C and D. The wording compared is the A to D quotes in these Notes.

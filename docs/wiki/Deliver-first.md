@@ -15,7 +15,7 @@ How to use: [How-to-use-Deliver-first](How-to-use-Deliver-first)
 
 ### Functional
 
-- DLF-1: **Unreviewed** Deliver first: a goal waits for me once, at its start
+- DLF-1: **Reviewed 2026-11-27** Deliver first: a goal waits for me once, at its start <!-- reviewed b578e203 -->
   - Principle 8 (Autonomous and human-friendly), linked from principle 3 (Fast) · Topic: Build loop · Page: `docs/wiki/Deliver-first.md`
   - ### Problem
   - Time is money. On 11-22 to 11-23, every v1.1.0 goal was built and reviewed overnight, and none merged for about 14 hours. Each waited for my word on red-team breaks, review-cap approvals, minute budgets or test-row choices. Nearly all of them were process choices, and none of them loosened a check.
