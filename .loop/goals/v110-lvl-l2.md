@@ -44,3 +44,4 @@ Departures from the plan (the reviewed text), each with its reason:
 - No leak-reader pair ran for this goal (o1040); the stored form `leak-readers full 2` does not mean one ran.
 - The tool only accepts the stored form 'full' for full-test-run; it does NOT mean a full test run happened (19 of 709 rows ran locally in qa, 17 passed and 2 known on main's list, plus the rows run alone before it); GitHub's full regression run on the PR head is the full-run proof.
 - G3's three CI reds (no-done-line-refused, home-guard-catches-leak, toys-set-userprofile) first ran on GitHub: the 15-minute lane budget left them unrun locally (the same gap as #5940; deliver-first v110-one-review-break-7).
+- Three guard toys (test-rows.sh DEL-2 and DEL-4-verify, test-docs-link.sh) failed only in a by-hand harness whose mktemp HOME had no git identity; the rows that run them (no-done-line-refused, home-guard-catches-leak) passed through the tool.
