@@ -83,6 +83,8 @@ def depth_for(setting, seen):
     over = seen.get("depth_override")
     if isinstance(over, dict) and over.get("depth") in ("full", "condensed"):
         return over["depth"], "owner override: %s" % (over.get("why") or "set per goal")
+    if seen.get("one_review"):
+        return "full", "a one-review goal keeps full depth"
     if setting != "condensed":
         return "full", "review_depth full holds every goal to full"
     size = seen.get("size") if isinstance(seen.get("size"), dict) else None
@@ -261,6 +263,27 @@ def cmd_set(g, args):
 
 def cmd_queue(g, args):
     return monitor("batch").cmd_queue(g, args)
+
+
+def start_review():
+    """Loaded only where a goal's start is checked, so a missing script stops no other command."""
+    import start_review as found
+    return found
+
+
+def start_answer():
+    import start_answer as found
+    return found
+
+
+def outcomes():
+    import outcomes as found
+    return found
+
+
+def reverts():
+    import reverts as found
+    return found
 
 
 def cmd_adopt(g, args):

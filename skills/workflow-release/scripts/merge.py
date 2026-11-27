@@ -33,6 +33,44 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 MON = os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts")
 
 
+def one_review_unanswered(state):
+  """DLF-1.3: a marked goal, or one needing a start review, merges only once its answer is saved."""
+  path = os.path.join(MON, "..", "..", "workflow-delivery", "scripts", "start_review.py")
+  if not os.path.exists(path):
+    return "start_review.py is missing. Fix: reinstall the skills." if state.get("one_review") or state.get("start_required") else ""
+  spec = importlib.util.spec_from_file_location("one_review_start", path)
+  found = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(found)
+  return found.unanswered(state, os.getcwd())
+
+
+def one_review_stopped(state, runs):
+  """Why a one-review goal is stopped for good, or ""; its decisions file is the authority, whatever the record says."""
+  path = os.path.join(MON, "..", "..", "workflow-delivery", "scripts", "decisions.py")
+  if not (state.get("one_review") or os.path.exists(os.path.join(runs, "%s.decisions.jsonl" % state.get("slug")))):
+    return ""
+  if not os.path.exists(path):
+    return "decisions.py is missing; reinstall the skills"
+  spec = importlib.util.spec_from_file_location("one_review_ledger", path)
+  found = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(found)
+  return found.stopped(found.require(runs, state))
+
+
+def one_review_unapproved(state, top, runs, base, head):
+  """DLF-1.3: the exact head being merged has no open finding, no new uncovered change and no unapproved requirement text."""
+  if not state.get("one_review"):
+    return ""
+  path = os.path.join(MON, "..", "..", "workflow-delivery", "scripts", "outcomes.py")
+  if not os.path.exists(path):
+    return "outcomes.py is missing. Fix: reinstall the skills. (ONE_REVIEW_UNAPPROVED)"
+  spec = importlib.util.spec_from_file_location("one_review_outcomes", path)
+  found = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(found)
+  more = found.blockers(top, runs, state, "origin/" + base, head)
+  return "the pull request can't be merged: %s. Nothing was merged. (ONE_REVIEW_UNAPPROVED)" % "; ".join(more) if more else ""
+
+
 def _pods():  # MON-15: workflow-monitoring's graph.py, or None
   sys.path.append(MON)  # graph's proctree
   try:
@@ -187,10 +225,18 @@ def main():
     sys.exit("REFUSED: no goal named %s." % slug)
   if not ar.mergeable(state):
     sys.exit("REFUSED: %s has no finished pull request. Fix: run goal.py pr first." % slug)
+  held = one_review_unanswered(state)
+  held and sys.exit("REFUSED: %s Nothing was merged. (ONE_REVIEW_UNANSWERED)" % held)
+  if cfg.get("merge_queue") and state.get("one_review"):  # a queued merge happens later, where a revert can't withdraw it yet
+    sys.exit("REFUSED: %s takes one review, and such a goal isn't put in a merge queue. Nothing was merged. Fix: the operation decides how it merges (ONE_REVIEW_QUEUE)" % slug)
   if pods:
     pods.refuse(state)
     pods.pr_queue("wait", runs, slug)  # an earlier pr lane holds the slot
     pods.merge_lock(os.path.abspath(common))
+  state = load(path) or state  # read again under the lock: a revert may have changed it while this waited (DLF-1.3)
+  why = one_review_stopped(state, runs)
+  why and sys.exit("REFUSED: %s was stopped for good: %s. Nothing was merged. (ONE_REVIEW_STOPPED)" % (slug, why))
+  ar.mergeable(state) or sys.exit("REFUSED: %s has no finished pull request. Fix: run goal.py pr first." % slug)
   wiki.top_of() and print(run([sys.executable, OPERATE, "apply", slug, str(state.get("branch"))], top).stdout.strip())
   view = run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid,statusCheckRollup"])
   info = json.loads(view.stdout or "{}") if view.returncode == 0 else {}
@@ -234,6 +280,8 @@ def main():
     if not state.get("branch") or run(["git", "fetch", "-q", "origin", state["branch"]], cwd=top).returncode:
       ar.fail(state, "could not fetch the goal branch %s to scan it; nothing was merged (PRIVATE_LIST)" % state.get("branch"))
     ar.check(state, top, "origin/" + base, {"release notes": ar.notes_text(state)}, True, head)
+    loose = one_review_unapproved(state, top, runs, base, tested or head)
+    loose and ar.fail(state, loose)
     held, noted = missing_ids(top, cfg, head)
     if held:
       ar.fail(state, "criterion rows name %s, which no wiki page on origin/%s names; nothing was merged. Fix: "

@@ -60,14 +60,14 @@ backlog-setup-makes	PASS	2026-11-19
 bad-schedule-refused	PASS	2026-11-12	
 batch-cut-user	PASS	2026-11-09	
 blockers-first	PASS	2026-11-14	
-board-estimates-overrun	PASS	2026-11-25	
-board-tz-mixed-stamps	PASS	2026-11-25	
+board-estimates-overrun	PASS	2026-11-27	
+board-tz-mixed-stamps	PASS	2026-11-27	
 breaking-asks	PASS	2026-11-09	
 budget-fair-base-moved	PASS	2026-11-25	
 budget-fair-failed-stays	PASS	2026-11-15	
 budget-order-first	PASS	2026-11-27	
 budgets-agree	PASS	2026-11-27	
-builtin-flow	PASS	2026-11-26	
+builtin-flow	PASS	2026-11-27	
 capture-row-ci	PASS	2026-11-27	
 capture-row-mac	PASS	2026-11-27	
 changelog-bracket-no-gh	PASS	2026-11-17	
@@ -113,7 +113,7 @@ del5-merge-forwards-checkout	PASS	2026-11-15
 del5-patch-default	PASS	2026-11-25	
 del6-depth-by-size	PASS	2026-11-27	
 del7-kill-resume	PASS	2026-11-27	
-del8-board-over	PASS	2026-11-25	
+del8-board-over	PASS	2026-11-27	
 del8-floor-step	PASS	2026-11-25	
 del8-prep-board	PASS	2026-11-27	
 del9-lane-part-no-path	PASS	2026-11-27	
@@ -122,7 +122,7 @@ del9-pr-refuses	PASS	2026-11-27
 dependency-held	PASS	2026-11-09	
 deploy-section-optional	PASS	2026-11-26	
 deployments-counts-pages	PASS	2026-11-26	
-deps-graph-94	PASS	2026-11-25	
+deps-graph-94	PASS	2026-11-27	
 depth-auto-approve-gate	PASS	2026-11-18	
 depth-base-branch	PASS	2026-11-18	
 depth-condensed-refused	PASS	2026-11-25	
@@ -147,7 +147,7 @@ dlf-done-2-budget	PASS	2026-11-25
 dlf-done-3-sizes	PASS	2026-11-25	
 dlf-lines-not-waits	PASS	2026-11-25	
 dlf-merge-on-green	PASS	2026-11-25	
-dlf-mutation-controls	PASS	2026-11-25	
+dlf-mutation-controls	PASS	2026-11-27	
 dlf-only-safety-waits	PASS	2026-11-25	
 dlf-scan-every-path	PASS	2026-11-25	
 dlf-setting-off-waits	PASS	2026-11-25	
@@ -192,7 +192,7 @@ eta-health	PASS	2026-11-25
 eta-health-missing	PASS	2026-11-25	
 eta-health-rules	PASS	2026-11-25	
 eta-ledger	PASS	2026-11-25	
-eta-preflight-asked	PASS	2026-11-25	
+eta-preflight-asked	PASS	2026-11-27	
 eta-preflight-missed	PASS	2026-11-25	
 every-row-described	PASS	2026-11-27	
 failed-waits-mender	PASS	2026-11-09	
@@ -219,8 +219,8 @@ grd2-limits-in-settings	PASS	2026-11-25
 grd2-pr-lane-holds-merge-slot	PASS	2026-11-15	
 grd2-step-budget	PASS	2026-11-25	
 grd2-time-stop	PASS	2026-11-25	
-grd4-budget	PASS	2026-11-25	
-grd4-touches	PASS	2026-11-25	
+grd4-budget	PASS	2026-11-27	
+grd4-touches	PASS	2026-11-27	
 grd4-worker-commit-main-refused	PASS	2026-11-15	
 grd5-health-close	PASS	2026-11-26	
 grd6-head-moved	PASS	2026-11-25	
@@ -250,10 +250,10 @@ health-timing	PASS	2026-11-11
 health-tokens-124	PASS	2026-11-26	
 health-unreviewed-warn-issue-118	PASS	2026-11-26	
 health-workflow-no-milestone	PASS	2026-11-12	
-held-all	PASS	2026-11-25	
+held-all	PASS	2026-11-27	
 held-charge-idle	PASS	2026-11-25	
 held-charge-pauses	PASS	2026-11-25	
-held-stale-next	PASS	2026-11-25	
+held-stale-next	PASS	2026-11-27	
 held-time-3878	PASS	2026-11-25	
 held-time-over-still-stops	PASS	2026-11-25	
 held-time-owner-wait	PASS	2026-11-14	
@@ -276,8 +276,8 @@ home-topic-live	PASS	2026-11-24
 hook-count	PASS	2026-11-19	
 hook-stub-mark-foreign	PASS	2026-11-17	
 hook-stub-mark-own	PASS	2026-11-17	
-issue-117-bind-self	PASS	2026-11-25	
-issue-117-github-touches	PASS	2026-11-25	
+issue-117-bind-self	PASS	2026-11-27	
+issue-117-github-touches	PASS	2026-11-27	
 issue-129-docs-published	PASS	2026-11-25	
 issue-38-verdicts	PASS	2026-11-27	
 issue-closed-ignored	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -302,6 +302,7 @@ lane-env-states	PASS	2026-11-24
 lane-fail-text	PASS	2026-11-27	
 lane-last-152	PASS	2026-11-27	
 lane-limit-150	PASS	2026-11-27	
+lane-memory-not-counted	PASS	2026-11-27	
 lane-messages-table	PASS	2026-11-11	
 lane-order	PASS	2026-11-24	
 lane-over-minutes	PASS	2026-11-27	
@@ -399,7 +400,7 @@ merge-batch-split	PASS	2026-11-24
 merge-guard-base-head	PASS	2026-11-11	
 merge-reach-fail-closed	PASS	2026-11-25	
 merge-refuses-worktree	PASS	2026-11-27	
-merged-frees-175	PASS	2026-11-25	
+merged-frees-175	PASS	2026-11-27	
 migration-base-config	PASS	2026-11-27	
 migration-clean	PASS	2026-11-27	
 migration-fix-sched-task	PASS	2026-11-27	
@@ -412,8 +413,8 @@ milestone-v1-free-form	PASS	2026-11-26
 milestone-wording-unreviewed	PASS	2026-11-27	
 milestones-once	PASS	2026-11-27	
 mon-stray-runs	PASS	2026-11-14	
-mon11-full-auto	PASS	2026-11-25	
-mon12-pool	PASS	2026-11-25	
+mon11-full-auto	PASS	2026-11-27	
+mon12-pool	PASS	2026-11-27	
 mon13-two-layers	PASS	2026-11-27	
 mon14-map-finish	PASS	2026-11-20	
 mon14-release-eta	PASS	2026-11-16	
@@ -421,11 +422,11 @@ mon14-repo-blocks	PASS	2026-11-27
 mon15-pod-owner	PASS	2026-11-27	
 mon16-checkin-grouped	PASS	2026-11-18	
 mon16-machine-line	PASS	2026-11-19	
-mon4-checkin-no-board	PASS	2026-11-25	
+mon4-checkin-no-board	PASS	2026-11-27	
 mon5-checkin-machine-line	PASS	2026-11-16	
 mon5-for-cell-sentence	PASS	2026-11-16	
-mon6-merged-frees	PASS	2026-11-25	
-mon7-govern-blocks	PASS	2026-11-25	
+mon6-merged-frees	PASS	2026-11-27	
+mon7-govern-blocks	PASS	2026-11-27	
 mon9-board-fast	PASS	2026-11-10	
 monitor-stray-runs-3862	PASS	2026-11-14	
 narrow-root-172	PASS	2026-11-24	
@@ -440,9 +441,14 @@ one-link	PASS	2026-11-27
 one-way-to-run	PASS	2026-11-27	
 operate-10-under-load	PASS	2026-11-11	
 operate-all	PASS	2026-11-25	
-operate-toy-no-check	PASS	2026-11-25	
-operate-wait-99	PASS	2026-11-25	
+operate-toy-no-check	PASS	2026-11-27	
+operate-wait-99	PASS	2026-11-27	
 ops-findings-filed	PASS	2026-11-19	
+orv-checkin-revert	PASS	2026-11-27	
+orv-checks-stay	PASS	2026-11-27	
+orv-no-owner-wait	PASS	2026-11-27	
+orv-safe-option	PASS	2026-11-27	
+orv-start-review	PASS	2026-11-27	
 package-caps-held	PASS	2026-11-25	
 package-gate-controls	PASS	2026-11-25	
 package-gate-head	PASS	2026-11-27	
@@ -541,7 +547,7 @@ repo-full-suite-limit	PASS	2026-11-11
 repo-narrow-178	PASS	2026-11-12	
 repo-rules-run	PASS	2026-11-26	
 repo-rules-setup	PASS	2026-11-24	
-report-done-final	PASS	2026-11-25	
+report-done-final	PASS	2026-11-27	
 report-header	PASS	2026-11-26	
 rerun-both-touched	PASS	2026-11-24	
 retired-id-exists	PASS	2026-11-26	
@@ -600,8 +606,8 @@ shard-fits-budget	PASS	2026-11-25
 size-140	PASS	2026-11-12	
 size-budget	PASS	2026-11-24	
 size-lf-crlf	PASS	2026-11-26	
-sizing-asz-1-1	PASS	2026-11-25	
-sizing-asz-1-2	PASS	2026-11-25	
+sizing-asz-1-1	PASS	2026-11-27	
+sizing-asz-1-2	PASS	2026-11-27	
 sizing-asz-1-3	PASS	2026-11-27	
 sizing-cbs-1-1	PASS	2026-11-27	
 sizing-cbs-1-2	PASS	2026-11-27	
@@ -617,7 +623,7 @@ skill-refusals-in-references	PASS	2026-11-26
 skill-size-116	PASS	2026-11-27	
 skill-workflow-in-references	PASS	2026-11-26	
 skip-list-approved	PASS	2026-11-25	
-slot-pool-112	PASS	2026-11-25	
+slot-pool-112	PASS	2026-11-27	
 spec-decisions-log	PASS	2026-11-13	
 spec-decisions-wording	PASS	2026-11-27	
 stale-comments-only-3122	PASS	2026-11-15	
@@ -701,7 +707,7 @@ tree-rules-first	PASS	2026-11-26
 trim-package-98	PASS	2026-11-26	
 trim-setup-under-19000	PASS	2026-11-25	
 two-lanes-toy-435	PASS	2026-11-10	
-unattended-checkin-line	PASS	2026-11-25	
+unattended-checkin-line	PASS	2026-11-27	
 unattended-loop-recreate	PASS	2026-11-24	
 unattended-sends-warn	PASS	2026-11-19	
 unproven-blocks	PASS	2026-11-27	

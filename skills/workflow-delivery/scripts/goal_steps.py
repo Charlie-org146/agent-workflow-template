@@ -10,6 +10,7 @@ import cover
 def cmd_record(args):
     slug, step = args.slug, args.step
     state = _s.held(slug)
+    _s.fit.start_review().gate(state, _s.root(), step)
     _s.guards.waiting_gate(_s.ME, state)
     _s.add_tokens(state, step, args.tokens, True)
     ran = os.path.join(_s.state_dir(), "%s.%s.ran" % (slug, step))
@@ -161,6 +162,9 @@ def cmd_pr(args):
     print("PR " + url)
     print("NEXT: " + ("workflow-release merges it: merge.py %s" % slug if cfg.get("auto_merge") is True and state.get("release") != "ask"
                       else "workflow-release asks cut or leave. The loop never merges."))
+    if state.get("one_review"):
+        note = _s.fit.outcomes().hand_note(cfg, state)
+        note and print(note)
     if state["statuses"] == "failed":
         print("NEXT: no merge until the status posts: private.py statuses --head %s --ok" % head)
     return 5 * (state["statuses"] == "failed")

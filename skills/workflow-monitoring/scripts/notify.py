@@ -2,6 +2,7 @@
 """Mail the owner once per new check-in event (MON-5), so nobody has to watch the operation session.
 
 usage: notify.py send [--checkin FILE] [--root DIR]   what operate.py runs after each check-in it prints
+       notify.py start-mail SLUG [--root DIR]           goal.py start-items: that goal's start review, once per code (DLF-1.3)
        notify.py status [--root DIR]                  whether it is on here, mail.env is there, and how many events are seen
        notify.py ready [--root DIR]                   operate.py start: the readiness table of a new operation session (MON-1)
        notify.py timer [created] [--root DIR]         operate.py timer: the check-in timer to show the owner; created records it (MON-5)
@@ -122,17 +123,24 @@ def events(root, text):
         out.append(("needs:" + key, "needs you", slug_in(item, slugs), item))
     for run in runs:
         slug, status = run["slug"], run.get("status")
-        if status in ("stopped", "failed"):
+        owns = True
+        if run.get("one_review"):  # DLF-1.3: its stops are the operation's, unless they still wait for the owner
+            import review_view
+            owns = review_view.owners(root, run)
+        if owns and status in ("stopped", "failed"):
             why = run.get("finding") or "it stopped at %s" % (run.get("step") or "a step")
             out.append(("stopped:%s:%s" % (slug, run.get("attempt") or 1), "stopped", slug,
                         "%s stopped: %s. You: resume it or retire it." % (slug, lb.plain(why, 160))))
         seen = auto.eta_seen(root, run)
-        if status in ("running", "waiting") and auto.eta_left(seen, datetime.datetime.now(datetime.timezone.utc)) == 0:
+        if owns and status in ("running", "waiting") and auto.eta_left(seen, datetime.datetime.now(datetime.timezone.utc)) == 0:
             out.append(("eta:%s:%d" % (slug, auto.eta_minutes(seen)), "past ETA", slug,
                         "%s is past its ETA. You: pick ship now, extend once or defer." % slug))
         if status == "done" and run.get("release_version"):
             out.append(("released:%s:%s" % (slug, run["release_version"]), "released", slug,
                         "%s merged (%s) and released as v%s. Nothing to do." % (slug, run.get("pr") or "its pull request", run["release_version"])))
+    if any(r.get("start_review") for r in runs):
+        import review_view
+        out += review_view.start_events(runs)
     told = {slug for _, kind, slug, _ in out if kind in ("stopped", "past ETA")}
     return [(key, "covered" if kind == "needs you" and slug in told else kind, slug, action) for key, kind, slug, action in out]
 
@@ -155,10 +163,14 @@ def cmd_send(args):
     except OSError:
         pass
     found, path = events(args.root, text), os.path.join(folder, "notified.json")
+    only = getattr(args, "slug", None)
+    found = [e for e in found if not only or (e[1] == "start review" and e[2] == only)]
     if not os.path.exists(path):
-        save(path, {"sent": {key: "baseline" for key, _, _, _ in found}})
-        say("baseline %d events, nothing sent; from now on each new one is mailed" % len(found))
-        return 0
+        held = [e for e in found if e[1] != "start review"]  # a start review is never part of the baseline: it must go out
+        save(path, {"sent": {key: "baseline" for key, _, _, _ in held}})
+        only or say("baseline %d events, nothing sent; from now on each new one is mailed" % len(held))
+        if len(held) == len(found):
+            return 0
     state = read_json(path)
     sent = state.setdefault("sent", {})
     new = [e for e in found if e[0] not in sent]
@@ -210,6 +222,11 @@ def cmd_send(args):
     return 0
 
 
+def cmd_start_mail(args):
+    import review_view
+    return review_view.start_mail(sys.modules[__name__], args)
+
+
 def approve(args, path, top, common):
     """monitor.py plan approve: the owner's plan (plan-round.json) written into the queue lines. Needs an owner-words record; any refusal changes nothing."""
     keys = ("release", "machine", "agent")
@@ -218,7 +235,8 @@ def approve(args, path, top, common):
     if plan.get("status") != "pending":
         sys.exit("REFUSED: no pending plan. Fix: run monitor.py plan first.")
     try:
-        known = {x.split("\t")[0] for x in open(os.path.join(common, "loop", "owner-words.tsv"), encoding="utf-8").read().splitlines()}
+        import auto
+        known = {r[0] for r in auto.owner_rows(top)}  # a start review's answer is not among them
     except OSError:
         known = set()
     if not args.owner_record or args.owner_record not in known:
@@ -345,12 +363,14 @@ def main():
         return plan_main(sys.argv[1:])
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
-    for name, func in (("send", cmd_send), ("status", cmd_status), ("ready", cmd_ready), ("timer", cmd_timer)):
+    for name, func in (("send", cmd_send), ("start-mail", cmd_start_mail), ("status", cmd_status), ("ready", cmd_ready), ("timer", cmd_timer)):
         item = sub.add_parser(name)
         item.add_argument("--root", default="")
         item.set_defaults(func=func)
         if name == "send":
             item.add_argument("--checkin", default="")
+        if name == "start-mail":
+            item.add_argument("slug")
         if name == "timer":
             item.add_argument("created", nargs="?", default="", choices=["", "created"])
     args = parser.parse_args()

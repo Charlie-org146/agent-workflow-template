@@ -1,0 +1,386 @@
+# One review at the start: a goal asks the owner once, and no later step waits on the owner (owner o1037, o1038)
+
+- Slug: v110-one-review
+- Touches: skills/workflow-delivery, skills/workflow-monitoring, dev/toy, .loop/regression.tsv, docs/wiki/Delivery.md, docs/wiki/Deliver-first.md, docs/wiki/How-to-use-Deliver-first.md, docs/wiki/Operation.md, docs/wiki/How-to-use-Operation.md, docs/wiki/Tests.md, skills/loop-files.md, listing.json, docs/wiki/Home.md, skills/workflow-release, .loop/config.json, .loop/START.md, skills/workflow-setup/scripts/settings.py, docs/wiki/How-to-use-Delivery.md, skills/workflow-docs/scripts/deployments.py, skills/workflow-docs/scripts/milestones.py, skills/workflow-docs/scripts/criteria.py, README.md, docs/wiki/Principles.md, .loop/regression-relevel.tsv, skills/workflow-regression/scripts/levels_gate.py
+- ETA: 870 active minutes (estimate 694m plus a 25% margin)
+
+## Words used
+
+The replacement for DLF-1.3, approved with the done lines (o1038):
+
+> DLF-1.3 **One review, at the start.** A goal waits for me once: at its start, where I approve its done lines and the safety items it is known to touch (deleting what can't be restored, money, security and sandbox settings, private data, steward merges, a change to what a feature promises, a test loosened or deleted). After that nothing waits for me. A safety item found later takes the safe option without asking: it is fixed in the build, or that part is dropped and filed as a DLF-1.1 line; nothing is waived or loosened that the start review didn't approve. The leak read before any push and the PR's reached-test run before a merge stay as automatic checks, not waits for me. Every decision made in my place is listed in the next check-in with a one-line revert.
+
+The DEL-3 line on the Delivery page is aligned in this goal's build to this wording (operation's decision under o1037 and o1038, listed for the owner to revert):
+
+> My decisions are made once, at a goal's start; later ones are made on the recommendation, with the safe option for safety, and listed for me to revert (DLF-1.3).
+
+The metric becomes "minutes a goal waits for me after its start review, target 0", and the Operation page's owner-question lines change the same way.
+
+## Done lines
+
+Frozen. A wrong done line needs a new goal.
+
+1. A goal asks the owner once, at its start: its done lines and its known safety items together, in one message.
+2. After that start review, no step waits on the owner: readings, red-team findings and plan questions are decided by the operation on its recommendation.
+3. A safety finding found later takes the safe option without asking: fixed in the build, or that part dropped and filed as a later item; a check is never waived or loosened.
+4. Every such decision appears in the next check-in with a one-line revert command, and a revert stops that part.
+5. Checks, leak reads and merge rules stay as they are; only the waits on the owner go.
+
+## Verify by hand
+
+<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+## Notes
+
+### Build order (the plan is final; TD2073, TD2127, TD2128)
+
+E1 to E5 come first, with one spec check on E1 to E3 before their code. They are required build items.
+
+- E1: one comparison of a whole requirement unit, sub-bullets included, of the approved text at revise, review, merge and in the requirement guard. DLF-1.3 is approved as part of the DLF-1 unit, and the other lines of the unit are checked as unchanged. A record is used once per ID and command, so two approved IDs both work. Record tags name IDs, not whole pages. The record is refused after a revert, a reject, a stop or a retire.
+- E2: a freeze interrupted between its commit and its saved record can be recovered. The mark is kept, the start answer is still asked, and no approval is rebuilt.
+- E3: adopt marks no goal. It refuses a goal with any sign of a mark (goal file, history it can reach, local record, handover ref) and refuses when it cannot read the history in full. Where a goal needs the mark, its start review is sent, and merge refuses until it is answered.
+- E4: decisions are kept in an append-only file with its own lock, read again under the merge and revert lock, and handed over with the pre-flight and plan-review files. A missing file refuses.
+- E5: a stop holds at every path that sets a goal queued or running.
+
+The other build items are listed under Build list below.
+
+### Rulings
+
+- The merge and release rules the owner set stay, and the PR and the metric name them as kept owner rules, beside the metric.
+- The leak read is not a build item; the automatic private-name scan stays as a filter. The DLF-1.3 text stays as approved.
+- The CI release workflow file is not part of this goal and is filed as a deliver-first line; the local release step reads the holds.
+- The rule ships on, with a documented off switch in settings ("on" as ruled under the spec check below: on in this repository, off by default in the package). The first goal after the merge is named the pilot and gets a red-team line on whether the one review held.
+- Past the start review, a part that would need an owner-contradicting decision is dropped and filed (top's reading; not added to any page).
+- Page wording approved by top under its DOC-2 delegation (TD2128), listed for the owner:
+  - Delivery, DEL-3: "My decisions on a goal are made once, at its start; later ones are made on the recommendation, with the safe option for safety, and listed for me to revert (DLF-1.3)."
+  - Operation, OPS-1: "**Full auto:** top decides process choices and numbers each decision. On a goal past its start review, a safety item found later takes the safe option without asking (DLF-1.3); outside that, the safety classes wait for my typed words."
+  - Operation, non-goal: "Full auto never answers for me on destructive, money, security or owner-contradicting decisions. On a goal past its start review, a safety item found later takes the safe option without asking (DLF-1.3)."
+  - Operation, metric: "With full auto on, a goal needs me only at its start review; the merge and release rules I set stay. Minutes a goal waits for me after its start review: target 0."
+- The owner approved the DLF-1 heading and metric ("Approve both", o1045), so they no longer hold the merge:
+  - DLF-1 heading: "Deliver first: a goal waits for me once, at its start"
+  - DLF-1 metric: "**Metric.** Minutes a goal waits for me after its start review. Target 0."
+- Revert rule, a required build item (TD2128): each decision records what it let go on, and its revert line says "stops the goal" when that is the whole goal.
+- The Delivery wording above is the one top approved; it takes the place of the earlier DEL-3 draft under Words used for the page edit.
+- The owner recorded two approvals in their own terminal. Nothing in this goal waits on the owner now, and the DEL-3 edit no longer holds the merge (this replaces the TD2135c hold).
+  - o1048 (v110-one-review, DLF-1, Deliver-first, OPS-1, Operation): the DLF-1 revise to the TD2136 unit and the Operation page lines B, C and D rest on it.
+  - o1046 (v110-one-review, DEL-3, TD2128-A): the DEL-3 edit rests on it.
+  - Each record counts once per command, so each is used in one revise call.
+- Order (operation): the o1047 unreview of DLF-1 runs only when v110-no-leak-gate's build starts, after this goal merges, because that goal's build and its line 4 wait for the merge. This goal's DLF-1 revise therefore starts from the Reviewed unit the TD2136 text was checked against.
+
+### Spec check of E1 to E3: rulings and clarifications
+
+(moved for PR-body length: see .loop/goals/v110-one-review.notes.md, section 'Spec check of E1 to E3')
+
+### Target text: the DLF-1 unit
+
+Top approved this unit under TD2136 with option K: the DLF-1.3 Metric and Test lines stay unchanged, so the part marked open below is settled. It rests on o1038, o1045, TD2128 E and F, and TD2136; its revise cites o1048. It governs over the plan's sentence that puts the approved metric under DLF-1.3. The pull request names the short window in which the leak-read clause is stale. The file is copied as written:
+
+```
+# v110-one-review: resulting DLF-1 unit (operation-mac, 17:11, TD2134 option A; for top's DOC-2 check before the worker uses it)
+
+Base: docs/wiki/Deliver-first.md on main 7784d862f. Exactly three changes; every other line of the unit (lines 18-52) and the page is unchanged. The history row (line 76) is untouched.
+
+1. Line 18 heading (o1045, TD2128 F):
+BEFORE: Deliver first: a goal never waits for me, unless it's a safety class
+AFTER:  Deliver first: a goal waits for me once, at its start
+
+2. Line 25 DLF-1.1 metric AND line 66 under Success metrics (o1045, TD2128 E):
+BEFORE: **Metric.** Minutes a goal spends waiting for my word on anything outside DLF-1.3. Target 0.
+AFTER:  **Metric.** Minutes a goal waits for me after its start review. Target 0.
+
+3. Lines 30-36, DLF-1.3's heading, its five bullets and 'Every other stop in the loop is removed or turned into DLF-1.1's issue line.', are replaced by the o1038 text, verbatim:
+  - DLF-1.3 **One review, at the start.** A goal waits for me once: at its start, where I approve its done lines and the safety items it is known to touch (deleting what can't be restored, money, security and sandbox settings, private data, steward merges, a change to what a feature promises, a test loosened or deleted). After that nothing waits for me. A safety item found later takes the safe option without asking: it is fixed in the build, or that part is dropped and filed as a DLF-1.1 line; nothing is waived or loosened that the start review didn't approve. The leak read before any push and the PR's reached-test run before a merge stay as automatic checks, not waits for me. Every decision made in my place is listed in the next check-in with a one-line revert.
+
+OPEN for top: DLF-1.3's Metric and Test lines (37-38):
+  - **Metric.** Goals merged past one of these. Target 0.
+  - **Test.** A goal whose only break loosens a test does not merge, and the board names that as the reason.
+'Goals merged past one of these' loses its list once the bullets go. Option K: keep both lines unchanged ('these' then reads as the safety items DLF-1.3 names). Option R: reword 'one of these' to 'a safety item DLF-1.3 names', which needs your DOC-2 approval. operation-mac recommends K (says no more than o1038).
+
+Unchanged on purpose: Non-goals line 46/60 'It never skips the leak read ...' and DLF-1.3's leak-read clause: v110-no-leak-gate line 4 deletes them after one-review merges (o1040). The PR body names that stale window (TD2134).
+```
+
+### Red-team dispositions (plan file sha1 defb36a61622)
+
+36 breaks, named by number, principle and short id; their text is not repeated here. All 36 are accepted in the tool's record (operation: principles 1, 3, 4, 6 and 8 under o1000; 2 and 7 under o1037). In that record, accepted means the disposition below, never a waiver. REQ is a required build item, DF is filed as a deliver-first line, and PW means the break showed the plan wrong as written. All 9 breaks of principle 6 are required build items.
+
+| break | principle | short id | REQ or DF | build item | disposition |
+|---|---|---|---|---|---|
+| 1 | 8 | b1p87f0ae6 | REQ (PW) | CEO B2, E6, DX D1 | the start message is sent once, after its items are final, after plan and red team and before the build (B2, E6) |
+| 2 | 8 | b2p831ef23 | REQ (PW) | RT1 | a safety item names exact files or an existing folder |
+| 3 | 6 | b3p667b05d | REQ (PW), build item CEO B1, E7, accepted by o1000 means a disposition, not a waiver | CEO B1, E7 | labels raise the class, and unknown stays safety (B1, E7) |
+| 4 | 2 | b4p2507a43 | REQ (PW) | E14, RT18 | a fix's row is tied to the finding and was red without the fix; a fresh reader gives a verdict on the fix (E14) |
+| 5 | 8 | b5p893dca2 | REQ (PW) | RT2 | a rule for ordinary test updates that loosens no check |
+| 6 | 8 | b6p8f4ac32 | REQ (PW) | RT16, CEO B4 | after a merge the revert command opens a revert goal for that part, and the owner's revert command is its start review (TD2127); each decision records what it let go on, and its revert line says what it stops, "stops the goal" when that is the whole goal (TD2128, B4) |
+| 7 | 8 | b7p8144c52 | REQ (PW) | RT17 | the DLF-1.4 accept list is named as a kept owner rule, in the PR and beside the metric (TD2127) |
+| 8 | 1 | b8p1913e68 | REQ (PW) | RT11 | only wording approved by top or the owner lands; any other line stays as it is |
+| 9 | 1 | b9p1108665 | REQ (PW) | RT5 | README and Principles are regenerated |
+| 10 | 1 | b10p12ee017 | DF | filed later | the other requirement lines that still describe waits |
+| 11 | 6 | b11p66acb23 | REQ, build item RT4, accepted by o1000 means a disposition, not a waiver | RT4 | the config file is among the settings paths |
+| 12 | 6 | b12p67426f6 | REQ, build item E12, CEO B1, accepted by o1000 means a disposition, not a waiver | E12, CEO B1 | the diff scan covers every class a diff can show; the gate is on every later command; an action asked or reported during the build that is not positively cleared is not taken (E12) |
+| 13 | 6 | b13p6fb9a58 | REQ, build item E11, accepted by o1000 means a disposition, not a waiver | E11 | a safety stop keeps the branch off origin (E11) |
+| 14 | 6 | b14p6dd986e | REQ, build item E13, accepted by o1000 means a disposition, not a waiver | E13 | closing a finding and its statements need a verified operation identity (E13) |
+| 15 | 6 | b15p64186be | REQ, build item E13, CEO B8, accepted by o1000 means a disposition, not a waiver | E13, CEO B8 | revert and decide are operation-only, mail text is treated as untrusted, and the owner has a way back from a mistaken hold (E13, B8) |
+| 16 | 6 | b16p67ee30f | REQ, build item E15, accepted by o1000 means a disposition, not a waiver | E15 | the shared owner-record reader refuses start records unless a use is allowed (E15) |
+| 17 | 2 | b17p2d20eca | REQ | CEO B6, RT17 | with 28 |
+| 18 | 2 | b18p22104b7 | REQ + DF part | RT12; wording filed later | on a marked goal the safety-class check is met by the start review or the safe option, and the check stays; deliver-first for the CBS-1.2 wording |
+| 19 | 2 | b19p2ede9b9 | REQ | DX D9 | a named acknowledgement of decision ids (D9) |
+| 20 | 2 | b20p242ae28 | REQ | RT13 | the new rows name DLF-1.3 |
+| 21 | 3 | b21p32146d5 | REQ + DF part | DX D17; time limits filed later | holds and open findings show age, responsible session and next step (D17); deliver-first for time limits and missed-with-cause |
+| 22 | 8 | b22p898a825 | REQ | RT14 | one message with a recommendation per item, one code, and what happens without an answer |
+| 23 | 1 | b23p12524c0 | REQ | RT15 | a written DEL-21 comparison with GitHub required checks and environment reviewers, before the E1-E5 code |
+| 24 | 1 | b24p1b389b6 | REQ (PW) | RT11 | approval comes before the DLF-1 revision (with 8) |
+| 25 | 1 | b25p1902119 | REQ | RT5 | with 9 |
+| 26 | 8 | b26p8ef5b5d | REQ (PW) | RT17 | hand merge and cut or leave are named as kept owner rules (TD2127) |
+| 27 | 8 | b27p830d75f | REQ (PW) | RT17 | modes the owner switched off are named as kept owner rules (TD2127) |
+| 28 | 2 | b28p23ff37a | REQ (PW) | CEO B6, RT17 | the kept owner rules are named beside the metric, with waiting time by cause (B6) |
+| 29 | 6 | b29p6ce5a29 | REQ (PW), build item CEO B1, E7, accepted by o1000 means a disposition, not a waiver | CEO B1, E7 | a proposed action counts as not safety only on positive grounds; otherwise it takes the safe option (with 3) |
+| 30 | 7 | b30p7b208de | REQ (PW) | E2, E3, DX D15 | recovery of a lost record that keeps approvals and restrictions (E2, E3, D15) |
+| 31 | 7 | b31p75d6ee2 | REQ | E1, E4 | approval evidence travels with a handover (E1, E4) |
+| 32 | 2 | b32p2cbff9b | REQ | E4 | safe concurrent writes of decisions (E4) |
+| 33 | 6 | b33p667f29a | REQ, build item E13, accepted by o1000 means a disposition, not a waiver | E13 | revert needs operation authority and goal ownership (E13) |
+| 34 | 8 | b34p8145e13 | REQ (PW) | RT16 | with 6; an ongoing outside action is stopped or gets corrective work |
+| 35 | 3 | b35p3c0770c | REQ (PW) | RT3 | "no estimate" is kept apart from the budget, with a stated cap rule |
+| 36 | 4 | b36p49b9bbc | DF | filed later | step token budgets |
+
+### Build list
+
+E1 to E5 are under Build order above. Every item below is required unless it says it is filed later.
+
+- E6: the start message is held until its items are final.
+- E7: separate scan rules for stop text and for diffs, using changed Reviewed units rather than wiki paths, checked on past breaks and diffs before the build; an unknown action is held under operation.
+- E8: merge scans the head it merges for new uncovered changes; a hand or already-merged pull request is checked before release; where that cannot be enforced the output says so; a new finding or revert marks the open pull request.
+- E9: release holds are shared across machines and read by every local release path; a replacement goal is new or unmerged; making a hold and publishing are ordered.
+- E10: the diff is read with external diff tools off, as text, decoded safely, with NUL-separated names; an unreadable diff refuses.
+- E11: findings keep hashes and blob ids, not content; stored text passes the existing secret and private-name checks; a safety stop does not push the branch.
+- E12: the build gate also guards flow runs, record, pr and every merge, with or without the principles page; merge refuses an unanswered marked goal.
+- E13: answer, closing a finding, revert and the delivered mark are operation-only.
+- E14: a fix's row names its finding and has a red run without the fix; drop and revert follow renames and copies.
+- E15: a start record is recognised by its content wherever owner records are read, and its uses are recorded in one place.
+- E16: for a marked goal, deliver-first is read from the committed base config, and off wins.
+- E17: one exact reply form after quoted text is removed; operation can resend; start mail goes first under the daily limit.
+- E18: a stated drop rule for goals released as leave or by hand; the list is paged and only printed ids are marked.
+- E19: a missing new script does not break an unmarked goal; a handover checks the receiver's version.
+- CEO B1: an action that is not positively cleared is treated as safety; a label raises the class; each not-safety ruling on an action is listed with its reason, with toy cases for money, deletion and steward-merge stops in varied wording.
+- CEO B2: the start message is sent only after its items are written, and a toy expects one send.
+- CEO B3: no removal or revert goal targets a fix or drop decision.
+- CEO B4: each revert line says what it can stop.
+- CEO B5: the Operation page keeps the protection against full auto answering a question that contradicts the owner.
+- CEO B6: the board shows blocked minutes by who they wait for and why, beside the owner metric, with goals stopped and parts dropped.
+- CEO B7: a queued merge that cannot be withdrawn is reported with the next step.
+- CEO B8: the owner has a recorded way back from a mistaken revert.
+- CEO B9: a refusal for a pending removal names it and how to clear it; operation can name a replacement.
+- CEO B10: safety and irreversible decisions are listed first.
+- DX D1: an items-pending state; one command records the items and then sends once.
+- DX D2: each operation action has a named command, with who may run it, exit codes and an example; a refusal prints the command.
+- DX D3: one exact reply form; a refusal gives the current code, the forms and whether the answer is unused.
+- DX D4: a read-only command shows the start review; the freeze and the build refusal print it and how to answer.
+- DX D5: new refusals carry a stable code, values, fix, recovery, side effects and a non-zero exit.
+- DX D6: a failed queued-merge withdrawal is saved as pending, holds releases, exits non-zero and names who finishes it.
+- DX D7: each revert command is on its own line, unwrapped, with its folder quoted.
+- DX D8: revert has a read-only preview.
+- DX D9: the delivered mark is a named acknowledgement of decision ids.
+- DX D10: a read-only scan preview.
+- DX D11: command names that do not clash; class values are printed.
+- DX D12: each new stored, mailed or printed field passes the private-name scan.
+- DX D13: the goal's mark, effective mode and controlling setting are shown; an older receiver is refused at handover.
+- DX D14: accepting an answer can be retried with the same record after a failed push.
+- DX D15: a lost owning record has a recovery that keeps approvals and findings.
+- DX D16: one end-to-end How-to example; the Machines and Release How-to pages are updated.
+- DX D17: a hold shows its age, last progress, responsible session and next command.
+- RT1: a safety item names exact files or an existing folder.
+- RT2: a rule for ordinary test updates that loosens no check.
+- RT3: "no estimate" is kept apart from the budget, with a stated cap rule.
+- RT4: the config file is among the settings paths.
+- RT5: README and Principles are regenerated.
+- RT6: filed later (not one of the 36): the CI release workflow reads the holds.
+- RT7: the answer command records the action taken.
+- RT8: the merge lock is held only around the last check and the merge request.
+- RT9: a re-review step for the revised DLF-1 unit.
+- RT10: filed later (break 36): step token budgets.
+- RT11: only wording approved by top or the owner lands, and approval comes before the DLF-1 revision.
+- RT12: on a marked goal the safety-class check is met by the start review or the safe option, and the check stays.
+- RT13: the new rows name DLF-1.3.
+- RT14: one start message with a recommendation per item, one code, and what happens without an answer.
+- RT15: a written DEL-21 comparison with GitHub required checks and environment reviewers, before the E1 to E5 code.
+- RT16: after a merge, the owner's revert command opens a revert goal for that part and is its start review; each decision records what it let go on, and its revert line says what it stops.
+- RT17: the kept owner rules (hand merge with auto_merge off, cut or leave, the DLF-1.4 accept list, modes the owner switched off) are named in the PR and beside the metric.
+- RT18: a fresh reader gives a verdict on each fix.
+
+### DEL-21 comparison (RT15), written after E2 to E5
+
+(moved for PR-body length: see .loop/goals/v110-one-review.notes.md, section 'DEL-21 comparison (RT15)')
+
+### Build record: slices
+
+- 78d2c1b05: E4 and E5. 3af6c6f17: E3. 2b7969ae5: E2. Next: E1.
+- E2 readings, sent to operation: a decisions file holding only its first mark entry, with no record, counts as the empty one of B6; a queued record's report lines are not later activity.
+- operation-mac accepted E3 (3af6c6f17) and E2 (2b7969ae5), both E2 readings included.
+- B7 at merge: the hold reads the mark committed on the goal branch when the record lost it; its toy case was seen red with that read switched off.
+- TD2180 (speed, scope frozen): only what the recorded plan and dispositions require is built; anything new becomes a deliver-first line for after the v1.1.0 cut unless it blocks the merge. The removal of dlf's private-data wait stays in this build.
+- Filed deliver-first: v110-one-review-choice-1 (three toys fail in an isolated local clone on main while GitHub passes them). Explicit pre-scans under TD2170: 1, clean; the filing tool scans the posted text again.
+- test-monitoring.sh, run to completion on untouched main 7784d862f in the isolated clone: 38 pass, 2 fail, the same two "watch.py alone" cases as on this branch (the toy's copied list lacks batch.py). Pre-existing. An earlier run here that showed 7 fails did not repeat, and one earlier run on main hit the 7 minute limit.
+
+### Later work
+
+- From the DEL-21 comparison (RT15): a required status check could add to E3's merge hold on GitHub's side. It needs a repository protection setting, which is the owner's.
+
+Deferred under TD2188 and TD2194 until after the v1.1.0 cut. The pull request names each as not built:
+- CEO B8, dropped and filed (v110-one-review-choice-2): a mistaken revert has no undo yet.
+- CEO B6, the rest: blocked minutes on the board by who they wait for and why. (The part naming the kept owner rules beside the metric is kept.)
+- DX D17: a hold's age, last progress, responsible session and next command.
+- DX D15 beyond E2: recovering a record lost after work started. Such a goal refuses.
+- E19's receiver version check. Safe option taken instead: a one-review goal is not handed over.
+- DX D2, the rest of D5, D8, D10, the rest of D11, D13's mode display, D16 and the extra How-to pages.
+- E8, the rest: marking an open pull request, and a check before a hand-merged pull request is released (the output says it is not enforced).
+- E17, the rest: resending, mail priority and mail-reply handling (operation records the answer's words).
+- E18, the rest: paging the list and a drop rule for releases left or done by hand (undelivered decisions stay listed).
+- CEO B9 and B10: naming a pending removal and a replacement; ordering the list.
+- The board's metric, board and live-board wording, and the automated inventory check (a hand list in the pull request stands in).
+- The combined-head check for a batch. Safe option taken: a one-review goal merges on its own.
+- RT6 and RT10, already filed later.
+
+### E7: the scan rules checked on past breaks and diffs
+
+safety_scan.py has one rule set for a stop's words and one for a diff. Nothing calls it yet. Run on this machine's past plan reviews and the last 100 merges on main up to 7784d862f (counts only):
+- Words, 655 distinct past breaks: 471 match no class. A change to a feature's promise: 112; private data 35; money 21; test 18; security 8; deletion 7; steward merge 4. A break may match several. The counts were not hand-checked for wrong matches.
+- Diffs, 100 merges, none unread: 30 open no finding. Test loosened or deleted: 65; security and settings: 18 (mostly workflow files and the config); deletion 3; money 1; steward merge 1; private data 0; changed Reviewed text 0.
+- The test rule as DLF-1 has it today (any removed line in a test file) is what makes 65. A narrower rule tried on the same merges (deleted test file, added skip mark, removed or edited existing row, fewer check lines in a file) still flags 41, mostly existing rows edited (30) and skip wording (19), and it detects less.
+- RT2 (ordinary test updates, loosening no check): the strict rule stays until operation rules.
+
+### E1, first part: the items, the message and the answer
+
+- New script start_answer.py (not in the plan's Files list, within the goal's touches): start_review.py lacks the room. Commands: goal.py start-items SLUG --file F (operation), goal.py start-review SLUG (read only), goal.py start SLUG --owner-record ID (operation).
+- Still open in E1: the start mail and its send-once rule (E6, E17, CEO B2); the start record refused by every other reader (E15, M1); the whole-unit comparison at revise, review, guard and merge (M2 to M5); uses voided as B2 rules. Until the mail is built, "later than the message" means later than the items were recorded.
+
+### Rulings after E7
+
+- RT2, operation-mac's ruling A (TD2188 round, listed for top): the strict test rule stays. Operation lists the test files a goal expects to edit as a numbered start item, which the owner approves once with the rest; a test change outside it takes the safe option. Evidence: the E7 counts above. The narrower rule is not taken, since it detects less.
+- E15 and M1: a record in start-answer form is no other permission. The shared monitoring reader, plan-accept, plan-round approval, the docs commands, delegated and milestone records and the release records leave it out. The one exception, the approved requirement item at revise and review, comes with the unit comparison. eta_new moved from auto.py to the new review_view.py, which the plan names.
+- Checks for the E15 slice: the two new toys and test-owner-words.sh pass. A wider run was stopped for operation's load rule after 3 passing toys and is still owed.
+- TD2188 (trim for speed): keep the five done lines, E1 to E5 and what a done line or safety guarantee needs; defer the rest as deliver-first lines named in the pull request; a safety item that can't be built in time is dropped and filed, never waived.
+
+### E1, second part: the start mail
+
+- goal.py start-items records the items and then calls notify.py start-mail: one mail per code, tried again after a refused or over-budget send, kept when it may have gone out. The mail carries only its own answer forms. A text the private-name scan doesn't pass is not stored for mailing. The mail code moved to review_view.py (notify.py had no room).
+- Checks: the start toy, test-email-notify.py and test-mailbox.py pass (single toys, under operation's load rule). Still open in E1: the whole-unit comparison at revise, review, guard and merge, and the uses voided as B2 rules.
+- The KEEP/DEFER sort under TD2188 is in the shared session notes (spare-worker-a-one-review-KEEP-DEFER.md), with its flagged items for operation.
+
+### Correction to the E7 counts
+
+(moved for PR-body length: see .loop/goals/v110-one-review.notes.md, section 'Correction to the E7 counts')
+
+### E1, last part: the whole-unit comparison
+
+- One comparison, in start_answer.py. revise, review and the requirement guard ask it through its command; goal.py pr and merge.py call it on the head given. It compares the whole unit, sub-lines included, against the copy in the run record, and refuses when the base unit is no longer the one the owner was shown.
+- A start record is used once per ID and command at revise and review, reviews only approved IDs and no page, retires nothing, and is void while the goal is stopped or failed and for good after a reject, a permanent stop or a retire. On a marked goal neither a done line nor a plain record passes the guard.
+- Safe option taken for batches: a one-review goal always merges on its own; the combined-head check for batches is not built and is to be filed.
+- Voiding single items after a files revert comes with revert (in the KEEP set). A tagged requirement line added outside its unit is now refused (7907adead); of 191 indented lines outside a unit on today's pages, none is tagged.
+- Checks, one toy at a time under operation's load rule: both new toys, test-criteria.sh, test-merge-batch.sh, test-dlf-merge.py and test-goal.sh pass. test-milestones.sh fails one case ("setup mentions a milestone") the same way on untouched main.
+
+### TD2194: the KEEP set (top's answer to the flags)
+
+Kept, still to build: the plan's core (each stop becomes a decision; findings closed by fix, drop or stop; pr and merge scan and refuse; the decide command; plan-accept refuses a safety break; operation holds replace owner waits, pre-flight and full auto included); the removal of dlf's private-data wait; the check-in's "Decided for you" and revert before and after merge, with RT16's revert goal (TD2127(2), needed for done line 4) and the release holds (E9); the head-scan part of E8; E11, E12, E13, E14, E16; E18's printed-ids part with DX D9; E19's safe option; CEO B3, B4, B5, B7; DX D6, D7, D12; RT3, RT8, RT12, RT13, RT18; B6's kept-owner-rules naming beside the metric (TD2127(1)); full-depth review for marked goals; the setting; the approved page wording with RT5, RT9, RT11; five rows; the command lines the package checks need; a hand list of every owner wait in the pull request.
+
+Kept and built: E1 to E5, E7, E10, E15, E19's first part, RT1, RT2 (ruling A), RT4, RT7, RT14, RT15, DX D3, D4, D14, CEO B2 with E6 and DX D1.
+
+Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans under TD2170 so far: 2, both clean; the filing tool scans the posted text again.
+
+- E19 safe option built: machines.py handover refuses a one-review goal, or one needing a start review (ONE_REVIEW_HANDOVER). The toy was seen red first. test-machines.py passes.
+
+### Plan core, first part: stops become decisions, findings
+
+- New outcomes.py (not in the plan's Files list, within the goal's touches). dlf.settle hands a one-review goal's stop to it: no class takes the recommendation (listed and filed); inside an approved item goes on under it; otherwise an open finding. Private text is withheld and is a finding, so dlf's private-data wait no longer holds such a goal (TD2180). Deliver-first off in the committed base, the working copy or by always-ask keeps today's wait (E16).
+- A stop that names no files is inside no item: no program can match its action, so it takes the safe option.
+- pr and merge refuse while a finding is open, open one for each uncovered class and file of the branch diff, and reopen a dropped one whose files changed again. goal.py finding-close (drop, not-taken, stop) and decide are operation-only. plan-accept refuses a safety-class break.
+- Not built yet: closing by fix (needs the finding's own row with a recorded red run, E14). Until then the safe option is drop or stop.
+- Toy: dev/toy/test-one-review-findings.py (not in the plan's Files list).
+
+### Plan core, second part: revert and release holds
+
+- New reverts.py. goal.py revert SLUG N (operation): a decision that let named files go on is reverted by taking them out (pr and merge hold until the branch has no change there and the done lines are recorded as met; the approved item then covers nothing); any other stops the goal. A repeat changes nothing. After the merge it records, files a line and, with named files, adds a release hold.
+- The manual cut, the automatic release (before any version is pushed, and before the release is created) and promote refuse while a hold's removal is not in the commit released. goal.py hold-clear SLUG N --commit SHA takes a commit that changes a held file.
+- Still open in this part: RT16's revert goal is not opened by the command (the output says to queue it); holds are kept on this machine only (E9 asks for them across machines); the check-in's "Decided for you" and the delivered mark.
+
+### Plan core, third part: "Decided for you"
+
+- checkin.py lists every one-review goal's decisions for each followed repo, after the line fitting, each with its revert command on its own line and what it stops. checkin.py --owner, the operation session's flag for a run it shows the owner, marks only the printed ids delivered; a decision leaves the list once delivered and its goal is cut or retired. The skill text still has to say what --owner is for.
+
+### Still owed in the KEEP set (as of 20:36)
+
+- E9: release holds shared across machines (today they are on this machine only).
+- Full auto's fixed reply and its own finding for a safety question (today such a question is held by the operation, which can open a finding with goal.py decide); board and live-board wording is deferred.
+- The one_review setting (settings.py, START.md, this repo's config), full-depth review and the ETA at the monitored start.
+- The approved page wording with README, Principles and Home regenerated; five rows; command lines; the hand list of owner waits.
+- The skill text for checkin.py --owner.
+
+### Plan core, fourth part: closing by fix
+
+- goal.py finding-close --how fix --row ID --reader FILE (E14, RT18): a commit after the finding changes its files, the rescan has no match left, the row is one this goal added or changed, names finding:SLUG:N and has a recorded red run, and a fresh reader's reply ends VERDICT: FIXED. The row's pass is the pr lane's reached-test run. The finding opens again if the fix leaves the branch or its files change into a new match.
+
+### Plan core, fifth part: operation holds
+
+- A one-review goal that waits, is stopped, failed, silent or held is listed under "Held by the operation" in the check-in, not under Needs you, and is not counted as waiting on the owner. No owner mail is sent for its stops or its ETA. goal.py answer is a listed decision. A marked goal asks no pre-flight questions. Every such wait is a waiting status, so goal.py wait, a worker's waiting report, repeated refusals, a bad flow marker and the merge round cap are covered by this one place; the hand list for the pull request still has to confirm it.
+
+- RT16 built: goal.py revert after a merge queues the removal goal (undo-SLUG-N) in .loop/queue.md of the folder it runs in; when that goal is frozen with the setting on, the revert command is its start answer, for the reverted files and safety classes only.
+
+### Approved page wording applied
+
+- criteria.py revise DLF-1 (o1048, the TD2136 unit), revise DEL-3 (o1046, TD2128 A) and revise OPS-1 (o1048, TD2128 B, the Full auto bullet): one call per ID. The Operation non-goal and metric (TD2128 C and D) and the DLF-1 metric under Success metrics are page lines outside a unit. The DLF-1 heading is copied into its README, Home and How-to rows. Generated blocks and START.md are rebuilt. The requirement guard passes.
+- DLF-1 now reads Unreviewed. No review mark was made; whether the re-review of RT9 rests on o1048 is asked of operation.
+- The edit was practised first in a throwaway clone with made-up owner records of the same IDs.
+
+### Review marks (TD2220, TD2221)
+
+- DLF-1: marked Reviewed with criteria.py review DLF-1 --user --owner-record o1048, printed "REVIEWED DLF-1", after a scripted diff against the TD2136 unit file showed 0 differing lines.
+- DEL-3 and OPS-1 stay Unreviewed, for the owner's list. Each changed line equals the approved text apart from the line's own tag. A review mark covers the whole unit, which has 6 (DEL-3) and 13 (OPS-1) lines no approval covers, and neither was Reviewed on main. The Operation non-goal and metric lines (outside a unit) equal TD2128 C and D. The wording compared is the A to D quotes in these Notes.
+
+### Wide toy run and the failures main also has
+
+The wide run: 93 toys on d4204241e (before the merge of d25f31e5d and the later commits), in isolated clones. The failures below are also on main. Compared with 7784d862f unless noted:
+- Same failing lines: test-automation-email.sh, test-docs-command.sh, test-docs-format.sh, test-docs-issues.sh, test-docs-sections.sh, test-delivery-prd.sh (10).
+- Same failing case: test-milestones.sh, test-release-gate.py, test-release.sh, test-merge-guard.sh (6) and test-who-merges.py (filed, v110-one-review-choice-1), test-batch.sh, test-plan-cache.sh ("nightly after land").
+- Against d25f31e5d, same failing lines: test-guards.sh, test-lanes.sh (both compared before the merge), test-defect.sh (after it). test-task-first-3.py showed no FAIL line on either side when compared again.
+- Mine, fixed: test-plan-cache.sh's other two fails and test-pods.sh (start_answer.py did not run alone, 6e4df0871). test-goal.sh and test-pods.sh pass run alone since.
+
+test-monitoring.sh, against d25f31e5d:
+- Alternating runs (branch, main, branch, main, branch; load 15 to 20, 41 to 44% memory free): all five failed only the two "watch.py alone" cases (its copied file list lacks batch.py). None timed out.
+- One earlier branch run had failed 16. With LOOP_FREE_GB=2 faked, main and the branch fail identically (29 FAIL lines each, the same lines), and 15 of that run's 16 are among them. Under 3 GB free (min_free_memory_gb's default) watch starts no goal, and the toy does not turn that off. That run's memory was not recorded, so this is the likely cause, not a proven one. replan.py and lanes_cli.py are unchanged here.
+- Filed deliver-first: v110-one-review-choice-3. Explicit pre-scans under TD2170 so far: 3, all clean.
+
+### Hand list: where a goal waits, and what a one-review goal does (done line 2)
+
+This stands in for the deferred automated inventory. "Toy" means a case in the new toys drives it; "read" means traced in the code, not driven by a new case. Deliver-first off or always-ask keeps every wait with the owner, as before (toy).
+
+| Wait | One-review goal after its start review | How checked |
+|---|---|---|
+| Red-team break; a step's open choice or plan question | A recorded decision; a safety one opens a finding; plan-accept refuses a safety break | toy (settle, plan-accept); the step-record caller read |
+| Safety found later (stop, branch diff, mail or report) | A finding; pr and merge refuse until operation closes it | toy |
+| goal.py wait; a worker's waiting report; repeated refusals; a step reply that asks; the merge round cap | A waiting status, held by the operation; its answer is a listed decision | toy for a waiting record and the answer; the five setters read |
+| Three failed tries; a refused automatic release; stopped, silent, held, stalled | Held by the operation; no owner mail for a stop | toy (stopped, stalled); the others read |
+| Merge waiting on review (review_hold) | The operation's review line | toy |
+| Time and token budget, past ETA | Raises itself and keeps working at the cap; with no estimate the first time budget stands in; no ETA mail to the owner | toy (minutes with no estimate); with an estimate it is today's deliver-first rule, older toys |
+| Pre-flight questions | None are asked | toy (the mark) |
+| Full auto on a question it holds for safety | Stays a waiting goal held by the operation; its fixed reply and own finding are not built | read |
+| Cut or leave; merging by hand with auto_merge off; a protected release pull request; a major release | The owner's, unchanged (kept owner rules) | toy for cut or leave; the others unchanged code |
+| The release's deliver-first accept list (DLF-1.4); modes the owner switched off | The owner's, unchanged | read |
+| The start review itself, and a goal adopted needing one | The one question; build (or, for an adopted goal, merge) waits for it | toy |
+
+- Known text gap: a requirement guard refusal still names an owner record as one fix; on a one-review goal only the approved text or taking the change out passes.
+- The monitored start records no ETA; for a one-review goal the first time budget counts as the estimate (above).
+
+### Safe options for the rest of B7, D6, RT8 and E8
+
+- No queued or armed merge is withdrawn by a revert (not built, to be filed). Safe option: merge.py does not put a one-review goal in a merge queue (ONE_REVIEW_QUEUE). This repository has no merge queue, and its merge.py merges at once.
+- RT8: revert takes the lock merge takes, so it waits for a merge under way and then sees the goal merged.
+- E8: where a person merges by hand (auto_merge off, or release ask), goal.py pr says the one-review checks are not enforced on that merge.
+- Not built, a question for operation: full auto's fixed reply and its own finding for a safety question. Today such a question stays waiting, held by the operation, so the action is not taken.
+
+## PR notes
+
+- Full test run: no full local run happened. 34 of 698 affected rows ran locally in the qa lane (0 FAIL), and `python3 dev/package.py` (full, 135 files) and `regression.py levels --check` (valid: 757 rows) passed. GitHub's full regression run on the PR head is the full-run proof.
+- No leak-reader pair ran (o1040).
+- merge.py (R1/R2) and levels_gate.py (E15) are owner-approved, ledger o1075. They merge only under the TD1229 checks, through operation-mac.
+- Review is at the cap (3 of 3): rounds 2 and 3 were each one fresh read-only reader, both CLEAN, with no must-fix.
+- TD2307, the qa cause: the first qa lane failed orv-no-owner-wait, orv-safe-option and orv-checkin-revert (the same toy, "2 FAILED"). The lane passes LOOP_ROLE=worker down, and the toy's check-in helper handed it to checkin.py --owner, an operation command, which then marked nothing. Red: the rows failed alone, and the toy failed on a06c6a32f under LOOP_ROLE=worker. Fix a77a29aa7 (toy only); after it the toy and each row pass. free_gb was not logged at the first failure (4.9 read afterwards, TD2239 not met). The first lane's log was overwritten; deliver-first line v110-one-review-break-5 asks that a rerun keep it.
+- eta-preflight-asked's anchor changed to match, not weakened.
+- plan-accept now refuses malformed ledger rows (the three-level toy's row fixed to the real 5-field shape).

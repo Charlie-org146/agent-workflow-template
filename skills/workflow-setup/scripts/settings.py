@@ -45,6 +45,7 @@ TABLE = [
     ("machine_setup", REPO, [], "Machine setup items (allow, routine, secret, connector) machine.py applies on adoption."),
     ("automation", REPO, [], "Routines the Automation table lists: {name, does, cadence, runs}."),
     ("deliver_first", REPO, {}, "Deliver first, default on: {goal: {ID: false}, task: {...}, release: {...}} turns it off for a scope (most specific wins); set only with an owner reference: dlf.py set deliver_first off --scope S --id ID --owner-record R."),
+    ("one_review", REPO, False, "true: a goal asks the owner once, at its start (DLF-1.3). Read from committed config. false: later stops wait again; open findings stay."),
     ("topics", REPO, {}, "Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column."),
     ("ci_levels", REPO, "nightly", "Target of scheduled and tag regression runs: nightly (every row) or land."),
     ("l1_minutes", REPO, 10, "L1's time goal on a pull request, in minutes; a longer run prints missed: and why."),
