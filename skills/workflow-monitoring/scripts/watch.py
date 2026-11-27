@@ -272,7 +272,7 @@ def freeze(goal, cfg):
         handle.write(review.marked_text(text) if one else text)
     git("add", path, cwd=tree)
     git("commit", "-q", "-m", "Goal: %s" % slug, "--", path, cwd=tree)
-    one and state.update(review.mark(os.path.join(loop_dir(), "runs"), slug, "watch go"))
+    one and state.update(review.mark(os.path.join(loop_dir(), "runs"), slug, "watch go", state["done_sha"]))
     state["step"] = "idea"
     save(state, "frozen in %s" % tree)
     return state

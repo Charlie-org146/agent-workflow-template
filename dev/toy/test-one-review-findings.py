@@ -438,7 +438,8 @@ queue = open(os.path.join(tmp, ".loop", "queue.md")).read() if os.path.exists(os
 new_slug = "undo-z-%d" % shipped
 check("QUEUED %s" % new_slug in said and "- slug: %s | touches: dev/toy/test-a.sh" % new_slug in queue and "done: " in queue,
       "the revert queues the removal goal: %s" % said.strip()[-200:])
-made = start_review.mark(runs, new_slug, "t")
+row = [h for h in reverts.holds(tmp) if h.get("removal_goal") == new_slug][0]
+made = start_review.mark(runs, new_slug, "t", done_sha=__import__("hashlib").sha256(("1. " + row.get("removal_done", "")).encode()).hexdigest())
 check(made.get("start_answer", {}).get("verdict") == "approve" and made["start_answer"]["record"] == "revert:z:%d" % shipped
       and [(i["class"], i["files"], i["approved"]) for i in made["start_answer"]["items"]] == [("a test loosened or deleted", ["dev/toy/test-a.sh"], True)]
       and start_review.unanswered(dict(made, slug=new_slug)) == "", "the owner's revert command is its start review, for those files and classes only: %s" % made.get("start_answer"))
@@ -514,5 +515,180 @@ said = refused(lambda: board_model.plan_accept(tmp, "h", 6, "o1"))
 check("ONE_REVIEW_SAFETY_BREAK" in said and "accepted" not in open(os.path.join(red, "plan-h.json")).read(), "a safety break is never accepted away: " + said[:110])
 check(refused(lambda: board_model.plan_accept(tmp, "h", 3, "o1")) == "", "a break with no safety class can still be accepted")
 
+
+# ---- review fixes ----
+sh("switch", "-q", "main")
+sh("reset", "-q", "--hard")
+sh("update-ref", "refs/remotes/origin/main", "main")
+for name in os.listdir(runs):
+    os.remove(os.path.join(runs, name))
+
+
+def one(slug, **more):
+    record(slug, **more)
+    return slug
+
+
+# a permanent stop holds pr and merge too, and no writer saves a stopped goal as done
+one("p1")
+decisions.stop(runs, "p1", "a done line needs the part", "t")
+held = outcomes.blockers(tmp, runs, rec("p1"), "origin/main", "HEAD")
+check(any("stopped for good" in x for x in held), "R1 a stopped goal never becomes a pull request or merges: %s" % held)
+check("ONE_REVIEW_STOPPED" in refused(lambda: decisions.hold(runs, dict(rec("p1"), status="done"))), "R1 and it is never saved as done")
+merge_py = os.path.join(root, "skills", "workflow-release", "scripts", "merge.py")
+done_state = dict(status="done", step="release", pr="https://example.invalid/pull/9", flow={x: "done" for x in ("idea", "plan", "review", "qa", "ship")})
+one("p2", **done_state)
+put(".loop/config.json", json.dumps({"base": "main", "one_review": True, "auto_merge": True}))
+lock = os.path.join(tmp, ".git", "loop", "merge.lock")
+open(lock, "w").write("%d\n" % os.getpid())
+merging = subprocess.Popen([sys.executable, merge_py, "p2"], cwd=tmp, env=dict(os.environ), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+try:
+    merging.wait(timeout=5)
+except subprocess.TimeoutExpired:
+    pass
+decisions.stop(runs, "p2", "reverted while the merge waited", "t")
+json.dump(dict(rec("p2"), status="stopped"), open(os.path.join(runs, "p2.json"), "w"))
+os.remove(lock)
+out, err = merging.communicate(timeout=60)
+check("ONE_REVIEW_STOPPED" in out + err and rec("p2")["status"] == "stopped", "R2 merge reads the record again once it holds the lock: %s" % (out + err).strip()[-170:])
+sh("checkout", "-q", "--", ".loop/config.json")
+
+# closing by stop records the stop before anything else, and a cut-off revert is finished by running it again
+one("p4")
+outcomes.cmd_decide  # noqa: B018
+decisions.add(runs, "p4", "finding", key="k", classes=["money"], files=[], question="q", source="stop", head=sh("rev-parse", "HEAD"))
+real_add = decisions.add
+
+
+def cut(r, slug, kind, **data):
+    if kind == "close":
+        raise KeyboardInterrupt
+    return real_add(r, slug, kind, **data)
+
+
+decisions.add = cut
+try:
+    outcomes.close(tmp, runs, rec("p4"), 2, "stop", "why", [], "origin/main", "operation")
+except KeyboardInterrupt:
+    pass
+decisions.add = real_add
+check(decisions.stopped(decisions.entries(runs, "p4")) != "", "R4 a close by stop that is cut off has already stopped the goal")
+one("p5")
+dlf.settle(tmp, runs, "p5", "choice", "c1", "pick the shorter name", "w", "take it")
+d5 = [e["n"] for e in decisions.entries(runs, "p5") if e["kind"] == "decision"][0]
+decisions.add(runs, "p5", "revert", decision=d5, effect="stop", files=[], by="operation")
+reverts.revert(tmp, runs, rec("p5"), d5, "operation", "origin/main")
+check(decisions.stopped(decisions.entries(runs, "p5")) != "" and rec("p5")["status"] == "stopped", "R5 a revert cut off before its stop stops the goal when run again")
+one("p6", status="done", release="merged")
+diff_ = "diff --git a/dev/toy/test-a.sh b/dev/toy/test-a.sh\n--- a/dev/toy/test-a.sh\n+++ b/dev/toy/test-a.sh\n@@ -1 +1 @@\n-check two\n"
+dlf.settle(tmp, runs, "p6", "test", "t1", "a test failed", "w", "update the test", diff=diff_)
+d6 = [e["n"] for e in decisions.entries(runs, "p6") if e["kind"] == "decision"][0]
+decisions.add(runs, "p6", "revert", decision=d6, effect="after-merge", files=["dev/toy/test-a.sh"], by="operation")
+reverts.revert(tmp, runs, rec("p6"), d6, "operation", "origin/main")
+check([(h["slug"], h["decision"]) for h in reverts.holds(tmp) if h["slug"] == "p6"] == [("p6", d6)], "R6 and an after-merge revert cut off before its hold adds it")
+
+# a hold is cleared only by a later commit that takes the shipped change out
+commit("other.txt", "x%s\n" % d6)
+check("ONE_REVIEW_HOLD" in refused(lambda: reverts.clear_hold(tmp, "p6", d6, sh("log", "--format=%H", "-1", "--", "dev/toy/test-a.sh"), "operation")),
+      "R7 the commit that shipped the part doesn't clear its hold")
+commit("dev/toy/test-a.sh", "check one\ncheck two\nout %s\n" % d6)
+check(refused(lambda: reverts.clear_hold(tmp, "p6", d6, sh("rev-parse", "HEAD"), "operation")) == "", "R7 a later commit that changes it does")
+
+# a removal goal's approval: only the goal the revert queued, once, while its hold is pending
+import start_review  # noqa: E402
+import hashlib  # noqa: E402
+one("p8", status="done", release="merged")
+dlf.settle(tmp, runs, "p8", "test", "t1", "a test failed", "w", "update the test", diff=diff_)
+d8 = [e["n"] for e in decisions.entries(runs, "p8") if e["kind"] == "decision"][0]
+reverts.revert(tmp, runs, rec("p8"), d8, "operation", "origin/main")
+row = [h for h in reverts.holds(tmp) if h["slug"] == "p8"][0]
+name = row["removal_goal"]
+good = hashlib.sha256(("1. " + row.get("removal_done", "?")).encode()).hexdigest()
+check("start_answer" not in start_review.mark(runs, name, "t", done_sha="0" * 64), "R8 another goal under that name gets no approval")
+check(start_review.mark(runs, name + "x", "t", done_sha=good).get("start_answer") is None, "R8 nor another name")
+check(start_review.mark(runs, name, "t", done_sha=good).get("start_answer", {}).get("verdict") == "approve", "R8 the queued goal does")
+os.remove(os.path.join(runs, name + ".decisions.jsonl"))
+commit("dev/toy/test-a.sh", "check one\ncheck two\nremoved %s\n" % d8)
+reverts.clear_hold(tmp, "p8", d8, sh("rev-parse", "HEAD"), "operation")
+check("start_answer" not in start_review.mark(runs, name, "t", done_sha=good), "R8 and not after the hold is cleared")
+
+# an approved file names one file; only an approved folder covers what is under it
+st = {"start_answer": {"verdict": "approve", "items": [{"n": 1, "class": "money", "files": ["a/new"], "approved": True},
+                                                        {"n": 2, "class": "money", "files": ["skills/x/scripts/sub/"], "approved": True}]}}
+check(outcomes.covering(st, "money", ["a/new"]) and not outcomes.covering(st, "money", ["a/new/deep.py"]) and outcomes.covering(st, "money", ["skills/x/scripts/sub/f.py"]),
+      "R9 an approved file doesn't cover a folder of that name")
+
+# a one-review goal's own wait is answered by operation, and a safety question stays a finding
+one("p10", status="waiting", waiting={"ask": "may I delete the old release", "words": ["go on p10"]})
+got = tool("worker", "answer", "p10")
+check("a worker can't" in got and rec("p10")["status"] == "waiting", "R10 a worker doesn't answer its own one-review wait: %s" % got.strip()[:110])
+tool("operation", "answer", "p10")
+still = [e for e in decisions.entries(runs, "p10") if e["kind"] == "finding"]
+check(rec("p10")["status"] == "running" and still and still[-1]["classes"] == ["deleting what cannot be restored"]
+      and any("finding" in x for x in outcomes.blockers(tmp, runs, rec("p10"), "origin/main", "HEAD")),
+      "R10 answering a safety wait waives nothing: a finding holds pr and merge: %s" % still[-1:])
+
+# a revert asks GitHub whether the pull request merged (a squash merge leaves no ancestor behind)
+fake = os.path.join(home, "bin")
+os.makedirs(fake, exist_ok=True)
+open(os.path.join(fake, "gh"), "w").write('#!/bin/sh\n[ "$TOY_GH" = fail ] && exit 1\necho \'{"state": "MERGED"}\'\n')
+os.chmod(os.path.join(fake, "gh"), 0o755)
+path_was = os.environ["PATH"]
+os.environ["PATH"] = fake + os.pathsep + path_was
+one("p11", status="done", pr="https://example.invalid/pull/11")
+dlf.settle(tmp, runs, "p11", "test", "t1", "a test failed", "w", "update the test", diff=diff_)
+d11 = [e["n"] for e in decisions.entries(runs, "p11") if e["kind"] == "decision"][0]
+os.environ["TOY_GH"] = "fail"
+check("ONE_REVIEW_REVERT" in refused(lambda: reverts.revert(tmp, runs, rec("p11"), d11, "operation", "origin/main")), "R11 when it can't tell, the revert refuses")
+os.environ.pop("TOY_GH")
+reverts.revert(tmp, runs, rec("p11"), d11, "operation", "origin/main")
+check([e["effect"] for e in decisions.entries(runs, "p11") if e["kind"] == "revert"] == ["after-merge"], "R11 a squash-merged pull request is treated as merged")
+os.environ["PATH"] = path_was
+
+# E15: the regression levels gate reads owner records too, and a start answer covers no lowering there
+sys.path.append(os.path.join(root, "skills", "workflow-regression", "scripts"))
+import levels_gate  # noqa: E402
+kept_words = os.path.join(tmp, ".git", "loop", "owner-words.tsv")
+was = open(kept_words).read() if os.path.exists(kept_words) else None
+open(kept_words, "w").write('o1\t2026-01-01T00:00:00Z\toperation\t"approve start ask abc123"\task,some-row\no2\t2026-01-01T00:00:00Z\toperation\t"lower that row"\task,some-row\n')
+got = levels_gate.ledger(tmp)
+check(sorted(got) == ["o2"] and not levels_gate.covers_subject(tmp, got, "o1", "some-row") and levels_gate.covers_subject(tmp, got, "o2", "some-row"),
+      "E15 a start answer covers no level lowering: %s" % sorted(got))
+os.remove(kept_words) if was is None else open(kept_words, "w").write(was)
+
+# full auto, a one-review goal and a safety question: no action at all (TD2246)
+sys.path.append(os.path.join(root, "skills", "workflow-monitoring", "scripts"))
+import auto  # noqa: E402
+for name in os.listdir(runs):
+    os.remove(os.path.join(runs, name))
+put(".loop/config.json", json.dumps({"base": "main", "one_review": True, "full_auto": True}))
+open(os.path.join(tmp, ".git", "loop", "owner-words.tsv"), "w").write('o1\t2026-01-01T00:00:00Z\toperation\t"full auto"\tfull-auto-rule\n')
+one("fa", status="waiting", waiting={"ask": "may I delete the old release branch to free space?", "words": ["yes, delete it", "keep it"],
+                                      "recommend": "yes, delete it"})
+sent = []
+real_run = auto.subprocess.run
+
+
+def spy(cmd, *a, **k):
+    if any(str(x).endswith("operate.py") for x in cmd):
+        sent.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+    return real_run(cmd, *a, **k)
+
+
+auto.subprocess.run = spy
+lines = auto.decide_all(tmp)
+again = auto.decide_all(tmp)
+auto.subprocess.run = real_run
+state = rec("fa")
+check(not sent and state["status"] == "waiting" and any(" fa | WAITS " in x and "safety class" in x for x in lines) and not [x for x in lines + again if " AUTO " in x]
+      and not os.path.exists(os.path.join(tmp, ".git", "loop", "inbox", "fa.txt")),
+      "FULL-AUTO a safety question on a one-review goal leads to no action: nothing sent, it stays waiting (%s)" % lines)
+import review_view  # noqa: E402
+check(not review_view.owners(tmp, state), "FULL-AUTO and it is held by the operation")
+one("fb", status="waiting", waiting={"ask": "which of the two names reads better?", "words": ["the first", "the second"], "recommend": "the first"})
+would = auto.decide_all(tmp, dry=True)
+check(any(x.startswith("WOULD ANSWER fb") for x in would), "FULL-AUTO control: full auto is on and would answer an ordinary question: %s" % would)
+sh("checkout", "-q", "--", ".loop/config.json")
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)

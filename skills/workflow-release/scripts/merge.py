@@ -44,6 +44,19 @@ def one_review_unanswered(state):
   return found.unanswered(state, os.getcwd())
 
 
+def one_review_stopped(state, runs):
+  """Why a one-review goal is stopped for good, or ""; its decisions file is the authority, whatever the record says."""
+  path = os.path.join(MON, "..", "..", "workflow-delivery", "scripts", "decisions.py")
+  if not (state.get("one_review") or os.path.exists(os.path.join(runs, "%s.decisions.jsonl" % state.get("slug")))):
+    return ""
+  if not os.path.exists(path):
+    return "decisions.py is missing; reinstall the skills"
+  spec = importlib.util.spec_from_file_location("one_review_ledger", path)
+  found = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(found)
+  return found.stopped(found.require(runs, state))
+
+
 def one_review_unapproved(state, top, runs, base, head):
   """DLF-1.3: the exact head being merged has no open finding, no new uncovered change and no unapproved requirement text."""
   if not state.get("one_review"):
@@ -220,6 +233,10 @@ def main():
     pods.refuse(state)
     pods.pr_queue("wait", runs, slug)  # an earlier pr lane holds the slot
     pods.merge_lock(os.path.abspath(common))
+  state = load(path) or state  # read again under the lock: a revert may have changed it while this waited (DLF-1.3)
+  why = one_review_stopped(state, runs)
+  why and sys.exit("REFUSED: %s was stopped for good: %s. Nothing was merged. (ONE_REVIEW_STOPPED)" % (slug, why))
+  ar.mergeable(state) or sys.exit("REFUSED: %s has no finished pull request. Fix: run goal.py pr first." % slug)
   wiki.top_of() and print(run([sys.executable, OPERATE, "apply", slug, str(state.get("branch"))], top).stdout.strip())
   view = run(["gh", "pr", "view", state["pr"], "--json", "state,headRefOid,statusCheckRollup"])
   info = json.loads(view.stdout or "{}") if view.returncode == 0 else {}

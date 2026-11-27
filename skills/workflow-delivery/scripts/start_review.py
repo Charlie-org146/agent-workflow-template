@@ -135,13 +135,13 @@ def marked_text(text):
     return out
 
 
-def mark(runs, slug, by):
+def mark(runs, slug, by, done_sha=""):
     """The record fields of a newly marked goal; its ledger is made here, once."""
     os.path.exists(decisions.ledger(runs, slug)) or decisions.create(runs, slug, by=by)
     made = {"one_review": {"at": decisions.stamp(), "by": by}, "preflight": {"items": []}}  # a marked goal asks no pre-flight
     if os.path.exists(os.path.join(runs, "..", "release-holds.jsonl")):
         import reverts  # a removal goal a revert queued: that command was its start review (RT16)
-        answer = reverts.start_by_revert(runs, slug)
+        answer = reverts.start_by_revert(runs, slug, done_sha)
         answer and made.update(start_answer=answer)
     return made
 
@@ -256,7 +256,7 @@ def recover(g, args):
         state.get("done_sha") == g.done_sha(lines) or refuse("the record's done lines are not the committed ones",
                                                              "ONE_REVIEW_RECOVER")
     if MARK.search(text):
-        state.update(mark(runs, slug, "goal.py recover"))
+        state.update(mark(runs, slug, "goal.py recover", state.get("done_sha", "")))
     elif setting_at(top, "HEAD"):
         state["start_required"] = {"why": "frozen where one_review is on, with no mark"}
     state["step"] = "idea"

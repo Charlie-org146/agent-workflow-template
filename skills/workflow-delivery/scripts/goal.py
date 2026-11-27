@@ -184,10 +184,11 @@ cmd_wait = lambda args: guards.cmd_wait(ME, args)
 
 
 def cmd_answer(args):
-    asked = (load(args.slug).get("waiting") or {}).get("ask") or ""
+    before = load(args.slug)
+    holds = before.get("one_review") and not fit.outcomes().owners_wait(root(), before)  # a wait of the operation's
+    holds and guards.operation_only(ME, "answer the hold of", args.slug)
     code = guards.cmd_answer(ME, args)
-    if load(args.slug).get("one_review"):
-        fit.outcomes().answered(root(), state_dir(), args.slug, asked)
+    holds and fit.outcomes().answered(root(), state_dir(), args.slug, (before.get("waiting") or {}).get("ask") or "")
     return code
 
 
@@ -237,7 +238,7 @@ def cmd_new(args):
              "batch": bool(os.environ.get("LOOP_BATCH")), "done_sha": done_sha(lines),
              "release": args.release, "waiting": None, "finding": "", "log": []}
     state.update(fields)
-    one and state.update(review.mark(state_dir(), slug, "goal.py new"))
+    one and state.update(review.mark(state_dir(), slug, "goal.py new", done_sha(lines)))
     guards.stamp(state, "idea")
     pods and pods.stamp(state)
     save(state, "frozen %d done lines" % len(lines))

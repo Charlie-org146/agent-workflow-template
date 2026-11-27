@@ -43,6 +43,7 @@ def checked(top, rows):
         action = " ".join(str(row.get("action", "")).split())
         files = row.get("files", [])
         check_files(top, files)
+        files = [f.rstrip("/") + "/" if os.path.isdir(os.path.join(top, f)) else f for f in files]  # a folder says so
         recommend = row.get("recommend", "")
         recommend in ("approve", "refuse") or refuse("each item recommends approve or refuse", "ONE_REVIEW_ITEMS")
         action or refuse("an item states one concrete action; a class with none is listed by the scan itself", "ONE_REVIEW_ITEMS")

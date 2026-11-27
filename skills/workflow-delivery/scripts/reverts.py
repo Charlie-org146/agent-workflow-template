@@ -4,15 +4,18 @@ only stops work: it undoes no safety fix, brings back no dropped part and reopen
 files go on is reverted by taking them out; any other stops the goal. After the merge nothing is taken back: the revert is
 filed, and named files hold every release until their removal is in the commit released. Standard library only."""
 import argparse
+import hashlib
 import json
 import os
 import shlex
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import decisions  # noqa: E402
 import dlf  # noqa: E402
 import outcomes  # noqa: E402
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 GOAL_PY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "goal.py")
 
@@ -44,7 +47,17 @@ def listing(top, runs, state):
 def merged(top, state, base):
     if state.get("release") in ("merged", "cut"):
         return True
-    return bool(state.get("pr_head")) and outcomes.git(top, "merge-base", "--is-ancestor", state["pr_head"], base)[0] == 0
+    if state.get("pr_head") and outcomes.git(top, "merge-base", "--is-ancestor", state["pr_head"], base)[0] == 0:
+        return True
+    if not state.get("pr"):
+        return False
+    try:  # a squash or hand merge leaves no ancestor behind
+        got = subprocess.run(["gh", "pr", "view", state["pr"], "--json", "state"], cwd=top, capture_output=True, text=True, timeout=60)
+        known = json.loads(got.stdout)["state"] if got.returncode == 0 else ""
+    except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError):
+        known = ""
+    known or refuse("whether %s merged can't be told, and a revert differs after a merge. Fix: reach GitHub, then run it again" % state["pr"])
+    return known == "MERGED"
 
 
 def removal_name(slug, number):
@@ -59,16 +72,28 @@ def queue_removal(g, slug, number):
     name, files = held["removal_goal"], held["files"]
     try:
         g.fit.cmd_queue(g, argparse.Namespace(slug=name, goal="Take out what decision %d of %s let into %s" % (number, slug, ", ".join(files)),
-                                              done=["%s no longer carries the change decision %d of %s let in" % (", ".join(files), number, slug)],
+                                              done=[held["removal_done"]],
                                               touches=",".join(files), depends_on="", release=""))
     except SystemExit as stop:
         print("NOT QUEUED %s: %s. Queue it by hand under that name; the release hold stands" % (name, stop.code))
 
 
-def start_by_revert(runs, slug):
-    """The start answer of a removal goal a revert queued: approved for the held files and their classes, nothing else."""
-    for row in hold_rows_at(os.path.join(runs, "..", "release-holds.jsonl")):
-        if row["op"] == "hold" and row.get("removal_goal") == slug:
+def removal_line(slug, number, files):
+    return "%s no longer carries the change decision %d of %s let in" % (", ".join(files), number, slug)
+
+
+def start_by_revert(runs, slug, done_sha):
+    """The start answer of the removal goal a revert queued: that goal only (its done line), once, while the removal is
+    pending, for the held files and their classes."""
+    path = os.path.join(runs, "..", "release-holds.jsonl")
+    rows = hold_rows_at(path)
+    spent = {(r["slug"], r["decision"]) for r in rows if r["op"] in ("clear", "started")}
+    for row in rows:
+        queued = row["op"] == "hold" and row.get("removal_goal") == slug and (row["slug"], row["decision"]) not in spent
+        if queued and hashlib.sha256(("1. " + row.get("removal_done", "")).encode()).hexdigest() == done_sha:
+            with open(path, "a", encoding="utf-8") as handle:
+                handle.write(json.dumps({"op": "started", "slug": row["slug"], "decision": row["decision"], "goal": slug,
+                                         "at": decisions.stamp()}, sort_keys=True) + "\n")
             items = [{"n": n, "class": kind, "action": "take the reverted change out", "files": row["files"], "recommend": "approve",
                       "approvable": True, "approved": True, "by": "revert"} for n, kind in enumerate(row.get("classes") or [], 1)]
             record = "revert:%s:%d" % (row["slug"], row["decision"])
@@ -116,13 +141,21 @@ def release_check(top, commit):
                    "ONE_REVIEW_HOLD")
 
 
+def shipped(top, state, base):
+    """The newest commit known to hold what is being reverted: a removal comes after it."""
+    return outcomes.git(top, "rev-parse", "--verify", "--quiet", base + "^{commit}")[1].strip() or state.get("pr_head") or ""
+
+
 def clear_hold(top, slug, number, commit, by):
     held = next((r for r in holds(top) if r["slug"] == slug and r["decision"] == number), None)
     held or refuse("no pending removal for %s #%s" % (slug, number), "ONE_REVIEW_HOLD")
     code, full = outcomes.git(top, "rev-parse", "--verify", "--quiet", commit + "^{commit}")
     full = full.strip()
     touches = not code and outcomes.git(top, "diff", "--quiet", "--no-ext-diff", full + "^1", full, "--", *held["files"])[0] == 1
-    touches or refuse("%s is not a commit that changes %s" % (commit, ", ".join(held["files"])), "ONE_REVIEW_HOLD")
+    was = held.get("shipped")
+    later = touches and (not was or full != was and not outcomes.git(top, "merge-base", "--is-ancestor", was, full)[0]
+                         and outcomes.git(top, "diff", "--quiet", "--no-ext-diff", was, full, "--", *held["files"])[0] == 1)
+    later or refuse("%s is not a commit after the merge that changes %s" % (commit, ", ".join(held["files"])), "ONE_REVIEW_HOLD")
     add_hold(top, {"op": "clear", "slug": slug, "decision": number, "commit": full, "by": by})
 
 
@@ -143,9 +176,17 @@ def revert(top, runs, state, number, by, base, met="", cannot="", save=None):
         left and refuse("%s still differs from the base; take it out first" % ", ".join(left))
         decisions.add(runs, slug, "met", decision=number, why=note, by=by)
         return print("RECORDED %s #%d: the done lines are still met" % (slug, number))
-    if done and not cannot:
+    cut_off = done and (done["effect"] == "stop" and not decisions.stopped(found) or done["effect"] == "after-merge" and done["files"]
+                        and not any(r["op"] == "hold" and (r["slug"], r["decision"]) == (slug, number) for r in hold_rows(top)))
+    if done and not cannot and not cut_off:
         return print("%s #%d was already reverted by %s; nothing changed" % (slug, number, done.get("by")))
     rel = dlf.brief(top, slug)[1]
+    if cut_off and done["effect"] == "after-merge":
+        add_hold(top, {"op": "hold", "slug": slug, "decision": number, "files": done["files"], "classes": entry.get("safety") or [],
+                       "removal_goal": removal_name(slug, number), "removal_done": removal_line(slug, number, done["files"]),
+                       "shipped": shipped(top, state, base)})
+        return print("REVERTED %s #%d: the release hold that was missing is in place" % (slug, number))
+    kind = "stop" if cut_off else kind
 
     def file(what, words):
         dlf.file_line(top, runs, slug, rel, "break", "other", "revert%d%s" % (number, "stop" if cannot else ""), what, words, "keep it out")
@@ -153,7 +194,8 @@ def revert(top, runs, state, number, by, base, met="", cannot="", save=None):
     if not done and merged(top, state, base):
         decisions.add(runs, slug, "revert", decision=number, effect="after-merge", files=entry.get("files") or [], by=by)
         entry.get("files") and add_hold(top, {"op": "hold", "slug": slug, "decision": number, "files": entry["files"],
-                                              "classes": entry.get("safety") or [], "removal_goal": removal_name(slug, number)})
+                                              "classes": entry.get("safety") or [], "removal_goal": removal_name(slug, number),
+                                              "removal_done": removal_line(slug, number, entry["files"]), "shipped": shipped(top, state, base)})
         file("%s #%d reverted after its merge: %s" % (slug, number, ", ".join(entry.get("files") or []) or "no named files"),
              "a removal goal for the reverted part")
         return print("REVERTED %s #%d after its merge: what merged or shipped is not taken back.%s" % (slug, number, " Releases (the "

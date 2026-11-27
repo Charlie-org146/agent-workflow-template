@@ -58,7 +58,7 @@ def top_loop(top):
 
 
 def within(path, names):
-    return any(path == name.rstrip("/") or path.startswith(name.rstrip("/") + "/") for name in names)
+    return any(path.startswith(name) if name.endswith("/") else path == name for name in names)  # a folder ends in "/"
 
 
 def voided(entries):
@@ -131,9 +131,17 @@ def hand_note(cfg, state):
     return "NOTE: a merge done by hand doesn't run merge.py's one-review checks, so they are not enforced on it"
 
 
+def owners_wait(top, state):
+    """The waits a one-review goal still leaves with the owner: the release choice, and deliver-first off or always ask."""
+    return state.get("release") == "ask" and state.get("step") == "release" or bool(off(top, state))
+
+
 def answered(top, runs, slug, asked):
-    """An operation hold's answer is a listed decision like any other."""
+    """An operation hold's answer is a listed decision like any other; a safety question also leaves an open finding."""
     question = WITHHELD if dlf.safe(top, asked) != asked else " ".join(asked.split())[:300]
+    classes = safety_scan.text_classes(asked)
+    classes and note(runs, slug, "hold:%s:%s" % (decisions.stamp(), question[:40]), classes=classes, files=[], question=question,
+                     source="hold", head=head_of(top))
     decisions.add(runs, slug, "decision", key="hold:%s:%s" % (decisions.stamp(), question[:40]), stop="hold", question=question,
                   taken="the operation answered it and the goal went on", safety=safety_scan.text_classes(question), inside=[], files=[])
 
@@ -162,6 +170,9 @@ def blockers(top, runs, state, base, head):
     if not state.get("one_review"):
         return []
     slug = state["slug"]
+    why = decisions.stopped(decisions.require(runs, state))
+    if why:  # for good: whatever a later writer put in the record
+        return ["the goal was stopped for good: %s (ONE_REVIEW_STOPPED)" % why]
     out = ["%s (a Reviewed requirement's text that was not approved)" % x for x in start_answer.unapproved(top, runs, state, base, head)]
     text, units = safety_scan.read_diff(top, base, head)
     entries = decisions.require(runs, state)
@@ -210,7 +221,7 @@ def write_record(runs, state, why):
 
 def rescan(top, point, head, names, classes):
     """The finding's classes that what the head changes in its files, against the merge base, still matches."""
-    code, text = git(top, "diff", "--text", "--no-ext-diff", "--no-textconv", "--no-renames", "--no-color", point, head, "--", *names)
+    code, text = git(top, "diff", "--text", *safety_scan.QUIET, point, head, "--", *names)
     code and refuse("the finding's files can't be read for the rescan", "ONE_REVIEW_DIFF")
     return sorted(set(safety_scan.diff_classes(text)) & set(classes))
 
@@ -265,9 +276,9 @@ def close(top, runs, state, number, how, why, files, base, by, save=None, row=""
         left = changed(top, base_point(top, base, "HEAD"), "HEAD", names)
         left and refuse("the part is still in the branch: %s differs from the base. Take it out, commit, then close it" % ", ".join(left),
                         "ONE_REVIEW_CLOSE")
+    how == "stop" and decisions.stop(runs, slug, why, by)  # first: a cut-off close must leave the goal stopped
     decisions.add(runs, slug, "close", finding=number, how=how, why=why, files=names, by=by, **proof)
     if how == "stop":
-        decisions.stop(runs, slug, why, by)
         state.update(status="stopped", finding="finding %d stopped the goal: %s" % (number, why))
         (save or (lambda s, note_: write_record(runs, s, note_)))(state, state["finding"])
     if how == "fix":

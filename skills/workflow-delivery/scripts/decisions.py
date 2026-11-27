@@ -110,7 +110,7 @@ def stop(runs, slug, why, by):
 
 def hold(runs, state):
     """Called by every writer of a run record before it writes: a stopped goal never becomes queued, running or waiting."""
-    why = stopped(require(runs, state)) if state.get("status") in LIVE else ""
+    why = stopped(require(runs, state)) if state.get("status") in LIVE + ("done",) else ""
     if why:
         refuse("%s was stopped for good: %s. It can't be set %s. Fix: retire it, or start a new goal"
                % (state["slug"], why, state["status"]), "ONE_REVIEW_STOPPED")

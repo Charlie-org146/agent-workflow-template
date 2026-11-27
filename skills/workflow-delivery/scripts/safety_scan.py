@@ -33,6 +33,8 @@ SETTINGS = (dlf.PATHS[SECURITY], r"^\.loop/config\.json$|^\.loop/permissions\.ts
 # a page's requirement line: mark (with its date), heading, and the seal comment a review leaves
 UNIT = re.compile(r"^- ([A-Z]{2,5}-\d+): \*\*(Unreviewed|Reviewed(?: \d{4}-\d\d-\d\d)?)\*\* (.*?)(?: <!-- reviewed \w+ -->)?$")
 PAGES = "docs/wiki/"
+# no external or text filter, no rename guessing, and the a/ b/ prefixes whatever the machine's git config says
+QUIET = ("--no-ext-diff", "--no-textconv", "--no-renames", "--no-color", "--src-prefix=a/", "--dst-prefix=b/")
 OUTSIDE = "text-outside-a-unit"
 # a requirement sentence ends in its tag; one indented where no unit holds it is no ordinary note
 TAGGED = re.compile(r"\[[A-Z]{2,5}-\d+\]\s*$")
@@ -91,7 +93,7 @@ def outside(text):
 
 def changed_units(before, after):
     """IDs whose Reviewed text changed: reviewed before and now different or gone, or reviewed now with new text."""
-    gone = {key for key, text in reviewed_units(before).items() if units(after).get(key) != text}
+    gone = {key for key, text in reviewed_units(before).items() if units(after).get(key) != text or key not in reviewed_units(after)}
     new = {key for key, text in reviewed_units(after).items() if units(before).get(key) != text}
     return sorted(gone | new) + ([OUTSIDE] if outside(after) - outside(before) else [])
 
@@ -125,6 +127,8 @@ def diff_classes(diff, units=()):
                 any(re.search(pattern, x, re.I) for x in added) and hit(name, path)
     for page, _ in units:
         hit(PROMISE, page)
+    if "diff --git " in diff and not list(sections(diff)):
+        sys.exit("REFUSED: this diff's file headers can't be read, so it is unread. Fix: show it with a/ and b/ prefixes (ONE_REVIEW_DIFF)")
     return found
 
 
@@ -144,10 +148,9 @@ def read_diff(top, base, head):
                           "again (ONE_REVIEW_DIFF)" % (args[0], base[:12], head[:12]))
         return out
     start = must("merge-base", base, head).strip()
-    quiet = ("--no-ext-diff", "--no-textconv", "--no-renames", "--no-color")
-    text = must("diff", "--text", *quiet, start, head)
+    text = must("diff", "--text", *QUIET, start, head)
     changed = []
-    for path in [p for p in must("diff", "-z", "--name-only", *quiet, start, head).split("\0") if p]:
+    for path in [p for p in must("diff", "-z", "--name-only", *QUIET, start, head).split("\0") if p]:
         if not (path.startswith(PAGES) and path.endswith(".md")):
             continue
         before, after = (out if not code else "" for code, out in
