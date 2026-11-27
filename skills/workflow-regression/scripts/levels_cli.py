@@ -251,6 +251,10 @@ def page_differs(root, state):
 
 
 def cmd_levels(root, args):
+    if args.old_workflow:
+        found = level_words.old_workflow(root)
+        found and print("\n".join(found))
+        return 0
     if args.discard:
         path = mark_path(root)
 
@@ -323,7 +327,7 @@ def register(sub, top):
     item.set_defaults(func=lambda a: cmd_level(top(), a))
     item = sub.add_parser("levels", help="list levels and problems; check, fill or discard a pending write")
     pick = item.add_mutually_exclusive_group()
-    for flag in ("--check", "--fill", "--discard"):
+    for flag in ("--check", "--fill", "--discard", "--old-workflow"):
         pick.add_argument(flag, action="store_true")
     item.set_defaults(func=lambda a: cmd_levels(top(), a))
     item = sub.add_parser("relevel", help="give every row a level and a risk tag (run once)")

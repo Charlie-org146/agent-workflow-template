@@ -178,3 +178,30 @@ def draft_guard(row, args):
     if row["level"] == "draft" and (args.retime or args.covers or args.test_level == "L0"):
         stop("LEVELS_DRAFT_NOT_READY", "%s is a draft: it is not run (so not measured for L0) and takes no covers until it is ready. Fix: "
              "regression.py level %s --ready. Then --test-level L0 --retime measures it" % (args.id, args.id))
+
+
+def old_workflow(repo):
+    """Lines naming an old generated pull request workflow: ours, running ci_levels, on an armed table (L1 is what it runs now), the fix,
+    and the rows that stop running in the pull request check (R14)."""
+    import re
+    try:
+        text = open(os.path.join(repo, ".github", "workflows", "regression-pr.yml"), encoding="utf-8").read()
+        armed = any(line.split("\t")[0] == "lvl-armed" for line in open(os.path.join(repo, ".loop", "regression.tsv"), encoding="utf-8"))
+    except OSError:
+        return []
+    if not (armed and text.startswith("# Written by workflow-regression")) or "regression.py run L1 " in text:
+        return []
+    out = ["WORKFLOW: .github/workflows/regression-pr.yml is the old generated text (it runs ci_levels; an armed table runs L1 and ci_levels no longer steers it). "
+           "Fix: python3 skills/workflow-regression/scripts/regression.py workflow, then commit it and merge it (until then the cover is off)"]
+    word = (re.search(r"regression\.py run (\w+) --reuse --tier goal", text) or [0, ""])[1]
+    try:
+        import completion
+        import regression
+        rows = list(regression.read_rows(repo).values())
+        now = {r["id"] for r in completion.at_level(rows, "L1", completion.entries(repo))}
+        before = {r["id"] for r in rows if r["level"] == "land"} if word == "land" else now  # an armed nightly run is already L1 (tiers.target)
+        gone = sorted(before - now)
+    except Exception as error:  # a report that cannot be made is said, never skipped
+        return out + ["ROWS: not worked out (%s)" % type(error).__name__]
+    return out + ["ROWS: %s" % ("%d row%s stops running in the pull request check: %s" % (len(gone), "" if len(gone) == 1 else "s", ", ".join(gone[:10])
+                                + (", +%d more" % (len(gone) - 10) if len(gone) > 10 else "")) if gone else "no row stops running in the pull request check")]

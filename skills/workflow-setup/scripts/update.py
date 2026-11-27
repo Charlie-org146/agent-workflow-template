@@ -341,16 +341,12 @@ def apply_skills(skills, manifest, read, old, fixes, take, where):
 
 
 def old_workflow(repo):
-    """Lines naming an old generated pull request workflow: ours, run at nightly, on a table that is armed (L1 is what it runs now)."""
-    try:
-        text = open(os.path.join(repo, ".github", "workflows", "regression-pr.yml"), encoding="utf-8").read()
-        armed = any(line.split("\t")[0] == "lvl-armed" for line in open(os.path.join(repo, ".loop", "regression.tsv"), encoding="utf-8"))
-    except OSError:
+    """Lines naming an old generated pull request workflow, its fix and the rows that stop running: the regression skill answers (levels --old-workflow)."""
+    script = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "..", "workflow-regression", "scripts", "regression.py")
+    if not os.path.isfile(script):
         return []
-    if not (armed and text.startswith("# Written by workflow-regression")) or "regression.py run L1 " in text:
-        return []
-    return ["WORKFLOW: .github/workflows/regression-pr.yml is the old generated text (it runs ci_levels; an armed table runs L1 and ci_levels no longer steers it). "
-            "Fix: python3 skills/workflow-regression/scripts/regression.py workflow, then commit it and merge it (until then the cover is off)"]
+    done = subprocess.run([sys.executable, script, "levels", "--old-workflow"], cwd=repo, capture_output=True, text=True)
+    return done.stdout.splitlines() if not done.returncode else []
 
 
 def locked(skills):
