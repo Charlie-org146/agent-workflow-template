@@ -619,6 +619,28 @@ reverts.revert(tmp, runs, rec("c3"), c3n, "operation", "origin/main")
 reverts.revert(tmp, runs, rec("c3"), c3n, "operation", "origin/main", cannot="cannot be met")
 check(decisions.stopped(decisions.entries(runs, "c3")) != "" and rec("c3")["status"] == "stopped", "CELL files-decision x cannot stops the goal for good")
 
+# reverts.py: git/gh settings only on its own subprocess calls, and an older hold row has no removal_done
+probe = subprocess.run([sys.executable, "-c", "import sys, os; sys.path.insert(0, %r); import reverts; print(os.environ.get('GIT_EDITOR', 'unset'))"
+                        % os.path.join(root, "skills", "workflow-delivery", "scripts")], capture_output=True, text=True, env={k: v for k, v in os.environ.items() if k != "GIT_EDITOR"})
+check(probe.stdout.strip() == "unset", "R14 importing reverts sets no process-wide git setting: %r %s" % (probe.stdout.strip(), probe.stderr.strip()[-80:]))
+add_hold = reverts.add_hold
+old_row = {"op": "hold", "slug": "old1", "decision": 7, "files": ["dev/toy/test-a.sh"], "classes": [], "removal_goal": "undo-old1-7"}
+reverts.add_hold(tmp, old_row)
+queued = []
+
+
+class FakeG:
+    fit = type("F", (), {"cmd_queue": staticmethod(lambda g, args: queued.append(args.done))})
+    root = staticmethod(lambda: tmp)
+
+
+try:
+    reverts.queue_removal(FakeG(), "old1", 7)
+    got14 = ""
+except KeyError as err:
+    got14 = "KeyError %s" % err
+check(got14 == "" and queued and queued[0], "R14 a hold row with no removal_done queues its removal: %s" % got14)
+
 # a hold is cleared only by a later commit that takes the shipped change out
 commit("other.txt", "x%s\n" % d6)
 check("ONE_REVIEW_HOLD" in refused(lambda: reverts.clear_hold(tmp, "p6", d6, sh("log", "--format=%H", "-1", "--", "dev/toy/test-a.sh"), "operation")),
