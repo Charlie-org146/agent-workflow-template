@@ -35,12 +35,13 @@ MON = os.path.join(HERE, "..", "..", "workflow-monitoring", "scripts")
 
 def one_review_unanswered(state):
   """DLF-1.3: a marked goal, or one needing a start review, merges only once its answer is saved."""
-  if not (state.get("one_review") or state.get("start_required")):
-    return ""
-  spec = importlib.util.spec_from_file_location("one_review_start", os.path.join(MON, "..", "..", "workflow-delivery", "scripts", "start_review.py"))
+  path = os.path.join(MON, "..", "..", "workflow-delivery", "scripts", "start_review.py")
+  if not os.path.exists(path):
+    return "start_review.py is missing. Fix: reinstall the skills." if state.get("one_review") or state.get("start_required") else ""
+  spec = importlib.util.spec_from_file_location("one_review_start", path)
   found = importlib.util.module_from_spec(spec)
   spec.loader.exec_module(found)
-  return found.unanswered(state)
+  return found.unanswered(state, os.getcwd())
 
 
 def _pods():  # MON-15: workflow-monitoring's graph.py, or None

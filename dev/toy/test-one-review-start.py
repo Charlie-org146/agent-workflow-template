@@ -16,11 +16,13 @@ sys.path.insert(0, delivery)
 home = tempfile.mkdtemp()
 fake = os.path.join(home, "py")
 os.makedirs(fake)
-open(os.path.join(fake, "sitecustomize.py"), "w").write('''import subprocess
+open(os.path.join(fake, "sitecustomize.py"), "w").write('''import os
+import subprocess
 _run = subprocess.run
 def run(args, *a, **k):
     if args and args[0] == "gh":
-        return subprocess.CompletedProcess(args, 0, '{"url": "https://github.com/o/r/pull/7", "state": "OPEN"}', "")
+        out = os.environ.get("TOY_PRS", "[]") if "list" in args else '{"url": "https://github.com/o/r/pull/7", "state": "OPEN"}'
+        return subprocess.CompletedProcess(args, 0, out, "")
     return _run(args, *a, **k)
 subprocess.run = run
 ''')
@@ -165,8 +167,146 @@ branch("old-era", base=OFF)
 said = adopt("old-era")
 check("ADOPTED old-era" in said and "start_required" not in record("old-era"), "an older goal is adopted as today: " + said.strip()[:80])
 
+# a freeze marks the goal where the setting is on, in the committed goal file, the record and a new ledger
+open(os.path.join(home, "flow.json"), "w").write(json.dumps({"steps": {s: "x" for s in ("idea", "plan", "review", "qa", "ship")}}))
+
+
+def tool(*args, role="worker", **more):
+    got = subprocess.run([sys.executable, goal_py] + list(args), capture_output=True, text=True, cwd=tmp,
+                         env=dict(env, LOOP_ROLE=role, **more))
+    open(os.path.join(home, "last.txt"), "a").write(got.stderr)
+    return got.stdout + got.stderr
+
+
+def ledger(slug):
+    try:
+        return [json.loads(line)["kind"] for line in open(os.path.join(runs, slug + ".decisions.jsonl"))]
+    except OSError:
+        return None
+
+
+def goal_in_head(slug):
+    return sh(tmp, "show", "HEAD:.loop/goals/%s.md" % slug)
+
+
+def fresh(slug, base="origin/main"):
+    sh(tmp, "reset", "-q", "--hard")
+    sh(tmp, "switch", "-q", "-c", "loop/" + slug, base)
+    return tool("new", slug, "--here", "--goal", "Do " + slug, "--done", slug + " works", "--touches", "a.py")
+
+
+said = fresh("frz")
+check("FROZEN frz" in said and "\n- Review: one\n" in goal_in_head("frz") and record("frz").get("one_review")
+      and ledger("frz") == ["mark"], "a freeze with the setting on marks the goal: " + said.strip()[:150])
+said = tool("step", "frz", "build")
+check("ONE_REVIEW_UNANSWERED" in said and record("frz").get("step") == "idea", "build waits for the start review: " + said.strip()[:110])
+lost = {k: v for k, v in record("frz").items() if k != "one_review"}
+json.dump(lost, open(os.path.join(runs, "frz.json"), "w"))
+check("ONE_REVIEW_UNANSWERED" in tool("step", "frz", "build"), "the committed mark holds a record that lost it")
+said = fresh("plain", OFF)
+check("FROZEN plain" in said and "Review: one" not in goal_in_head("plain") and "one_review" not in record("plain")
+      and ledger("plain") is None, "a freeze with the setting off is as today: " + said.strip()[:120])
+os.remove(os.path.join(runs, "plain.json"))
+head = sh(tmp, "rev-parse", "HEAD")
+said = tool("new", "plain", "--here", "--goal", "again", "--done", "other")
+check("goal.py recover plain" in said and sh(tmp, "rev-parse", "HEAD") == head, "new never freezes a committed goal file twice: " + said.strip()[:110])
+
+
+def lose(slug, keep_ledger=False):
+    os.remove(os.path.join(runs, slug + ".json"))
+    keep_ledger or (os.path.exists(os.path.join(runs, slug + ".decisions.jsonl")) and os.remove(os.path.join(runs, slug + ".decisions.jsonl")))
+
+
+def recover(slug, role="operation", **more):
+    return tool("recover", slug, role=role, **more)
+
+
+for slug, keep in (("rec-none", False), ("rec-ledger", True)):
+    fresh(slug)
+    lose(slug, keep)
+    said = recover(slug)
+    got = record(slug)
+    check("RECOVERED " + slug in said and got.get("one_review") and not got.get("start_answer") and got.get("release") == "ask"
+          and got.get("step") == "idea" and got.get("done_sha") and got.get("eta") is not None and ledger(slug) == ["mark"],
+          "recovery %s gives a marked, unanswered record that asks about release: %s" % (slug, said.strip()[:140]))
+    check("ONE_REVIEW_UNANSWERED" in tool("step", slug, "build"), "build still waits after recovery of " + slug)
+
+fresh("rec-queued")
+queued = dict(record("rec-queued"), status="queued", step="", release="", waits_on=["frz"], batch=True)
+queued.pop("one_review", None)
+json.dump(queued, open(os.path.join(runs, "rec-queued.json"), "w"))
+os.path.exists(os.path.join(runs, "rec-queued.decisions.jsonl")) and os.remove(os.path.join(runs, "rec-queued.decisions.jsonl"))
+said = tool("step", "rec-queued", "plan")
+check("goal.py recover rec-queued" in said, "a half-frozen goal takes no step until it is recovered: " + said.strip()[:110])
+before = record("rec-queued")
+for script, args in (("sessions.py", ["assign", "rec-queued", "--text", "text"]), ("sessions.py", ["bind", "rec-queued", "local_x"]),
+                     ("machines.py", ["handover", "rec-queued", "--to", "elsewhere"])):
+    ran = subprocess.run([sys.executable, os.path.join(root, "skills", "workflow-monitoring", "scripts", script)] + args,
+                         capture_output=True, text=True, cwd=tmp, env=dict(env, LOOP_ROLE="operation"))
+    check("goal.py recover rec-queued" in ran.stdout + ran.stderr and record("rec-queued") == before,
+          "%s %s refuses a half-frozen goal: %s" % (script, args[0], (ran.stdout + ran.stderr).strip()[:110]))
+said = recover("rec-queued")
+got = record("rec-queued")
+check("RECOVERED" in said and got.get("waits_on") == ["frz"] and got.get("release") == "" and got.get("batch") is True
+      and got.get("status") == "queued" and got.get("step") == "idea" and got.get("one_review"),
+      "recovery keeps every field of a queued record: " + said.strip()[:140])
+
+
+def no_recovery(slug, why, prepare, role="operation", **more):
+    fresh(slug)
+    lose(slug)
+    prepare(slug)
+    said = recover(slug, role, **more)
+    check("REFUSED" in said and "RECOVERED" not in said and "invalid choice" not in said and record(slug).get("step") != "idea",
+          "recovery refuses %s: %s" % (why, said.strip()[:120]))
+
+
+def side(name, text="{}"):
+    return lambda slug: open(os.path.join(runs, name % slug), "w").write(text)
+
+
+def queued_with(**more):
+    return lambda slug: json.dump(dict({"slug": slug, "status": "queued", "step": "", "flow": {}, "pid": None}, **more),
+                                  open(os.path.join(runs, slug + ".json"), "w"))
+
+
+no_recovery("no-worker", "a worker", lambda slug: None, role="worker")
+no_recovery("no-later", "a later commit", lambda slug: commit(tmp, "a.py", "y = 2\n", "later work"))
+no_recovery("no-dirty", "a changed working copy", lambda slug: open(os.path.join(tmp, ".loop/goals/%s.md" % slug), "a").write("2. more\n"))
+no_recovery("no-extra", "a side file", side("%s.extra.json"))
+no_recovery("no-step", "a step file", side("%s.plan.ran", "x"))
+no_recovery("no-used", "a ledger with a decision", side("%s.decisions.jsonl", '{"n": 1, "kind": "mark"}\n{"n": 2, "kind": "decision"}\n'))
+no_recovery("no-pushed", "a branch on origin", lambda slug: sh(tmp, "push", "-q", "origin", "loop/" + slug))
+no_recovery("no-handed", "a handover record", lambda slug: handover(slug, {"state": {"slug": slug}}))
+no_recovery("no-pr", "a pull request", lambda slug: None, TOY_PRS='[{"number": 7}]')
+no_recovery("no-read", "an unreadable pull request list", lambda slug: None, TOY_PRS="nonsense")
+no_recovery("no-flow", "a record with a finished step", queued_with(flow={"idea": "done"}))
+no_recovery("no-session", "a record with a session", queued_with(session={"id": "s1"}))
+sh(tmp, "remote", "set-url", "origin", os.path.join(home, "gone.git"))
+fresh("no-origin")
+lose("no-origin")
+said = recover("no-origin")
+check("REFUSED" in said and "origin" in said and not record("no-origin"), "recovery refuses an origin it can't reach: " + said.strip()[:110])
+sh(tmp, "remote", "set-url", "origin", origin)
+
+# the background starter marks the same way
+sh(tmp, "switch", "-q", "main")
+sh(tmp, "reset", "-q", "--hard", "origin/main")
+made = subprocess.run([sys.executable, "-c", "import sys; sys.path.insert(0, %r); import watch\n"
+                       "watch.freeze({'slug': 'bg', 'goal': 'Do bg', 'done': ['bg works'], 'touches': ['a.py'], 'depends': []}, {'base': 'main'})"
+                       % os.path.join(root, "skills", "workflow-monitoring", "scripts")], capture_output=True, text=True, cwd=tmp, env=env)
+got = record("bg")
+check(got.get("one_review") and got.get("step") == "idea" and ledger("bg") == ["mark"]
+      and "- Review: one" in sh(tmp, "show", "loop/bg:.loop/goals/bg.md"), "watch's freeze marks the goal: %s" % made.stderr.strip()[-160:])
+
+os.remove(os.path.join(runs, "bg.json"))
+again = subprocess.run([sys.executable, "-c", "import sys; sys.path.insert(0, %r); import watch\n"
+                        "watch.freeze({'slug': 'bg', 'goal': 'Do bg', 'done': ['other'], 'touches': [], 'depends': []}, {'base': 'main'})"
+                        % os.path.join(root, "skills", "workflow-monitoring", "scripts")], capture_output=True, text=True, cwd=tmp, env=env)
+check("goal.py recover bg" in again.stderr and not record("bg"), "watch never freezes a committed goal twice: %s" % again.stderr.strip()[-120:])
+
 # merge refuses until the start review is answered
-done = dict(got, status="done", step="ship", pr="https://github.com/o/r/pull/7", flow={s: "done" for s in ("idea", "plan", "review", "qa", "ship")})
+done = dict(record("new-era"), status="done", step="ship", pr="https://github.com/o/r/pull/7", flow={s: "done" for s in ("idea", "plan", "review", "qa", "ship")})
 json.dump(done, open(os.path.join(runs, "new-era.json"), "w"))
 merge_py = os.path.join(root, "skills", "workflow-release", "scripts", "merge.py")
 got = subprocess.run([sys.executable, merge_py, "new-era"], capture_output=True, text=True, cwd=tmp, env=env)
@@ -176,5 +316,6 @@ check(start_review.unanswered({"slug": "x"}) == "" and start_review.unanswered({
       and start_review.unanswered({"slug": "x", "start_required": {"why": "t"}, "start_answer": {"record": "o1"}}) == ""
       and start_review.unanswered({"slug": "x", "one_review": {"at": "t"}}) != "", "a marked or required goal is unanswered until an answer is saved")
 
+os.environ.get("TOY_SHOW") and print(open(os.path.join(home, "last.txt")).read())
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)

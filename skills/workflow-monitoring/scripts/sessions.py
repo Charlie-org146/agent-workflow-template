@@ -208,7 +208,15 @@ def held(slug):
                      "in its worktree, then sessions.py bind %s %s." % (slug, entry.get("name") or entry["id"], slug, slug, entry["id"]))
         sys.exit("REFUSED: no run named %s." % slug)
     graph.refuse(state)
+    finish_first(state)
     return state
+
+
+def finish_first(state):
+    """DLF-1.3: a goal whose freeze was cut off takes no worker and no handover until operation recovers it."""
+    if state.get("status") == "queued" and state.get("step") == "" and state.get("done_sha"):
+        sys.exit("REFUSED: %s was never fully frozen. Fix: the operation session runs goal.py recover %s (ONE_REVIEW_HALF_FROZEN)"
+                 % (state["slug"], state["slug"]))
 
 
 def bad_slug(slug):

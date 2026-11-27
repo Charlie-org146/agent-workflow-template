@@ -6,6 +6,7 @@ from a committed config, never from a working copy; a missing key reads as off. 
 file. adopt marks no goal: it refuses one with any sign of a mark, and records that a start review is required for a goal
 first committed where the setting was on. Standard library only.
 """
+import argparse
 import json
 import os
 import re
@@ -14,6 +15,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import decisions  # noqa: E402
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 MARK = re.compile(r"^- Review: one[ \t\r]*$", re.M)
 HAND = "refs/loop/handover/"
@@ -126,9 +128,131 @@ def adopt_check(top, slug, runs):
     return {"start_required": kept or carried} if kept or carried else {}
 
 
-def unanswered(state):
-    """Why a goal that is marked, or needs a start review, may not go on; "" once an accepted answer is saved."""
-    if state.get("start_answer") or not (state.get("one_review") or state.get("start_required")):
+def marked_text(text):
+    """A new goal file with the mark under its slug line."""
+    out, count = re.subn(r"^(- Slug: .*\n)", lambda found: found.group(1) + "- Review: one\n", text, count=1, flags=re.M)
+    count == 1 or refuse("the goal file template has no slug line, so the mark can't be written", "ONE_REVIEW_MARK")
+    return out
+
+
+def mark(runs, slug, by):
+    """The record fields of a newly marked goal; its ledger is made here, once."""
+    os.path.exists(decisions.ledger(runs, slug)) or decisions.create(runs, slug, by=by)
+    return {"one_review": {"at": decisions.stamp(), "by": by}}
+
+
+def committed(top, ref, slug):
+    """The goal file as `ref` holds it, or "" when that ref or file is not there."""
+    got = git(top, "cat-file", "blob", "%s:.loop/goals/%s.md" % (ref, slug))
+    return "" if got.returncode else got.stdout
+
+
+def frozen_twice(top, ref, slug):
+    committed(top, ref, slug) and refuse(
+        ".loop/goals/%s.md is already committed. A new goal needs a new slug; to finish a freeze that was cut off, the operation "
+        "session runs goal.py recover %s in its worktree" % (slug, slug), "ONE_REVIEW_HALF_FROZEN")
+
+
+def half_frozen(state):
+    """A queued record with no step: its freeze never finished."""
+    return state.get("status") == "queued" and state.get("step") == "" and bool(state.get("done_sha"))
+
+
+def unanswered(state, top=None):
+    """Why a goal that is marked, or needs a start review, may not go on; "" once an accepted answer is saved. With `top`,
+    the mark committed on the goal's branch counts too, so a record that lost it is still held."""
+    slug = state.get("slug")
+    held = state.get("one_review") or state.get("start_required")
+    if not held and top and slug:
+        branch = state.get("branch") or "loop/%s" % slug
+        held = MARK.search(committed(top, "refs/heads/" + branch, slug))
+    if state.get("start_answer") or not held:
         return ""
     return ("%s needs the owner's start review and no accepted answer is saved. Fix: send it, then goal.py start %s "
-            "--owner-record ID" % (state.get("slug"), state.get("slug")))
+            "--owner-record ID" % (slug, slug))
+
+
+def gate(state, top, step):
+    """Before a step is entered: a half-frozen goal takes none, and a marked one doesn't build or open a pr unanswered. A goal
+    that only needs a start review (adopted) is held at the merge."""
+    half_frozen(state) and refuse("%s was never fully frozen. Fix: the operation session runs goal.py recover %s"
+                                  % (state["slug"], state["slug"]), "ONE_REVIEW_HALF_FROZEN")
+    if step not in ("build", "pr"):
+        return
+    why = unanswered(dict(state, start_required=None), top)
+    why and refuse(why, "ONE_REVIEW_UNANSWERED")
+
+
+def _later_life(g, slug, runs):
+    """Refuse at any sign that more than the freeze happened to this goal."""
+    def no(what):
+        refuse("%s can't be recovered: %s. Only a freeze cut off before its record was saved is recovered" % (slug, what),
+               "ONE_REVIEW_RECOVER")
+    found = None
+    path = os.path.join(runs, slug + ".json")
+    if os.path.exists(path):
+        found = g.load(slug)
+        used = [key for key in ("step", "flow", "pid", "session", "worker", "pr", "start_answer") if found.get(key)]
+        if found.get("status") != "queued" or used:
+            no("its record is %s and carries %s" % (found.get("status"), ", ".join(used) or "no other sign"))
+    own = ("%s.json" % slug, "%s.decisions.jsonl" % slug)
+    for name in os.listdir(runs) if os.path.isdir(runs) else []:
+        if name.startswith(slug + ".") and name not in own and not name.endswith(".lock") and not name.startswith(own[0] + "."):
+            no("the file %s is here" % os.path.join(runs, name))
+    os.path.exists(os.path.join(runs, "..", "redteam", "plan-%s.json" % slug)) and no("a plan review of it is saved here")
+    if os.path.exists(decisions.ledger(runs, slug)):
+        [e["kind"] for e in decisions.entries(runs, slug)] == ["mark"] or no("its decisions file has entries after the mark")
+    top, branch = g.root(), "loop/" + slug
+    seen = git(top, "ls-remote", "origin", "refs/heads/" + branch, HAND + slug)
+    seen.returncode and no("origin can't be read (%s)" % seen.stderr.strip()[:200])
+    seen.stdout.strip() and no("origin has %s" % ", ".join(line.split()[-1] for line in seen.stdout.splitlines()))
+    asked = g.run(["gh", "pr", "list", "--head", branch, "--state", "all", "--json", "number"])
+    try:
+        prs = json.loads(asked.stdout) if asked.returncode == 0 else None
+    except ValueError:
+        prs = None
+    isinstance(prs, list) or no("the pull requests of %s can't be read" % branch)
+    prs and no("%s has a pull request" % branch)
+    return found
+
+
+def recover(g, args):
+    """goal.py recover SLUG, operation only: finish a freeze cut off between its commit and its saved record. It keeps the
+    mark, rebuilds no approval and imports no owner record, so the start review is still to be asked."""
+    slug, branch = args.slug, "loop/" + args.slug
+    g.guards.operation_only(g, "recover", slug)
+    top, runs, rel = g.root(), g.state_dir(), ".loop/goals/%s.md" % slug
+    g.git("branch", "--show-current") == branch or g.no("not on %s. Fix: run this in its worktree." % branch)
+    only = (len(must(top, "rev-list", "--parents", "-n", "1", "HEAD").split()) == 2
+            and must(top, "log", "-1", "--format=%s").strip() == "Goal: " + slug
+            and must(top, "diff-tree", "--no-commit-id", "--name-status", "-r", "HEAD").splitlines() == ["A\t" + rel])
+    only or refuse("HEAD is not the freeze commit of %s that adds only %s" % (slug, rel), "ONE_REVIEW_RECOVER")
+    git(top, "diff", "--quiet", "HEAD", "--", rel).returncode == 0 or refuse(
+        "%s differs from the committed file. Fix: git checkout -- %s" % (rel, rel), "ONE_REVIEW_RECOVER")
+    state = _later_life(g, slug, runs)
+    text, lines = committed(top, "HEAD", slug), g.done_lines(slug)
+    lines or refuse("%s has no done lines" % rel, "ONE_REVIEW_RECOVER")
+    if state is None:
+        title = re.match(r"# (.*)", text)
+        touched = re.search(r"^- Touches: (.*)$", text, re.M)
+        touches = [x.strip() for x in touched.group(1).split(",")] if touched and touched.group(1).strip() != "not declared" else []
+        goal = title.group(1).strip() if title else slug
+        # a lost record's release choice is unknown, so it asks: auto_merge never applies by default here
+        state = {"slug": slug, "goal": goal, "status": "running", "step": "", "tries": 0, "flow": {}, "branch": branch,
+                 "worktree": top, "touches": touches, "pid": None, "pr": "", "batch": False, "done_sha": g.done_sha(lines),
+                 "release": "ask", "waiting": None, "finding": "", "log": []}
+        state.update(g.fit.frozen_fields(g, argparse.Namespace(slug=slug, goal=goal), lines, touches))
+        g.guards.stamp(state, "idea")
+        g.pods and g.pods.stamp(state)
+    else:
+        state.get("done_sha") == g.done_sha(lines) or refuse("the record's done lines are not the committed ones",
+                                                             "ONE_REVIEW_RECOVER")
+    if MARK.search(text):
+        state.update(mark(runs, slug, "goal.py recover"))
+    elif setting_at(top, "HEAD"):
+        state["start_required"] = {"why": "frozen where one_review is on, with no mark"}
+    state["step"] = "idea"
+    g.save(state, "recovered a freeze that was cut off before its record was saved")
+    print("RECOVERED %s at idea, release=%s%s" % (slug, state.get("release") or "as set up",
+                                                "; its start review is still to be asked" if unanswered(state) else ""))
+    return 0

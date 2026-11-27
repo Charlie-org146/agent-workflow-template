@@ -203,6 +203,8 @@ def cmd_new(args):
     if os.path.exists(state_path(slug)):
         no("%s already exists. Fix: pick a new slug." % slug)
     cfg = config()
+    review = fit.start_review()
+    review.frozen_twice(root(), "HEAD", slug)
     fit.nag(ME, args)
     touches = [item.strip() for item in args.touches.split(",") if item.strip()]
     branch = "loop/" + slug
@@ -215,8 +217,10 @@ def cmd_new(args):
     fields = fit.frozen_fields(ME, args, lines, touches)
     path = goal_file(slug)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    write(path, TEMPLATE.format(goal=" ".join(args.goal.split()), slug=slug,
-                                touches=", ".join(touches) or "not declared", eta=fit.eta_line(fields), done="\n".join(lines)))
+    text = TEMPLATE.format(goal=" ".join(args.goal.split()), slug=slug,
+                           touches=", ".join(touches) or "not declared", eta=fit.eta_line(fields), done="\n".join(lines))
+    one = review.setting_at(root(), "HEAD")  # the committed setting, never the working copy's
+    write(path, review.marked_text(text) if one else text)
     git("add", path)
     git("commit", "-m", "Goal: %s" % slug, "--", path)
     state = {"slug": slug, "goal": args.goal, "status": "running", "step": "idea", "tries": 0, "flow": {},
@@ -224,6 +228,7 @@ def cmd_new(args):
              "batch": bool(os.environ.get("LOOP_BATCH")), "done_sha": done_sha(lines),
              "release": args.release, "waiting": None, "finding": "", "log": []}
     state.update(fields)
+    one and state.update(review.mark(state_dir(), slug, "goal.py new"))
     guards.stamp(state, "idea")
     pods and pods.stamp(state)
     save(state, "frozen %d done lines" % len(lines))
@@ -250,6 +255,7 @@ def revoked_stop(slug):
 
 def cmd_step(args):
     state = load(args.slug)
+    fit.start_review().gate(state, root(), args.name)
     args.name == "build" and guards.plan_gate(ME, state)
     fit.budget_stop(args.slug, state, state_dir(), config(), save=save)
     state["step"] = args.name
@@ -297,6 +303,7 @@ def main():
     add("new", cmd_new, *goal, ("--here", {"action": "store_true"}))
     add("queue", cmd_queue, *goal, ("--depends-on", {"default": ""}))
     add("adopt", cmd_adopt)
+    add("recover", lambda args: fit.start_review().recover(ME, args))
     add("step", cmd_step, ("name", {}), ("--note", {"default": ""}), ("--tokens", {"type": int, "default": 0}))
     add("record", cmd_record, ("step", {"choices": FLOW}), ("--file", {"required": True}), ("--in-session", {"action": "store_true"}),
         ("--tokens", {"default": ""}))

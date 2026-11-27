@@ -15,6 +15,7 @@ State lives in <git common dir>/loop/; it never merges.
 """
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -238,11 +239,22 @@ def known_rules():
         return None
 
 
+def start_review():
+    """DLF-1.3: delivery's start rules, loaded by path (skills don't import each other)."""
+    spec = importlib.util.spec_from_file_location("one_review_start", os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "start_review.py"))
+    found = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(found)
+    return found
+
+
 def freeze(goal, cfg):
     slug, base = goal["slug"], cfg.get("base", "main")
     branch = "loop/" + slug
     tree = os.path.join(loop_dir("worktrees"), slug)
     lines = ["%d. %s" % (index, line) for index, line in enumerate(goal["done"], 1)]
+    review = start_review()
+    review.frozen_twice(root(), "refs/heads/" + branch, slug)
     state = {"slug": slug, "goal": goal["goal"], "status": "queued", "step": "", "tries": 0, "flow": {},
              "branch": branch, "worktree": tree, "touches": goal["touches"], "pid": None, "pr": "", "batch": True,
              "done_sha": hashlib.sha256("\n".join(lines).encode()).hexdigest(),
@@ -253,11 +265,14 @@ def freeze(goal, cfg):
     git("worktree", "add", *([tree, branch] if git("rev-parse", "--verify", "--quiet", "refs/heads/" + branch, check=False) else ["-b", branch, tree, base]))
     path = os.path.join(tree, ".loop", "goals", slug + ".md")
     os.makedirs(os.path.dirname(path), exist_ok=True)
+    text = TEMPLATE.format(goal=goal["goal"], slug=slug,
+                           touches=", ".join(goal["touches"]) or "not declared", done="\n".join(lines))
+    one = review.setting_at(tree, "HEAD")
     with open(path, "w") as handle:
-        handle.write(TEMPLATE.format(goal=goal["goal"], slug=slug,
-                                     touches=", ".join(goal["touches"]) or "not declared", done="\n".join(lines)))
+        handle.write(review.marked_text(text) if one else text)
     git("add", path, cwd=tree)
     git("commit", "-q", "-m", "Goal: %s" % slug, "--", path, cwd=tree)
+    one and state.update(review.mark(os.path.join(loop_dir(), "runs"), slug, "watch go"))
     state["step"] = "idea"
     save(state, "frozen in %s" % tree)
     return state
@@ -306,6 +321,10 @@ def start_round(args, cfg):
         try:
             state = freeze(goal, cfg)
         except SystemExit as error:
+            if "(ONE_REVIEW_HALF_FROZEN)" in str(error):  # no failed record: it would stop the recovery
+                print(error)
+                begun.remove(goal)
+                continue
             state = load(goal["slug"]) or {"slug": goal["slug"], "log": []}
             state.update(status="failed", finding=str(error))
             save(state, "failed to start: %s" % error)
