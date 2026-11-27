@@ -8,6 +8,8 @@ import subprocess
 import sys
 import time
 
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no gh or git call waits on a prompt (DEL-10)
+
 
 # l2tail:begin (actions.py copies this block into the workflow)
 def l2_state(rid, code, said, late, known, skips):

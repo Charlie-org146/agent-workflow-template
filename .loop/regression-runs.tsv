@@ -698,7 +698,7 @@ toy-leak-merge-where	PASS	2026-11-27
 toy-leak-row-merge	PASS	2026-11-27	
 toy-leak-row-setup	PASS	2026-11-27	
 toy-no-leftovers	PASS	2026-11-12	
-toys-set-userprofile	PASS	2026-11-25	
+toys-set-userprofile	PASS	2026-11-27	
 tree-once-lock	PASS	2026-11-24	
 tree-rules-first	PASS	2026-11-26	
 trim-package-98	PASS	2026-11-26	
