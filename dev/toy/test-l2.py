@@ -391,6 +391,20 @@ def draftearly():
     check(code != 0 and "BAD_TARGET" in said and "not run: draft drf" in said.splitlines(), "a bad target is refused and the draft is named first")
 
 
+def l2_level_pick_typo():
+    l2 = l2mod()
+    folder = tempfile.mkdtemp(prefix="test-l2-typo.")
+    os.makedirs(os.path.join(folder, ".loop"))
+    open(os.path.join(folder, ".loop", "regression-relevel.tsv"), "w").write("")
+    cwd = os.getcwd()
+    os.chdir(folder)
+    try:
+        l2.level_pick.__defaults__[0].clear()
+        return [w for w in ("Draft", "lnd", "Land", "") if l2.level_pick("L1", ["x", w])]
+    finally:
+        os.chdir(cwd)
+
+
 def levelrun():
     print("== R11: the generated runner selects L0 and L1 as regression.py run <level> does, and only when armed")
     # Value: protects=the scheduled runner and the local runner pick the same rows for L0, L1 and L2, a missing record fails loudly, and an
@@ -433,6 +447,7 @@ def levelrun():
                 check(code == 0 and ran == ["L1"], "unarmed: L1 is only the row called L1, as it was before", (code, ran, out[-300:]))
         mark and check(sorted(open(os.path.join(repo.path, "ran.log")).read().split()) != [], "control: the L2 run ran rows")
         repo.close()
+    check(not l2_level_pick_typo(), "the runner's L0/L1 pick runs only land and nightly rows: a typo or capitalised word never runs (review round 1)")
     # a row with no record entry cannot be in a valid table (every run refuses LEVELS_NO_ENTRY), so it is compared as functions: l2.level_pick against
     # completion.at_level on one record that lacks the row
     scripts = os.path.join(root, "skills", "workflow-regression", "scripts")

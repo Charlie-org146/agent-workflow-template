@@ -422,6 +422,11 @@ def coverstate():
     check(result("c").startswith("PASS " + head), "the sole cover passed at this commit: PASS with the commit", result("c"))
     check(result("d").startswith("FAIL " + head), "one cover failed: the worst state, FAIL, with its commit, not PASS", result("d"))
     check(result("e").startswith("draft"), "a cover that is a draft: draft", result("e"))
+    ghost = [l for l in repo.read(".loop/regression-runs.tsv").splitlines() if l.startswith("a\t")]
+    repo.write(".loop/regression-runs.tsv", repo.read(".loop/regression-runs.tsv") + "ghost\tPASS\t2026-11-27\t\t\t" + head + "\n")
+    repo.write(".loop/regression-relevel.tsv", repo.read(".loop/regression-relevel.tsv") + "\t".join(["g", "covered", "L1", "none", "ghost", "", "", "covers"]) + "\n")
+    repo.write(".loop/regression.tsv", repo.read(".loop/regression.tsv") + "\t".join(["g", "covered", "read by a person", "", "2026-01-01", "checks g", "criterion", ""]) + "\n")
+    check(result("g").startswith("no result recorded"), "a covered row whose cover is no longer a row is no result, even with a PASS record for that id (review round 1)", result("g"))
     legacy = "".join(l.split("\t")[0] and "\t".join(l.split("\t")[:5]) + "\n" for l in repo.read(".loop/regression-runs.tsv").splitlines() if l and l[0] != "#")
     repo.write(".loop/regression-runs.tsv", "# id\tstatus\tdate\trun\tflaky\n" + legacy)
     check(result("c").startswith("no result recorded"), "a record from before the commit cell is unproven: no result recorded", result("c"))
@@ -663,6 +668,8 @@ def draftl0():
     check(done != 0 and "LEVELS_DRAFT_NOT_READY" in said, "a draft takes no --covers: it is refused until it is ready", said)
     done, said = repo.run("add", "d2", "--level", "draft", "--test-level", "L1", "--covers", "alpha", "--command", "true")
     check(done != 0 and "LEVELS_DRAFT_NOT_READY" in said, "add --level draft --covers is refused (a draft is not a covered row)", said)
+    done, said = repo.run("level", "d1", "--ready", "--risk", "security")
+    check(done != 0 and "LEVELS_BAD_FLAGS" in said, "--ready goes alone: another flag beside it is refused, not ignored (review round 1)", said)
     done, said = repo.run("add", "d3", "--level", "draft", "--test-level", "L1", "--command", "echo write a test")
     done, said = repo.run("level", "d3", "--ready")
     check(done != 0 and "LEVELS_NO_REAL_COMMAND" in said, "control: a placeholder draft cannot be readied", said)
@@ -733,6 +740,10 @@ def gate():
     check(any(u.startswith("ABC-4") and "bad" in u for u in got), "one failing cover among two makes the row unmet", got)
     got = unmet(base, ents, known="bad\tknown red\n", failing=("b",))
     check(not any(u.startswith("ABC-2") for u in got), "a known cover is treated as the gate treats a known row today (met), and nothing says green", got)
+    more = base + [row("ABC-5", level="covered", command="x"), row("ABC-6", level="covered", command="x")]
+    got = unmet(more, ents + [entry("ABC-6", old="covered", covers="")], failing=("b",))
+    check(any(u.startswith("ABC-5") for u in got) and any(u.startswith("ABC-6") for u in got),
+          "on a levelled table a covered row with no record entry, or an empty covers list, is unmet (fail closed, review round 1)", got)
     got = unmet(base, None, failing=("b",))
     check(not any(u.startswith(("ABC-2", "ABC-3", "ABC-4")) for u in got), "a table with no levels record keeps the old skip of covered rows (R9: levelled tables only)", got)
     repo = Repo([row("a")], [entry("a")], ["label\tsecurity\tsecurity\tx"])
@@ -797,6 +808,9 @@ def mixedrecord():
     check(chk[0] in (0, 2) and "doesn't have" not in chk[1], "a mixed record reads: no 'the line doesn't have' refusal", chk[1][:200])
     code, ok, text, chk = merged(new9, line(entry("a", level="L2")) + line(entry("b")) + line(entry("c")))
     check(code != 0 and not ok, "one id changed on both sides (a 9-cell line against an 8-cell edit) is left to the person merging", (code, ok))
+    code, ok, text, chk = merged(line(entry("a"), "\t") + line(entry("b"), "\t") + line(entry("c"), "\t"),
+                                 line(entry("a"), "\tdraft") + line(entry("b"), "\t") + line(entry("c"), "\t"))
+    check(code != 0 and not ok, "two 9-cell lines of one entry whose state cells differ are left to the person merging, not resolved by length (review round 1)", (code, ok))
     repo = Repo(rows, None, risks)
     repo.close()
 
