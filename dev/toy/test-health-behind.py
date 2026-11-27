@@ -5,9 +5,9 @@
 """HLT-4, TD451 (c): health files and closes nothing from a checkout behind origin/main.
 
 A checkout 257 commits behind once filed 34 false issues. In a throwaway repo with a bare origin and the fake gh
-(dev/toy/fakegh/fake.py), `health.py file --group size` is run level with origin/main (it files one issue, as before),
+(dev/toy/fakegh/fake.py), `health.py file --group docs` is run level with origin/main (it files one issue, as before),
 then 3 commits behind (it prints the findings and `checkout is 3 commits behind origin/main: not filing`, exits 1 and
-files nothing even with a new finding), and `triage --close --yes` from the stale checkout closes nothing. usage: test-health-behind.py"""
+files nothing even with a new finding: a stale page, then a missing one), and `triage --close --yes` from the stale checkout closes nothing. usage: test-health-behind.py"""
 import contextlib
 import io
 import json
@@ -88,17 +88,23 @@ with tempfile.TemporaryDirectory() as tmp:
     with open(os.path.join(repo, ".loop", "config.json"), "w") as f:
         json.dump({"base": "main"}, f)
     with open(os.path.join(repo, ".loop", "docs.tsv"), "w") as f:
-        f.write("Calc\tskills/x\nHome\tREADME.md\n")
-    with open(os.path.join(repo, "skills", "x", "scripts", "near.py"), "w", newline="\n") as f:
-        f.write("# pad\n" * 3400)
+        f.write("Calc\tskills/x\n")
+    os.makedirs(os.path.join(repo, "docs", "wiki"))
+    with open(os.path.join(repo, "docs", "wiki", "Calc.md"), "w", newline="\n") as f:
+        f.write("<!-- workflow-docs -->\n# Calc\n\nThe calculator adds and prints the sum of the numbers given on the line.\n")
+    with open(os.path.join(repo, "skills", "x", "scripts", "calc.py"), "w", newline="\n") as f:
+        f.write("# calc\n")
     git("init", "-q", "-b", "main", repo)
     for key, value in (("user.email", "t@example.test"), ("user.name", "t"), ("core.autocrlf", "false")):
         git("-C", repo, "config", key, value)
     git("-C", repo, "add", "-A")
-    git("-C", repo, "commit", "-qm", "A near-limit script")
+    git("-C", repo, "commit", "-qm", "Calc and its page")
+    with open(os.path.join(repo, "skills", "x", "scripts", "calc.py"), "a", newline="\n") as f:  # the page goes stale: a Docs WARN
+        f.write("X = 1\n")
+    git("-C", repo, "commit", "-qam", "Change calc")
     git("-C", repo, "remote", "add", "origin", bare)
     git("-C", repo, "push", "-q", "origin", "main")
-    out, code = health(repo, "file", "--group", "size")
+    out, code = health(repo, "file", "--group", "docs")
     print(out)
     check(code == 0 and "DONE open" in out and "not filing" not in out and len(issues_of(d)) == 1,
           "a checkout level with origin/main files as before (one issue opened, exit %d)" % code)
@@ -112,16 +118,16 @@ with tempfile.TemporaryDirectory() as tmp:
         git("-C", other, "add", "-A")
         git("-C", other, "commit", "-qm", "main moves %d" % n)
     git("-C", other, "push", "-q", "origin", "main")
-    with open(os.path.join(repo, "skills", "x", "scripts", "near2.py"), "w", newline="\n") as f:  # a new finding the stale checkout would file
-        f.write("# pad\n" * 3400)
+    with open(os.path.join(repo, ".loop", "docs.tsv"), "a") as f:  # a new finding the stale checkout would file: a missing page
+        f.write("Zed\tskills/z\n")
     git("-C", repo, "add", "-A")
-    git("-C", repo, "commit", "-qm", "A second near-limit script")
+    git("-C", repo, "commit", "-qm", "Map Zed")
     before = issues_of(d)
-    out, code = health(repo, "file", "--group", "size")
+    out, code = health(repo, "file", "--group", "docs")
     print(out)
     check("checkout is 3 commits behind origin/main: not filing" in out and code == 1 and "DONE" not in out and issues_of(d) == before,
           "3 commits behind: it prints the line, files nothing and exits 1 (exit %d, %d issues)" % (code, len(issues_of(d))))
-    check("near2.py" in out and "FINDINGS (2)" in out, "3 commits behind: the findings, the new one included, are still printed")
+    check("Zed" in out and "FINDINGS (2)" in out, "3 commits behind: the findings, the new one included, are still printed")
     out, code = health(repo, "triage", "--close", "--issue", "1", "--why", "the owner said so", "--yes")
     print(out)
     check("not filing" in out and code == 1 and all(i.get("state", "OPEN").upper() == "OPEN" for i in issues_of(d)),

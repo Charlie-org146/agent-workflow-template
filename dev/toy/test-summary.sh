@@ -131,7 +131,7 @@ printf '#!/usr/bin/env python3\nimport sys\nsys.stderr.write("STUB-BROKEN: canno
 out=$(python3 -B "$c/skills/workflow-health/scripts/health.py" check 2>/dev/null)
 awk '/^TESTS$/{t=1; next} t && /^$/{exit} t' <<<"$out" | grep -qxF "NOTE: the test list is unavailable (STUB-BROKEN: cannot read regression.tsv)" \
   && tail -1 <<<"$out" | grep -q '^HEALTH: ' && ok "when tests.py fails, health shows its error in the TESTS block and the verdict stays last" || bad "failing tests.py: $out"
-out=$(python3 -B "$c/skills/workflow-health/scripts/health.py" check --group size 2>/dev/null)
+out=$(python3 -B "$c/skills/workflow-health/scripts/health.py" check --group hygiene 2>/dev/null)
 ! grep -qx 'TESTS' <<<"$out" && tail -1 <<<"$out" | grep -q '^HEALTH: ' && ok "a health check of one group prints no TESTS block" || bad "group TESTS: $out"
 rm -rf "$c"
 cd "$top"; rm -rf "$r" "$g"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# reads: skills/ dev/toy/make.sh dev/toy/repo/ dev/toy/fakecodex
+# reads: skills/ dev/toy/codex-controls.sh dev/toy/make.sh dev/toy/repo/ dev/toy/fakecodex dev/toy/codexrun.py dev/toy/hist.py .github/workflows/regression-pr.yml
 # SET-3: the template's key commands run in Codex on a clean toy repo with no private settings, and a Codex pod and a
 # Claude Code pod running side by side don't collide. Codex gets a plain prompt naming each command and writes each exit
 # code and output to .codex-out/; this test checks the files the commands leave and the output they print, never
@@ -9,6 +9,9 @@
 # Exit 77 (SKIPPED, never PASS) when every other part passed but the live part could not run: codex is not installed,
 # not signed in, or cannot answer (usage limit, unsupported model). CODEX_BIN names another codex; CODEX_MODEL a model.
 # usage: test-codex.sh [home|collide|skip|fake|live]
+# Codes, each printed with its fix (dev/toy/codexrun.py): CODEX-E01 not installed and CODEX-E02 not signed in (both skip, 77);
+# CODEX-E03 the live part's deadline passed; CODEX-E04 a command exited with an error; CODEX-E05 a command didn't finish the way
+# it should. KEEP=<file outside the repository> keeps a screened copy of Codex's log; Codex's files never go inside the repository.
 set -u
 unset LOOP_ROLE LOOP_SESSION LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_FLOW LOOP_LANE_LIMIT
 here=$(cd "$(dirname "$0")/../.." && pwd)
@@ -16,20 +19,40 @@ here=$(cd "$(dirname "$0")/../.." && pwd)
 only=${1:-}
 case "$only" in ""|home|collide|skip|fake|live) ;; *) echo "test-codex.sh: no part '$only'; usage: test-codex.sh [home|collide|skip|fake|live]" >&2; exit 2 ;; esac
 want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
+LIVE_DEADLINE=270  # seconds for the whole live part, strictly under the row limit of every lane that could run it
+PROBE_LIMIT=30     # seconds for each admission probe (sign-in status, one-word reply)
+CR="$here/dev/toy/codexrun.py"
+cr() { LOOP_PRIVATE_NAMES="${caller_names:-/dev/null}" python3 "$CR" "$@"; }  # lines, screening, kept logs
+[ -z "${KEEP:-}" ] || cr keep - "$KEEP" "$here" || exit 2
+inside_before=$(git -C "$here" status --porcelain 2>/dev/null)
 export CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"  # codex keeps its own sign-in there; HOME below is the toy's, with no private settings
 T=$(mktemp -d); toy_on_exit 'chmod -R u+w "$T" 2>/dev/null; rm -rf "$T"'
+# read before HOME moves: what is printed or kept is screened with the runner's own private-name list, not the practice one
+caller_names=$(python3 -c 'import os, sys; sys.path.insert(0, sys.argv[1]); import hist; print(hist.NAMES)' "$here/dev/toy")
 export HOME="$T/home" LOOP_BOARD_HEALTH=green; mkdir -p "$HOME"
 export USERPROFILE="$HOME"
 fails=0; live_skip=""; home_skip=""
-ok() { echo "PASS: $1"; }
-bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
+ran=0; FAKE_CHECKS=22  # the checks the fake part makes: any other count means one did not run, or this number is out of date
+ok() { ran=$((ran + 1)); echo "PASS: $1"; }
+bad() { ran=$((ran + 1)); echo "FAIL: $1"; fails=$((fails + 1)); }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 S="$here/skills"
 G="python3 $S/workflow-delivery/scripts/goal.py"; SS="python3 $S/workflow-monitoring/scripts/sessions.py"
 RG="python3 $S/workflow-regression/scripts/regression.py"
 
+# The practice home's private-name list: empty, which setup needs before it writes anything.
+private_list() { mkdir -p "$HOME/.workflow-loop" && : > "$HOME/.workflow-loop/private-names"; }
+# CODE NAME [DETAIL]; a line the helper can't print is still a failure
+coded() { local said; said=$(cr line "$@") && [ -n "$said" ] || said="$1: $2: the line helper failed"; bad "$said"; }
+# a reason to skip the live part; if the helper can't print it, that is a failure, never a silent pass
+skip_line() {
+  local said
+  if said=$(cr line "$1" live) && [ -n "$said" ]; then live_skip=$said; else bad "live: the line helper failed for $1"; fi
+}
+
 # A toy repo at $1 (repo, origin.git), adopted by setup and merged.
 adopted() {
+  private_list
   "$here/dev/toy/make.sh" "$1" >/dev/null || exit 1
   (cd "$1/repo" && python3 "$S/workflow-setup/scripts/setup.py" >/dev/null 2>&1; git switch -q main; git merge -q --no-edit workflow-setup)
 }
@@ -53,26 +76,69 @@ verify() {
   local O="$2/.codex-out" n
   for n in setup merge go board health regression; do [ -f "$O/$n.rc" ] || { bad "$1: $n ran and left its result"; return; }; done
   check "$1: setup adopts the repo on branch workflow-setup" "grep -q '^WROTE the adoption on branch workflow-setup' $O/setup.txt"
-  # with claude or codex on PATH, setup refuses to call a bare agent command done (exit 1, a REFUSED line); with neither it exits 0
+  # adoption never blocks: with claude or codex on PATH, a bare agent command is a gap with its fix, and setup exits 0
   if command -v claude >/dev/null 2>&1 || command -v codex >/dev/null 2>&1; then
-    check "$1: setup exits 1 with its REFUSED line about the agent command, as it does on any first run" "[ \"\$(cat $O/setup.rc)\" = 1 ] && grep -q '^REFUSED to call this done: agent_command' $O/setup.txt"
+    check "$1: setup exits 0 and lists the bare agent command as a gap with its fix, as on any first run" "[ \"\$(cat $O/setup.rc)\" = 0 ] && grep -q '^GAP: agent_command .*Fix: add to .loop/config.json: \"agent_command\"' $O/setup.txt"
   else
     check "$1: setup exits 0 when no agent is installed" "[ \"\$(cat $O/setup.rc)\" = 0 ]"
   fi
+  # every command's own exit status: health ends 1 when it prints not green, the regression run ends 1 while a row is unproven
+  local want_rc got
+  for n in setup merge go board health regression; do
+    want_rc=0
+    [ $n = health ] && grep -q '^HEALTH: not green' "$O/health.txt" && want_rc=1
+    [ $n = regression ] && grep -qE '^RESULT .* [1-9][0-9]* unproven' "$O/regression.txt" && want_rc=1
+    got=$(cat "$O/$n.rc")
+    [ "$got" = "$want_rc" ] || coded CODEX-E05 "$1" "$n exited $got, expected $want_rc"
+  done
   check "$1: the adoption merges into main" "[ \"\$(cat $O/merge.rc)\" = 0 ]"
   check "$1: go freezes the goal" "grep -q '^FROZEN codex-toy' $O/go.txt && [ -f $2/.loop/goals/codex-toy.md ]"
   check "$1: the live board lists the goal" "grep -q codex-toy $O/board.txt && [ \"\$(cat $O/board.rc)\" = 0 ]"
   check "$1: health check prints its verdict" "grep -q '^HEALTH: ' $O/health.txt"
   check "$1: regression run prints its result with no failed row" "grep -q '^RESULT [0-9]* passed.* 0 failed' $O/regression.txt"
 }
-# Run $2 (a codex, or the stand-in) as `codex exec` on a fresh toy repo named $1.
+# Run $2 (a codex, or the stand-in) as `codex exec` on a fresh toy repo named $1, for at most $4 seconds. A deadline passed or an
+# exit other than 0 is a failure, whatever the run's files say.
 as_codex() {
   "$here/dev/toy/make.sh" "$T/$1" >/dev/null || exit 1
-  local R="$T/$1/repo"; mkdir -p "$R/.codex-out"; echo ".codex-out/" >> "$R/.git/info/exclude"
-  (cd "$R" && "$2" exec --skip-git-repo-check -s workspace-write \
+  private_list
+  local R="$T/$1/repo" rc; mkdir -p "$R/.codex-out"; echo ".codex-out/" >> "$R/.git/info/exclude"
+  (cd "$R" && python3 "$CR" limited "${4:-$LIVE_DEADLINE}" -- "$2" exec --skip-git-repo-check -s workspace-write \
      -c "sandbox_workspace_write.writable_roots=[\"$(git rev-parse --absolute-git-dir)\",\"$T/$1/origin.git\",\"$HOME/.workflow-loop\"]" \
-     -c model_reasoning_effort=low ${3:+-m $3} "$(prompt)" </dev/null > "$T/$1.log" 2>&1)
-  [ -z "${KEEP:-}" ] || cp "$T/$1.log" "$KEEP"
+     -c model_reasoning_effort=low ${3:+-m $3} "$(prompt)" > "$T/$1.log" 2>&1); rc=$?
+  if [ -n "${KEEP:-}" ] && ! cr keep "$T/$1.log" "$KEEP" "$here"; then bad "$1: the kept log you asked for (KEEP) was not saved"; fi
+  if [ $rc = 124 ]; then coded CODEX-E03 "$1" "${4:-$LIVE_DEADLINE} s"
+  elif [ $rc != 0 ]; then coded CODEX-E04 "$1" "codex exec exit $rc"; fi
+  return $rc
+}
+
+# A stand-in script at $1 whose body is the rest.
+# standin() and controls(): each rule of the live part, shown on a stand-in
+. "$here/dev/toy/codex-controls.sh" || { echo "FAIL: the stand-in controls (dev/toy/codex-controls.sh) could not be loaded"; exit 1; }
+
+# The live part with the codex at $1. A probe past its limit is CODEX-E03; the other reasons it can't run are skips.
+live_part() {
+  local bin=$1 rc model probe pc started=$SECONDS left
+  if ! command -v "$bin" >/dev/null 2>&1; then skip_line CODEX-E01; return; fi
+  python3 "$CR" limited $PROBE_LIMIT -- "$bin" login status >/dev/null 2>&1; rc=$?
+  if [ $rc = 124 ]; then coded CODEX-E03 live "sign-in probe, $PROBE_LIMIT s"; return; fi
+  if [ $rc != 0 ]; then skip_line CODEX-E02; return; fi
+  model=${CODEX_MODEL:-$(python3 - <<'PY' 2>/dev/null
+import json, os
+slugs = [m["slug"] for m in json.load(open(os.path.join(os.environ["CODEX_HOME"], "models_cache.json")))["models"] if m.get("visibility") == "list"]
+print(next((s for s in slugs if "luna" in s), slugs[0] if slugs else ""))
+PY
+)}
+  probe=$(cd "$T" && python3 "$CR" limited $PROBE_LIMIT -- "$bin" exec --skip-git-repo-check -s read-only -c model_reasoning_effort=low ${model:+-m $model} "reply with the word OK" 2>&1); pc=$?
+  if [ $pc = 124 ]; then coded CODEX-E03 live "reply probe, $PROBE_LIMIT s"; return; fi
+  if [ $pc != 0 ] || ! grep -qi 'ok' <<<"$probe"; then
+    local why
+    why=$(cr screen "probe exit $pc: $(grep -m1 'ERROR' <<<"$probe")") && [ -n "$why" ] || { bad "live: the line helper failed for the reply probe"; return; }
+    live_skip="codex cannot answer here ($why)"
+    return
+  fi
+  left=$((LIVE_DEADLINE - (SECONDS - started)))
+  as_codex live "$bin" "$model" "$left"; verify live "$T/live/repo"
 }
 
 if want home && [ "$(id -u)" = 0 ]; then
@@ -134,27 +200,15 @@ if want skip; then
 fi
 
 if want fake; then
+  before=$ran
   as_codex fake "$here/dev/toy/fakecodex"; verify fake "$T/fake/repo"
+  controls
+  counted=$((ran - before))
+  [ $counted = $FAKE_CHECKS ] || bad "fake: $counted checks ran, expected $FAKE_CHECKS"
 fi
 
 if want live; then
-  bin=${CODEX_BIN:-codex}
-  if ! command -v "$bin" >/dev/null 2>&1; then live_skip="codex is not installed on this machine"
-  elif ! "$bin" login status >/dev/null 2>&1; then live_skip="codex is not signed in on this machine"
-  else
-    model=${CODEX_MODEL:-$(python3 - <<'PY' 2>/dev/null
-import json, os
-slugs = [m["slug"] for m in json.load(open(os.path.join(os.environ["CODEX_HOME"], "models_cache.json")))["models"] if m.get("visibility") == "list"]
-print(next((s for s in slugs if "luna" in s), slugs[0] if slugs else ""))
-PY
-)}
-    probe=$(cd "$T" && "$bin" exec --skip-git-repo-check -s read-only -c model_reasoning_effort=low ${model:+-m $model} "reply with the word OK" </dev/null 2>&1); pc=$?
-    if [ $pc != 0 ] || ! grep -qi 'ok' <<<"$probe"; then
-      live_skip="codex cannot answer here: $(grep -m1 'ERROR' <<<"$probe" | cut -c1-160)"
-    else
-      as_codex live "$bin" "$model"; verify live "$T/live/repo"
-    fi
-  fi
+  live_part "${CODEX_BIN:-codex}"
   [ -z "$live_skip" ] || echo "SKIPPED: live: $live_skip"
 fi
 

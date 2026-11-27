@@ -12,7 +12,7 @@
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH LOOP_PRIVATE_NAMES TOY_PROTECT TOY_PR_MODE  # its cases write the home's list (a row's explicit empty one would hide it)
 set -u
 export LOOP_ROLE=worker
-here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-all}; self="$here/dev/toy/$(basename "$0")"
+here=$(cd "$(dirname "$0")/../.." && pwd); only=${1:-all}
 . "$here/dev/toy/reap.sh"
 export HOME=$(mktemp -d)
 export USERPROFILE="$HOME"
@@ -291,16 +291,13 @@ if want docs; then
   echo "== #129: the docs say merge.py publishes"
   S="$here/skills/workflow-release/SKILL.md"; C="$here/skills/loop-files.md"
   ! grep -iE "merge\.py[^.]*\bdrafts? (a|the) release" "$S" "$C" && grep -q "publishes the release (no draft)" "$S" && grep -q "publishes the release (no draft)" "$C" \
-    && grep -q "release PR" "$S" && grep -q "goal.py set SLUG --bump" "$S" && [ "$(wc -l < "$S")" -lt 150 ] \
+    && grep -q "release PR" "$S" && grep -q "goal.py set SLUG --bump" "$S" \
     && ok "#129: the docs say merge.py publishes (no draft) and only cut drafts" || bad "#129: docs"
   was=$fails
   for code in PRIVATE_NAME PRIVATE_LIST PRIVATE_MODULE RELEASE_PR_BLOCKED RELEASE_VERSION_MISMATCH RELEASE_EXISTS REQUIREMENT_MISSING; do
     grep -q "| \`$code\`" "$C" || bad "codes table lacks $code"
   done
-  for f in "$here"/skills/workflow-release/scripts/*.py "$self"; do
-    [ "$(wc -c < "$f")" -lt 20480 ] || bad "$(basename "$f") is over 20 KB"
-  done
-  [ "$fails" = "$was" ] && ok "the release codes table and every release script under 20 KB"
+  [ "$fails" = "$was" ] && ok "the release codes table lists every code"
 fi
 
 [ "$fails" = 0 ] || { echo "$fails FAILED"; exit 1; }

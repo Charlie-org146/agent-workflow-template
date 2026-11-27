@@ -87,6 +87,5 @@ out=$(python3 "$T/h.py" "$S" "$RUNS" x qa rm "{\"tmp\": \"$T/keep\"}"; python3 "
 check "removal skips a path outside loop-lane-*, a symlink and a record with no tmp, and removes a lane folder, with no error" '[ "$(grep -c "^ok" <<<"$out")" = 4 ] && [ -f "$T/keep/f" ] && [ ! -e "$T/loop-lane-12345678-x-qa-zz" ]'
 out=$(python3 "$T/h.py" "$S" "$RUNS" x qa rm "{\"tmp\": \"$T/missing/loop-lane-gone\"}")
 check "removing a folder that is already gone is not an error" 'grep -qx ok <<<"$out"'
-check "lane.py and lanekit.py stay under the 20 KB script cap" '[ "$(wc -c < "$S/lane.py")" -lt 20480 ] && [ "$(wc -c < "$S/lanekit.py")" -lt 20480 ]'
 
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

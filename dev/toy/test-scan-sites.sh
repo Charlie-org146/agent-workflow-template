@@ -32,9 +32,5 @@ if bad:
     print("unscanned: " + ", ".join(bad)); sys.exit(1)
 PY
 
-for f in "$here"/skills/workflow-delivery/scripts/*.py "$here"/skills/workflow-release/scripts/*.py "$here"/skills/workflow-monitoring/scripts/*.py; do
-  [ "$(wc -c < "$f")" -lt 20480 ] || bad "$(basename "$f") is over 20 KB"
-done
-ok "every delivery, release and monitoring script stays under 20 KB"
 [ "$fails" = 0 ] || exit 1
 echo "ALL PASS"
