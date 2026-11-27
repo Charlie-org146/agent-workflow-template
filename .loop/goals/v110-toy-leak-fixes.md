@@ -1,7 +1,7 @@
 # Four known toy leaks fixed
 
 - Slug: v110-toy-leak-fixes
-- Touches: skills/workflow-regression/scripts/actions.py, dev/toy/test-merge-where.py, dev/toy/test-budget-order.py, dev/toy/test-platform-limits.py, dev/toy/test-entry-config.sh, .loop/regression.tsv, docs/wiki/Tests.md, dev/check-row-merge.py
+- Touches: skills/workflow-regression/scripts/actions.py, dev/toy/test-merge-where.py, dev/toy/test-budget-order.py, dev/toy/test-platform-limits.py, dev/toy/test-entry-config.sh, .loop/regression.tsv, docs/wiki/Tests.md, dev/check-row-merge.py, docs/wiki/Regression.md
 - ETA: 460 active minutes (estimate 367m plus a 25% margin)
 
 ## Done lines
