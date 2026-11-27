@@ -69,6 +69,8 @@ def goal():
               "the old-word line for %r names exactly what to set: %s" % (value, level))
     got, out, err, code = plan(True, "weekly")
     check(code not in (None, 0) and "REFUSED (GOAL_LEVELS_BAD)" in err and "Nothing was run." in err, "levelled table: goal_levels 'weekly' is refused before any work")
+    check(err.strip() == "REFUSED (GOAL_LEVELS_BAD): goal_levels is 'weekly' in .loop/config.json; the values are L0, L1 and L2. Fix: set one there and commit it. Nothing was run.",
+          "the refusal lists all three levels, L0, L1 and L2, in exactly this text")
     for value, want in (("land", "land"), ("nightly", "nightly"), ("L0", "land"), ("L1", "nightly"), ("L2", "nightly")):
         got, out, err, code = plan(False, value)
         check(got == want and code is None and "GOAL_LEVELS_OLD" not in out, "table not levelled: goal_levels %r runs as %s" % (value, want))
