@@ -4,6 +4,7 @@
 Pure data in, text out: no model call, no network, no write. `cards(...)` builds them, `group_by(...)` groups them.
 A goal card wraps the lines the board showed for that goal before: its mark line, its done-line bars, its ETA text and its stop cause.
 """
+import json
 import os
 import sys
 
@@ -94,3 +95,43 @@ def group_by(found, view):
     for key in out:  # the group's own card first, then tasks, then goals
         out[key].sort(key=lambda c: {"release": 0, "task": 1, "goal": 2}[c["kind"]])
     return out
+
+
+VOLATILE = ("generated", "next_at")  # clock fields: a refresh that changed nothing else leaves the file alone (BOARD-5)
+
+
+def same(path, text):
+    """True when the file already holds this text, JSON compared without its clock fields."""
+    try:
+        with open(path) as handle:
+            old = handle.read()
+    except OSError:
+        return False
+    if old == text:
+        return True
+    try:
+        keep = lambda raw: {k: v for k, v in json.loads(raw).items() if k not in VOLATILE}
+        return keep(old) == keep(text)
+    except (ValueError, AttributeError):
+        return False
+
+
+def card_list(rows, deps, at, repos, setting_of):
+    """The cards for board.json, per repo (repos: board.followed()): a failure to build them never stops the board."""
+    try:
+        import board_tasks
+        out = []
+        for name, path, base in repos:
+            mine = [r for r in rows if r["repo"] == name]
+            items = [{"mark": r["status"], "slug": r["slug"], "left": r.get("left"), "machine": "", "bars": []} for r in mine]
+            runs = [{"slug": r["slug"], "status": r["status"], "updated": r.get("last") or ""} for r in mine]
+            batches = {}
+            for slug in [x["slug"] for x in mine] + [d["slug"] for d in deps if d["repo"] == name]:
+                batches.setdefault(board_status.release_of(path, slug), []).append(slug)
+            batches.pop("no release", None)
+            for c in cards(items, runs, board_tasks.tasks(path, runs), batches, at, path, setting_of(path, "board_max_age", 120)):
+                c["repo"], c["time"] = name, c["time"].strftime("%Y-%m-%dT%H:%M:%SZ") if c.get("time") else ""
+                out.append(c)
+        return out
+    except Exception as err:  # noqa: BLE001
+        return [{"id": "cards:error", "kind": "error", "name": type(err).__name__}]

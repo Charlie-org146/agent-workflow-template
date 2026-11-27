@@ -47,40 +47,7 @@ def mailer():
     return importlib.import_module("mail")  # another skill's script: no static import, so the package scan sees none
 
 
-DELIVERY = os.path.join(HERE, "..", "..", "workflow-delivery", "scripts")
-
-
-def outgoing_refusal(units):
-    """What the private-name scan refuses in the text about to go out: its places, never the word ("" when clean). {place: text}.
-    No list, a broken list or a scan past its limit refuses too (it fails closed); a list that holds only comments passes."""
-    sys.path.insert(1, DELIVERY)
-    private = importlib.import_module("private")  # another skill's script: no static import, so the package scan sees none
-    found = private.scan(".", "", texts=units)
-    if found["state"] in ("none", "broken"):
-        return "the private-name scan could not run: " + str(found.get("note", found["state"]))
-    return "; ".join(found["hits"]) if found["state"] == "hit" else ""
-
-
-def checkin_gate(state, lines, now, every):
-    """send, same or early for a check-in carrying these CHANGE lines. Reads state, writes nothing: same = nothing changed since the
-    last check-in sent; early = a change closer than `every` minutes to it; send otherwise (a first one included)."""
-    last = state.get("checkin") or {}
-    key = "|".join(sorted(lines))
-    if last and last.get("lines") == key:
-        return "same"
-    if last and now - last.get("at", 0) < every * 60:
-        return "early"
-    return "send"
-
-
-def checkin_sent(state, lines, now):
-    state["checkin"] = {"lines": "|".join(sorted(lines)), "at": now}
-
-
-def checkin_lines(text):
-    """What a check-in says, without its clock: its headline and its Needs you items."""
-    first = next((x.strip() for x in str(text or "").splitlines() if x.strip()), "")
-    return ([first] if first else []) + needs(text)
+import notify_gate as gate  # noqa: E402  (BOARD-5, BOARD-8)
 
 
 def say(text):
@@ -204,7 +171,7 @@ def cmd_send(args):
     if not os.path.exists(path):
         held = [e for e in found if e[1] != "start review"]  # a start review is never part of the baseline: it must go out
         base = {"sent": {key: "baseline" for key, _, _, _ in held}}
-        checkin_lines(text) and checkin_sent(base, checkin_lines(text), datetime.datetime.now(datetime.timezone.utc).timestamp())
+        gate.checkin_event(base, text, needs, args.root, False)
         save(path, base)
         only or say("baseline %d events, nothing sent; from now on each new one is mailed" % len(held))
         if len(held) == len(found):
@@ -215,13 +182,7 @@ def cmd_send(args):
     for key, kind, _, _ in [e for e in new if e[1] == "covered"]:  # its stopped or past-ETA mail says it
         sent[key] = "covered"
     new = [e for e in new if e[1] != "covered"]
-    lines, now = checkin_lines(text), datetime.datetime.now(datetime.timezone.utc).timestamp()
-    import board_cards  # noqa: E402
-    every = board_cards.setting(read_json(os.path.join(args.root, ".loop", "config.json")), "checkin_every", 30)
-    if lines and not only and "checkin" not in state:  # the first check-in seen is a baseline, as for every other event
-        checkin_sent(state, lines, now)
-    elif lines and not only and checkin_gate(state, lines, now, every) == "send":  # nothing changed or too soon: not an event at all
-        new.append(("checkin:%d" % now, "check-in", "", "check-in: " + "; ".join(lines)[:600]))
+    new += gate.checkin_event(state, text, needs, args.root, not only)
     save(path, state)
     if not new:
         return 0
@@ -250,14 +211,14 @@ def cmd_send(args):
         save(path, state)
         body = mailbox.compose(folder, key, kind, slug, action, repo)
         subject = "Loop: %s %s (%s) [%s]" % (kind, slug, repo, mailbox.qid(key))
-        refused = outgoing_refusal({"subject": subject, "body": body, "page": mail.rounds.to_html(body)})
-        if refused:  # BOARD-5: nothing is sent, the claim is let go, and the refusal names the place and not the word
+        refused = gate.outgoing_refusal({"subject": subject, "body": body, "page": mail.rounds.to_html(body)})
+        if refused:  # nothing is sent; the refusal names the place, not the word
             del sent[key]
             mailbox.claim(folder, key, flow_path(), args.root, release=True)
-            say("not sent %s %s: private-name scan refused %s (PRIVATE_NAME)" % (kind, slug, refused))
+            say("not sent %s %s: private-name scan refused %s" % (kind, slug, refused))
             continue
         try:
-            outcome, detail, _ = mail.deliver(mode, keys, "Loop: %s %s (%s) [%s]" % (kind, slug, repo, mailbox.qid(key)), body, mail.rounds.to_html(body),
+            outcome, detail, _ = mail.deliver(mode, keys, subject, body, mail.rounds.to_html(body),
                                               (host, port, wait, api))
         except Exception as err:  # noqa: BLE001 - maybe mid-send: keep it marked, never send twice
             outcome, detail = "unknown", type(err).__name__
@@ -269,7 +230,7 @@ def cmd_send(args):
             say("%s %s may have been sent: %s; kept, so it is not sent twice (MAIL_UNKNOWN)" % (kind, slug, detail))
         else:
             sent[key] = "mailed"
-            kind == "check-in" and (checkin_sent(state, lines, now), sent.pop(key, None))
+            kind == "check-in" and gate.mark(state, text, needs, sent, key)
             say("sent %s %s" % (kind, slug))
         save(path, state)
     return 0

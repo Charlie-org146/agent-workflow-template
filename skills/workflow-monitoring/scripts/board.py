@@ -24,6 +24,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
+import board_cards  # noqa: E402
 import schedule_load as sl  # noqa: E402
 from board_log import stamp, unread  # noqa: E402,F401  (aware UTC or None; a zone-less stamp is named, not guessed)
 try:  # without board_status.py there is no estimate
@@ -118,27 +119,8 @@ def read_json(path):
         return None
 
 
-VOLATILE = ("generated", "next_at")  # clock fields: a refresh that changed nothing else leaves the file alone (BOARD-5)
-
-
-def same(path, text):
-    """True when the file already holds this text, JSON compared without its clock fields."""
-    try:
-        with open(path) as handle:
-            old = handle.read()
-    except OSError:
-        return False
-    if old == text:
-        return True
-    try:
-        keep = lambda raw: {k: v for k, v in json.loads(raw).items() if k not in VOLATILE}
-        return keep(old) == keep(text)
-    except (ValueError, AttributeError):
-        return False
-
-
 def write(path, text):
-    if same(path, text):
+    if board_cards.same(path, text):
         return
     temp = path + ".%d.tmp" % os.getpid()
     with open(temp, "w") as handle:
@@ -148,7 +130,6 @@ def write(path, text):
 
 def repo_setting(path, key, default):
     """One repo's setting from its own .loop/config.json, never from the directory the command runs in."""
-    import board_cards  # noqa: E402
     top = git("rev-parse", "--show-toplevel", cwd=path) or path
     return board_cards.setting(read_json(os.path.join(top, ".loop", "config.json")) or {}, key, default)
 
@@ -306,36 +287,13 @@ def build(at, since):
     delay = delay_of(cadence, bool(live))
     doc = {"generated": iso(at), "repos": names, "cadence": cadence, "digest": digest,
            "next_delay": delay, "next_at": "" if delay == "none" else (at + datetime.timedelta(seconds=int(delay))).strftime("%H:%M UTC"), "open": bool(live or waiting or deps), "waiting": waiting, "dependencies": deps, "runs": rows, "state": flat, **({"incomplete": True} if sl.STATUS else {})}
-    doc["cards"] = card_list(rows, deps, at)  # BOARD-1: one card per release, task and goal; a new key after the old ones
+    doc["cards"] = board_cards.card_list(rows, deps, at, followed(), repo_setting)  # BOARD-1: one card per release, task and goal; a new key after the old ones
     old = (read_json(since) or {}).get("state") if since else {}
     old = old if isinstance(old, dict) else {}
     for key, item in flat.items():  # gh failing to answer says nothing about the pull request
         if item.get("prstate") == "unknown":
             item["prstate"] = (old.get(key) or {}).get("prstate") or "unknown"
     return doc, changes(old, flat)
-
-
-def card_list(rows, deps, at):
-    """The cards for board.json (board_cards.py), per repo: a failure to build them never stops the board."""
-    try:
-        import board_cards
-        import board_tasks
-        out = []
-        for name, path, base in followed():
-            mine = [r for r in rows if r["repo"] == name]
-            items = [{"mark": r["status"], "slug": r["slug"], "left": r.get("left"), "machine": "", "bars": []} for r in mine]
-            runs = [{"slug": r["slug"], "status": r["status"], "updated": r.get("last") or ""} for r in mine]
-            batches = {}
-            for r in [x["slug"] for x in mine] + [d["slug"] for d in deps if d["repo"] == name]:
-                batches.setdefault(board_status.release_of(path, r) if board_status else "no release", []).append(r)
-            batches.pop("no release", None)
-            max_age = repo_setting(path, "board_max_age", 120)
-            for c in board_cards.cards(items, runs, board_tasks.tasks(path, runs), batches, at, path, max_age):
-                c["repo"], c["time"] = name, c["time"].strftime("%Y-%m-%dT%H:%M:%SZ") if c.get("time") else ""
-                out.append(c)
-        return out
-    except Exception as err:  # noqa: BLE001
-        return [{"id": "cards:error", "kind": "error", "name": type(err).__name__}]
 
 
 def changes(old, new):

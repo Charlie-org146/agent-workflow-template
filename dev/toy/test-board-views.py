@@ -139,7 +139,7 @@ def t_stale(tmp):
 
 
 def t_scan(tmp):
-    import notify
+    import notify_gate as notify
     word = "zorblax"
     names = os.path.join(tmp, "names.txt")
     put(names, word + "\n")
@@ -152,7 +152,7 @@ def t_scan(tmp):
 
 
 def t_gate(tmp):
-    import notify
+    import notify_gate as notify
     state = {}
     lines = ["CHANGE a/b step: x -> y"]
     now = NOW
