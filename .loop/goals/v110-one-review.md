@@ -61,7 +61,10 @@ The other build items are listed under Build list below.
   - DLF-1 metric: "**Metric.** Minutes a goal waits for me after its start review. Target 0."
 - Revert rule, a required build item (TD2128): each decision records what it let go on, and its revert line says "stops the goal" when that is the whole goal.
 - The Delivery wording above is the one top approved; it takes the place of the earlier DEL-3 draft under Words used for the page edit.
-- The DEL-3 edit holds the merge for the owner's own typed word (TD2135c); it does not hold the build.
+- The owner recorded two approvals in their own terminal. Nothing in this goal waits on the owner now, and the DEL-3 edit no longer holds the merge (this replaces the TD2135c hold).
+  - o1048 (v110-one-review, DLF-1, Deliver-first, OPS-1, Operation): the DLF-1 revise to the TD2136 unit and the Operation page lines B, C and D rest on it.
+  - o1046 (v110-one-review, DEL-3, TD2128-A): the DEL-3 edit rests on it.
+  - Each record counts once per command, so each is used in one revise call.
 
 ### Spec check of E1 to E3: rulings and clarifications
 
@@ -83,7 +86,7 @@ Required clarifications (operation, as the spec check wrote them):
 
 ### Target text: the DLF-1 unit
 
-Top approved this unit under TD2136 with option K: the DLF-1.3 Metric and Test lines stay unchanged, so the part marked open below is settled. It rests on o1038, o1045, TD2128 E and F, and TD2136. It governs over the plan's sentence that puts the approved metric under DLF-1.3. The pull request names the short window in which the leak-read clause is stale. The file is copied as written:
+Top approved this unit under TD2136 with option K: the DLF-1.3 Metric and Test lines stay unchanged, so the part marked open below is settled. It rests on o1038, o1045, TD2128 E and F, and TD2136; its revise cites o1048. It governs over the plan's sentence that puts the approved metric under DLF-1.3. The pull request names the short window in which the leak-read clause is stale. The file is copied as written:
 
 ```
 # v110-one-review: resulting DLF-1 unit (operation-mac, 17:11, TD2134 option A; for top's DOC-2 check before the worker uses it)
