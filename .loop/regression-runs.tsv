@@ -481,6 +481,8 @@ perms-settings-tracked	PASS	2026-11-15
 pkg-no-echo-1	PASS	2026-11-26	
 pkg-no-echo-2	PASS	2026-11-26	
 pkg-secret-print-4-sizes	PASS	2026-11-26	
+plan-by-size-rounds	PASS	2026-11-27	
+plan-by-size-start	PASS	2026-11-27	
 plan-cache-key	PASS	2026-11-12	
 plan-calls-flat	PASS	2026-11-27	
 plan-identity	PASS	2026-11-27	
