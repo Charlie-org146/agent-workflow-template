@@ -163,6 +163,7 @@ def main():
         state = json.loads(read(os.path.join(runs, args.slug + ".json")))
     except (OSError, ValueError):
         state = {}
+    fit.start_review().gate(state, git("rev-parse", "--show-toplevel"), args.step) if state.get("slug") else None  # DLF-1.3
     headless = state.get("worker") != "session"
     if headless and repo_config().get("workers") == "app" and not os.path.exists(os.path.join(runs, "%s.%s.job" % (args.slug, args.step))):
         sys.exit("REFUSED: workers is app and %s has no bound app session, so no headless agent starts. Fix: sessions.py bind %s SESSION (NO_SESSION)" % (args.slug, args.slug))

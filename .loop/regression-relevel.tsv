@@ -761,6 +761,11 @@ lvl-sizing-levels	land	L1	none				default
 lvl-armed	land	L1	none				default
 done-lvl-relevel-6	covered	L1	none	package-passes-3800,lvl-armed			covers
 history-rows-fail-closed	land	L1	none				src:7099da4212
+orv-start-review	land	L1	none				default
+orv-no-owner-wait	land	L1	none				default
+orv-safe-option	land	L1	none				default
+orv-checkin-revert	land	L1	none				default
+orv-checks-stay	land	L1	none				default
 lvl-l1-select	land	L1	none				default
 lvl-l1-cover	land	L1	none				default
 lvl-l1-queue	land	L1	none				default

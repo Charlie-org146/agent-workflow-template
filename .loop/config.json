@@ -1,5 +1,6 @@
 {
   "base": "main",
+  "one_review": true,
   "agent_command": [
     "claude",
     "-p",

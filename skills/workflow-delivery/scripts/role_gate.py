@@ -132,6 +132,12 @@ def requirement_gate(g, slug):
     if loose or (done and done.returncode):
         g.no("[FIND-FILE] %s not filed on its Backlog milestone. Fix: run goal.py finding again" % ", ".join(sorted(t.split()[0] for t in loose))
              if loose else (done.stderr or done.stdout).strip())
+    state = g.load(slug)
+    if state.get("one_review"):  # DLF-1.3: open findings, new uncovered changes and unapproved requirement text
+        import outcomes
+        more = outcomes.blockers(g.root(), g.state_dir(), state, "origin/" + g.config()["base"], "HEAD")
+        more and g.no("no pull request yet: %s. Fix: take out or fix each part; the operation closes a finding (goal.py finding-close); "
+                      "use only approved requirement text (ONE_REVIEW_UNAPPROVED)" % "; ".join(more))
 
 
 def session_reply(state, slug, step, path, runs, flow):

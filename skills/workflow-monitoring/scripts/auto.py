@@ -191,7 +191,7 @@ def add_owner_words(args, ids):
     """Append the owner's message as the next record (delegated: TDn, DOC-2 rN); returns its number."""
     if args.delegated and not (args.via == "top" and re.fullmatch(r"TD\d+", args.delegated) and re.fullmatch(r"r\d+", args.doc2)):
         sys.exit("REFUSED: a delegated record is --from top with --delegated TDn and --doc2 rN. Nothing was written.")
-    where, count = owner_words_path(), len(owner_rows()) + 1
+    where, count = owner_words_path(), len(owner_rows(start=True)) + 1
     os.makedirs(os.path.dirname(where), exist_ok=True)
     who = "operation-top:delegated:%s:DOC-2:%s" % (args.delegated, args.doc2) if args.delegated else "operation-top" * (args.via == "top") or os.environ.get("LOOP_OPERATION_SESSION") or "operation"
     with open(where, "a", encoding="utf-8") as handle:
@@ -199,10 +199,14 @@ def add_owner_words(args, ids):
     return count
 
 
-def owner_rows(root="."):
+START_ANSWER = re.compile(r'"(\\[ntr]|\s)*(approve|reject)(\\[ntr]|\s)+start\b', re.I)  # DLF-1.3: no other permission (E15, M1)
+
+
+def owner_rows(root=".", start=False):
+    """The records; a start review's answer is left out unless asked for by name."""
     try:
         with open(owner_words_path(root), encoding="utf-8") as handle:
-            return [r for r in (line.rstrip("\n").split("\t") for line in handle) if len(r) == 5]
+            return [r for r in (line.rstrip("\n").split("\t") for line in handle) if len(r) == 5 and (start or not START_ANSWER.match(r[3]))]
     except OSError:
         return []
 
@@ -232,20 +236,9 @@ def eta_margin(cfg):
     return 1 + (value if isinstance(value, (int, float)) and not isinstance(value, bool) and 0 <= value <= 300 else 25) / 100
 
 
-def eta_new(root, slug, done, touches, budget, cfg=None):
-    """{minutes, estimate, basis}: the model's high end plus the margin (30 minutes at least), else the time budget."""
-    names = glob.glob(os.path.join(loop_dir(root), "runs", "*.json"))
-    runs = [r for r in map(bs.read_json, names) if isinstance(r, dict) and r.get("slug")]
-    try:
-        found = bs.estimate_full({"slug": slug, "status": "queued", "done": done, "touches": touches}, runs,
-                                 datetime.datetime.now(datetime.timezone.utc), root)
-    except Exception:
-        found = None
-    if not found or not found[2]:
-        return {"minutes": budget or 240, "estimate": 0, "basis": "no estimate yet, so the time budget"}
-    high, margin = int(found[2] // 60), eta_margin(cfg)
-    return {"minutes": max(ETA_FLOOR, -(-int(high * margin) // 5) * 5), "estimate": high,
-            "basis": "estimate %dm plus a %d%% margin%s" % (high, round((margin - 1) * 100), ", rough" if found[3] else "")}
+def eta_new(*args, **kwargs):
+    import review_view  # moved there: DLF-1.3 needed the room
+    return review_view.eta_new(*args, **kwargs)
 
 
 def eta_seen(root, run):

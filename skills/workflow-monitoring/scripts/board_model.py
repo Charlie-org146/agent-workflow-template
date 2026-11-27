@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Live-board estimate candidates, time-ordered selection, and per-goal predictions. Scores are kept in MODEL per set of
 runs; a goal file edited inside one long-lived process is not seen until a run changes. Never imports board_status.py."""
+import importlib.util
 import json
 import math
 import os
@@ -370,12 +371,21 @@ def estimate_text(found):
 
 def plan_accept(root, slug, n, record):
     """The owner accepts a break of principle n on the plan as it stands, by an owner-words.tsv record."""
+    import auto
     import board_log as bl
     path, owner = os.path.join(bl.red_dir(root), "plan-%s.json" % slug), os.path.join(os.path.dirname(bl.red_dir(root)), "owner-words.tsv")
     seen = bl.read_json(path) or {}
     hit = [b for b in seen.get("breaks", []) if b["principle"] == n and seen.get("sha") == bl.plan_sha(root, slug)]
-    if not hit or not os.path.exists(owner) or record not in {r.split("\t")[0] for r in open(owner, encoding="utf-8")}:
+    if not hit or not os.path.exists(owner) or record not in {r[0] for r in auto.owner_rows(root)}:
         sys.exit("REFUSED: needs an owner-words.tsv record and a break of principle %d on the plan as it stands" % n)
+    held = bl.read_json(os.path.join(os.path.dirname(os.path.dirname(path)), "runs", slug + ".json")) or {}
+    if held.get("one_review"):  # DLF-1.3: nothing is waived that the start review didn't approve
+        spec = importlib.util.spec_from_file_location("one_review_scan", os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "safety_scan.py"))
+        scan = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(scan)
+        if any(scan.text_classes(b.get("text", "")) for b in hit):
+            sys.exit("REFUSED: a break of principle %d names a safety class, and on a one-review goal none is accepted. Fix: fix it in the build or "
+                     "drop that part (ONE_REVIEW_SAFETY_BREAK)" % n)
     for b in hit:
         b["accepted"] = record
     json.dump(seen, open(path, "w"), indent=1)

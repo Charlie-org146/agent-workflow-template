@@ -116,6 +116,8 @@ def save(state, note=None):
         have = disk.get("log") or []
         merged["log"] = have + [line for line in state.get("log") or [] if line not in have]
         role.report(disk, merged, state["updated"])
+        if merged.get("one_review") or os.path.exists(path[:-5] + ".decisions.jsonl"):
+            pods.keep_stop(path, merged)
         temp = path + ".tmp"
         write(temp, json.dumps(merged, indent=2))
         os.replace(temp, path)
@@ -179,7 +181,17 @@ def failed_try(state, why, step="build", fix="fix it, then run the step again"):
 
 
 cmd_wait = lambda args: guards.cmd_wait(ME, args)
-cmd_answer = lambda args: guards.cmd_answer(ME, args)
+
+
+def cmd_answer(args):
+    before = load(args.slug)
+    holds = before.get("one_review") and not fit.outcomes().owners_wait(root(), before)  # a wait of the operation's
+    holds and guards.operation_only(ME, "answer the hold of", args.slug)
+    code = guards.cmd_answer(ME, args)
+    holds and fit.outcomes().answered(root(), state_dir(), args.slug, (before.get("waiting") or {}).get("ask") or "")
+    return code
+
+
 cmd_adopt = lambda args: fit.cmd_adopt(ME, args)
 cmd_queue = lambda args: fit.cmd_queue(ME, args)
 cmd_set = lambda args: fit.cmd_set(ME, args)
@@ -201,6 +213,8 @@ def cmd_new(args):
     if os.path.exists(state_path(slug)):
         no("%s already exists. Fix: pick a new slug." % slug)
     cfg = config()
+    review = fit.start_review()
+    review.frozen_twice(root(), "HEAD", slug)
     fit.nag(ME, args)
     touches = [item.strip() for item in args.touches.split(",") if item.strip()]
     branch = "loop/" + slug
@@ -213,8 +227,10 @@ def cmd_new(args):
     fields = fit.frozen_fields(ME, args, lines, touches)
     path = goal_file(slug)
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    write(path, TEMPLATE.format(goal=" ".join(args.goal.split()), slug=slug,
-                                touches=", ".join(touches) or "not declared", eta=fit.eta_line(fields), done="\n".join(lines)))
+    text = TEMPLATE.format(goal=" ".join(args.goal.split()), slug=slug,
+                           touches=", ".join(touches) or "not declared", eta=fit.eta_line(fields), done="\n".join(lines))
+    one = review.setting_at(root(), "HEAD")  # the committed setting, never the working copy's
+    write(path, review.marked_text(text) if one else text)
     git("add", path)
     git("commit", "-m", "Goal: %s" % slug, "--", path)
     state = {"slug": slug, "goal": args.goal, "status": "running", "step": "idea", "tries": 0, "flow": {},
@@ -222,6 +238,7 @@ def cmd_new(args):
              "batch": bool(os.environ.get("LOOP_BATCH")), "done_sha": done_sha(lines),
              "release": args.release, "waiting": None, "finding": "", "log": []}
     state.update(fields)
+    one and state.update(review.mark(state_dir(), slug, "goal.py new", done_sha(lines)))
     guards.stamp(state, "idea")
     pods and pods.stamp(state)
     save(state, "frozen %d done lines" % len(lines))
@@ -248,6 +265,7 @@ def revoked_stop(slug):
 
 def cmd_step(args):
     state = load(args.slug)
+    fit.start_review().gate(state, root(), args.name)
     args.name == "build" and guards.plan_gate(ME, state)
     fit.budget_stop(args.slug, state, state_dir(), config(), save=save)
     state["step"] = args.name
@@ -295,6 +313,15 @@ def main():
     add("new", cmd_new, *goal, ("--here", {"action": "store_true"}))
     add("queue", cmd_queue, *goal, ("--depends-on", {"default": ""}))
     add("adopt", cmd_adopt)
+    add("recover", lambda args: fit.start_review().recover(ME, args))
+    add("start-items", lambda args: fit.start_answer().cmd_items(ME, args), ("--file", {"required": True}))
+    add("start-review", lambda args: fit.start_answer().cmd_show(ME, args))
+    add("start", lambda args: fit.start_answer().cmd_start(ME, args), ("--owner-record", {"required": True}))
+    add("finding-close", lambda args: fit.outcomes().cmd_close(ME, args), ("number", {"type": int}), ("--how", {"required": True, "choices": ("fix", "drop", "not-taken", "stop")}),
+        ("--why", {"required": True}), ("--files", {"default": ""}), ("--row", {"default": ""}), ("--reader", {"default": ""}))
+    add("revert", lambda args: fit.reverts().cmd_revert(ME, args), ("number", {"type": int}), ("--met", {"default": ""}), ("--cannot", {"default": ""}))
+    add("hold-clear", lambda args: fit.reverts().cmd_hold_clear(ME, args), ("number", {"type": int}), ("--commit", {"required": True}))
+    add("decide", lambda args: fit.outcomes().cmd_decide(ME, args), ("--finding", {"required": True}), ("--class", {"dest": "cls", "required": True}), ("--files", {"default": ""}))
     add("step", cmd_step, ("name", {}), ("--note", {"default": ""}), ("--tokens", {"type": int, "default": 0}))
     add("record", cmd_record, ("step", {"choices": FLOW}), ("--file", {"required": True}), ("--in-session", {"action": "store_true"}),
         ("--tokens", {"default": ""}))

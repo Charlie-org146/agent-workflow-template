@@ -315,7 +315,7 @@ def delegated(root, rid, text):
     except (OSError, StopIteration):
         return None
     found = re.fullmatch(r"operation-top:delegated:(TD\d+):DOC-2:(r\d+)", row[2])
-    if not found:
+    if not found or deployments.START_ANSWER.match(row[3]):
         return None
     revs = "".join(x.split("### DOC-2\n", 1)[1].split("\n### ", 1)[0] for x in map(lambda r: slurp(os.path.join(root, r)), pages(root)) if "### DOC-2\n" in x)
     return bool(re.search(r"^\| %s \|" % found[2], revs, re.M)) and not safety(json.loads(row[3]) + " " + text)

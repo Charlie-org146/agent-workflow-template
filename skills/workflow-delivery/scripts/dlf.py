@@ -236,6 +236,15 @@ def held_ask(top, step, pending, why):
 
 def settle(top, runs, slug, stop, occ, what, words, rec, **ctx):
     on, scope = setting(top, slug)
+    try:
+        with open(os.path.join(runs, slug + ".json"), encoding="utf-8") as handle:
+            held = json.load(handle)
+    except (OSError, ValueError):
+        held = {}
+    if held.get("one_review"):  # DLF-1.3: after its start review no stop waits on the owner
+        import outcomes
+        retry(top, runs, slug)
+        return outcomes.settle(top, runs, held, stop, occ, what, words, rec, ctx)
     retry(top, runs, slug)
     subject = SAFETY[3] if safe(top, what) != what else classify(stop, what, ctx.get("paths", ()), ctx.get("diff", ""), ctx.get("label", ""), ctx.get("cls", ""), ctx.get("template", False))
     ask = "the operation answers it (goal.py answer %s)" % slug
@@ -282,6 +291,8 @@ def budget_stop(slug, state, runs, cfg_, at=None, save=None, top=""):
     for name, spent in (("minutes", minutes), ("tokens", fit.spent_tokens(state, bool(held["tokens"])))):
         if held[name] and spent >= held[name]:
             est = (seen.get("eta") or {}).get("estimate") if name == "minutes" else cfg_.get("token_budget")
+            if name == "minutes" and not est and state.get("one_review"):  # RT3: its first time budget stands in, so the cap is twice that
+                est = (state.get("budget") or {}).get("minutes") or cfg_.get("time_budget_minutes") or 240
             new, capped = raise_budget(held[name], est, spent, share * (est or 0))
             raised, was = on and est and new > held[name], stored[name] or held[name]
             if raised:

@@ -1948,6 +1948,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |
 | `automation` | `[]` | Routines the Automation table lists: {name, does, cadence, runs}. |
 | `deliver_first` | `{}` | Deliver first, default on: {goal: {ID: false}, task: {...}, release: {...}} turns it off for a scope (most specific wins); set only with an owner reference: dlf.py set deliver_first off --scope S --id ID --owner-record R. |
+| `one_review` | `false` | true: a goal asks the owner once, at its start (DLF-1.3). Read from committed config. false: later stops wait again; open findings stay. |
 | `topics` | `{}` | Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column. |
 | `ci_levels` | `nightly` | Target of scheduled and tag regression runs: nightly (every row) or land. |
 | `l1_minutes` | `10` | L1's time goal on a pull request, in minutes; a longer run prints missed: and why. |

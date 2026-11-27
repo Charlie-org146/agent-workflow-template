@@ -218,7 +218,7 @@ with tempfile.TemporaryDirectory() as tmp:
     check(layers.due(os.path.join(tmp, ".git"), now + 60) == "RED-TEAM DUE: no pass recorded", "the hourly pass ignores plan findings")
     code, said = step_build(tmp)
     check(code == 2 and "break of principle 3" in said and "PLAN_BREAK" in said, "a recorded principle break blocks the goal's build step")
-    open(os.path.join(tmp, ".git", "loop", "owner-words.tsv"), "w").write("o1\t2026-11-19T00:00:00Z\ts\t{}\n")
+    open(os.path.join(tmp, ".git", "loop", "owner-words.tsv"), "w").write("o1\t2026-11-19T00:00:00Z\ts\t\"accept the break\"\tg\n")
     refused = []
     for args in ((3, "o99"), (2, "o1")):
         try:
