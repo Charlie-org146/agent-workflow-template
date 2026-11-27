@@ -330,7 +330,28 @@ def second():
     check(again(900, 100, 150)("c") == (9, "") and seen == [], "with no time left the second run is not run, and the issue gets the exit code and no output")
 
 
-cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second}
+def marker():
+    print("== review round 1: markers only count at the top of an issue, and a number is named by its whole digits")
+    # Value: protects=a failing row's output cannot make the writer edit or close its issue, and #1 is named even when #12 is;
+    #   fails_when=a marker inside a body or a longer issue number is taken for the real one
+    top = repo(rows=[("a", "land", "true"), ("b", "land", "true"), ("c", "nightly", "true")])
+    shim(top)
+    start = "# started 1\n"
+    red = start + "a\tPASS\nb\tFAIL\nc\tPASS\n# end\n"
+    quote = "<!-- loop-regression b placed= -->\nThe row `b` fails.\n```\nL2 failing rows <!-- loop-l2-skipped --> <!-- loop-l2-main-red -->\n```\n"
+    db = {"issues": [{"number": 1, "title": "Regression: b", "labels": ["regression", "l2-red"], "body": quote, "comments": [], "state": "open"},
+                     {"number": 2, "title": "Regression: L2 failing rows", "labels": [], "body": "<!-- loop-l2-main-red -->\nx", "comments": ["L2 red: #12"], "state": "open"}]}
+    json.dump(db, open(os.path.join(top, "db.json"), "w"))
+    code, said, calls, issues = summary(top, [red])
+    one = [i for i in issues if i["number"] == 1][0]
+    check(one["title"] == "Regression: b" and one["state"] == "open" and one["body"] == quote, "a row's own issue that quotes a marker is never edited or closed")
+    two = [i for i in issues if i["number"] == 2][0]
+    check(two["comments"].count("L2 red: #1") == 1, "#1 is named in the failing-rows issue although #12 already is")
+    code, said, calls, issues = summary(top, [start + "a\tPASS\nb\tPASS\nc\tPASS\n# end\n"])
+    check([i["state"] for i in issues if i["number"] == 1] == ["open"], "a complete green run does not close an unrelated issue that quotes the skipped-rows marker")
+
+
+cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second, "marker": marker}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
