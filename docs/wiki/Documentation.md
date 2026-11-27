@@ -7,11 +7,10 @@ Review: **Unreviewed** <!-- kept fast-3min@d4d7dad03 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
-Page paths from `criteria.py` use `/` on every OS.
-
 ## Problem
 - I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested.
 - Pages drift from the code, and each repo writes them its own way, so reviewing them takes too long.
+- Page paths from `criteria.py` use `/` on every OS, so a page has one name on Windows and Linux.
 - I need my approved requirements to stay exactly as I wrote them, while the loop keeps tests up to date for me; and when a PRD also lives in Notion, I want any difference between the two told to me, never silently overwritten.
 
 ## Requirements
