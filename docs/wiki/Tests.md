@@ -514,6 +514,7 @@
 | <a id="t-toys-no-leak-schedule"></a>toys-no-leak-schedule | requirement | REG-4 | not run | - | local | 2026-11-17 |
 | <a id="t-toys-no-leak-lane-pool"></a>toys-no-leak-lane-pool | requirement | REG-4 | not run | - | local | 2026-11-17 |
 | <a id="t-budget-order-first"></a>budget-order-first | requirement | REG-4 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-20 |
+| <a id="t-row-env-drops-host-session"></a>row-env-drops-host-session | requirement | REG-4 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
 
 ## Setup
 
@@ -834,4 +835,3 @@
 | <a id="t-toy-leak-config-keep"></a>toy-leak-config-keep | requirement | done line v110-toy-leak-fixes:2 | not run | - | local | 2026-11-27 |
 | <a id="t-toy-leak-row-setup"></a>toy-leak-row-setup | requirement | done line v110-toy-leak-fixes:4 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
 | <a id="t-toy-leak-entry-commit"></a>toy-leak-entry-commit | requirement | done line v110-toy-leak-fixes:4 | not run | - | local | 2026-11-27 |
-| <a id="t-row-env-drops-host-session"></a>row-env-drops-host-session | workflow | - | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
