@@ -45,7 +45,7 @@ None
 ## Non-goals
 
 - It never skips a check on CBS-1.2's fixed list.
-- It doesn't choose which checks a size runs: that's CBS-1.
+- It doesn't choose which checks a size runs: that's CBS-1. <!-- still true at v110-main-red: the regression job's full-history checkout changes nothing here -->
 
 ## Success metrics
 

@@ -16,6 +16,7 @@ The workflow skills share this contract. The design guide at the end explains ho
 | `.loop/config.json` key `session_command` | The session tool, as a list: called `start NAME` (prints the new session's id), `rename ID NAME` and `send ID TEXT`; a non-zero exit or 30 seconds means no session, so the goal falls back to a background process. `$LOOP_SESSION_TOOL` replaces it. The pool is `loop/session-pool.json` under the git common dir |
 | `.loop/config.json` key `criteria` | `true` makes `docs.py check` enforce the criteria contract on the wiki pages; each regression row links to one criterion by its goal or id; a reviewed line ends with a hash of its text, and `docs.py check` fails if the text changes; `criteria.py render` makes each page's Tests table |
 | `.loop/regression.tsv` | Each test row: id, level, command, goal, date seen failing |
+| `.loop/regression-relevel.tsv`, `.loop/regression-risk.tsv`, `.loop/regression-relevel-input.tsv` | Each row's test level and risk tag, the risk rules, and the re-levelling's input: "Row levels and risk tags" |
 | `.loop/regression-issues.tsv` | Each defect test's issue or pull request: link, state, date; written only by `tests.py issues --write`, shown in the wiki Tests lines and the health report |
 | `.loop/regression-runs.tsv` | Each row's last run: id, PASS or FAIL, date; written by `regression.py run`, shown in the wiki Tests tables |
 | `.loop/regression-known.tsv` | Rows expected to fail, with a reason; they don't block |
@@ -737,6 +738,120 @@ outside it. All three take `--root DIR` (default: the git top level), exit 2 on 
 audit hook and fails a row whose run read a skill file outside its closure (`LANES-TRACE-UNDECLARED`, with the line
 to add), whose Python launch the hook never saw (`LANES-TRACE-NOHOOK`), or whose command failed. It covers Python reads
 only; bash reads are covered by the static rules above.
+
+## Row levels and risk tags
+
+A row has a test level, L0, L1 or L2, and a risk tag, security, private or none, kept beside the table. The table's
+own `level` cell keeps the old words (land, nightly, draft, covered): they select what the scheduled run and a goal
+lane run. The pull request run follows the test level (below).
+
+**Levelled tables.** A table is levelled when `.loop/regression-relevel.tsv` exists or the table holds the row
+`lvl-armed`. Any other table is read and written as before, and `--test-level`, `--risk`, `--covers` and `level` are
+refused there with a line naming `relevel`.
+
+| File | Columns (tab-separated) |
+|---|---|
+| `.loop/regression-relevel.tsv`, the record | `id, old, level, risk, covers, seconds, cmdhash, reason`: one line per row, in table order. `old` is the word at the row's first entry; `covers` the proving rows of a covered row; `seconds` and `cmdhash` (sha1 of the command) only for L0; `reason` a comma list of `default`, `time:<s>`, `risk:<tag>`, `covers`, `limits-file`, `excepted:<record>`, `owner:<record id>` and `src:<hash>` (a defect row's link, goal and category). Never a link or a repository name |
+| `.loop/regression-risk.tsv`, the risk data | `kind, key, tag, why`: `requirement` (a Principle 6 requirement and the ids it absorbs; `-`, tag `none`, if there is none), `row` (a listed row), `given` (a tag given with `--risk` or `--risk-for`), `label` (a word in an issue label's name that means a tag), `removed` and `off` (what was removed, its why holding `owner:<id>`) |
+| `.loop/regression-relevel-input.tsv`, read by `relevel` | `id, value`: a covered row's comma list, or `own N` for a defect link that is a bare or `#N` number of this repository |
+
+**Risk.** A row guards a requirement when its goal cell or its id names a listed requirement id (any case, the inner
+hyphen optional, no letter or digit before or digit after), or the row is listed; its tag is at least that
+requirement's, and private wins over security. A security or private row is L1. A defect row's tag also comes from the
+labels of every linked issue or pull request; only the class is stored, never a label's name. Every stored tag is kept:
+lowering or removing one, or setting none where the tag can't be derived, needs `--owner-record` with an owner record
+(`<git common dir>/loop/owner-words.tsv`) that covers the row id or this branch's goal; it may be reused for what it
+covers, and its id is stored. Raising a tag needs no record. A requirement or listed row is never set to none. A write
+with an unchanged defect link reads no label.
+
+**What reading refuses** (all at once, the first 20 and a count, on stderr, exit 2; each line names the code, row, file
+and line, value, fix and who makes it). `run`, `criteria`, `sync` (and `--write`), `red` and the local cover refuse.
+`add`, `level`, `levels --fill` and `relevel` refuse their own change when it would add a problem or leave a row they
+write wrong, and list the others. `levels` and `levels --check` report; `workflow` and `reads` are unchanged. The
+pull-request check runs rows through `run`, so it refuses too.
+
+| Code | Refused |
+|---|---|
+| `LEVELS_NO_RECORD` | a levelled table with no record |
+| `LEVELS_NO_ENTRY` | a row with no entry. A plain row: `levels --fill`; a defect row: `relevel`; a covered row: `level ID --covers A,B` |
+| `LEVELS_BAD_LEVEL` | a stored level that is blank or not L0, L1 or L2 |
+| `LEVELS_BAD_OLD_WORD` | a table `level` cell that is not land, nightly, draft or covered |
+| `LEVELS_NO_RISK` | a row guarding a requirement with a blank or none tag, or a weaker one than it requires |
+| `LEVELS_RISK_LEVEL` | a security or private row at L0 or L2 |
+| `LEVELS_ORPHAN` | an entry, or a risk-data row line, whose row is not in the table: `level OLD --rename NEW` or `--remove` |
+| `LEVELS_DUPLICATE` | an id twice in the table or the record |
+| `LEVELS_L0_OVER` | L0 seconds over 45 in all (names the total) |
+| `LEVELS_L0_TIME` | an L0 entry with no positive seconds, or a command that changed since it was measured |
+| `LEVELS_BAD_COVERS` | a covered row whose list is empty, names itself, an unknown or covered row, or a tagged covered row with an untagged proving row |
+| `LEVELS_STALE_RISK` | a defect row whose link, goal or category changed since its tag was read: `level ID --refresh` |
+| `LEVELS_BAD_RISK_DATA` | risk data missing, empty, or with a bad or repeated line |
+| `LEVELS_BAD_FILE` | a malformed line, a conflict marker, or an unknown risk, old word or reason |
+| `LEVELS_LOWERED` | since the merge base: a tag or risk line removed or lowered, or the record and `lvl-armed` removed, with no `owner:` id covering it (checked against the owner records wherever this machine keeps them; elsewhere the id must be recorded). An id already there at the merge base covers no new change; a gone tagged row counts as renamed only into one new row with the same command, goal and tag. Also refused when there is no base branch to compare with. Merge bases are taken against GitHub's base ref, the default branch, main, master and the base their settings name; a branch's own setting is added, never used alone to compare it with itself |
+| `LEVELS_INTERRUPTED` | a write stopped between files: `levels --fill` completes it |
+
+Commands also refuse with `LEVELS_NEEDS_OWNER`, `LEVELS_NEEDS_RISK`, `LEVELS_NOT_LEVELLED`, `LEVELS_L0_TIME`,
+`LEVELS_BAD_RENAME`, `LEVELS_BAD_REMOVE`, `LEVELS_BAD_FLAGS`, `LEVELS_NO_ROW`, `LEVELS_CHANGED` and
+`LEVELS_UNEXPECTED` (names the error type and what was written). A covered row with no proving row is excused only by a
+fixed entry tied to its id, goal and command, and each read names it (`EXCEPTED`, on stderr). A covered row never runs;
+its level is its proving rows' highest, L1 at least when tagged.
+
+**Writes.** The table, record and risk data change as one update under the table's lock; readers wait for a write under
+way (a table that is not levelled takes no lock, and a reader that can't open the lock reads). A write of several files
+first leaves a mark in the worktree's git folder with each file before and after. `levels --fill` completes it only on
+the same branch with each file at one of those two states; otherwise it writes nothing and names the files and the mark,
+and `levels --discard` removes the mark. `level ID --rename NEW` moves the row, its entry, covers lists, risk-data lines
+and the limits, known, red and skip lists; `--remove` refuses while the row proves another, and a tagged row needs an owner
+record. After a merge that brought rows without entries (a clean merge, or a pull request that was green before), run
+`levels --fill`; the automatic repair of a conflicted table also joins the record by row id, refuses one id with two
+different lines, and fills; a conflict in the risk data is left to a person.
+
+**L0.** Only the first `relevel` and `level ID --retime` put a row at L0; `add` and `levels --fill` never do. A row is
+eligible when it is not tagged, passes in under 5 seconds, is on neither the skip nor the known-red list, and its
+command and the scripts it names (followed three deep, imports included) hold no network or toy-repository word and no
+call that can't be followed. `relevel` takes the fastest first while the total stays at 45 s or less. `--retime` runs
+the committed command in a throwaway clone with its own HOME and the row environment, and counts only exit 0 within the
+row's limit. Nothing in the times file ties a time to a command: the record keeps the command's hash. A changed command
+leaves L0. The local cover never leaves an L0 row to GitHub.
+
+**`relevel`** (once; run again it fills only missing entries) needs the risk data, measured times
+(`.github/workflows/row-times.tsv` or `--times`), the per-row limit (the pull-request workflow's `--timeout` or
+`--row-limit`) and the input file's covers lists. land is L1, or L0 when eligible; nightly is L2 when the limits file
+marks it `nightly` or its measured time reaches its limit, else L1; a covered row takes its proving rows' level; a
+tagged row is L1. Linked issues are read once each (one retry, 20 s a call, 300 s in all); every unreadable defect row
+is listed and nothing is written; `--risk-for ROW=TAG` gives it (none needs `--owner-record`). A new repository starts
+with a risk-data file (`requirement`, `-`, `none` and why, if it has no such requirement), then `relevel --dry-run`,
+`relevel`, `levels --check`. To stop levelling, add an `off` risk-data line with an owner record and remove the record
+and `lvl-armed`.
+
+**Which rows a levels change selects:** the rows whose entry changed, the rows that read the table, and the rows whose
+command or `# reads:` header names the changed levels file; not every row that reaches the runner. `lanes_cli.py affected` applies this only
+when the base already holds the record; before that it reads the levels files as any other file. `lvl-armed`
+(`dev/toy/test-lvl-armed.sh`) reads the runner, the table, the record, the risk data and the Principles page.
+
+## L1 on the pull request
+
+The table is armed when it holds `lvl-armed` and `.github/workflows/regression-pr.yml` is this tool's. On an armed
+table GitHub's pull request run of `run nightly --reuse --tier goal` is L1 (the same command run anywhere else is as
+before): the changed rows at L0 or L1, every security or
+private row the change reaches, and every private row when it reaches none (never reused). An L2 row it only reaches
+waits for the scheduled run. A private row listed `nightly` in the limits file still runs, with a NOTE. `run L0`,
+`run L1` and `run L2` pick by level when typed. A documents-only change runs no row, as before. A goal's own
+local lane is unchanged, except while the cover claims L1: it then runs its L0 rows and the planned rows the pull
+request leaves out (`NOT COVERED by L1: <ids>`), and records no L1 run. With the cover off, the lane runs as before.
+The merge queue runs no row.
+
+**Time goal.** Each shard writes `span.txt` (`start <epoch>`, then `end <epoch> <exit>`) and uploads it with its times
+file. When the legs, latest end minus earliest start, take longer than `l1_minutes` (10), the `affected` job prints
+`missed: <cause>`, the three slowest rows and the fix; it reports and fails nothing. A leg with no end is named and
+left out. A value that is not a whole number of at least 1 is refused (`L1_MINUTES_BAD`).
+
+**A security row that flips.** A row tagged security that fails is run once more in a fresh HOME. If it then passes it
+stays FAIL, prints `FLAKY <id>: failed then passed ...`, and the leg uploads `flaky.tsv` (`id TAB seconds TAB tail`,
+only after a flip; it holds none of the row's output). No rerun after a timeout, a signal or a start failure. `.github/workflows/regression-flaky.yml`
+runs from the default branch, never a pull request's code, only for a failed pull request run of this repository: it
+reads the flip files as data, refuses a malformed one or a row the default branch does not tag security, and opens or
+comments on one issue for each row: the row, that it failed then passed, the pull request, the commit and a link to its
+checks. No row output is published.
 
 ## Goal tier
 
@@ -1827,6 +1942,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `deliver_first` | `{}` | Deliver first, default on: {goal: {ID: false}, task: {...}, release: {...}} turns it off for a scope (most specific wins); set only with an owner reference: dlf.py set deliver_first off --scope S --id ID --owner-record R. |
 | `topics` | `{}` | Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column. |
 | `ci_levels` | `nightly` | Target of scheduled and tag regression runs: nightly (every row) or land. |
+| `l1_minutes` | `10` | L1's time goal on a pull request, in minutes; a longer run prints missed: and why. |
 | `time_budget_minutes` | `240` | Active minutes before no new step starts; 0 is none. |
 | `max_merge_rounds` | `8` | Merge rounds goal.py pr may take before it waits. |
 | `max_active_goals` | `20` | Goals live at once (or parallel, if smaller); 0 is none. |

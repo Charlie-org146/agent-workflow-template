@@ -32,6 +32,7 @@ NO_EFFECT = ("CHANGELOG.md", "VERSION", "README.md", "FINDINGS.md", "DECISIONS.m
              "docs/designs/", *RECORDS, ".loop/findings.md", ".loop/queue.md", RUNS_FILE)
 RUNNER = "skills/workflow-regression/scripts/regression.py"
 TABLE = ".loop/regression.tsv"
+LEVEL_FILES = (".loop/regression-relevel.tsv", ".loop/regression-risk.tsv")
 IMPORT = re.compile(r"^\s*(?:from\s+([A-Za-z_]\w*)|import\s+([\w, ]+))", re.M)
 ROOT_RUN = re.compile(r'(?:cd|pushd)\s+"?\$\{?here\}?/?"?(?=[\s;&|)]|$)|-C\s+"?\$\{?here\}?/?"?\s|--root[= ]"?\$\{?here\}?/?"?(?=[\s;&|)]|$)', re.M)
 
@@ -49,7 +50,8 @@ def git(root, *args):
 def runner():
     here = os.path.dirname(os.path.abspath(__file__))
     digest = hashlib.sha256()
-    for name in ("regression.py", "lanes.py", "narrow.py", "runs.py", "tiers.py", "row_reach.py", "completion.py"):
+    for name in ("regression.py", "lanes.py", "narrow.py", "runs.py", "tiers.py", "row_reach.py", "completion.py",
+                 "levels.py", "levels_gate.py", "levels_write.py", "levels_read.py", "levels_cli.py"):
         with open(os.path.join(here, name), "rb") as handle:
             digest.update(handle.read())
     return digest.hexdigest()[:12]
@@ -327,6 +329,25 @@ def table(root, commit, name, memo):
     return memo[commit, name]
 
 
+def entry_moved(root, at, rid, memo):
+    """Whether a row's record entry differs from the one at commit `at`."""
+    name = os.path.basename(LEVEL_FILES[0])
+    if name not in memo:
+        try:
+            with open(os.path.join(root, LEVEL_FILES[0]), encoding="utf-8") as handle:
+                memo[name] = {x.split("\t")[0]: x for x in handle.read().splitlines() if x.strip() and x[0] != "#"}
+        except OSError:
+            memo[name] = {}
+    return table(root, at, name, memo).get(rid) != memo[name].get(rid)
+
+
+def level_change(root, row, path, moved, cache):
+    """A levels-file change picks the row whose entry changed, a table reader and a row declaring the file: not every
+    row that reaches the runner."""
+    return moved and path == LEVEL_FILES[0] or names_table(root, row["command"], cache) \
+        or hits(path, declared(root, row["command"], cache))
+
+
 def no_effect(path):
     return any(path == n or (n.endswith("/") and path.startswith(n)) for n in NO_EFFECT)
 
@@ -380,6 +401,8 @@ def plan(root, selected, record, current_tsv, current_known):
                 stale = table(root, prior["commit"], "regression-known.tsv", memo).get(rid) != current_known.get(rid)
             elif path == narrow.CONFIG:
                 stale = stale or narrow.config_hit(root, prior["commit"], row["command"], cache)
+            elif path in LEVEL_FILES:
+                stale = level_change(root, row, path, entry_moved(root, prior["commit"], rid, memo), cache)
             elif touches(root, row["command"], path, cache):
                 stale = True
             elif not no_effect(path) and not any(hits(path, closure(root, other["command"], cache)[0]) for other in selected):

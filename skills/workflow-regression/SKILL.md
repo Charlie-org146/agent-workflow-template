@@ -15,7 +15,12 @@ Rows live in `.loop/regression.tsv`: id, level, command, goal, and the date it w
 | `land` | `run land` and `run nightly`. Keep these to seconds: a row whose suite takes 20 seconds or more is `nightly` |
 | `nightly` | `run nightly` |
 | `draft` | Nothing, until you give it a real command and level |
-| `covered` | Nothing. The done line is proved elsewhere; say where in the command |
+| `covered` | Nothing. The done line is proved elsewhere; say where in the command. On a levelled table, name the proving rows with `--covers A,B` |
+
+On a **levelled** table (`.loop/regression-relevel.tsv` exists, or the row `lvl-armed`), each row also has a test level
+L0, L1 or L2 and a risk tag (security, private or none), kept beside the table. The pull request run follows the level
+(`loop-files.md`, "L1 on the pull request"); the words above select what the scheduled run and a goal lane run.
+Reading a wrong level or a missing tag is refused. Rules and codes: `loop-files.md`, "Row levels and risk tags".
 
 ## `add <id> --level <level> --command "<command>" [--goal <criterion>|<slug>:<n>] [--category criterion|workflow|defect --link <url>]`
 
@@ -24,6 +29,39 @@ test needs a criterion. A changed command must be proved again. `--category defe
 defect test: one for every finding, issue or bug that gets fixed. It shows under "Defect tests" on the page of the
 criterion in `--goal`, never counts as proof of that criterion, and `sync` flags a defect row with no link.
 `--category workflow` makes a workflow test: an end-to-end run of a whole flow on a toy repo, after the requirement tests.
+
+On a levelled table a new row gets L1 and its derived risk, printed as `LEVEL <id> ...`; `--test-level L1|L2`, `--risk`,
+`--covers` and `--owner-record` set them (L0 only by `level --retime`). **A defect row whose link is an issue or pull
+request address has its labels read** (gh, signed in); a `#N` link or one that can't be read needs `--risk` (security or
+private needs no owner record; none does). An unchanged link keeps its tag without a read.
+
+## `level <id>`
+
+```bash
+python3 scripts/regression.py level login-test --risk security
+```
+
+Shows a row's level, or changes it: `--test-level`, `--risk`, `--covers`, `--retime` (L0, by running the committed
+command in a throwaway clone), `--refresh` (read a defect link's labels again), `--rename NEW`, `--remove`. Lowering or
+removing a tag needs `--owner-record`.
+
+## `levels [--check|--fill|--discard]`
+
+```bash
+python3 scripts/regression.py levels --check
+```
+
+Lists levels and problems. `--check` prints `valid` or `not levelled` (exit 0), or every problem as a missing entry to
+fill or a stored one to repair (exit 2). `--fill` completes a stopped write and adds missing non-defect entries;
+`--discard` drops a stopped write's mark.
+
+## `relevel [--dry-run]`
+
+```bash
+python3 scripts/regression.py relevel --dry-run
+```
+
+Gives every row without an entry its level and risk tag, once for a repository: `loop-files.md` has the rules.
 
 `run` records each row's last status and date in `.loop/regression-runs.tsv`, which the wiki Tests tables show. The GitHub
 workflow runs every `land` and `nightly` row, so a criterion's rows should be one of those; its run summary lists each result.
@@ -35,7 +73,8 @@ python3 scripts/regression.py sync
 ```
 
 Lists each done line with no row (`GAP`), each `DRAFT` row and each row never seen failing (`UNPROVEN`); exits
-0 only when there are none. `--write` adds a `draft` row per gap. Replace each with `add` and a real command, or mark it `covered`.
+0 only when there are none. `--write` adds a `draft` row per gap. Replace each with `add` and a real command, or mark it
+`covered` (on a levelled table, with `--covers`).
 
 ## `red <id> --break "<command>"`
 
@@ -138,5 +177,8 @@ Asking the agent for one of these runs exactly the routine beside it, from the s
 | `/workflow-regression run land` | `python3 scripts/regression.py run land` |
 | `/workflow-regression sync` | `python3 scripts/regression.py sync` |
 | `/workflow-regression workflow` | `python3 scripts/regression.py workflow` |
+| `/workflow-regression level ID --risk security` | `python3 scripts/regression.py level ID --risk security` |
+| `/workflow-regression levels --check` | `python3 scripts/regression.py levels --check` |
+| `/workflow-regression relevel --dry-run` | `python3 scripts/regression.py relevel --dry-run` |
 | `/workflow-regression list` | `python3 scripts/tests.py list` |
 | `/workflow-regression issues` | `python3 scripts/tests.py issues --write` |

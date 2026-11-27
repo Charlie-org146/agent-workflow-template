@@ -26,8 +26,10 @@ import socket
 import subprocess
 import sys
 
+import completion
 import lanes
 import narrow
+from completion import notes, rank  # noqa: F401
 
 # No terminal, no waiting: a prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -45,7 +47,9 @@ def kinds(rows, kind):
 
 
 def target(root, args):
-    """S23: a goal lane plans from goal_levels: land (default), or nightly for land and nightly rows."""
+    """S23: a goal lane plans from goal_levels: land (default), or nightly. Armed, GitHub's pull request `nightly` run is L1."""
+    if args.tier and args.target == "nightly" and os.environ.get("GITHUB_EVENT_NAME") == "pull_request" and completion.armed(root):
+        return "L1"
     return "nightly" if args.tier and args.target == "land" and config(root).get("goal_levels") == "nightly" else args.target
 
 
@@ -196,6 +200,8 @@ def hit(root, row, path, at, cache, memo):
         return lanes.table(root, at, "regression-known.tsv", memo).get(row["id"]) != memo["known"].get(row["id"])
     if path == narrow.CONFIG:
         return narrow.config_hit(root, at, row["command"], cache)
+    if path in lanes.LEVEL_FILES:
+        return lanes.level_change(root, row, path, lanes.entry_moved(root, at, row["id"], memo), cache)
     return lanes.touches(root, row["command"], path, cache)
 
 
@@ -214,14 +220,14 @@ def reason(root, row, old, ok, base, cache, memo):
         return ""
     if found:
         return "reaches " + found
-    if paths and lanes.closure(root, row["command"], cache)[1]:
+    if set(paths) - set(lanes.LEVEL_FILES) and lanes.closure(root, row["command"], cache)[1]:
         return "root runner"
     return "failure rerun (flaky: never reused)" if (old or {}).get("rows", {}).get(row["id"], {}).get("flaky") else ""
 
 
 def quiet(path, gone):
     """Paths the unmapped rule ignores: deleted ones, the loop's tables and files no row reads."""
-    return path in gone or path in (lanes.TABLE, KNOWN) or path.startswith(lanes.BOOKKEEPING) or any(
+    return path in gone or path in (lanes.TABLE, KNOWN, *lanes.LEVEL_FILES) or path.startswith(lanes.BOOKKEEPING) or any(
         path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT)
 
 
@@ -230,13 +236,6 @@ def unmapped(root, picked, base, cache):
     gone = lanes.deleted(root, base)
     deps = [lanes.closure(root, row["command"], cache)[0] for row in picked]
     return [p for p in lanes.changed(root, base) or [] if not quiet(p, gone) and not any(lanes.hits(p, d) for d in deps)], gone
-
-
-def notes(loose, gone):
-    """The advisory UNMAPPED lines (DX-15, DX-18): such a path picks the rows that name it and the runners (REG-7)."""
-    return ["UNMAPPED %s: no row declares it. Note: the rows that name it and the runners run; declare it in the "
-            "# reads: header of the row that tests it to map it" % p for p in loose] + [
-            "UNMAPPED %s: deleted. Note: the rows that name it and the runners run" % p for p in gone]
 
 
 def picks(root, picked, paths, old, ok, cache, memo):
@@ -249,12 +248,6 @@ def picks(root, picked, paths, old, ok, cache, memo):
         elif mine and lanes.names_any(root, row["command"], mine, cache):
             found[row["id"]] = "names an unmapped path"
     return found
-
-
-def rank(because):
-    """Run order (#531): new or changed rows, reruns, rows that reach a changed file, then root runners and picks."""
-    return 0 if because.startswith("new row") else 1 if because.startswith(("failure", "skipped")) else 3 if because.startswith(
-        ("root runner", "names")) else 2
 
 
 def closeness(root, picked, base, times, cache=None):
@@ -289,6 +282,8 @@ def plan(root, picked, record):
         for rid, because in (picks(root, picked, loose + gone, old, ok, cache, memo) if loose or gone else {}).items():
             why[rid] = why[rid] or because
     why = {row["id"]: why.get(row["id"]) or ("FULL" if full else "") for row in picked}
+    completion.all_private(picked, why, {row["id"] for row in picked if row.get("mandatory") == "private" and (
+        lanes.closure(root, row["command"], cache)[1] or lanes.whole(root, row, {}))})
     todo = [row["id"] for row in picked if why[row["id"]]]
     near = closeness(root, picked, BASE, old["rows"] if ok else {}, cache)
     todo.sort(key=lambda rid: (rank(why[rid]), near[rid]))  # then closeness (TD476)
@@ -369,6 +364,10 @@ def flaky_apply(record, results, head, clean):
     rows, (host, python), lines = previous(record) if record else {}, runner(), []
     for item in results:
         item.update(commit=head, clean="yes" if clean else "no", host=host, python=python)
+        if item.get("rerun_passed"):  # a security row that flipped within this run: it keeps its mark and fails
+            completion.flaky_write(os.environ.get("LOOP_FLAKY_FILE"), item)
+            lines.append(completion.FLIP % item["id"]) if clean else None
+            continue
         if not clean:
             continue
         item["flaky"] = compare(rows.get(item["id"]), item["state"], head, clean)
