@@ -70,3 +70,6 @@ Pull request notes:
 - Left to later goals: running rows by level and using a size's levels (G2), the scheduled run (G3), and retiring the old words and the draft state column (G4). Until then a side record file holds each row's level in place of a table column.
 - To make room under the packaged-script limit, the work is in five new modules in workflow-regression and one in workflow-delivery, and three functions moved whole: split, merge_runs and mend.
 - Deliver-first: the advised remove command doesn't take an orphaned pinned-tag line; that line is removed by hand.
+- The pull request step's lane is run under env -i (HOME, PATH, TERM=dumb, LOOP_ROLE=worker). The qa lane and one earlier pull request lane ran with the app session's environment; a row the lane reuses keeps its earlier result.
+- Under an app session's environment four rows failed: del6-depth-by-size, del7-kill-resume, del9-pr-refuses and issue-38-verdicts. See #5917, lines v110-lvl-relevel-choice-1 and v110-lvl-relevel-choice-2.
+- The row filter change for this belongs to v110-toy-leak-fixes, not to this pull request.
