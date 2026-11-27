@@ -119,8 +119,8 @@ check(len(lines) == 1 and lines[0].startswith("p pre-flight, 2 open") and '"reco
 check(auto.eta_text(auto.eta_seen(here, run), at) == "ETA after your answers (2 open)", "the ETA cell reads 'after your answers (2 open)'")
 check(not auto.eta_over(auto.eta_seen(here, run), 500) and refused(fit.budget_stop, "p", run, g.state_dir(), {}) == "",
       "with items open the ETA never trips, however long the goal has run")
-check('replan.preflight_lines([auto.eta_seen(root, r) for r in live])' in open(os.path.join(root, "skills", "workflow-monitoring", "scripts", "checkin.py")).read(),
-      "the check-in adds these lines to Needs you")
+check('replan.preflight_lines([auto.eta_seen(root, r) for r in live if not r.get("one_review")])' in open(os.path.join(root, "skills", "workflow-monitoring", "scripts", "checkin.py")).read(),
+      "the check-in adds these lines to Needs you (changed to match the one-review filter, not weakened)")
 check(replan.preflight_lines([dict(run, preflight={"items": []})]) == [] and "ETA " in auto.eta_text(dict(run, preflight={}), at) and "after" not in auto.eta_text(dict(run, preflight={}), at),
       "negative control: a goal with no items has no line and the plain ETA (goals frozen before pre-flight read as before)")
 
