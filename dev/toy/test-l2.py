@@ -467,6 +467,43 @@ def levelrun():
     repo.close()
 
 
+def order():
+    print("== TD2358: one worst-state order, and a covered row asked for by id is refused")
+    # Value: protects=the summary job and the pages rank states by the same order (FLAKY included, an unknown state worst, no traceback), and a
+    #   covered row targeted by its id never runs; fails_when=the two orders differ, ORDER.index raises, or the runner runs a covered row
+    l2 = l2mod()
+    sys.path.insert(0, os.path.join(root, "skills", "workflow-regression", "scripts"))
+    import level_words
+    states = ("FAIL", "FLAKY", "no result", "draft", "SKIPPED", "KNOWN", "EXEMPT", "excepted", "PASS")
+    check(tuple(l2.ORDER) == states and tuple(level_words.ORDER) == states, "one order, worst first, in l2.py and level_words.py", (l2.ORDER, level_words.ORDER))
+    yml = open(os.path.join(root, ".github", "workflows", "regression.yml"), encoding="utf-8").read()
+    copy = re.search(r"^\s+ORDER = (\(.*?\))", yml, re.M)
+    check(copy and tuple(eval(copy.group(1))) == states, "the order in regression.yml's summary job is the same tuple", copy and copy.group(1))
+    check(l2.rank("FLAKY") < l2.rank("PASS") and l2.rank("FAIL") < l2.rank("FLAKY"), "a FLAKY cover ranks worse than PASS and better than FAIL")
+    check(all(level_words.worst([s, "PASS"]) == (s if s != "PASS" else "PASS") for s in states), "level_words.worst gives the same answer for every state against PASS")
+    record = "c1\tcovered\tL1\tnone\tx,y\t\t\tcovers\n"
+    for s in states:
+        lines, incomplete = l2.covered_lines(record, {"x": s, "y": "PASS"})
+        check(("L2_COVERED c1 -> %s via x" % s) in lines or s == "PASS", "the summary ranks %s as worst against PASS" % s, lines)
+    try:
+        lines, incomplete = l2.covered_lines(record, {"x": "weird", "y": "FAIL"})
+        check("L2_COVERED c1 -> weird via x" in lines, "an unknown state ranks worst, with no traceback", lines)
+    except ValueError as error:
+        check(False, "an unknown state ranks worst, with no traceback", error)
+
+
+def coveredid():
+    print("== TD2358: a covered row targeted by its id is refused and runs nothing")
+    # Value: protects=R2: a covered row never makes a PASS of its own; fails_when=the runner runs a covered row's command by id
+    top = repo(rows=[("l1", "land", 'echo l1 >> "$TOY_LOG"'), ("cov", "covered", 'echo cov >> "$TOY_LOG"')],
+               files={"regression-relevel.tsv": "l1\tland\tL1\tnone\t\t\t\tdefault\ncov\tcovered\tL1\tnone\tl1\t\t\tcovers\n"})
+    code, said, results, calls = step(top, "cov")
+    ran = open(os.path.join(top, "ran.log")).read().split()
+    check(code != 0 and "REFUSED (COVERED_ROW)" in said and "covered by l1; run those" in said and ran == [], "target = a covered row's id is refused: covered by l1; run those, and nothing ran", (code, said[-300:], ran))
+    code, said, results, calls = step(top, "l1")
+    check(code == 0 and "l1" in open(os.path.join(top, "ran.log")).read().split(), "a plain row's id still runs", (code, said[-200:]))
+
+
 def draftrun():
     print("== R6: the scheduled runner never runs a draft, even asked for by its row id")
     # Value: protects=a draft's command never runs in the generated workflow and the log says so; fails_when=the runner runs a draft named by
@@ -479,7 +516,7 @@ def draftrun():
         check([l for l in said.splitlines() if "drf" in l] == ["not run: draft drf"], "target %s: the log names the draft once, as not run: draft drf" % target)
 
 
-cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second, "marker": marker, "usage": usage, "guard": guard, "draftrun": draftrun, "draftearly": draftearly, "levelrun": levelrun}
+cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second, "marker": marker, "usage": usage, "guard": guard, "draftrun": draftrun, "draftearly": draftearly, "levelrun": levelrun, "order": order, "coveredid": coveredid}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
