@@ -10,7 +10,7 @@ Lines: about 600
 Gates: a covered row whose list doesn't resolve to row IDs is refused, a goal_levels value that is neither a level nor an old word is refused on a levelled table
 Classes: security (workflow files)
 
-The goal's frozen touches don't hold .github/workflows, .loop/START.md or .loop/regression-relevel.tsv. They are added through goal.py, the workflow files only after the owner's record below.
+The two workflow files, .loop/START.md, .loop/regression-relevel.tsv and level_words.py are added to the goal's touches through goal.py; the workflow files rest on the owner's record below.
 
 ## What G1 already does (on d25f31e5d)
 A table is levelled when .loop/regression-relevel.tsv exists or the table holds lvl-armed. The record's columns are id, old, level, risk, covers, seconds, cmdhash, reason, and parse_record (levels.py:96) refuses a line without exactly eight cells. The table's own level cell keeps the old words, which still select what runs. For line 3, G1 already refuses a covered row whose list is empty, names itself, an unknown row or a covered row, or (when tagged) an untagged cover (LEVELS_BAD_COVERS), and computes a covered row's level from its covers (covered_level; L1 at least when tagged). Two rows with no covers are excused by fixed entries bound to id, goal and command (levels.py EXCUSED: done-pkg-secret-print-3, which G1 records as operation decision TD2022 and the earlier G4 plan records as ruled by the owner by ID in o1034, and done-gap-wave1-small-4, owner record o988); each read prints EXCEPTED. G1 has no draft row to handle and leaves the draft state column, the goal_levels words, the PR level map and the runbook labels to this goal; it leaves "green when all its covers are" to G2.
@@ -54,8 +54,8 @@ D5. Room under the package limit. On d25f31e5d, bytes left: regression.py 248, l
 
 D6. Existing rows. goal-levels-nightly carries the old words, and del-16-linked tests for "covered" in column 2, which stays. A row line changes only if its meaning changes; each changed line gets its approved-row-changes line, stricter or equal, never looser.
 
-## Safety items: the owner's own words before the build
-Relayed words don't count (TD2002). No build before that owner record exists. The numbers are the ones already sent to the owner.
+## Safety items (approved: owner record o1062)
+Owner record o1062 approves editing .github/workflows/regression-pr.yml and regenerating regression.yml for the level map. release.yml is not in this goal. The numbers are the ones already sent to the owner.
 - S7 (.github/, security): regression-pr.yml, the pull request check, runs the L1 level under its new name, and ci_levels no longer changes it.
 - S8 (.github/, security): regression.yml, the scheduled test workflow, is regenerated so it knows the new level names and drafts; this goal changes none of its triggers or permissions.
 Any other new workflow permission or trigger the build finds it needs is added to this list and asked the same way. D4 makes review.py's major gate stricter and loosens nothing.
