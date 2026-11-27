@@ -68,6 +68,11 @@ def mend(git, files, base):
                 if f == tsv[2] and same:  # one record entry with and without the ninth (state) cell: keep the longer
                     out[at[k]] = max(line, out[at[k]], key=len)
                     continue
+                if f == tsv[1]:  # a run line with and without the sixth (commit) cell: when the first five cells are byte-equal, keep the longer
+                    pa, pb = (line.split("\t") + [""] * 6)[:6], (out[at[k]].split("\t") + [""] * 6)[:6]
+                    if pa[:5] == pb[:5] and not (pa[5] and pb[5]):
+                        out[at[k]] = max(line, out[at[k]], key=len)
+                        continue
                 if f != tsv[1] or line.split("\t")[2:3] == out[at[k]].split("\t")[2:3]:
                     return False
                 out[at[k]] = max(line, out[at[k]], key=lambda l: l.split("\t")[2:3])
