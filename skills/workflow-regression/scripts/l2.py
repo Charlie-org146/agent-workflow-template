@@ -148,7 +148,7 @@ def issues(text, v, complete_run):
     bad = 0
     rows = dict(v["skipped"], **{rid: "no result (shard did not finish)" for rid in v["unfinished"]})
     found = listed("--label", "regression")
-    mine = [i for i in found or [] if "<!-- loop-l2-skipped -->" in (i["body"] or "")]
+    mine = [i for i in found or [] if (i["body"] or "").split("\n", 1)[0] == "<!-- loop-l2-skipped -->"]
     bad += found is None
     if found is not None:
         keep = {}
@@ -171,7 +171,7 @@ def issues(text, v, complete_run):
     red = listed("--label", "l2-red")
     bad += red is None
     if red:
-        goal = listed("--label", "main-red") or [i for i in listed() or [] if "<!-- loop-l2-main-red -->" in (i["body"] or "")]
+        goal = listed("--label", "main-red") or [i for i in listed() or [] if (i["body"] or "").split("\n", 1)[0] == "<!-- loop-l2-main-red -->"]
         if not goal:
             made = gh("issue", "create", "--title", "Regression: L2 failing rows", body="<!-- loop-l2-main-red -->\nThe L2 run's failing rows, one line each.")
             bad += bool(made.returncode)
@@ -181,7 +181,7 @@ def issues(text, v, complete_run):
             seen = gh("issue", "view", str(goal[0]["number"]), "--json", "body,comments", "--jq", '.body, (.comments[]?.body)')
             bad += bool(seen.returncode)
             for one in sorted(i["number"] for i in red):
-                if not seen.returncode and ("L2 red: #%d" % one) not in seen.stdout.replace("\r", ""):
+                if not seen.returncode and not re.search(r"L2 red: #%d(?!\d)" % one, seen.stdout):
                     bad += bool(gh("issue", "comment", str(goal[0]["number"]), body="L2 red: #%d" % one).returncode)
     return bad
 
