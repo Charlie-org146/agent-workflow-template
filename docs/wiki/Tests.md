@@ -834,4 +834,4 @@
 | <a id="t-toy-leak-config-keep"></a>toy-leak-config-keep | requirement | done line v110-toy-leak-fixes:2 | not run | - | local | 2026-11-27 |
 | <a id="t-toy-leak-row-setup"></a>toy-leak-row-setup | requirement | done line v110-toy-leak-fixes:4 | not run | - | local | 2026-11-27 |
 | <a id="t-toy-leak-entry-commit"></a>toy-leak-entry-commit | requirement | done line v110-toy-leak-fixes:4 | not run | - | local | 2026-11-27 |
-| <a id="t-row-env-drops-host-session"></a>row-env-drops-host-session | workflow | - | not run | - | local | no |
+| <a id="t-row-env-drops-host-session"></a>row-env-drops-host-session | workflow | - | not run | - | local | 2026-11-27 |
