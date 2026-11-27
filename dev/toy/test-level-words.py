@@ -521,7 +521,41 @@ def runbook():
         check(len(line) == 1 and all(w in line[0] for w in olds) and new in line[0], "the table has one line for %s with its old words and %s" % (where, new), line)
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook}
+def prlevel():
+    print("== S7: the pull request check runs L1 on an armed table; ci_levels no longer steers it")
+    # Value: protects=regression-pr.yml names L1 on an armed table and is otherwise unchanged (same triggers, permissions, steps), the cover's
+    #   pinned sha follows the file, and an unarmed table keeps ci_levels; fails_when=an armed repository still writes ci_levels, anything but
+    #   the run line differs, or WF_SHA is not the sha1 of the committed file
+    import hashlib
+    from lvl_fixture import Repo, entry, row, REG
+    risks = ["label\tsecurity\tsecurity\tfixture label"]
+
+    def written(armed, levels):
+        rows = [row("a")] + ([row("lvl-armed")] if armed else [])
+        repo = Repo(rows, [entry("a")] + ([entry("lvl-armed")] if armed else []), risks)
+        os.makedirs(os.path.join(repo.path, "skills", "workflow-regression"))
+        os.symlink(REG, os.path.join(repo.path, "skills", "workflow-regression", "scripts"))
+        repo.write(".loop/config.json", json.dumps({"ci_levels": levels}))
+        armed and repo.write(".github/workflows/regression-pr.yml", "# Written by workflow-regression\n")
+        repo.commit()
+        repo.run("workflow", "--visibility", "public")
+        text = repo.read(".github/workflows/regression-pr.yml")
+        repo.close()
+        return text
+    armed_land, armed_night = written(True, "land"), written(True, "nightly")
+    plain_land = written(False, "land")
+    check("run L1 --reuse --tier goal" in armed_land and "run land" not in armed_land, "armed, ci_levels land: the check runs L1 and ci_levels does not steer it")
+    check(armed_land == armed_night, "armed: ci_levels land and nightly write the same file")
+    check("run land --reuse --tier goal" in plain_land, "not armed: ci_levels land still steers the check, as before")
+    check(armed_land.replace("run L1 ", "run land ") == plain_land, "the armed file differs from the unarmed one only in the run line: triggers, permissions and steps are the same")
+    committed = open(os.path.join(root, ".github", "workflows", "regression-pr.yml"), encoding="utf-8").read()
+    cover = open(os.path.join(root, "skills", "workflow-delivery", "scripts", "cover.py"), encoding="utf-8").read()
+    sha = hashlib.sha1(committed.strip().replace("\r\n", "\n").encode()).hexdigest()
+    check('WF_SHA = "%s"' % sha in cover, "cover.py's WF_SHA is the sha1 of the committed regression-pr.yml (they move together)")
+    check("run L1 --reuse --tier goal" in committed, "this repository's regression-pr.yml names L1")
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
