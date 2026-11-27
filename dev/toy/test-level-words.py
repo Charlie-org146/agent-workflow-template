@@ -56,6 +56,9 @@ def goal():
         got, out, err, code = plan(True, value)
         old = value in ("land", "nightly")
         check(got == want and code is None and (("GOAL_LEVELS_OLD" in out) == old), "levelled table: goal_levels %r plans from %s%s" % (value, want, " and says so" if old else ""))
+    for armed in (True, False):
+        got, out, err, code = plan(armed, None)
+        check(got == "land" and code is None and not out + err, "goal_levels not set: a goal lane plans as it always did, in silence (%s table)" % ("levelled" if armed else "not levelled"))
     got, out, err, code = plan(True, "weekly")
     check(code not in (None, 0) and "REFUSED (GOAL_LEVELS_BAD)" in err and "Nothing was run." in err, "levelled table: goal_levels 'weekly' is refused before any work")
     for value, want in (("land", "land"), ("nightly", "nightly"), ("L0", "land"), ("L1", "nightly"), ("L2", "nightly")):

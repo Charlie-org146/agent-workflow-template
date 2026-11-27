@@ -28,6 +28,7 @@ import sys
 
 import completion
 import lanes
+import level_words
 import narrow
 from completion import notes, rank  # noqa: F401
 
@@ -50,7 +51,7 @@ def target(root, args):
     """S23: a goal lane plans from goal_levels: land (default), or nightly. Armed, GitHub's pull request `nightly` run is L1."""
     if args.tier and args.target == "nightly" and os.environ.get("GITHUB_EVENT_NAME") == "pull_request" and completion.armed(root):
         return "L1"
-    return "nightly" if args.tier and args.target == "land" and config(root).get("goal_levels") == "nightly" else args.target
+    return level_words.goal_target(config(root).get("goal_levels"), completion.armed(root)) if args.tier and args.target == "land" else args.target
 
 
 def config(root):
