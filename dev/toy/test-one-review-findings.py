@@ -242,6 +242,44 @@ check(refused(lambda: reverts.release_check(tmp, "HEAD")) == "" and "ONE_REVIEW_
       "once the removal is in the commit being released, the release goes on, and not before")
 sh("switch", "-q", "loop/g")
 
+# the check-in lists every decision with its command until the owner has been shown it and the goal is finished
+sh("update-ref", "refs/remotes/origin/main", "main")
+sh("switch", "-q", "-c", "loop/k", "main")
+record("k", branch="loop/k")
+dlf.settle(tmp, runs, "k", "choice", "c1", "pick the shorter name", "w", "take it")
+
+
+def checkin(*flags):
+    got = subprocess.run([sys.executable, os.path.join(root, "skills", "workflow-monitoring", "scripts", "checkin.py")] + list(flags),
+                         capture_output=True, text=True, cwd=tmp, env=dict(os.environ))
+    return got.stdout + got.stderr
+
+
+def section(text):
+    return text.split("\nDecided for you\n", 1)[1].split("\n\n")[0].split("\n") if "\nDecided for you\n" in text else []
+
+
+number = decided("k")[0]["n"]
+said = checkin()
+mine = [x for x in section(said) if " k " in x or "k #" in x]
+command = next((x.strip() for x in section(said) if "revert k %d" % number in x), "")
+check(any("k #%d: pick the shorter name -> take it. Reverting it stops the goal." % number in x for x in mine) and command.startswith("cd ")
+      and said.index("Decided for you") < said.index("Coming up"), "the check-in lists the decision with what a revert stops: %s" % (section(said) or said[-400:]))
+check(command and len(command) > 100 and command.endswith("revert k %d" % number), "the command stands whole on its own line, however long: %d" % len(command))
+check(not [e for e in decisions.entries(runs, "k") if e["kind"] == "delivered"], "a plain check-in marks nothing delivered")
+json.dump(dict(rec("k"), status="retired"), open(os.path.join(runs, "k.json"), "w"))
+check("revert k %d" % number in checkin(), "a retired goal's decision stays listed until the owner was shown it")
+json.dump(dict(rec("k"), status="running"), open(os.path.join(runs, "k.json"), "w"))
+checkin("--owner")
+marked = [e for e in decisions.entries(runs, "k") if e["kind"] == "delivered"]
+check([e["ids"] for e in marked] == [[number]], "--owner marks exactly the ids it printed: %s" % marked)
+check("revert k %d" % number in checkin(), "shown but unfinished, it stays listed")
+json.dump(dict(rec("k"), status="retired"), open(os.path.join(runs, "k.json"), "w"))
+check("revert k %d" % number not in checkin(), "shown and finished, it leaves the list")
+ran = subprocess.run(command, shell=True, capture_output=True, text=True, env=dict(os.environ))
+check("stops without merging" in ran.stdout, "the printed command runs as it stands: %s" % (ran.stdout + ran.stderr).strip()[-160:])
+sh("switch", "-q", "loop/g")
+
 # the two operation-only commands, and a safety break that nobody can accept away
 record("h")
 put("flow.json", "{}")

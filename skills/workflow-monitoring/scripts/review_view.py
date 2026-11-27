@@ -4,11 +4,14 @@ monitoring scripts; it has no command of its own. Standard library only."""
 import argparse
 import datetime
 import glob
+import importlib.util
 import os
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import board_status as bs  # noqa: E402
+os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 
 def eta_new(root, slug, done, touches, budget, cfg=None):
@@ -60,3 +63,46 @@ def start_mail(notify, args):
         print("NOT MAILED %s: %s" % (args.slug, "it may have gone out, so it is not sent twice" if now == "mailing"
                                      else "see the NOTIFY line; the next check-in tries again"))
     return 0
+
+
+def delivery(name):
+    """One of delivery's scripts, loaded by path (skills don't import each other)."""
+    spec = importlib.util.spec_from_file_location("one_review_" + name, os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", name + ".py"))
+    found = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(found)
+    return found
+
+
+def decided(roots, owner=False):
+    """The "Decided for you" lines of every followed repo. A decision stays until the owner was shown it (`owner`, the
+    operation session's flag for that run) and its goal's release is cut or the goal is retired. Only printed ids are marked."""
+    out = []
+    for root in roots:
+        try:
+            common = subprocess.run(["git", "rev-parse", "--git-common-dir"], cwd=root, capture_output=True, text=True, check=True).stdout.strip()
+            runs = os.path.join(os.path.abspath(os.path.join(root, common)), "loop", "runs")
+            names = sorted(glob.glob(os.path.join(runs, "*.json")))
+        except (OSError, subprocess.SubprocessError):
+            out.append("- %s: its decisions can't be read" % root)
+            continue
+        for state in (bs.read_json(n) for n in names if os.path.basename(n).count(".") == 1):
+            if not isinstance(state, dict) or not state.get("one_review"):
+                continue
+            try:
+                reverts, ledger = delivery("reverts"), delivery("decisions")
+                pairs = reverts.listing(root, runs, state)
+                entries = ledger.entries(runs, state["slug"])
+                shown = {i for e in entries if e["kind"] == "delivered" for i in e["ids"]}
+                done = state.get("release") == "cut" or state.get("status") == "retired"
+                printed = []
+                for line, command in pairs:
+                    number = int(line.split("#", 1)[1].split(":", 1)[0])
+                    if not (done and number in shown):
+                        out += ["- " + line, "  " + command]
+                        printed.append(number)
+                fresh = [n for n in printed if n not in shown]
+                owner and fresh and ledger.add(runs, state["slug"], "delivered", ids=fresh)
+            except (SystemExit, Exception) as stop:  # noqa: BLE001 - one bad goal must not hide the others
+                out.append("- %s: its decisions can't be listed: %s" % (state.get("slug"), str(stop)[:160]))
+    return ["", "Decided for you"] + out if out else []

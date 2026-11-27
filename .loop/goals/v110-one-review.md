@@ -328,3 +328,7 @@ Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans und
 - New reverts.py. goal.py revert SLUG N (operation): a decision that let named files go on is reverted by taking them out (pr and merge hold until the branch has no change there and the done lines are recorded as met; the approved item then covers nothing); any other stops the goal. A repeat changes nothing. After the merge it records, files a line and, with named files, adds a release hold.
 - The manual cut, the automatic release (before any version is pushed, and before the release is created) and promote refuse while a hold's removal is not in the commit released. goal.py hold-clear SLUG N --commit SHA takes a commit that changes a held file.
 - Still open in this part: RT16's revert goal is not opened by the command (the output says to queue it); holds are kept on this machine only (E9 asks for them across machines); the check-in's "Decided for you" and the delivered mark.
+
+### Plan core, third part: "Decided for you"
+
+- checkin.py lists every one-review goal's decisions for each followed repo, after the line fitting, each with its revert command on its own line and what it stops. checkin.py --owner, the operation session's flag for a run it shows the owner, marks only the printed ids delivered; a decision leaves the list once delivered and its goal is cut or retired. The skill text still has to say what --owner is for.

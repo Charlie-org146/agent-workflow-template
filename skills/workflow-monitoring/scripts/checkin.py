@@ -300,9 +300,14 @@ def missing(text, cwd=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--since", default="")
+    parser.add_argument("--owner", action="store_true", help="the operation session shows the owner this run: mark its decisions delivered")
     args = parser.parse_args()
     args.since and bs.timed(args.since, "--since %r")
     lines = render(stamp=args.since or None)
+    import review_view  # after the line fitting: each revert command stands whole on its own line (DLF-1.3)
+    at = lines.index("Coming up") - 1 if "Coming up" in lines else len(lines)
+    lines[at:at] = review_view.decided([bs.git("rev-parse", "--show-toplevel")] + [path for _, path, _ in bd.followed()
+                                       if os.path.realpath(path) != os.path.realpath(bs.git("rev-parse", "--show-toplevel"))], args.owner)
     lines[1:1] = sl.load(bs.git("rev-parse", "--show-toplevel"))["banner"]
     print("\n".join(lines))
     try:  # an op-tokens.tsv row (proctree.op_append) for the quiet hook; never fail a check-in
