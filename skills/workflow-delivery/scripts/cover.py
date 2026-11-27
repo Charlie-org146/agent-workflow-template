@@ -33,15 +33,15 @@ SILENT = ("GH", "RUNS")
 PLAN = r"""
 import json, sys
 sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True
-import regression, tiers, lanes, runs
+import regression, tiers, lanes, runs, levels_gate
 class A: tier, target, kind, reuse = "goal", "land", None, True
-root = regression.top(); rows = regression.read_rows(root)
+root = regression.top(); levels_gate.check_read(root); rows = regression.read_rows(root)
 picked = [r for r in tiers.kinds(regression.chosen(rows, tiers.target(root, A)), None) if r["level"] not in ("draft", "covered")]
 todo, reused, old, why = tiers.plan(root, picked, lanes.record_path(root))
 bad = [k for k, v in ((old or {}).get("rows") or {}).items() if v.get("status") in ("FAIL", "SKIPPED", "LEFT") or v.get("flaky")]
 bad += runs.unproven(root, picked, regression.SEEN)  # a row with no seen-failing date fails the lane wherever it runs
 todo += [k for k in bad if k in {r["id"] for r in picked} and k not in todo]  # a cut, failed, skipped or flaky row runs here, never reused
-print(json.dumps({"todo": todo, "bad": bad}))
+print(json.dumps({"todo": todo, "bad": bad, "l0": sorted(levels_gate.l0_ids(root))}))
 """
 
 
@@ -138,7 +138,7 @@ def select(root, cfg, names):
         plan = json.loads(out.splitlines()[-1])
     except (ValueError, IndexError):
         return [], [], "PLAN"
-    gone = set(plan["bad"])  # GitHub reads the merge ref: a row on either the base's or this branch's list is not run there
+    gone = set(plan["bad"]) | set(plan.get("l0") or ())  # L0 rows always run here; GitHub reads the merge ref: a row on either the base's or this branch's list is not run there
     for ref in ("origin/%s" % base, "HEAD"):
         for name, only in (("skips", None), ("limits", "nightly")):
             rc, out = sh(["git", "show", "%s:.loop/regression-%s.tsv" % (ref, name)], root)

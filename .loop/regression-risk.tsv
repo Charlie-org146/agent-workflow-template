@@ -1,0 +1,90 @@
+# kind	key	tag	why
+# Read on every table read (skills/loop-files.md). Principle 6 requirements and the ids they absorb;
+# rows that guard one without naming it; label names that mean a tag (matched inside a label's name).
+requirement	DEL-9	private	Principle 6
+requirement	GRD-3	private	Principle 6, absorbed by DEL-9
+requirement	AUT-6	private	Principle 6, absorbed by DEL-9
+requirement	MCH-9	private	Principle 6, absorbed by DEL-9
+requirement	GRD-4	security	Principle 6
+requirement	OPS-7	security	Principle 6, absorbed by GRD-4
+requirement	AUT-9	security	Principle 6, absorbed by GRD-4
+requirement	MCH-11	security	Principle 6, absorbed by GRD-4
+requirement	MCH-6	security	Principle 6, absorbed by GRD-4
+requirement	GRD-5	security	Principle 6
+requirement	INT-4	security	Principle 6, absorbed by GRD-5
+requirement	GRD-6	security	Principle 6
+requirement	GRD-16	security	Principle 6, absorbed by GRD-6
+row	scan-fail-closed	private	guards a Principle 6 requirement
+row	defect-5727-smoke-private-list	private	guards a Principle 6 requirement
+row	grd10-install-hooks	private	guards a Principle 6 requirement
+row	wiki-front-tree	private	guards a Principle 6 requirement
+row	wiki-front-private-scan	private	guards a Principle 6 requirement
+row	wiki-front-hardening	private	guards a Principle 6 requirement
+row	dlf-scan-every-path	private	guards a Principle 6 requirement
+row	pkg-no-echo-1	private	guards a Principle 6 requirement
+row	pkg-no-echo-2	private	guards a Principle 6 requirement
+row	machine-done-4	private	guards a Principle 6 requirement
+row	machine-done-11	private	guards a Principle 6 requirement
+row	machine-task-layout	private	guards a Principle 6 requirement
+row	ls-nothing-in-repo	private	guards a Principle 6 requirement
+row	set2-layers-show	private	guards a Principle 6 requirement
+row	tasks-briefs-real	private	guards a Principle 6 requirement
+row	roadmap-finished-not-queued	private	guards a Principle 6 requirement
+row	codex-run-ends-done	private	guards a Principle 6 requirement
+row	dlf-only-safety-waits	private	guards a Principle 6 requirement
+row	setup-refusal-writes-120	private	guards a Principle 6 requirement
+row	machine-hook-state	private	guards a Principle 6 requirement
+row	package-passes-3800	private	guards a Principle 6 requirement
+row	notify-new-events	private	guards a Principle 6 requirement
+row	eta-preflight-asked	private	guards a Principle 6 requirement
+row	dlf-lines-not-waits	private	guards a Principle 6 requirement
+row	dlf-setting-off-waits	private	guards a Principle 6 requirement
+row	set1-docs-format	private	guards a Principle 6 requirement
+row	ls-log-bounded	private	guards a Principle 6 requirement
+row	task-first	private	guards a Principle 6 requirement
+row	dlf-cut-refuses-open	private	guards a Principle 6 requirement
+row	dlf-mutation-controls	private	guards a Principle 6 requirement
+row	wiki-front-tracked	private	guards a Principle 6 requirement
+row	release-static-rules	private	guards a Principle 6 requirement
+row	make-room-3-package	private	guards a Principle 6 requirement
+row	make-room-b-3-package	private	guards a Principle 6 requirement
+row	pods-size	private	guards a Principle 6 requirement
+row	adoption-golden	private	guards a Principle 6 requirement
+row	owner-record-applies	security	guards a Principle 6 requirement
+row	delegated-record-accepted	security	guards a Principle 6 requirement
+row	rel-owner-only	security	guards a Principle 6 requirement
+row	perms-docs-check	security	guards a Principle 6 requirement
+row	worker-push-guard-refuse	security	guards a Principle 6 requirement
+row	gap-token-needs-live	security	guards a Principle 6 requirement
+row	preview-writes-nothing	security	guards a Principle 6 requirement
+row	no-token-would	security	guards a Principle 6 requirement
+row	known-no-block	security	guards a Principle 6 requirement
+row	st-setup-readonly	security	guards a Principle 6 requirement
+row	st-public-zero	security	guards a Principle 6 requirement
+row	defect-5609-one-merge-path	security	guards a Principle 6 requirement
+row	guards-rule-start	security	guards a Principle 6 requirement
+row	guards-resume	security	guards a Principle 6 requirement
+row	guards-worker-role	security	guards a Principle 6 requirement
+row	unattended-loop-recreate	security	guards a Principle 6 requirement
+row	mon13-two-layers	security	guards a Principle 6 requirement
+row	pods-independent	security	guards a Principle 6 requirement
+row	codex-fallback-start	security	guards a Principle 6 requirement
+row	machine-done-9	security	guards a Principle 6 requirement
+row	machine-done-10	security	guards a Principle 6 requirement
+row	merge-guard-base-head	security	guards a Principle 6 requirement
+row	merge-reach-fail-closed	security	guards a Principle 6 requirement
+row	st-pass	security	guards a Principle 6 requirement
+row	aut-regression-off	security	guards a Principle 6 requirement
+row	sync-not-connected	security	guards a Principle 6 requirement
+row	milestone-sync-no-source	security	guards a Principle 6 requirement
+row	local-row-env	security	rows never get the caller's tokens
+row	full-auto-safety-waits	security	safety questions are never answered for the owner
+row	done-pkg-secret-print-3	private	searches run logs for printed secret matches
+row	home-guard-catches-leak	security	nothing is written outside a toy's own home
+row	home-sandbox-4859	security	nothing is written outside a toy's own home
+row	toys-no-leak-schedule	security	nothing is written outside a toy's own home
+row	toys-no-leak-lane-pool	security	nothing is written outside a toy's own home
+row	setup-both-halves	private	the private half stays outside the repository
+label	security	security	a label whose name holds this word
+label	private	private	a label whose name holds this word
+label	privacy	private	a label whose name holds this word
