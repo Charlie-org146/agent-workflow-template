@@ -670,6 +670,8 @@ token-diet-quiet	PASS	2026-11-25
 token-diet-step-tokens	PASS	2026-11-25	
 topics-in-reference	PASS	2026-11-13	
 toy-leak-config-keep	PASS	2026-11-27	
+toy-leak-entry-commit	PASS	2026-11-27	
+toy-leak-entry-config	PASS	2026-11-27	
 toy-leak-merge-where	PASS	2026-11-27	
 toy-leak-row-merge	PASS	2026-11-27	
 toy-leak-row-setup	PASS	2026-11-27	
