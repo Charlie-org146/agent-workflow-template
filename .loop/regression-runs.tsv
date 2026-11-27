@@ -688,7 +688,7 @@ sync-first-adopts	PASS	2026-11-18
 sync-not-connected	PASS	2026-11-20	
 sync-repo-delta	PASS	2026-11-18	
 sync-source-delta	PASS	2026-11-18	
-tables-prep-151	PASS	2026-11-27			953c0e7f1c87
+tables-prep-151	PASS	2026-11-27		6251fab0a8c1	6251fab0a8c1
 task-first	PASS	2026-11-25	
 task-first-1	PASS	2026-11-25	
 task-first-2	PASS	2026-11-25	
