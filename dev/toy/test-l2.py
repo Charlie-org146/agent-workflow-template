@@ -351,7 +351,20 @@ def marker():
     check([i["state"] for i in issues if i["number"] == 1] == ["open"], "a complete green run does not close an unrelated issue that quotes the skipped-rows marker")
 
 
-cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second, "marker": marker}
+def usage():
+    print("== l2.py run alone, as the package check runs it: no arguments and --help print the usage")
+    # Value: protects=the package's run-alone check of every script; fails_when=l2.py stops with a traceback and a non-zero
+    #   exit when it gets no argument or --help (the IndexError of 0118e9595)
+    import shutil
+    scripts = os.path.join(root, "skills", "workflow-regression", "scripts")
+    lone = tempfile.mkdtemp(prefix="test-l2-lone.")
+    shutil.copytree(scripts, os.path.join(lone, "scripts"))
+    for args in ([], ["--help"]):
+        done = subprocess.run([sys.executable, "-E", "-s", os.path.join(lone, "scripts", "l2.py")] + args, cwd=lone, capture_output=True, text=True, timeout=60)
+        check(done.returncode == 0 and "l2.py check TARGET CLEANUP" in done.stdout and "Traceback" not in done.stderr, "l2.py run alone with %s prints its usage and exits 0" % (args or "no argument"))
+
+
+cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second, "marker": marker, "usage": usage}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
