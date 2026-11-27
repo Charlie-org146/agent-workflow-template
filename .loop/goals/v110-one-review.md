@@ -382,3 +382,5 @@ This stands in for the deferred automated inventory. "Toy" means a case in the n
 - merge.py (R1/R2) and levels_gate.py (E15) are owner-approved, ledger o1075. They merge only under the TD1229 checks, through operation-mac.
 - Review is at the cap (3 of 3): rounds 2 and 3 were each one fresh read-only reader, both CLEAN, with no must-fix.
 - TD2307, the qa cause: the first qa lane failed orv-no-owner-wait, orv-safe-option and orv-checkin-revert (the same toy, "2 FAILED"). The lane passes LOOP_ROLE=worker down, and the toy's check-in helper handed it to checkin.py --owner, an operation command, which then marked nothing. Red: the rows failed alone, and the toy failed on a06c6a32f under LOOP_ROLE=worker. Fix a77a29aa7 (toy only); after it the toy and each row pass. free_gb was not logged at the first failure (4.9 read afterwards, TD2239 not met). The first lane's log was overwritten; deliver-first line v110-one-review-break-5 asks that a rerun keep it.
+- eta-preflight-asked's anchor changed to match, not weakened.
+- plan-accept now refuses malformed ledger rows (the three-level toy's row fixed to the real 5-field shape).
