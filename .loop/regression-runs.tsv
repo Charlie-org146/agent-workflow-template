@@ -298,9 +298,9 @@ lane-order	PASS	2026-11-24
 lane-over-minutes	PASS	2026-11-27	
 lane-ports-tmpdir	PASS	2026-11-27	
 lane-rows-judge-own-diff	PASS	2026-11-27	
+lane-stale-pid-safe	PASS	2026-11-27	
 lane-start-mark-once	PASS	2026-11-27	
 lane-tmpdir-outside-repo	PASS	2026-11-27	
-lane-stale-pid-safe	PASS	2026-11-27	
 lane-walk-skips-git	PASS	2026-11-24	
 lane-walk-skips-node-modules	PASS	2026-11-24	
 lanes-abs-not-walked	PASS	2026-11-14	
