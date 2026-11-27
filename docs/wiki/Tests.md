@@ -859,3 +859,11 @@
 | <a id="t-lvl-l2-skip"></a>lvl-l2-skip | requirement | done line v110-lvl-l2:2 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
 | <a id="t-lvl-l2-fail"></a>lvl-l2-fail | requirement | done line v110-lvl-l2:3 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
 | <a id="t-done-lvl-l2-4"></a>done-lvl-l2-4 | requirement | done line v110-lvl-l2:4 | not run | - | local | no |
+| <a id="t-board-views-cards"></a>board-views-cards | requirement | done line v110-board-views:1 | not run | - | local | 2026-11-27 |
+| <a id="t-board-views-lines"></a>board-views-lines | requirement | done line v110-board-views:2 | not run | - | local | 2026-11-27 |
+| <a id="t-board-views-nowrite"></a>board-views-nowrite | requirement | done line v110-board-views:3 | not run | - | local | 2026-11-27 |
+| <a id="t-board-views-stale"></a>board-views-stale | requirement | done line v110-board-views:4 | not run | - | local | 2026-11-27 |
+| <a id="t-board-views-scan"></a>board-views-scan | requirement | done line v110-board-views:5 | not run | - | local | 2026-11-27 |
+| <a id="t-board-views-gate"></a>board-views-gate | requirement | done line v110-board-views:6 | not run | - | local | 2026-11-27 |
+| <a id="t-board-views-repos"></a>board-views-repos | requirement | done line v110-board-views:7 | not run | - | local | 2026-11-27 |
+| <a id="t-done-board-views-8"></a>done-board-views-8 | requirement | done line v110-board-views:8 | not run | - | local | no |
