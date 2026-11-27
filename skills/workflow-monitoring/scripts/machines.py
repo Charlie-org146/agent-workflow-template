@@ -292,6 +292,15 @@ def start_worker(state, prompt, cfg):
     return "background"
 
 
+def one_review(runs, state, files=None):
+    """The files a one-review goal's handover carries: packed here, or put beside the record when files are given."""
+    here = os.path.join(runs, state["slug"] + ".decisions.jsonl")
+    if not (state.get("one_review") or os.path.exists(here) or (files or {}).get("decisions")):
+        return {}
+    found = graph.decisions_of(state["slug"])
+    return found.pack(runs, state) if files is None else found.unpack(runs, state, files)
+
+
 def cmd_handover(args):
     import sessions
     state = sessions.held(args.slug)
@@ -305,7 +314,8 @@ def cmd_handover(args):
     if not has_origin(tree) or sh("push", "-q", "origin", "loop/" + args.slug, cwd=tree, wait=120) is None:
         sys.exit("REFUSED: the branch loop/%s did not push to origin, so %s can't take it. Nothing was moved." % (args.slug, args.to))
     old = read_ref(HAND + args.slug, tree)[1]
-    if not write_ref(HAND + args.slug, {"from": me(), "to": args.to, "at": time.time(), "state": state}, old, tree):
+    runs = os.path.join(sessions.base(), "runs")
+    if not write_ref(HAND + args.slug, {"from": me(), "to": args.to, "at": time.time(), "state": state, "files": one_review(runs, state)}, old, tree):
         sys.exit("REFUSED: the record did not copy to origin. Nothing was moved.")
     sessions.release(args.slug)
     state.update(status="moved", moved_to=args.to, worker="", session=None, pid=None)
@@ -331,6 +341,7 @@ def cmd_take(args):
     state.pop("moved_to", None)
     state.pop("pod", None)
     graph.stamp(state)
+    one_review(os.path.join(sessions.base(), "runs"), state, rec.get("files") or {})
     sessions.save(state, "taken from %s on %s" % (rec.get("from"), here))
     print("TAKEN %s: worker %s" % (args.slug, start_worker(state, RESUME.format(slug=args.slug), sessions.config())))
     return 0

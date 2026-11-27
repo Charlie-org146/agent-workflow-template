@@ -92,6 +92,8 @@ def save(state, note=None):
     if note:
         state.setdefault("log", []).append("%s %s" % (state["updated"], note))
         print("%s %s: %s" % (state["updated"], state["slug"], note))
+    import graph
+    graph.keep_stop(path_of(state["slug"]), state)
     temp = path_of(state["slug"]) + ".%d.tmp" % os.getpid()
     with open(temp, "w") as handle:
         json.dump(state, handle, indent=2)

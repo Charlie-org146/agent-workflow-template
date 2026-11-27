@@ -116,6 +116,8 @@ def save(state, note=None):
         have = disk.get("log") or []
         merged["log"] = have + [line for line in state.get("log") or [] if line not in have]
         role.report(disk, merged, state["updated"])
+        if merged.get("one_review") or os.path.exists(path[:-5] + ".decisions.jsonl"):
+            pods.keep_stop(path, merged)
         temp = path + ".tmp"
         write(temp, json.dumps(merged, indent=2))
         os.replace(temp, path)

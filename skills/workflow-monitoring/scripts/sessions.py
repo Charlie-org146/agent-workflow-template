@@ -115,6 +115,7 @@ def load(slug):
 def save(state, note):
     state["updated"] = now()
     state.setdefault("log", []).append("%s %s" % (state["updated"], note))
+    graph.keep_stop(os.path.join(base(), "runs", state["slug"] + ".json"), state)
     write(os.path.join(base(), "runs", state["slug"] + ".json"), state)
     print("%s %s: %s" % (state["updated"], state["slug"], note))
 

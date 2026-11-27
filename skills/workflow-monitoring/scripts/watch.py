@@ -137,6 +137,7 @@ def save(state, note=None):
         state.setdefault("log", []).append("%s %s" % (state["updated"], note))
         print("%s %s: %s" % (state["updated"], state["slug"], note))
     path = record_path(state["slug"])
+    graph.keep_stop(path, state)
     temp = path + ".%d.tmp" % os.getpid()
     with open(temp, "w") as handle:
         json.dump(state, handle, indent=2)
@@ -212,6 +213,7 @@ def launch(state, prompt, cfg):
     command, agent = agent_command(cfg, state)
     if not command:
         sys.exit("REFUSED: no agent_command in .loop/config.json.")
+    graph.keep_stop(record_path(state["slug"]), dict(state, status="running"))  # before any process starts
     env = dict(os.environ, LOOP_BATCH="1", LOOP_ROLE="worker")
     if os.path.exists(beside("worker.py")):
         command = [sys.executable, beside("worker.py"), "loop", state["slug"], "--"] + command
