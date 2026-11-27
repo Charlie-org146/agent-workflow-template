@@ -184,6 +184,11 @@ marked = len(__import__("re").findall(r"^- [A-Z]{2,5}-\d+: \*\*Reviewed", real, 
 check(marked and len(sc.reviewed_units(real)) == marked, "every Reviewed requirement of a real page is read (%d of %d)" % (len(sc.reviewed_units(real)), marked))
 check(sc.units(base.replace("**Reviewed 2026-11-24**", "**Unreviewed**").replace(" <!-- reviewed 2069271e -->", ""))["AB-1"] == "One\n  - sub line [AB-1]",
       "losing the mark alone doesn't change the unit's text")
+after = base.replace("  - sub line [AB-1]\n\n", "  - sub line [AB-1]\n\n  - a slipped sentence [AB-1]\n\n")
+check(sc.changed_units(base, after) == [sc.OUTSIDE], "a requirement line added outside its unit is found: %s" % sc.changed_units(base, after))
+notes = base.replace("  - sub line [AB-1]\n\n", "  - sub line [AB-1]\n\n  - Reference: a tool\n\n")
+check(sc.changed_units(base, notes) == [], "an untagged note outside a unit is not")
+check(sc.changed_units(after, after) == [], "a tagged line that was already there is not new")
 
 # the diff is read as git sees it, with names that need quoting, and an unreadable one refuses
 repo = os.path.join(home, "scanrepo")

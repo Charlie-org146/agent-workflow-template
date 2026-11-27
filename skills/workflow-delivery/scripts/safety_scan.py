@@ -33,6 +33,9 @@ SETTINGS = (dlf.PATHS[SECURITY], r"^\.loop/config\.json$|^\.loop/permissions\.ts
 # a page's requirement line: mark (with its date), heading, and the seal comment a review leaves
 UNIT = re.compile(r"^- ([A-Z]{2,5}-\d+): \*\*(Unreviewed|Reviewed(?: \d{4}-\d\d-\d\d)?)\*\* (.*?)(?: <!-- reviewed \w+ -->)?$")
 PAGES = "docs/wiki/"
+OUTSIDE = "text-outside-a-unit"
+# a requirement sentence ends in its tag; one indented where no unit holds it is no ordinary note
+TAGGED = re.compile(r"\[[A-Z]{2,5}-\d+\]\s*$")
 
 
 def text_classes(text, paths=(), label=""):
@@ -74,11 +77,23 @@ def reviewed_units(text):
     return units(text, True)
 
 
+def outside(text):
+    """Tagged indented lines that no requirement's unit holds."""
+    found, current = set(), False
+    for line in text.split("\n"):
+        if UNIT.match(line.rstrip()):
+            current = True
+        elif not (current and line.startswith("  ") and line.strip()):
+            current = False
+            line.startswith("  ") and TAGGED.search(line) and found.add(line.strip())
+    return found
+
+
 def changed_units(before, after):
     """IDs whose Reviewed text changed: reviewed before and now different or gone, or reviewed now with new text."""
     gone = {key for key, text in reviewed_units(before).items() if units(after).get(key) != text}
     new = {key for key, text in reviewed_units(after).items() if units(before).get(key) != text}
-    return sorted(gone | new)
+    return sorted(gone | new) + ([OUTSIDE] if outside(after) - outside(before) else [])
 
 
 def sections(diff):
