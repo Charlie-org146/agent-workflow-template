@@ -28,6 +28,7 @@ Fixes #5870 (row tasks-rows-only-added).
 - Codex test, one expected value corrected, not loosened (TD2111): one check expected setup to refuse a bare agent command. That refusal was removed on purpose by aeca3f9c8 ("adoption never blocks"); the check now requires exit 0 and the agent_command gap line with its fix.
 - Line 4's live proof was dropped under o1038 (top's TD2110), revertible by the owner typing "allow main-red's live Codex runs". Done line 4 is not shown met, and #5895 stays open. The lanes of this goal run with no Codex program, so codex-key-commands is SKIPPED there, which is not a pass.
 - Red-team break 2 was decided by top under the owner's o1037 standing rule (TD2098(1)) and is revertible.
+- Build review: three full rounds. Round 3 did not pass: one of its two readers failed it. As the operation decided (TD2125), its one item to fix now is fixed, and a fresh reader checked that change alone and passed it. No fourth full round was run, and round 3's other items are not fixed in this change.
 - The four make-room rows (make-room-2-identical, make-room-4-surface, make-room-b-2-identical, make-room-b-4-surface) can only be shown by the first scheduled run on main that contains this change. That check is not met at merge.
 
 ## Verify by hand
