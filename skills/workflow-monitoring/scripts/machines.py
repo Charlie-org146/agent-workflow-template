@@ -306,6 +306,8 @@ def one_review(runs, state, files=None):
 def cmd_handover(args):
     import sessions
     state = sessions.held(args.slug)
+    if state.get("one_review") or state.get("start_required"):  # an older receiver would not honour its holds (E19)
+        sys.exit("REFUSED: %s takes one review, and such a goal is not handed over yet. Fix: finish it here. Nothing was moved. (ONE_REVIEW_HANDOVER)" % args.slug)
     if args.to == me():
         sys.exit("REFUSED: %s is already on %s." % (args.slug, args.to))
     if state.get("status") in ("done", "moved"):

@@ -312,3 +312,5 @@ Kept, still to build: the plan's core (each stop becomes a decision; findings cl
 Kept and built: E1 to E5, E7, E10, E15, E19's first part, RT1, RT2 (ruling A), RT4, RT7, RT14, RT15, DX D3, D4, D14, CEO B2 with E6 and DX D1.
 
 Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans under TD2170 so far: 2, both clean; the filing tool scans the posted text again.
+
+- E19 safe option built: machines.py handover refuses a one-review goal, or one needing a start review (ONE_REVIEW_HANDOVER). The toy was seen red first. test-machines.py passes.

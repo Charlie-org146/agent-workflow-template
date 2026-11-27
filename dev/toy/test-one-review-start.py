@@ -657,6 +657,12 @@ check(start_review_answer.unapproved(tmp, runs, record("page"), "moved-base", "H
       "an approval doesn't overwrite a unit the base changed since the start message")
 for status in ("stopped", "failed", "retired"):
     check(start_review_answer.unapproved(tmp, runs, dict(state, status=status), "origin/main", "HEAD") != [], "no use while the goal is %s" % status)
+held_before = record("page")
+ran = subprocess.run([sys.executable, os.path.join(root, "skills", "workflow-monitoring", "scripts", "machines.py"), "handover", "page", "--to", "elsewhere", "--force"],
+                     capture_output=True, text=True, cwd=tmp, env=dict(env, LOOP_ROLE="operation"))
+check("ONE_REVIEW_HANDOVER" in ran.stdout + ran.stderr and record("page") == held_before
+      and not sh(tmp, "ls-remote", "origin", "refs/loop/handover/page", "refs/heads/loop/page"),
+      "a one-review goal is not handed over: %s" % (ran.stdout + ran.stderr).strip()[:140])
 sys.path.insert(0, delivery)
 import decisions as ledger_tool  # noqa: E402
 ledger_tool.stop(runs, "page", "t", "t")
