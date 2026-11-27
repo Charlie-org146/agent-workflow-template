@@ -188,6 +188,9 @@ def issues(text, v, complete_run):
 
 def main(argv):
     """l2.py check TARGET CLEANUP | summary RESULTS SHARDS MATRIX SHA | issues RESULTS SHARDS MATRIX: the summary step's three calls."""
+    if not argv or argv[0] not in ("check", "summary", "issues"):
+        print(main.__doc__)
+        return 0
     table, record = ".loop/regression.tsv", ".loop/regression-relevel.tsv"
     if argv[0] == "check":
         said = check(argv[1], argv[2], table)
