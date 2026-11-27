@@ -89,8 +89,8 @@ def level_pick(target, row, record=[]):
     recorded L0; L1 is L0 and L1 and every security or private row; no entry is L1; drafts and covered rows never run."""
     if target in ("land", "nightly", "L2"):
         return row[1] in ("land", "nightly" if target == "L2" else target)
-    if row[1] in ("draft", "covered"):
-        return False
+    if row[1] not in ("land", "nightly"):
+        return False  # a draft, a covered row, or a word the table does not know never runs
     if not record:
         try:
             with open(".loop/regression-relevel.tsv", encoding="utf-8") as handle:
