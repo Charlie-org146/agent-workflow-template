@@ -394,7 +394,41 @@ def writers():
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers}
+def coverstate():
+    print("== R8: a covered row shows the worst state of its covers, with a commit")
+    # Value: protects=the Runs of a covered row is the worst of its covers bound to a commit, never a bare green; results keep their commit;
+    #   fails_when=a covered row shows its own placeholder, a legacy record counts as proof, or PASS wins over FAIL
+    import subprocess
+    from lvl_fixture import Repo, entry, row, REG
+    risks = ["label\tsecurity\tsecurity\tfixture label"]
+    rows = [row("lvl-armed"), row("a"), row("b", command="false"), row("drf", level="draft"), row("c", level="covered", command="read by a person"),
+            row("d", level="covered", command="read by a person"), row("e", level="covered", command="read by a person")]
+    ents = [entry("lvl-armed"), entry("a"), entry("b"), entry("drf", old="draft"), entry("c", old="covered", covers="a"),
+            entry("d", old="covered", covers="a,b"), entry("e", old="covered", covers="a,drf")]
+    repo = Repo(rows, ents, risks)
+    repo.write(".github/workflows/regression-pr.yml", "# Written by workflow-regression\n")
+    repo.commit()
+
+    def result(key):
+        got = subprocess.run([sys.executable, os.path.join(REG, "tests.py"), "list", "--tsv"], cwd=repo.path, env=repo.env, capture_output=True, text=True)
+        said = got.stdout + got.stderr
+        got = [l.split("\t") for l in said.splitlines() if l.split("\t")[1:2] == [key]]
+        return got[0][6] if got else said
+    check(result("c").startswith("no result recorded"), "no cover has a result: no result recorded", result("c"))
+    done, said = repo.run("run", "land")
+    head = repo.git("rev-parse", "HEAD").stdout.strip()[:12]
+    record = [l.split("\t") for l in repo.read(".loop/regression-runs.tsv").splitlines() if l.startswith("a\t")]
+    check(record and len(record[0]) == 6 and record[0][5] == head, "a run record keeps the commit it ran at (sixth cell)", record)
+    check(result("c").startswith("PASS " + head), "the sole cover passed at this commit: PASS with the commit", result("c"))
+    check(result("d").startswith("FAIL " + head), "one cover failed: the worst state, FAIL, with its commit, not PASS", result("d"))
+    check(result("e").startswith("draft"), "a cover that is a draft: draft", result("e"))
+    legacy = "".join(l.split("\t")[0] and "\t".join(l.split("\t")[:5]) + "\n" for l in repo.read(".loop/regression-runs.tsv").splitlines() if l and l[0] != "#")
+    repo.write(".loop/regression-runs.tsv", "# id\tstatus\tdate\trun\tflaky\n" + legacy)
+    check(result("c").startswith("no result recorded"), "a record from before the commit cell is unproven: no result recorded", result("c"))
+    repo.close()
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
