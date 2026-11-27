@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/completion.py
 # reads: skills/workflow-regression/scripts/tiers.py skills/workflow-regression/scripts/runs.py dev/toy/lvl_fixture.py
+# reads: skills/workflow-delivery/scripts/cover.py
 """v110-lvl-l1: what a goal-tier run picks on an armed table (lines 1 and 4), and a security row that flips (line 5).
-usage: test-l1.py [select|flaky]
+usage: test-l1.py [select|cover|flaky]
 
 Every repository here is a temporary one with its own HOME and a stand-in gh; nothing reads the live loop records."""
 import json
@@ -13,7 +14,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
-from lvl_fixture import REG, RISKS, Repo, check, done, entry, row, sha  # noqa: E402
+from lvl_fixture import DELIVERY, REG, RISKS, Repo, check, done, entry, row, sha  # noqa: E402
 
 sys.path.insert(0, REG)
 import completion  # noqa: E402
@@ -77,8 +78,8 @@ def select():
     repo = levelled(THREE)
     touch(repo, "zero", "one", "two")
     _, said = goal_run(repo)
-    check(ran(said) >= {"zero"} and not ran(said) & {"one", "two"}, "a goal lane's local run on an armed table runs the L0 rows only",
-          said)
+    check(ran(said) >= {"zero", "one", "two"},
+          "a goal lane's local run with no cover runs as before, whatever the levels (only the pull request run is L1)", said)
     repo.close()
 
     repo = levelled(THREE, armed=False)
@@ -121,17 +122,54 @@ def select():
           "a private row listed nightly still runs on L1, with one NOTE on each shard's run", said)
     repo.close()
 
-    repo = levelled(specs)
-    touch(repo, "zero", "hidden", "guard", "kept")
-    _, said = goal_run(repo)
-    check(not ran(said) & {"hidden", "kept", "guard"}, "a goal lane's L0 run adds no security or private row", said)
-    repo.close()
-
     for word, want in (("L0", {"zero"}), ("L1", {"zero", "one", "lvl-armed"}), ("L2", {"zero", "one", "two", "lvl-armed"})):
         repo = levelled(THREE)
         _, said = repo.run("run", word)
         check(ran(said) == want, "run %s, typed, runs the rows of that level" % word, said)
         repo.close()
+
+
+def cover_line():
+    """Line 2: at a goal's test step the cover claims L1; the local lane runs the L0 rows and what L1 leaves out."""
+    sys.path.insert(0, DELIVERY)
+    import cover
+    specs = THREE + [("hidden", "L1", "private")]
+    repo = levelled(specs)
+    repo.git("update-ref", "refs/remotes/origin/main", "main")
+    touch(repo, "zero", "one", "two")
+    names = ["data/zero", "data/one", "data/two"]
+    runs_dir = os.path.join(repo.top, "runs")
+    os.makedirs(runs_dir)
+    before, facts, saved = os.getcwd(), cover.facts, dict(os.environ)
+    seen = []
+
+    def local_lane(fn_runs, slug, step, spec, cfg, wait=90):
+        seen.append(os.environ.get("LOOP_COVER_IDS"))
+        return "pass", "LANE pr", []
+
+    try:
+        os.chdir(repo.path)
+        os.environ.update(repo.env)
+        cover.facts = lambda root, cfg: ("", names)
+        got = cover.select(repo.path, {"base": "main"}, names)
+        status, text, _ = cover.lane(local_lane, runs_dir, "g", "qa", {}, {"base": "main"})
+        claim = cover.load(runs_dir, "g").get("claim") or {}
+        cover.facts = lambda root, cfg: ("DOC", names)
+        cover.lane(local_lane, runs_dir, "h", "qa", {}, {"base": "main"})
+    finally:
+        os.chdir(before)
+        os.environ.clear()
+        os.environ.update(saved)
+        cover.facts = facts
+    covered, local, code = got
+    check(code == "" and covered == ["one"] and local == ["two", "zero"],
+          "line 2: the cover claims the L1 row; the L0 row and the L2 row L1 leaves out run locally; no private row is added",
+          got)
+    check(status == "pass" and "COVERED 1 rows by L1" in text and seen[:1] == ["two,zero"] and claim.get("name") == "L1",
+          "line 2: the test step names L1 as the cover and its local lane runs only the uncovered rows", (text, seen, claim))
+    check(not [n for n in os.listdir(runs_dir) if "L1" in n], "line 2: no local L1 run is recorded", os.listdir(runs_dir))
+    check(seen[1:] == [None], "control: with the cover off the local lane runs as before, with no row list", seen)
+    repo.close()
 
 
 # a stand-in gh that keeps issues in a file: label create, issue list/create/comment, api comments
@@ -239,9 +277,11 @@ def filing():
 
 def workflow_file():
     text = completion.FLAKY_FLOW
-    perms = text[text.index("permissions:\n"):text.index("jobs:")]
-    check(perms == "permissions:\n  contents: read\n  actions: read\n  issues: write\n" and text.count("permissions:") == 1,
-          "the new workflow has exactly the three allowed permissions", perms)
+    perms = re.search(r"^permissions:.*\n", text, re.M).group(0)
+    jobperms = text[text.index("  file:\n    permissions:\n"):text.index("    if:")]
+    check(perms == "permissions: {}\n" and jobperms == "  file:\n    permissions:\n      contents: read\n      actions: read\n      issues: write\n"
+          and text.count("permissions:") == 2, "only its one job gets the three allowed permissions, and nothing else gets any",
+          perms + jobperms)
     jobs = text[text.index("jobs:"):]
     check(re.findall(r"^  (\w+):$", jobs, re.M) == ["file"] and "timeout-minutes: 10" in jobs, "it has one job with a 10-minute limit")
     check("if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'failure' && "
@@ -252,6 +292,6 @@ def workflow_file():
 
 
 if __name__ == "__main__":
-    for name in sys.argv[1:] or ["select", "flaky"]:
-        {"select": select, "flaky": flaky}[name]()
+    for name in sys.argv[1:] or ["select", "cover", "flaky"]:
+        {"select": select, "cover": cover_line, "flaky": flaky}[name]()
     sys.exit(done())

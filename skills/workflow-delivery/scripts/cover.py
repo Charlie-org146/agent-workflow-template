@@ -28,20 +28,24 @@ PIN = ("name: regression-pr\n", "  pull_request:\n  merge_group:\n    types: [ch
        "\n  small:\n", "cutgate.py", 'test "${{ needs.shard.result }}" = success')
 JOB = {"shard": "github.event_name != 'merge_group'", "affected": "always() && github.event_name != 'merge_group'",
        "small": "github.event_name == 'merge_group'"}  # each job's own if: (a disabled pull_request job is no cover)
-WF_SHA = "d915bcc5584270f75b511de8f62faa6138fcb879"  # sha1 of the base's regression-pr.yml as reviewed: any edit turns the cover off
+WF_SHA = "533fbed6f28fac049a2bd2c45eaa3bdbffed1ac6"  # sha1 of the base's regression-pr.yml as reviewed: any edit turns the cover off
 SILENT = ("GH", "RUNS")
 PLAN = r"""
 import json, sys
 sys.path.insert(0, sys.argv[1]); sys.dont_write_bytecode = True
-import regression, tiers, lanes, runs, levels_gate
-class A: tier, target, kind, reuse = "goal", "land", None, True
+import regression, tiers, lanes, runs, levels_gate, completion
 root = regression.top(); levels_gate.check_read(root); rows = regression.read_rows(root)
-picked = [r for r in tiers.kinds(regression.chosen(rows, tiers.target(root, A)), None) if r["level"] not in ("draft", "covered")]
-todo, reused, old, why = tiers.plan(root, picked, lanes.record_path(root))
+def planned(word):
+    class A: tier, target, kind, reuse = "goal", word, None, True
+    picked = [r for r in tiers.kinds(regression.chosen(rows, tiers.target(root, A)), None) if r["level"] not in ("draft", "covered")]
+    return picked, tiers.plan(root, picked, lanes.record_path(root))
+armed = completion.armed(root)
+pr = planned("nightly")[1][0] if armed else None  # armed: what the pull request's L1 run selects
+picked, (todo, reused, old, why) = planned("land")  # the local goal lane's plan, as before
 bad = [k for k, v in ((old or {}).get("rows") or {}).items() if v.get("status") in ("FAIL", "SKIPPED", "LEFT") or v.get("flaky")]
 bad += runs.unproven(root, picked, regression.SEEN)  # a row with no seen-failing date fails the lane wherever it runs
 todo += [k for k in bad if k in {r["id"] for r in picked} and k not in todo]  # a cut, failed, skipped or flaky row runs here, never reused
-print(json.dumps({"todo": todo, "bad": bad, "l0": sorted(levels_gate.l0_ids(root))}))
+print(json.dumps({"todo": todo, "bad": bad, "l0": sorted(levels_gate.l0_ids(root)), "pr": pr}))
 """
 
 
@@ -145,9 +149,16 @@ def select(root, cfg, names):
             if rc and sh(["git", "ls-tree", ref, "--", ".loop/regression-%s.tsv" % name], root) != (0, ""):
                 return [], [], "LIST"  # the list is there (or unknown) but unread: no row may be claimed
             gone |= ids_of(out, 0, only)
-    todo = list(plan["todo"])
-    covered = sorted(k for k in todo if k in reach and k not in gone)
-    return covered, sorted(k for k in todo if k not in covered), "" if covered else "NONE"
+    todo, pr, l0 = list(plan["todo"]), plan.get("pr"), set(plan.get("l0") or ())
+    runs_there = todo if pr is None else pr
+    covered = sorted(k for k in runs_there if k in reach and k not in gone)
+    local = sorted((set(todo) | (set(runs_there) & l0)) - set(covered))  # L0 stays local; what L1 won't run does too
+    left = [] if pr is None else [k for k in local if k not in set(pr) | l0]
+    if left:
+        print("NOT COVERED by %s: %s (the pull request's run leaves %s out; run locally)" % (
+            NAME, ", ".join(left[:12]) + (", +%d more" % (len(left) - 12) if len(left) > 12 else ""),
+            "it" if len(left) == 1 else "them"))
+    return covered, local, "" if covered else "NONE"
 
 
 def drop(runs, slug):

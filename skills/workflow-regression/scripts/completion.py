@@ -88,7 +88,7 @@ def merge_runs(root):
 
 # -- levels at run time (v110-lvl-l1): L1 on the pull request, L0 in a goal lane
 def armed(root):
-    """The table holds lvl-armed and the pull request workflow is this tool's: goal-tier runs follow the levels."""
+    """The table holds lvl-armed and the pull request workflow is this tool's: the pull request run is L1."""
     try:
         with open(os.path.join(root, ".loop", "regression.tsv"), encoding="utf-8") as table:
             marked = any(line.split("\t")[0] == "lvl-armed" for line in table)
@@ -336,12 +336,13 @@ on:
   workflow_run:
     workflows: [regression-pr]
     types: [completed]
-permissions:
-  contents: read
-  actions: read
-  issues: write
+permissions: {}
 jobs:
   file:
+    permissions:
+      contents: read
+      actions: read
+      issues: write
     if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
