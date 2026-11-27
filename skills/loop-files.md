@@ -784,6 +784,8 @@ pull-request check runs rows through `run`, so it refuses too.
 | `LEVELS_L0_TIME` | an L0 entry with no positive seconds, or a command that changed since it was measured |
 | `LEVELS_BAD_COVERS` | a covered row whose list is empty, names itself, an unknown or covered row, or a tagged covered row with an untagged proving row |
 | `LEVELS_COVER_LEVEL` | a covered row whose stored level is not the highest level of the rows its list names (a hand-edited record); the fix is `regression.py level <id> --covers <the same list>`, which writes the level the covers give |
+| `LEVELS_BAD_STATE` | a record line whose ninth cell (the state) is neither blank nor `draft` |
+| `LEVELS_STATE_MISMATCH` | a nine-cell record line whose state disagrees with the table's own level word (`draft` in the table, `draft` in the state, both ways); a line with eight cells, written before the state column, takes its state from the table |
 | `LEVELS_STALE_RISK` | a defect row whose link, goal or category changed since its tag was read: `level ID --refresh` |
 | `LEVELS_BAD_RISK_DATA` | risk data missing, empty, or with a bad or repeated line |
 | `LEVELS_BAD_FILE` | a malformed line, a conflict marker, or an unknown risk, old word or reason |
