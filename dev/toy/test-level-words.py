@@ -88,7 +88,7 @@ def settings():
     check(all(survey.fits("goal_levels", v, "L0") for v in ("L0", "L1", "L2", "land", "nightly")) and not survey.fits("goal_levels", "weekly", "L0"),
           "the survey borrows L0, L1, L2 and the two old words, and refuses another value")
     cfg = json.load(open(os.path.join(root, ".loop", "config.json")))
-    check(cfg.get("goal_levels") == "L0", "this repo's config sets goal_levels to L0")
+    check(cfg.get("goal_levels") == "L1", "this repo's config sets goal_levels to L1 (the level that selects what land did)")
     page = open(os.path.join(root, "docs", "wiki", "How-to-use-Setup.md"), encoding="utf-8").read()
     line = [l for l in page.splitlines() if l.startswith("| `goal_levels` |")]
     check(len(line) == 1 and "L0 (the default), L1 or L2" in line[0] and "`L0` | default" in line[0], "the How-to-use-Setup row for goal_levels names L0, L1 and L2 and the default L0")

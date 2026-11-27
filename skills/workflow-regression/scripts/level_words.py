@@ -3,7 +3,7 @@
 on one that is not. An old word is read, never silently: a levelled table prints one line; another value is refused there."""
 import sys
 
-OLD = {"land": "L0", "nightly": "L1"}  # the old words, translated on a levelled table
+OLD = {"land": "L1", "nightly": "L2"}  # the old words, translated on a levelled table: the level that selects at least the same rows (TD2334)
 LEVELS = ("L0", "L1", "L2")
 PLAIN = {"L0": "land", "L1": "nightly", "L2": "nightly"}  # a table that is not levelled runs the level as its old word
 
