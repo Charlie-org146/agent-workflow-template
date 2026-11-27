@@ -374,3 +374,24 @@ test-monitoring.sh, against d25f31e5d:
 - Alternating runs (branch, main, branch, main, branch; load 15 to 20, 41 to 44% memory free): all five failed only the two "watch.py alone" cases (its copied file list lacks batch.py). None timed out.
 - One earlier branch run had failed 16. With LOOP_FREE_GB=2 faked, main and the branch fail identically (29 FAIL lines each, the same lines), and 15 of that run's 16 are among them. Under 3 GB free (min_free_memory_gb's default) watch starts no goal, and the toy does not turn that off. That run's memory was not recorded, so this is the likely cause, not a proven one. replan.py and lanes_cli.py are unchanged here.
 - Filed deliver-first: v110-one-review-choice-3. Explicit pre-scans under TD2170 so far: 3, all clean.
+
+### Hand list: where a goal waits, and what a one-review goal does (done line 2)
+
+This stands in for the deferred automated inventory. "Toy" means a case in the new toys drives it; "read" means traced in the code, not driven by a new case. Deliver-first off or always-ask keeps every wait with the owner, as before (toy).
+
+| Wait | One-review goal after its start review | How checked |
+|---|---|---|
+| Red-team break; a step's open choice or plan question | A recorded decision; a safety one opens a finding; plan-accept refuses a safety break | toy (settle, plan-accept); the step-record caller read |
+| Safety found later (stop, branch diff, mail or report) | A finding; pr and merge refuse until operation closes it | toy |
+| goal.py wait; a worker's waiting report; repeated refusals; a step reply that asks; the merge round cap | A waiting status, held by the operation; its answer is a listed decision | toy for a waiting record and the answer; the five setters read |
+| Three failed tries; a refused automatic release; stopped, silent, held, stalled | Held by the operation; no owner mail for a stop | toy (stopped, stalled); the others read |
+| Merge waiting on review (review_hold) | The operation's review line | toy |
+| Time and token budget, past ETA | Raises itself and keeps working at the cap; with no estimate the first time budget stands in; no ETA mail to the owner | toy (minutes with no estimate); with an estimate it is today's deliver-first rule, older toys |
+| Pre-flight questions | None are asked | toy (the mark) |
+| Full auto on a question it holds for safety | Stays a waiting goal held by the operation; its fixed reply and own finding are not built | read |
+| Cut or leave; merging by hand with auto_merge off; a protected release pull request; a major release | The owner's, unchanged (kept owner rules) | toy for cut or leave; the others unchanged code |
+| The release's deliver-first accept list (DLF-1.4); modes the owner switched off | The owner's, unchanged | read |
+| The start review itself, and a goal adopted needing one | The one question; build (or, for an adopted goal, merge) waits for it | toy |
+
+- Known text gap: a requirement guard refusal still names an owner record as one fix; on a one-review goal only the approved text or taking the change out passes.
+- The monitored start records no ETA; for a one-review goal the first time budget counts as the estimate (above).
