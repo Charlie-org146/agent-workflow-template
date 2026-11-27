@@ -87,7 +87,7 @@ def settings():
     check(cfg.get("goal_levels") == "L0", "this repo's config sets goal_levels to L0")
     page = open(os.path.join(root, "docs", "wiki", "How-to-use-Setup.md"), encoding="utf-8").read()
     line = [l for l in page.splitlines() if l.startswith("| `goal_levels` |")]
-    check(len(line) == 1 and "L0, L1 or L2" in line[0] and "`L0` | default" in line[0], "the How-to-use-Setup row for goal_levels names L0, L1 or L2 and the default L0")
+    check(len(line) == 1 and "L0 (the default), L1 or L2" in line[0] and "`L0` | default" in line[0], "the How-to-use-Setup row for goal_levels names L0, L1 and L2 and the default L0")
 
 
 cases = {"goal": goal, "settings": settings}

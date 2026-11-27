@@ -1015,7 +1015,7 @@ lane ends.
   it limits concurrent full lanes, not the machine's load; AFFECTED, by-id and red runs take no slot.
 - A goal lane has no limit of its own beside its budget (`test_budget_minutes`, REG-7). The scheduled full suite has a fixed
   30-minute limit that health warns above.
-- `goal_levels` (land) and `ci_levels` (nightly): the levels a goal lane plans from (nightly adds the nightly rows a
+- `goal_levels` (L0) and `ci_levels` (nightly): the levels a goal lane plans from (L1 adds the L1 rows a
   change reaches) and the CI target (with nightly, the schedule's default target is L2; a cleanup stays nightly; land is unchanged). A CI run cut short by its job time still records its time, so health warns.
 - Each lane child gets its own `TMPDIR` and `LOOP_LANE_PORT_BASE` (a leased range of 100 ports from 20000); a row that
   binds ports uses that range or picks a free port itself. The `TMPDIR` is a new folder per lane start,
@@ -1943,7 +1943,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `wiki_dir` | `docs/wiki` | The folder of wiki pages. |
 | `risky_paths` | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | Regexes for paths whose goals need extra care. |
 | `step_limit` | `0` | Seconds a flow step may run when the flow file sets none; 0 is built-in. |
-| `goal_levels` | `land` | Row levels a goal lane plans from: land, or nightly (land and nightly rows). |
+| `goal_levels` | `L0` | Row levels a goal lane plans from: L0 (the default), L1 or L2 (every row). |
 | `regression_runs` | `(empty)` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. |
 | `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |
 | `automation` | `[]` | Routines the Automation table lists: {name, does, cadence, runs}. |

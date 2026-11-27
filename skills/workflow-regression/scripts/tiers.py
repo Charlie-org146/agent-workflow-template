@@ -48,7 +48,7 @@ def kinds(rows, kind):
 
 
 def target(root, args):
-    """S23: a goal lane plans from goal_levels: land (default), or nightly. Armed, GitHub's pull request `nightly` run is L1."""
+    """S23: a goal lane plans from goal_levels: L0 (default), L1 or L2 (level_words). Armed, GitHub's pull request `nightly` run is L1."""
     if args.tier and args.target == "nightly" and os.environ.get("GITHUB_EVENT_NAME") == "pull_request" and completion.armed(root):
         return "L1"
     return level_words.goal_target(config(root).get("goal_levels"), completion.armed(root)) if args.tier and args.target == "land" else args.target
