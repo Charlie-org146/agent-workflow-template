@@ -40,7 +40,10 @@ def need_stage(root, args):
     from levels import State
     if args.level == "draft" and not args.test_level and State(root).levelled():
         sys.exit("REFUSED (LEVELS_NO_STAGE): a draft needs the level it will have. Fix: regression.py add %s --level draft --test-level L1 "
-                 "--command '...' (L0, L1 or L2). Nothing was written." % args.id)
+                 "--command '...'. The levels are L0, L1 and L2. Nothing was written." % args.id)
+    if args.level == "draft" and args.covers:
+        sys.exit("REFUSED (LEVELS_DRAFT_NOT_READY): a draft is not a covered row and takes no covers. Fix: regression.py add %s --level draft "
+                 "--test-level L1 --command '...'. Give covers to a real row once it is ready. Nothing was written." % args.id)
 
 
 def ready(root, args):
@@ -55,7 +58,7 @@ def ready(root, args):
         levels_cli.stop("LEVELS_NOT_DRAFT", "%s is not a draft. Fix: nothing to do" % args.id)
     if row["command"].strip() in ("", PLACEHOLDER):
         levels_cli.stop("LEVELS_NO_REAL_COMMAND", "%s has no real command yet. Fix: regression.py add %s --level draft --test-level <L> "
-                        "--command '<a real command>', then run --ready again" % (args.id, args.id))
+                        "--command '<a real command>'. Then run level %s --ready again" % (args.id, args.id, args.id))
     word = {}
 
     def change(now):
@@ -167,3 +170,11 @@ def pr_target(root, cfg):
     """The level the pull request check runs: L1 once the table is armed (ci_levels no longer steers it), else ci_levels or nightly."""
     import completion
     return "L1" if completion.armed(root) else str(cfg.get("ci_levels") or "nightly")
+
+
+def draft_guard(row, args):
+    """A draft is not run to be measured and takes no covers: refused until `level ID --ready` (R5, R6)."""
+    from levels_cli import stop
+    if row["level"] == "draft" and (args.retime or args.covers or args.test_level == "L0"):
+        stop("LEVELS_DRAFT_NOT_READY", "%s is a draft: it is not run (so not measured for L0) and takes no covers until it is ready. Fix: "
+             "regression.py level %s --ready. Then --test-level L0 --retime measures it" % (args.id, args.id))

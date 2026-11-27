@@ -130,6 +130,7 @@ def cmd_level(root, args):
     row, entry = state.by_id.get(args.id), state.entries().get(args.id)
     if not row:
         stop("LEVELS_NO_ROW", "no row %s" % args.id)
+    level_words.draft_guard(row, args)
     if not any(edits):
         print("LEVEL %s: %s" % (args.id, "no entry" if not entry else ", ".join(
             "%s %s" % (k, entry[k]) for k in ("old", "level", "risk", "covers", "seconds", "reason") if entry[k])))
