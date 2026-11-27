@@ -147,7 +147,7 @@ dlf-done-2-budget	PASS	2026-11-25
 dlf-done-3-sizes	PASS	2026-11-25	
 dlf-lines-not-waits	PASS	2026-11-25	
 dlf-merge-on-green	PASS	2026-11-25	
-dlf-mutation-controls	PASS	2026-11-25	
+dlf-mutation-controls	PASS	2026-11-27	
 dlf-only-safety-waits	PASS	2026-11-25	
 dlf-scan-every-path	PASS	2026-11-25	
 dlf-setting-off-waits	PASS	2026-11-25	
@@ -192,7 +192,7 @@ eta-health	PASS	2026-11-25
 eta-health-missing	PASS	2026-11-25	
 eta-health-rules	PASS	2026-11-25	
 eta-ledger	PASS	2026-11-25	
-eta-preflight-asked	PASS	2026-11-25	
+eta-preflight-asked	PASS	2026-11-27	
 eta-preflight-missed	PASS	2026-11-25	
 every-row-described	PASS	2026-11-27	
 failed-waits-mender	PASS	2026-11-09	
@@ -302,6 +302,7 @@ lane-env-states	PASS	2026-11-24
 lane-fail-text	PASS	2026-11-27	
 lane-last-152	PASS	2026-11-27	
 lane-limit-150	PASS	2026-11-27	
+lane-memory-not-counted	PASS	2026-11-27	
 lane-messages-table	PASS	2026-11-11	
 lane-order	PASS	2026-11-24	
 lane-over-minutes	PASS	2026-11-27	
