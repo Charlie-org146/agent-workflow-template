@@ -308,9 +308,9 @@ def enforced():
         found = {r["subject"]: r for r in json.loads(got.stdout)["rows"] if r.get("subject", "").startswith("ABC-")}
     except ValueError:
         found = {}
-    for key, want in (("ABC-1", "not enforced"), ("ABC-2", "not enforced")):
+    for key, state in (("ABC-1", "FAIL"), ("ABC-2", "WARN")):  # a draft-only requirement keeps today's FAIL (R7: no weaker); a covered-only one was silent before
         item = found.get(key, {})
-        check(item.get("state") == "WARN" and want in item.get("detail", ""), "%s shows WARN, not enforced" % key, item or "no row for %s among %s" % (key, sorted(found)))
+        check(item.get("state") == state and "not enforced" in item.get("detail", ""), "%s shows %s, not enforced" % (key, state), item or "no row for %s among %s" % (key, sorted(found)))
     check("ABC-3" not in found or "not enforced" not in found["ABC-3"].get("detail", ""), "a requirement with a land row is not reported not enforced")
     repo.close()
 
