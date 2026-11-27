@@ -64,6 +64,15 @@ check("A plan gets the reviews its size's row lists, once." in text and "at most
 check("at most `3` such reads" in prompt(SMALL, {"plan_fix_reads": 3}), "plan_fix_reads from the base config is used")
 for bad in ("x", True, -1, 2.5):
     check("at most `2` such reads" in prompt(SMALL, {"plan_fix_reads": bad}), "plan_fix_reads %r falls back to 2" % (bad,))
+# red team pass 1 (v110-plan-by-size): inputs that must stay full
+for name, odd in (("a dot-slash path", {"touches": ["./.github/workflows/x.yml"]}), ("a backslash path", {"touches": [".github\\x"]}),
+                  ("an upper-case path", {"touches": [".GITHUB/workflows/x.yml"]}), ("a dotdot path", {"touches": ["x/../.github/y"]}),
+                  ("touches as a string", {"touches": ".github/workflows/x.yml"}),
+                  ("small as the text false", {"size": {"small": "false"}}), ("small as 1", {"size": {"small": 1}}),
+                  ("a list for goal", {"goal": ["a"]}), ("a None touch", {"touches": [None]}),
+                  ("a bogus depth_override", {"touches": [".github/x"], "depth_override": {"depth": "x"}})):
+    text = prompt(dict(SMALL, **odd))
+    check("never condense" in text.lower() and "one-round" not in text, "%s is held to full at plan start" % name, text)
 sys.path.insert(0, os.path.join(ROOT, "skills", "workflow-setup", "scripts"))
 import settings  # noqa: E402
 rows = {row[0]: row for row in settings.TABLE}
