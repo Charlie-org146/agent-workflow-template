@@ -330,8 +330,9 @@ def suite_rows(common_dir, suite_limit, cfg):
     full = [cells for cells in lines if len(cells) >= 4 and cells[1] == "full" and cells[2].isdigit()]
     if not full:
         off = cfg.get("regression_cron") == "off" or cfg.get("ci_levels") == "land"
-        return [timing_row("INFO", "full-suite", "no full-suite time recorded yet", "run regression.py run L2 locally (nightly: every land and nightly row)" if off
-                    else "the scheduled health job downloads CI's time; locally, run regression.py run L2 (nightly: every land and nightly row)")]
+        run = "run regression.py run L2 (nightly: every land and nightly row)"
+        return [timing_row("INFO", "full-suite", "no full-suite time recorded yet", run if off
+                    else "the scheduled health job downloads CI's time; locally, " + run)]
     sha, _, seconds, day = full[-1][:4]
     minutes, source = int(seconds) // 60, "CI artifact" if len(full[-1]) > 4 and full[-1][4] == "ci" else "local run"
     left = int(full[-1][4]) if len(full[-1]) > 4 and full[-1][4].isdigit() else 0  # 5th column: rows left unrun (REG-7)
