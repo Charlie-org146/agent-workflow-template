@@ -2,7 +2,6 @@
 """The one-time re-levelling, the reading of defect labels and which rows may run in L0 (skills/loop-files.md)."""
 import os
 import re
-import signal
 import subprocess
 import sys
 import tempfile
@@ -10,6 +9,7 @@ import time
 
 import actions
 import completion
+import proctree
 from levels import L0_MS, RANK, State, excuse, file_of, fingerprint, ms, needs, sha, tokens
 from levels_write import derive, entry_for, pin, reasoned, update, writer_gate
 from row_reach import references
@@ -211,9 +211,9 @@ def measured_run(root, row):
                 code = None
             finally:
                 try:
-                    os.killpg(child.pid, signal.SIGKILL)
-                except (OSError, AttributeError):
-                    child.kill() if child.poll() is None else None
+                    proctree.kill(child.pid)
+                except OSError:
+                    pass
         seconds = time.time() - began
     if code != 0:
         sys.exit("REFUSED (LEVELS_L0_TIME): the row %s; only a passing run is a measurement, nothing was written" % (
