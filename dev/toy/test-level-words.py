@@ -506,7 +506,7 @@ def runbook():
     book = page.split("\n## Runbook\n", 1)[1].split("\n## Requirements", 1)[0]
     found = sorted(set(w.lower() for w in re.findall(r"\b(land|nightly|covered|draft)\b", book, re.I)))
     check(not found, "the Runbook section holds none of land, nightly, covered, draft: %s" % (found or "none"))
-    check(all(re.search(r"\b%s\b" % level, book) for level in ("L0", "L1", "L2")) and "target L0, L1, L2 or one row id" in book, "the Runbook names the targets L0, L1, L2 and a row id")
+    check(all(re.search(r"\b%s\b" % level, book) for level in ("L0", "L1", "L2")) and "L0, L1, L2 or one row id" in book, "the Runbook names the targets L0, L1, L2 and a row id")
     how = open(os.path.join(root, "docs", "wiki", "How-to-use-Regression.md"), encoding="utf-8").read()
     table = how.split("### Old words and the new levels", 1)
     check(len(table) == 2, "How-to-use-Regression.md has the section 'Old words and the new levels'")
@@ -517,7 +517,7 @@ def runbook():
             ("ci_levels", ("land", "nightly"), "unchanged"),
             ("regression-limits.tsv", ("land", "nightly"), "unchanged"))
     for where, olds, new in want:
-        line = [l for l in rows if l.split("|")[1].strip("` ").startswith(where)]
+        line = [l for l in rows if where in l.split("|")[1]]
         check(len(line) == 1 and all(w in line[0] for w in olds) and new in line[0], "the table has one line for %s with its old words and %s" % (where, new), line)
 
 

@@ -53,6 +53,18 @@ A row must be seen failing once before it counts. Known failures don't block, an
 | "Which tests does this change reach?" | The rows the change can affect are listed. Any change but one only to NO_EFFECT files such as VERSION or a goal file, a deleted file included, also reaches the root runners, on Windows as on Linux. An edit to `.loop/regression.tsv` or `.loop/regression-known.tsv` re-runs only the rows whose own line changed, plus the rows whose command or directly named script names `.loop/regression.tsv` and the rows that run tools on the repo's own files (TOP-DECISION 46, widened). A row that reads the table only through an unnamed helper isn't re-run on a table edit; the gate's full suite and the pull request's CI still run it. |
 | (a test shows ENV) | Windows could not start it under low memory (exit 0xC0000142 and like codes), even on the lane's one rerun of it: it is not a failure, so rerun it when memory allows. |
 
+### Old words and the new levels
+
+The level words are L0, L1 and L2. These places still take an old word; each line says where and what to type now.
+
+| Where you still type it | Old words | New |
+|---|---|---|
+| `regression.py add --level` (column 2 of `.loop/regression.tsv`) | land, nightly, draft, covered | the same four words; give the level with `--test-level L0`, `L1` or `L2` (a row that is not ready is made with `--level draft --test-level L1` and readied with `level ID --ready`) |
+| `regression.py run` and the Actions `target` | land, nightly | `run L1` and `run L2` (L0 too); `run land` and `run nightly` still work |
+| `goal_levels` in `.loop/config.json` | land, nightly | L0, L1, L2: an old word is read as L1 (land) or L2 (nightly), with a line telling you to change it |
+| `ci_levels` in `.loop/config.json` | land, nightly | unchanged: the old words |
+| `.loop/regression-limits.tsv` | land, nightly | unchanged: the old words |
+
 Each requirement and how it is delivered:
 
 - REG-4: When tests run. Example, from the lanes-reuse test: given a first run on unchanged content, when a second run happens, then it reuses the first and runs no test. Also (was REG-1): Three kinds of tests. Example, from the refused-unmet test: given a criterion with no test, when a release is cut, then it is refused.
