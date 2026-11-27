@@ -140,8 +140,11 @@ def common_of(top):
     return os.path.join(release.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top, check=False), "loop")
 
 
+START_ANSWER = re.compile(r'"(\\[ntr]|\s)*(approve|reject)(\\[ntr]|\s)+start\b', re.I)  # DLF-1.3: no other permission (E15, M1)
+
+
 def table(top, name):
-    return tsv(common_of(top), name)
+    return [r for r in tsv(common_of(top), name) if not (name == "owner-words.tsv" and len(r) > 3 and START_ANSWER.match(r[3]))]
 
 
 def waivers(top, kind):

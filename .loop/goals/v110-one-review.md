@@ -264,3 +264,10 @@ safety_scan.py has one rule set for a stop's words and one for a diff. Nothing c
 
 - New script start_answer.py (not in the plan's Files list, within the goal's touches): start_review.py lacks the room. Commands: goal.py start-items SLUG --file F (operation), goal.py start-review SLUG (read only), goal.py start SLUG --owner-record ID (operation).
 - Still open in E1: the start mail and its send-once rule (E6, E17, CEO B2); the start record refused by every other reader (E15, M1); the whole-unit comparison at revise, review, guard and merge (M2 to M5); uses voided as B2 rules. Until the mail is built, "later than the message" means later than the items were recorded.
+
+### Rulings after E7
+
+- RT2, operation-mac's ruling A (TD2188 round, listed for top): the strict test rule stays. Operation lists the test files a goal expects to edit as a numbered start item, which the owner approves once with the rest; a test change outside it takes the safe option. Evidence: the E7 counts above. The narrower rule is not taken, since it detects less.
+- E15 and M1: a record in start-answer form is no other permission. The shared monitoring reader, plan-accept, plan-round approval, the docs commands, delegated and milestone records and the release records leave it out. The one exception, the approved requirement item at revise and review, comes with the unit comparison. eta_new moved from auto.py to the new review_view.py, which the plan names.
+- Checks for the E15 slice: the two new toys and test-owner-words.sh pass. A wider run was stopped for operation's load rule after 3 passing toys and is still owed.
+- TD2188 (trim for speed): keep the five done lines, E1 to E5 and what a done line or safety guarantee needs; defer the rest as deliver-first lines named in the pull request; a safety item that can't be built in time is dropped and filed, never waived.

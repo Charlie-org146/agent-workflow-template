@@ -423,6 +423,62 @@ check("STARTED older-ans" in said and record("older-ans").get("one_review") and 
       and "- Review: one" in sh(tmp, "show", "origin/loop/older-ans:.loop/goals/older-ans.md") and ledger("older-ans") == ["mark", "start"],
       "an older goal's answer marks it, commits the mark and pushes it: %s" % said.strip()[:200])
 
+# a start answer is no other permission: every other reader of owner records leaves it out (E15, M1)
+sh(tmp, "reset", "-q", "--hard")
+START = words("approve start ask abc123", who="operation")
+ALSO = words("  Reject   Start zzz 000000", who="operation")
+PLAIN = words("keep going", who="operation")
+common = os.path.join(tmp, ".git", "loop")
+rows = [line.split("\t") for line in open(os.path.join(common, "owner-words.tsv")).read().splitlines()]
+open(os.path.join(common, "owner-words.tsv"), "w").write("".join("\t".join(r[:4] + ["ask,v9.0.0,full-auto-rule,always-ask:*"]) + "\n" for r in rows))
+put(tmp, "docs/wiki/D.md", "### DOC-2\n\n| rev | date |\n|---|---|\n| r1 | x |\n")
+delegated = words("approve start ask abc123", who="operation-top:delegated:TD1:DOC-2:r1")
+put(tmp, ".loop/queue.md", "")
+put(tmp, ".loop/goals/ask.plan.md", "plan\n")
+probe = r"""
+import argparse, json, os, subprocess, sys
+root, tmp, common, START, ALSO, PLAIN, DEL = sys.argv[1:]
+for skill in ("workflow-monitoring", "workflow-docs", "workflow-release"):
+    sys.path.append(os.path.join(root, "skills", skill, "scripts"))
+os.chdir(tmp)
+git = lambda *a: subprocess.run(["git"] + list(a), capture_output=True, text=True, check=True).stdout.strip()
+def said(call):
+    try:
+        return "got %r" % (call(),)
+    except SystemExit as stop:
+        return "refused %s" % stop.code
+import auto, board_log, board_model, notify, deployments, criteria, milestones, review
+out = {}
+ids = [r[0] for r in auto.owner_rows(tmp)]
+out["rows"] = [START in ids, ALSO in ids, PLAIN in ids]
+out["count"] = auto.add_owner_words(argparse.Namespace(text="more words", delegated="", via="owner", doc2=""), ["x"]) == len(open(os.path.join(common, "owner-words.tsv")).readlines())
+red = board_log.red_dir(tmp); os.makedirs(red, exist_ok=True)
+json.dump({"sha": board_log.plan_sha(tmp, "ask"), "breaks": [{"principle": 1, "text": "b"}]}, open(os.path.join(red, "plan-ask.json"), "w"))
+out["plan_accept"] = [said(lambda r=r: board_model.plan_accept(tmp, "ask", 1, r)) for r in (START, PLAIN)]
+pending = os.path.join(common, "toy-plan.json"); json.dump({"status": "pending", "goals": []}, open(pending, "w"))
+out["approve"] = said(lambda: notify.approve(argparse.Namespace(owner_record=START, rest=[]), pending, tmp, os.path.dirname(common)))
+args = lambda r: argparse.Namespace(owner_record=r, command="review", ids=["ask"])
+out["docs"] = [said(lambda r=r: deployments.owner_words(args(r), git)) for r in (START, PLAIN)]
+out["delegated"] = criteria.delegated(tmp, DEL, "plain")
+out["milestone"] = [bool(milestones.record(r, "ask", "ask")) for r in (START, PLAIN)]
+table = [r[0] for r in review.table(tmp, "owner-words.tsv")]
+out["release"] = [START in table, PLAIN in table]
+print("OUT " + json.dumps(out))
+"""
+ran = subprocess.run([sys.executable, "-c", probe, root, tmp, common, START, ALSO, PLAIN, delegated], capture_output=True, text=True, env=env)
+got = json.loads(ran.stdout.split("OUT ", 1)[1]) if "OUT " in ran.stdout else {}
+got or print(ran.stderr[-1500:])
+check(got.get("rows") == [False, False, True], "the shared reader leaves start answers out: %s" % got.get("rows"))
+check(got.get("count") is True, "record numbers still count every record")
+acc = got.get("plan_accept") or ["", ""]
+check(acc[0].startswith("refused") and acc[1].startswith("got 'ACCEPTED"), "a start answer accepts no plan break: %s" % acc[0][:90])
+check("takes the owner's words" in got.get("approve", ""), "a start answer approves no plan round: %s" % got.get("approve", "")[:90])
+docs = got.get("docs") or ["", ""]
+check("ONE_REVIEW_RECORD" in docs[0] and docs[1].startswith("got 'record "), "the docs commands refuse it: %s" % docs[0][:110])
+check(got.get("delegated") in (False, None), "it is no delegated approval: %r" % got.get("delegated"))
+check(got.get("milestone") == [False, True], "it is no milestone record: %s" % got.get("milestone"))
+check(got.get("release") == [False, True], "it is no release record or waiver: %s" % got.get("release"))
+
 os.environ.get("TOY_SHOW") and print(open(os.path.join(home, "last.txt")).read())
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)

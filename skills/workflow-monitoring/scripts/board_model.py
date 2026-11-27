@@ -370,11 +370,12 @@ def estimate_text(found):
 
 def plan_accept(root, slug, n, record):
     """The owner accepts a break of principle n on the plan as it stands, by an owner-words.tsv record."""
+    import auto
     import board_log as bl
     path, owner = os.path.join(bl.red_dir(root), "plan-%s.json" % slug), os.path.join(os.path.dirname(bl.red_dir(root)), "owner-words.tsv")
     seen = bl.read_json(path) or {}
     hit = [b for b in seen.get("breaks", []) if b["principle"] == n and seen.get("sha") == bl.plan_sha(root, slug)]
-    if not hit or not os.path.exists(owner) or record not in {r.split("\t")[0] for r in open(owner, encoding="utf-8")}:
+    if not hit or not os.path.exists(owner) or record not in {r[0] for r in auto.owner_rows(root)}:
         sys.exit("REFUSED: needs an owner-words.tsv record and a break of principle %d on the plan as it stands" % n)
     for b in hit:
         b["accepted"] = record

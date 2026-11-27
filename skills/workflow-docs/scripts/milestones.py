@@ -230,7 +230,7 @@ def record(rid, slug, *names):
     except OSError:
         rows = []
     for r in rows:
-        if len(r) == 5 and r[0] == rid and slug in r[4].split(",") and set(names) & set(r[4].split(",")):
+        if len(r) == 5 and r[0] == rid and not cr.deployments.START_ANSWER.match(r[3]) and slug in r[4].split(",") and set(names) & set(r[4].split(",")):
             return '%s: "%s"' % (rid, pf.enc(" ".join(json.loads(r[3]).split()[:12])))
 
 

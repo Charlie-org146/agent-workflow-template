@@ -218,7 +218,8 @@ def approve(args, path, top, common):
     if plan.get("status") != "pending":
         sys.exit("REFUSED: no pending plan. Fix: run monitor.py plan first.")
     try:
-        known = {x.split("\t")[0] for x in open(os.path.join(common, "loop", "owner-words.tsv"), encoding="utf-8").read().splitlines()}
+        import auto
+        known = {r[0] for r in auto.owner_rows(top)}  # a start review's answer is not among them
     except OSError:
         known = set()
     if not args.owner_record or args.owner_record not in known:

@@ -248,6 +248,9 @@ def safety(text):
         sys.path.remove(here)
 
 
+START_ANSWER = re.compile(r'"(\\[ntr]|\s)*(approve|reject)(\\[ntr]|\s)+start\b', re.I)  # DLF-1.3: no other permission (E15, M1)
+
+
 def owner_rows(path):
     try:
         with open(path, encoding="utf-8") as handle:
@@ -263,6 +266,9 @@ def owner_words(args, git):
         sys.exit("REFUSED: no owner-words record %s. Nothing was changed. Fix: the operation session records the owner's "
                  "message with sessions.py owner-words." % args.owner_record)
     record = found[-1]
+    if START_ANSWER.match(record[3]):
+        sys.exit("REFUSED: record %s answers a start review, and that is no other permission. Nothing was changed. Fix: the "
+                 "operation session records the owner's words for this (ONE_REVIEW_RECORD)." % args.owner_record)
     stand = args.command == "unreview" and "full-auto-rule" in record[4].split(",")
     left = [] if stand else sorted(set(args.ids) - set(record[4].split(",")))
     if left:
