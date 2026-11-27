@@ -68,7 +68,29 @@ def goal():
     check(got == "land" and code is None and "GOAL_LEVELS" in out + err, "table not levelled: goal_levels 'weekly' runs as land and is warned about")
 
 
-cases = {"goal": goal}
+def settings():
+    print("== R1: the setting's documented words, the survey's values and this repo's config")
+    # Value: protects=goal_levels is documented, accepted when borrowed and set with the new words only; fails_when=the table,
+    #   the survey or this repo's config still speaks land and nightly
+    import re
+    import subprocess
+    sdir = os.path.join(root, "skills", "workflow-setup", "scripts")
+    ref = subprocess.run([sys.executable, os.path.join(sdir, "settings.py"), "reference"], capture_output=True, text=True).stdout
+    row = [line for line in ref.splitlines() if line.startswith("| `goal_levels` |")]
+    check(len(row) == 1 and "| `L0` |" in row[0] and all(w in row[0] for w in ("L0", "L1", "L2")), "settings.py documents goal_levels with the default L0 and the values L0, L1 and L2")
+    check(len(row) == 1 and not re.search(r"\b(land|nightly|covered|draft)\b", row[0]), "the goal_levels row uses none of the old words")
+    sys.path.insert(0, sdir)
+    import survey
+    check(all(survey.fits("goal_levels", v, "L0") for v in ("L0", "L1", "L2", "land", "nightly")) and not survey.fits("goal_levels", "weekly", "L0"),
+          "the survey borrows L0, L1, L2 and the two old words, and refuses another value")
+    cfg = json.load(open(os.path.join(root, ".loop", "config.json")))
+    check(cfg.get("goal_levels") == "L0", "this repo's config sets goal_levels to L0")
+    page = open(os.path.join(root, "docs", "wiki", "How-to-use-Setup.md"), encoding="utf-8").read()
+    line = [l for l in page.splitlines() if l.startswith("| `goal_levels` |")]
+    check(len(line) == 1 and "L0, L1 or L2" in line[0] and "`L0` | default" in line[0], "the How-to-use-Setup row for goal_levels names L0, L1 or L2 and the default L0")
+
+
+cases = {"goal": goal, "settings": settings}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
