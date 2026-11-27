@@ -166,10 +166,13 @@ def unanswered(state, top=None):
     if not held and top and slug:
         branch = state.get("branch") or "loop/%s" % slug
         held = MARK.search(committed(top, "refs/heads/" + branch, slug))
-    if state.get("start_answer") or not held:
+    answer = state.get("start_answer")
+    if answer and answer.get("verdict") == "reject":
+        return "%s's start review was rejected" % slug
+    if answer or not held:
         return ""
-    return ("%s needs the owner's start review and no accepted answer is saved. Fix: send it, then goal.py start %s "
-            "--owner-record ID" % (slug, slug))
+    return ("%s needs the owner's start review and no accepted answer is saved. Fix: show it (goal.py start-review %s), then "
+            "goal.py start %s --owner-record ID" % (slug, slug, slug))
 
 
 def gate(state, top, step):

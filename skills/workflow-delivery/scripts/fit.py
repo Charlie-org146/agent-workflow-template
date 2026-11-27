@@ -269,6 +269,11 @@ def start_review():
     return found
 
 
+def start_answer():
+    import start_answer as found
+    return found
+
+
 def cmd_adopt(g, args):
     return monitor("batch").cmd_adopt(g, args)
 

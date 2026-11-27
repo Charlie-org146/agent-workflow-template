@@ -259,3 +259,8 @@ safety_scan.py has one rule set for a stop's words and one for a diff. Nothing c
 - Diffs, 100 merges, none unread: 30 open no finding. Test loosened or deleted: 65; security and settings: 18 (mostly workflow files and the config); deletion 3; money 1; steward merge 1; private data 0; changed Reviewed text 0.
 - The test rule as DLF-1 has it today (any removed line in a test file) is what makes 65. A narrower rule tried on the same merges (deleted test file, added skip mark, removed or edited existing row, fewer check lines in a file) still flags 41, mostly existing rows edited (30) and skip wording (19), and it detects less.
 - RT2 (ordinary test updates, loosening no check): the strict rule stays until operation rules.
+
+### E1, first part: the items, the message and the answer
+
+- New script start_answer.py (not in the plan's Files list, within the goal's touches): start_review.py lacks the room. Commands: goal.py start-items SLUG --file F (operation), goal.py start-review SLUG (read only), goal.py start SLUG --owner-record ID (operation).
+- Still open in E1: the start mail and its send-once rule (E6, E17, CEO B2); the start record refused by every other reader (E15, M1); the whole-unit comparison at revise, review, guard and merge (M2 to M5); uses voided as B2 rules. Until the mail is built, "later than the message" means later than the items were recorded.

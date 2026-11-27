@@ -304,6 +304,9 @@ def main():
     add("queue", cmd_queue, *goal, ("--depends-on", {"default": ""}))
     add("adopt", cmd_adopt)
     add("recover", lambda args: fit.start_review().recover(ME, args))
+    add("start-items", lambda args: fit.start_answer().cmd_items(ME, args), ("--file", {"required": True}))
+    add("start-review", lambda args: fit.start_answer().cmd_show(ME, args))
+    add("start", lambda args: fit.start_answer().cmd_start(ME, args), ("--owner-record", {"required": True}))
     add("step", cmd_step, ("name", {}), ("--note", {"default": ""}), ("--tokens", {"type": int, "default": 0}))
     add("record", cmd_record, ("step", {"choices": FLOW}), ("--file", {"required": True}), ("--in-session", {"action": "store_true"}),
         ("--tokens", {"default": ""}))

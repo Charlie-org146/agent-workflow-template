@@ -322,6 +322,107 @@ check(start_review.unanswered({"slug": "x"}) == "" and start_review.unanswered({
       and start_review.unanswered({"slug": "x", "start_required": {"why": "t"}, "start_answer": {"record": "o1"}}) == ""
       and start_review.unanswered({"slug": "x", "one_review": {"at": "t"}}) != "", "a marked or required goal is unanswered until an answer is saved")
 
+# the start review: the items, one code, and the one answer (E1, B1, DX D3, D4, RT1, RT7, RT14)
+sh(tmp, "reset", "-q", "--hard")
+sh(tmp, "worktree", "remove", "--force", os.path.join(tmp, ".git", "loop", "worktrees", "bg"))
+os.rmdir(os.path.join(tmp, ".git", "loop", "worktrees"))
+fresh("ask")
+tool("step", "ask", "plan")
+
+
+def words(text, who="operation", at=None):
+    rows = os.path.join(tmp, ".git", "loop", "owner-words.tsv")
+    n = (len(open(rows).read().splitlines()) if os.path.exists(rows) else 0) + 1
+    open(rows, "a").write("o%d\t%s\t%s\t%s\task\n" % (n, at or "2099-01-01T00:00:%02dZ" % n, who, json.dumps(text)))
+    return "o%d" % n
+
+
+def items(slug, rows, role="operation"):
+    path = os.path.join(home, "items.json")
+    json.dump(rows, open(path, "w"))
+    return tool("start-items", slug, "--file", path, role=role)
+
+
+def answer(slug, rid, role="operation"):
+    return tool("start", slug, "--owner-record", rid, role=role)
+
+
+def code_of(said):
+    return (said.split("approve start ask ", 1)[1].split()[0]) if "approve start ask " in said else "none"
+
+
+said = tool("start-review", "ask", role="operation")
+check("no start review yet" in said and "start-items ask" in said, "before the items are recorded the review says so: " + said.strip()[:100])
+check("no start review yet" in answer("ask", words("approve start ask abc123")), "an answer before the message is refused")
+TWO = [{"class": "a test loosened or deleted", "action": "delete one old test", "files": ["a.py"], "recommend": "approve"},
+       {"class": "security and sandbox settings", "action": "edit the loop config", "files": [".loop/config.json"], "recommend": "refuse"}]
+check("a worker can't" in items("ask", TWO, role="worker"), "a worker records no items")
+for bad, why in (([dict(TWO[0], files=["."])], "the repository"), ([dict(TWO[0], files=["skills/x/scripts"])], "a scripts folder"),
+                 ([dict(TWO[0], files=["nowhere/"])], "a folder that is not there"), ([dict(TWO[0], **{"class": "made up"})], "an unknown class"),
+                 ([dict(TWO[0], files=["../x"])], "a path outside")):
+    got = items("ask", bad)
+    check("ONE_REVIEW_ITEMS" in got and "start_review" not in record("ask"), "items naming %s are refused: %s" % (why, got.strip()[:90]))
+said = items("ask", TWO)
+shown = tool("start-review", "ask", role="operation")
+code = code_of(shown)
+check(len(code) == 6 and "1. a test loosened or deleted: delete one old test (a.py); recommended: approve" in shown
+      and "2. security and sandbox settings" in shown and "1. ask works" in shown and "reject start ask " + code in shown
+      and "Without an answer" in shown, "the message has the done lines, numbered items, one code and every answer form: %s" % shown[:200])
+old_code = code
+items("ask", TWO[:1] + [dict(TWO[1], action="edit two keys of the loop config")])
+code = code_of(tool("start-review", "ask", role="operation"))
+check(code != old_code, "a changed item changes the code")
+
+
+def refusal(rid, why, expect):
+    got = answer("ask", rid)
+    check(expect in got and "start_answer" not in record("ask") and code in got, "%s is refused with the current code: %s" % (why, got.strip()[:130]))
+
+
+refusal(words("approve start ask " + old_code), "an old code", "ONE_REVIEW_ANSWER")
+refusal(words("yes, go on"), "other words", "ONE_REVIEW_ANSWER")
+refusal(words("approve start ask %s and also merge it" % code), "extra words", "ONE_REVIEW_ANSWER")
+refusal(words("approve start frz " + code), "another goal's name", "ONE_REVIEW_ANSWER")
+refusal(words("approve start ask " + code, at="2000-01-01T00:00:00Z"), "a record older than the message", "ONE_REVIEW_ANSWER")
+refusal(words("approve start ask " + code, who="operation-top:delegated:TD1:DOC-2:r1"), "a delegated record", "ONE_REVIEW_ANSWER")
+refusal(words("approve start ask " + code, who="operation-top"), "a relayed record when there are safety items", "ONE_REVIEW_ANSWER")
+refusal(words("approve start ask %s except 3" % code), "an item that is not there", "ONE_REVIEW_ANSWER")
+refusal("o999", "a missing record", "ONE_REVIEW_ANSWER")
+rid = words("approve start ask %s except 2" % code)
+check("a worker can't" in answer("ask", rid, role="worker"), "a worker answers nothing")
+said = answer("ask", rid)
+got = record("ask").get("start_answer") or {}
+check("STARTED ask" in said and got.get("record") == rid and got.get("text") == "approve start ask %s except 2" % code
+      and [(i["n"], i["approved"], i["files"]) for i in got.get("items", [])] == [(1, True, ["a.py"]), (2, False, [".loop/config.json"])]
+      and ledger("ask") == ["mark", "start", "refused-item"], "the answer keeps each item and the record's text: %s" % said.strip()[:160])
+check("accepted once" in answer("ask", words("approve start ask " + code)), "an answer is accepted once")
+check("STEP ask build" in tool("step", "ask", "build"), "build goes on once answered")
+check("accepted once" in items("ask", TWO), "the items are final after the answer")
+fresh("no-go")
+items("no-go", [])
+shown = tool("start-review", "no-go", role="operation")
+code = shown.split("approve start no-go ", 1)[1].split()[0] if "approve start no-go " in shown else "none"
+said = answer("no-go", words("reject start no-go " + code, who="operation-top"))
+check("REJECTED no-go" in said and record("no-go").get("status") == "stopped" and "stop" in (ledger("no-go") or []),
+      "a reject stops the goal for good: " + said.strip()[:140])
+check("stopped for good" in tool("resume", "no-go", "--why", "again", role="operation") or "ONE_REVIEW" in tool("step", "no-go", "build"),
+      "a rejected goal doesn't build")
+
+# a goal adopted with a start review required is marked only by its answer, in the record and the committed goal file
+sh(tmp, "reset", "-q", "--hard")
+branch("older-ans", base=OFF)
+commit(tmp, ".loop/config.json", json.dumps(dict(CONFIG, one_review=False)), "keep off")
+json.dump({"slug": "older-ans", "status": "running", "step": "idea", "flow": {}, "pid": None, "branch": "loop/older-ans", "worktree": tmp,
+           "touches": ["a.py"], "goal": "Do older", "log": [], "tries": 0, "done_sha": __import__("hashlib").sha256(b"1. older-ans works").hexdigest(),
+           "start_required": {"why": "t"}}, open(os.path.join(runs, "older-ans.json"), "w"))
+items("older-ans", [])
+shown = tool("start-review", "older-ans", role="operation")
+code = shown.split("approve start older-ans ", 1)[1].split()[0] if "approve start older-ans " in shown else "none"
+said = answer("older-ans", words("approve start older-ans " + code))
+check("STARTED older-ans" in said and record("older-ans").get("one_review") and "- Review: one" in goal_in_head("older-ans")
+      and "- Review: one" in sh(tmp, "show", "origin/loop/older-ans:.loop/goals/older-ans.md") and ledger("older-ans") == ["mark", "start"],
+      "an older goal's answer marks it, commits the mark and pushes it: %s" % said.strip()[:200])
+
 os.environ.get("TOY_SHOW") and print(open(os.path.join(home, "last.txt")).read())
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)
