@@ -77,3 +77,5 @@ Frozen. A wrong done line needs a new goal.
 - Workflow files: .github/workflows/regression-pr.yml (one line, run L1) and the regenerated .github/workflows/regression.yml (the embedded tests.py and l2.py text; no trigger, permission, env or step added) are owner-approved (o1062); each diff was approved by operation-top before its commit (TD2344, TD2349, TD2350, TD2357, TD2360, TD2361, TD2363, TD2366, TD2407). The 730 rows LEFT by the local lane (and the rest of the 741 not run locally) are reached by GitHub's L1 pull-request run on the exact PR head: its run id and head sha are named by the operation session at merge time (TD1229), and a row that run does not reach is not called covered.
 
 Superseded v110-lvl-retire-old-words-2 (the push guard reads the folder name; filed v110-lvl-retire-old-words-2-break-1), with code identical to -2's afb30f0f9.
+
+Doubled review record (mine): the first review record for -3 cited -3's head in place of -2's round heads 820cf97e25550955eb317d484e25e8f53bf18237 and d9963811ad4da4b9c7a75689822a62bc08db72f4 (a sed slip); it was re-recorded with the right text, and the second record is the one that counts.
