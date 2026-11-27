@@ -81,6 +81,16 @@ Anything beyond the four rows (OPS-1.10); no new rows; the one product-code fix 
 - criteria.py's entry in Touches lives in the tool's extra.json, not in the goal file; the goal file stays uncommitted as the tool wrote it.
 - Last read answers (round 3): "stricter" for a row command means only added conjuncts or added exit-code and FAIL checks, with no removed or edited expected text; the `# reads:` header of test-one-review-start.py is exempt from the token guard (a comment, not a check) and is a deliver-first line; the deliver-first list is therefore (1) the root-cause fix in criteria.py, (2) the bash resolution as a runner change, (3) done line 2 met by the producer emitting "/", (4) the toy-leak-config-keep row command fixed for path handling as a fifth row, (5) the `# reads:` header edit, (6) rows-pr-full made stricter. The bash refusal (None or under System32) is the intended outcome on a PC where WSL comes first on PATH, and its message tells the owner to put Git Bash first on PATH. Files, in one line: skills/workflow-docs/scripts/criteria.py, dev/toy/test-shard-balance.py, dev/toy/test-one-review-start.py (its code and its `# reads:` header), .loop/regression.tsv (rows rows-pr-full and toy-leak-config-keep).
 
+## Round 4 red team revisions (TD2457: only FAIL-OPEN and PLAN-WRONG findings are fixed; this section wins over every section above)
+- (1) The bash refusal in test-shard-balance.py exits 1 and prints a line starting "FAIL: ", never 77 (the row runner counts exit 77 as SKIPPED, `actions.py:220`).
+- (2) The row runner runs `bash -c` on Windows (`lanes.py:131`), which may resolve to WSL. Each Windows run's evidence prints `command -v bash` and `uname -s`; a Windows green counts only when `uname -s` shows MINGW or MSYS.
+- (3) The path scrub covers commit messages too: nothing reaches a commit message before the scan has run on it.
+- (4) Scrub matching collapses repeated separators, is case-insensitive, and includes the 8.3 short-name form of the home folder and doubled backslashes; the scan runs before and after normalising.
+- (5) The guard's "no added sys.exit" rule exempts exactly one exit: the bash-refusal exit, named by its line.
+- (6) The outcome check keeps the token guard and adds exit 0 and zero `^FAIL: ` lines on head on Windows. Equality with base's check names is taken from GitHub's Linux run, comparing names after stripping interpolated values.
+- Config-keep row command (TD1103): it may be planned here, but the row edit is NOT committed until the owner's answer is relayed.
+- Deliver-first lines filed (no redesign): (a) never `git add -A` or `commit -a`, so the goal file stays uncommitted; (b) anchor `^FAIL: ` in rows-pr-full; (c) if toy-leak-row-setup passes unchanged, done line 4's "seen red" does not apply to it, and the PR notes say so; (d) the lanes selection note; (e) the unverified line-609 cause; (f) the size WARN; (g) old saved start answers with backslash paths stop matching; (h) the ETA risk; (i) the rstrip join alternative.
+
 ## PENDING
 PENDING: 1. Whether test-one-review-start.py's failure is a fixture line-ending problem (in scope) or a backslash built in product code (stop and report): resolved by step 1.
 PENDING: 2. Which layer of the `toy-leak-config-keep` command fails on Windows and whether it lies in dev/toy: resolved by step 1.
