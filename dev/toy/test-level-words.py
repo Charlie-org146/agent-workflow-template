@@ -604,16 +604,39 @@ def advice():
     #   "run land"/"run nightly" as the level to run, or the --level error forgets the levels
     def src(rel):
         return open(os.path.join(root, rel), encoding="utf-8").read()
-    lean, mile, cli = src("skills/workflow-health/scripts/lean.py"), src("skills/workflow-health/scripts/milestone.py"), src("skills/workflow-regression/scripts/levels_cli.py")
+    lean, mile = src("skills/workflow-health/scripts/lean.py"), src("skills/workflow-health/scripts/milestone.py")
     check("run what it left with regression.py run L1, or raise the budget" in lean and "run regression.py run L1 --reuse" in lean, "lean.py's lane advice says run L1, not run land")
     check("regression.py run land" not in lean, "lean.py names no 'regression.py run land'")
     check("move the slowest rows to L2 (nightly in column 2 of .loop/regression.tsv)" in lean, "lean.py says where to move a slow row: L2, the nightly word of column 2")
     check("regression.py run L2" in mile and "regression.py run nightly" not in mile, "milestone.py's full-suite advice says run L2")
     check(mile.count("move the slowest to L2 (nightly in column 2)") == 1 and "move the slowest to nightly" not in mile, "milestone.py's slow-row advice says L2 and where the word nightly still goes")
-    check("--level takes the old words land, nightly, draft or covered (the levels are L0, L1 and L2)" in cli, "levels_cli.py's --level error names the old words and the levels")
+    from lvl_fixture import Repo
+    repo = Repo([], None, None)
+    done, said = repo.run("add", "x", "--level", "L1", "--command", "true")
+    repo.close()
+    said = " ".join(said.split())
+    check(done != 0 and "--level takes the old words land, nightly, draft or covered (the levels are L0, L1 and L2)" in said, "the --level error names the old words and the levels", said[-250:])
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "wfpin": wfpin}
+def advice2():
+    print("== R15: no advice line names run land or run nightly without the L0, L1, L2 meaning beside it")
+    # Value: protects=an old word a person types still works and is always shown with the level it means; fails_when=a prose or advice line
+    #   in the seven named surfaces says "run land"/"run nightly" with no L0, L1 or L2 on the line (a bare command example is exempt)
+    import re
+    names = ("skills/workflow-health/scripts/lean.py", "skills/workflow-health/scripts/milestone.py", "skills/workflow-regression/scripts/levels_write.py",
+             "skills/workflow-regression/scripts/levels_cli.py", ".loop/START.md", "skills/loop-files.md", "skills/workflow-regression/SKILL.md")
+    bad = []
+    for rel in names:
+        for n, line in enumerate(open(os.path.join(root, rel), encoding="utf-8").read().splitlines(), 1):
+            if re.search(r"\b(run|add [\w-]+ --level) (land|nightly)\b|--level land|to nightly\b", line) and not re.search(r"\bL[012]\b", line):
+                bare = re.match(r"^\s*(python3 |/workflow-regression |\|? ?`?/workflow-regression|- `/workflow-regression)", line)
+                bare or bad.append("%s:%d" % (rel, n))
+    check(not bad, "every advice line that names run land or run nightly has L0, L1 or L2 beside it: %s" % (bad or "none"))
+    book = open(os.path.join(root, "skills", "workflow-regression", "SKILL.md"), encoding="utf-8").read()
+    check("| `land` | `run land` and `run nightly` (L1's rows: `run L1`" in book and "| `nightly` | `run nightly` (L2's rows: `run L2`" in book, "SKILL.md's level table says what land and nightly mean in L1 and L2")
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "wfpin": wfpin}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
