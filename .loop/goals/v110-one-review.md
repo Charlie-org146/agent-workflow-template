@@ -337,7 +337,7 @@ Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans und
 
 - E9: release holds shared across machines (today they are on this machine only).
 - RT16, needed for done line 4: a revert after a merge opens the revert goal itself (today the output says to queue it).
-- Operation holds in place of the other owner waits (goal.py wait, a worker's waiting report, repeated refusals, a bad flow marker, the merge round cap, full auto, pre-flight), and the mail, headline and Needs-you wording.
+- Full auto's fixed reply and its own finding for a safety question (today such a question is held by the operation, which can open a finding with goal.py decide); board and live-board wording is deferred.
 - The one_review setting (settings.py, START.md, this repo's config), full-depth review and the ETA at the monitored start.
 - The approved page wording with README, Principles and Home regenerated; five rows; command lines; the hand list of owner waits.
 - The skill text for checkin.py --owner.
@@ -345,3 +345,7 @@ Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans und
 ### Plan core, fourth part: closing by fix
 
 - goal.py finding-close --how fix --row ID --reader FILE (E14, RT18): a commit after the finding changes its files, the rescan has no match left, the row is one this goal added or changed, names finding:SLUG:N and has a recorded red run, and a fresh reader's reply ends VERDICT: FIXED. The row's pass is the pr lane's reached-test run. The finding opens again if the fix leaves the branch or its files change into a new match.
+
+### Plan core, fifth part: operation holds
+
+- A one-review goal that waits, is stopped, failed, silent or held is listed under "Held by the operation" in the check-in, not under Needs you, and is not counted as waiting on the owner. No owner mail is sent for its stops or its ETA. goal.py answer is a listed decision. A marked goal asks no pre-flight questions. Every such wait is a waiting status, so goal.py wait, a worker's waiting report, repeated refusals, a bad flow marker and the merge round cap are covered by this one place; the hand list for the pull request still has to confirm it.

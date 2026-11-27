@@ -124,6 +124,13 @@ def settle(top, runs, state, stop, occ, what, words, rec, ctx):
     return "continue", lid or status or "decision %d" % entry
 
 
+def answered(top, runs, slug, asked):
+    """An operation hold's answer is a listed decision like any other."""
+    question = WITHHELD if dlf.safe(top, asked) != asked else " ".join(asked.split())[:300]
+    decisions.add(runs, slug, "decision", key="hold:%s:%s" % (decisions.stamp(), question[:40]), stop="hold", question=question,
+                  taken="the operation answered it and the goal went on", safety=safety_scan.text_classes(question), inside=[], files=[])
+
+
 def findings(entries):
     """(open, closed) findings by number; a close entry carries how."""
     every = {e["n"]: e for e in entries if e["kind"] == "finding"}

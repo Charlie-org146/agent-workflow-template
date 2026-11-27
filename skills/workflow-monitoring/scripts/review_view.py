@@ -106,3 +106,24 @@ def decided(roots, owner=False):
             except (SystemExit, Exception) as stop:  # noqa: BLE001 - one bad goal must not hide the others
                 out.append("- %s: its decisions can't be listed: %s" % (state.get("slug"), str(stop)[:160]))
     return ["", "Decided for you"] + out if out else []
+
+
+def held_line(run, state, ask=""):
+    """DLF-1.3: what a one-review goal waits for is the operation's, never the owner's."""
+    slug = run["slug"]
+    if state == "waiting":
+        return "%s: %s; the operation answers it (goal.py answer %s)" % (slug, ask, slug)
+    if state in ("silent", "held"):
+        return "%s is %s; the operation looks at its session" % (slug, state)
+    return "%s is %s: %s; the operation decides (resume, or retire)" % (slug, state, str(run.get("finding") or "no reason recorded")[:160])
+
+
+def held_section(runs, states, plain):
+    """The "Held by the operation" lines for the one-review goals among these live runs."""
+    out = []
+    for run in runs:
+        state = states.get(run["slug"], run.get("status"))
+        state = run.get("status") if run.get("status") in ("stopped", "failed") else state
+        if run.get("one_review") and state in ("waiting", "silent", "held", "stopped", "failed"):
+            out.append("- " + held_line(run, state, plain((run.get("waiting") or {}).get("ask"), 160)))
+    return ["", "Held by the operation"] + out if out else []

@@ -123,12 +123,13 @@ def events(root, text):
         out.append(("needs:" + key, "needs you", slug_in(item, slugs), item))
     for run in runs:
         slug, status = run["slug"], run.get("status")
-        if status in ("stopped", "failed"):
+        owns = not run.get("one_review")  # DLF-1.3: its own stops are the operation's, so no owner mail
+        if owns and status in ("stopped", "failed"):
             why = run.get("finding") or "it stopped at %s" % (run.get("step") or "a step")
             out.append(("stopped:%s:%s" % (slug, run.get("attempt") or 1), "stopped", slug,
                         "%s stopped: %s. You: resume it or retire it." % (slug, lb.plain(why, 160))))
         seen = auto.eta_seen(root, run)
-        if status in ("running", "waiting") and auto.eta_left(seen, datetime.datetime.now(datetime.timezone.utc)) == 0:
+        if owns and status in ("running", "waiting") and auto.eta_left(seen, datetime.datetime.now(datetime.timezone.utc)) == 0:
             out.append(("eta:%s:%d" % (slug, auto.eta_minutes(seen)), "past ETA", slug,
                         "%s is past its ETA. You: pick ship now, extend once or defer." % slug))
         if status == "done" and run.get("release_version"):

@@ -114,7 +114,7 @@ def render(root=None, at=None, stamp=None):
     counts = lambda *names, live=None: sum(s in names and live in (None, v) for _, s, v in rows)
     parked, old = counts("running", "held", "silent", "waiting", live=False), [k for k, s, v in rows if s in ("failed", "stopped") and not v]  # TD481, TD502
     pool_line = pl.status_line(found or {}, cfg) if found is not None else "pool: unreadable"
-    out = ["%d running, %d waiting on you, %d queued%s; %s" % (counts("running", "held", "silent", live=True), counts("waiting", "failed", "stopped", live=True),
+    out = ["%d running, %d waiting on you, %d queued%s; %s" % (counts("running", "held", "silent", live=True), counts("waiting", "failed", "stopped", live=True) - sum(r.get("status") in ("waiting", "failed", "stopped") for g in pod for r in g["live"] if r.get("one_review")),
                                                               sum(len(g["queue"]) for g in pod), ", %d parked" % parked * bool(parked) + ", %d old" % len(old) * bool(old), pool_line),
            *machines.lines(root, cfg, bs.machine_line(cfg)), *["Old: " + ", ".join(old)] * bool(old)]
     for g in pod:
@@ -170,7 +170,8 @@ def render(root=None, at=None, stamp=None):
     out += ["", "Needs you"]
     needs, readonly = [], []
     owned = lambda prefix, run: "- %s%s asks (owned by %s, read-only here)" % (prefix, run["slug"], graph.foreign(run))
-    for run in live:
+    mine_held = [run for g in pod for run in g["runs"] if run.get("one_review") and not graph.foreign(run)]
+    for run in [r for r in live if not r.get("one_review")]:  # DLF-1.3: a one-review goal is never the owner's to move
         state, ask = states[run["slug"]], run.get("waiting") or {}
         run.get("review_wait") and needs.append("%s: merge waiting on review; review.py record %s" % (run["slug"], run["slug"]))
         if line := bs.stalled_line(run, state, at, cfg, lb.worker_of(run, taken)):
@@ -186,7 +187,7 @@ def render(root=None, at=None, stamp=None):
                 run["slug"], graph.silent_for(run, at) // 60))
         elif state == "held":
             needs.append("%s is held with no worker; give it a session (sessions.py bind %s ID)" % (run["slug"], run["slug"]))
-    needs += replan.preflight_lines([auto.eta_seen(root, r) for r in live]) + notify.timer_lines(folder, bd.cadence_of(os.path.dirname(folder), cfg.get("cadence")))
+    needs += replan.preflight_lines([auto.eta_seen(root, r) for r in live if not r.get("one_review")]) + notify.timer_lines(folder, bd.cadence_of(os.path.dirname(folder), cfg.get("cadence")))
     stuck = board_lines.stuck(live, cfg.get("resume_on_limit") is True)
     needs += [" ".join(line.split()) for line in stuck if line.startswith("- ")]
     for hold in ready and (replan.plan_pause(cfg), replan.memory_hold(cfg)):
@@ -219,7 +220,7 @@ def render(root=None, at=None, stamp=None):
     for g in pod[1:]:
         for run in g["live"]:
             ask = run.get("waiting") or {}
-            if g["states"][run["slug"]] == "waiting":
+            if g["states"][run["slug"]] == "waiting" and not run.get("one_review"):
                 readonly.append(owned(g["name"] + "/", run)) if graph.foreign(run) else needs.append("%s/%s asks: %s; options: %s" % (
                     g["name"], run["slug"], lb.plain(ask.get("ask"), 160), quoted(ask.get("words") or ["go on"])))
     needs += ["%s: can't be read (%s); the other repos are shown" % item for item in broken]
@@ -235,6 +236,8 @@ def render(root=None, at=None, stamp=None):
     out[spot:spot] = grouped(blocks, at, {(n, i["slug"]): tags[keys(n, i["slug"])] for n, items in blocks for i in items if keys(n, i["slug"]) in tags}, folder)
     out += ["%d. %s" % (i, text) for i, text in enumerate(needs, 1)] or ["Nothing needs you"]
     out += readonly
+    import review_view
+    out += review_view.held_section([r for g in pod for r in g["runs"]], {k: v for g in pod for k, v in g["states"].items()}, lb.plain)
     out += ["", "Coming up"] + ([operation] if operation else [])
     for run in live:
         if states[run["slug"]] == "done":

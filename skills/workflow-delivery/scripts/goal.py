@@ -181,7 +181,16 @@ def failed_try(state, why, step="build", fix="fix it, then run the step again"):
 
 
 cmd_wait = lambda args: guards.cmd_wait(ME, args)
-cmd_answer = lambda args: guards.cmd_answer(ME, args)
+
+
+def cmd_answer(args):
+    asked = (load(args.slug).get("waiting") or {}).get("ask") or ""
+    code = guards.cmd_answer(ME, args)
+    if load(args.slug).get("one_review"):
+        fit.outcomes().answered(root(), state_dir(), args.slug, asked)
+    return code
+
+
 cmd_adopt = lambda args: fit.cmd_adopt(ME, args)
 cmd_queue = lambda args: fit.cmd_queue(ME, args)
 cmd_set = lambda args: fit.cmd_set(ME, args)

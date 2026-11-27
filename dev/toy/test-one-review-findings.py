@@ -353,6 +353,39 @@ said = tool("operation", *done)
 check("CLOSED finding" in said, "operation closes it: " + said.strip()[-120:])
 
 sys.path.append(os.path.join(root, "skills", "workflow-monitoring", "scripts"))
+# done line 2: after the start review nothing about a one-review goal waits on the owner; operation holds it
+sh("update-ref", "refs/remotes/origin/main", "main")
+for slug in os.listdir(runs):
+    slug.startswith("h.") or os.remove(os.path.join(runs, slug))
+ASK = {"ask": "pick the colour of the thing", "words": ["go on w1"]}
+record("w1", status="waiting", waiting=ASK)
+json.dump({"slug": "u1", "goal": "u1", "status": "waiting", "step": "build", "branch": "loop/u1", "flow": {}, "log": [], "worktree": tmp,
+           "touches": [], "waiting": {"ask": "an older goal's question", "words": ["go on u1"]}}, open(os.path.join(runs, "u1.json"), "w"))
+record("w2", status="stopped", finding="it stopped", preflight={"items": [{"id": "budget", "ask": "raise the budget?"}]})
+
+
+def part(text, head):
+    return text.split("\n%s\n" % head, 1)[1].split("\n\n")[0] if "\n%s\n" % head in text else ""
+
+
+said = checkin()
+needs, held = part(said, "Needs you"), part(said, "Held by the operation")
+check("w1" not in needs and "w2" not in needs and "u1" in needs, "only the older goal needs the owner: %s" % needs[:300])
+check("w1" in held and "pick the colour" in held and "goal.py answer w1" in held and "w2" in held, "the one-review goals are held by the operation: %s" % held[:300])
+check(said.split("\n")[0].startswith("0 running, 1 waiting on you"), "the headline counts only what waits on the owner: %s" % said.split("\n")[0])
+sys.path.append(os.path.join(root, "skills", "workflow-monitoring", "scripts"))
+here = os.getcwd()
+os.chdir(tmp)
+import notify  # noqa: E402
+mails = notify.events(tmp, "")
+check(not [e for e in mails if e[2] in ("w1", "w2")], "no mail asks the owner about a one-review goal's stop: %s" % [(e[1], e[2]) for e in mails])
+os.chdir(here)
+got = tool("operation", "answer", "w1")
+last = [e for e in decisions.entries(runs, "w1") if e["kind"] == "decision"]
+check("ANSWERED w1" in got and last and last[-1]["stop"] == "hold" and "pick the colour" in last[-1]["question"], "operation's answer is a listed decision: %s %s" % (got.strip()[:60], last[-1:]))
+import start_review  # noqa: E402
+check(start_review.mark(runs, "w3", "t").get("preflight") == {"items": []}, "a marked goal asks no pre-flight questions")
+
 import board_log  # noqa: E402
 import board_model  # noqa: E402
 put(".loop/goals/h.plan.md", "plan\n")

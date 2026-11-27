@@ -138,7 +138,7 @@ def marked_text(text):
 def mark(runs, slug, by):
     """The record fields of a newly marked goal; its ledger is made here, once."""
     os.path.exists(decisions.ledger(runs, slug)) or decisions.create(runs, slug, by=by)
-    return {"one_review": {"at": decisions.stamp(), "by": by}}
+    return {"one_review": {"at": decisions.stamp(), "by": by}, "preflight": {"items": []}}  # a marked goal asks no pre-flight
 
 
 def committed(top, ref, slug):
