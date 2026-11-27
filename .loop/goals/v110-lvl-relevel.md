@@ -73,3 +73,5 @@ Pull request notes:
 - The pull request step's lane is run under env -i (HOME, PATH, TERM=dumb, LOOP_ROLE=worker). The qa lane and one earlier pull request lane ran with the app session's environment; a row the lane reuses keeps its earlier result.
 - Under an app session's environment four rows failed: del6-depth-by-size, del7-kill-resume, del9-pr-refuses and issue-38-verdicts. See #5917, lines v110-lvl-relevel-choice-1 and v110-lvl-relevel-choice-2.
 - The row filter change for this belongs to v110-toy-leak-fixes, not to this pull request.
+- GitHub's run on 35093a97e failed four rows: narrow-root-172, lane-once-5734, windows-safe-posix-names and win-posix-calls-gone. Three later commits fix them; each of the four passed alone with a clean environment on 8c8fe2dc3. See #5917, lines v110-lvl-relevel-choice-5 and v110-lvl-relevel-choice-6.
+- Departure from the plan (TD2178): in lanes_cli.py affected, the level-file selection rule applies only when the base already holds the level record. See #5917, line v110-lvl-relevel-choice-7.
