@@ -49,7 +49,7 @@ The other build items are listed under Build list below.
 - The merge and release rules the owner set stay, and the PR and the metric name them as kept owner rules, beside the metric.
 - The leak read is not a build item; the automatic private-name scan stays as a filter. The DLF-1.3 text stays as approved.
 - The CI release workflow file is not part of this goal and is filed as a deliver-first line; the local release step reads the holds.
-- The rule ships on, with a documented off switch in settings. The first goal after the merge is named the pilot and gets a red-team line on whether the one review held.
+- The rule ships on, with a documented off switch in settings ("on" as ruled under the spec check below: on in this repository, off by default in the package). The first goal after the merge is named the pilot and gets a red-team line on whether the one review held.
 - Past the start review, a part that would need an owner-contradicting decision is dropped and filed (top's reading; not added to any page).
 - Page wording approved by top under its DOC-2 delegation (TD2128), listed for the owner:
   - Delivery, DEL-3: "My decisions on a goal are made once, at its start; later ones are made on the recommendation, with the safe option for safety, and listed for me to revert (DLF-1.3)."
@@ -62,6 +62,24 @@ The other build items are listed under Build list below.
 - Revert rule, a required build item (TD2128): each decision records what it let go on, and its revert line says "stops the goal" when that is the whole goal.
 - The Delivery wording above is the one top approved; it takes the place of the earlier DEL-3 draft under Words used for the page edit.
 - The DEL-3 edit holds the merge for the owner's own typed word (TD2135c); it does not hold the build.
+
+### Spec check of E1 to E3: rulings and clarifications
+
+One spec check ran before any E1 to E3 code: 8 blocking and 13 minor points; none of the three items is unbuildable. The full report is in the shared session notes (spare-worker-a-one-review-E1E3-spec-check.md). B3 is settled by the target text below.
+
+Rulings by operation, agreed by top under TD2135(a) and listed for the owner to revert:
+
+- B2 (E1): a reject, a retire, a permanent stop or a goal-stopping revert voids the start approval for good. A files revert voids only the items it covers. A resumable stop or failed state blocks use of the approval only while it lasts.
+- B8 (E3): a goal file first committed on a history with the setting on means "start review required". That is stored in the run record, so a handover keeps it and a re-adopt derives it again. History that cannot be read refuses. Adopt never marks.
+- Ships on: this repository's committed config sets `one_review` on. The package default stays off, and a missing key reads as off. The off switch is documented in settings.
+
+Required clarifications (operation, as the spec check wrote them):
+
+- B1 (E1): at acceptance, each item's page, ID, whole unit text, record ID and record text are stored in the run record itself, with the mark. Comparisons use that copy, never a record number alone. A missing or differing copy refuses.
+- B4 (E2): one named, operation-only recovery covers both interrupted states: no record, and a queued record with an empty step. `goal.py new` refuses a slug whose goal file is already committed and points to the recovery.
+- B5 (E2): recovery keeps every field of an existing queued record. With no record, release is never set to automatic by default: it is asked for again or set to ask. Other fields are computed as a freeze computes them.
+- B6 (E2): recovery runs only when all of these hold, and refuses if any of them cannot be read: HEAD is the freeze commit and it adds only this goal file; there is no flow, process, session, sidecar, ledger, start message or answer, or step file; there is no handover ref, branch on origin or pull request. The done lines come from the committed file, and a differing working copy refuses. Only here may an empty ledger be created. No old owner record is imported, and the start answer is asked with a new message.
+- B7 (E2): where the committed mark exists, every gate treats the goal as marked and unanswered unless an accepted answer is saved. Running `goal.py start` again finishes it, with no second mark commit and no rebuilt approval.
 
 ### Target text: the DLF-1 unit
 
