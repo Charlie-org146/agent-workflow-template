@@ -485,11 +485,13 @@ def order():
     for s in states:
         lines, incomplete = l2.covered_lines(record, {"x": s, "y": "PASS"})
         check(("L2_COVERED c1 -> %s via x" % s) in lines or s == "PASS", "the summary ranks %s as worst against PASS" % s, lines)
-    try:
-        lines, incomplete = l2.covered_lines(record, {"x": "weird", "y": "FAIL"})
-        check("L2_COVERED c1 -> weird via x" in lines, "an unknown state ranks worst, with no traceback", lines)
-    except ValueError as error:
-        check(False, "an unknown state ranks worst, with no traceback", error)
+    for other in ("PASS", "FAIL"):
+        try:
+            lines, incomplete = l2.covered_lines(record, {"x": "weird", "y": other})
+            check("L2_COVERED c1 -> weird via x" in lines, "an unknown state next to %s ranks worst and is shown, with no traceback" % other, lines)
+            check(incomplete == ["c1"], "an unknown state next to %s is NOT green: the cover counts as incomplete (the verdict cannot be GREEN)" % other, incomplete)
+        except ValueError as error:
+            check(False, "an unknown state next to %s ranks worst, with no traceback" % other, error)
 
 
 def coveredid():
