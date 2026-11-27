@@ -857,6 +857,10 @@ def runsmend():
     check(code != 0 and ok is False, "a same-date difference in the first five cells (PASS against FAIL) is still left to the person merging", (code, ok))
     code, ok, text = merged("a\tPASS\t2026-11-27\t\t\t4495d93d3902\nb\tPASS\t2026-11-20\t\n", "a\tPASS\t2026-11-27\t\t\tc739d0b8dcfa\nb\tPASS\t2026-11-20\t\n")
     check(code != 0 and ok is False, "two different sixth cells on the same date are still left to the person merging", (code, ok))
+    code, ok, text = merged("a\tPASS\t2026-11-27\t\t\t\tZ\nb\tPASS\t2026-11-20\t\n", "a\tPASS\t2026-11-27\t\t\tabc1234\nb\tPASS\t2026-11-20\t\n")
+    check(code != 0 and ok is False and "Z" not in text.split("<<<<")[0], "a line with a cell past the sixth is never dropped for a longer string: left to the person merging (review round 1)", (code, ok, text))
+    code, ok, text = merged("a\tPASS\t2026-11-27\t\t\tabc1234\nb\tPASS\t2026-11-20\t\n", "a\tPASS\t2026-11-27\t\nb\tPASS\t2026-11-20\t\n")
+    check(code != 0 and ok is True and "abc1234" in text, "the same merge with the two sides the other way round keeps the sixth cell too", (code, ok, text))
 
 
 def targets():
