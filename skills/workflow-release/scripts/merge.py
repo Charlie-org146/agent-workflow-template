@@ -45,17 +45,17 @@ def one_review_unanswered(state):
 
 
 def one_review_unapproved(state, top, runs, base, head):
-  """DLF-1.3: the exact head being merged changes no Reviewed requirement beyond what its start review approved."""
+  """DLF-1.3: the exact head being merged has no open finding, no new uncovered change and no unapproved requirement text."""
   if not state.get("one_review"):
     return ""
-  path = os.path.join(MON, "..", "..", "workflow-delivery", "scripts", "start_answer.py")
+  path = os.path.join(MON, "..", "..", "workflow-delivery", "scripts", "outcomes.py")
   if not os.path.exists(path):
-    return "start_answer.py is missing. Fix: reinstall the skills. (ONE_REVIEW_UNAPPROVED)"
-  spec = importlib.util.spec_from_file_location("one_review_answer", path)
+    return "outcomes.py is missing. Fix: reinstall the skills. (ONE_REVIEW_UNAPPROVED)"
+  spec = importlib.util.spec_from_file_location("one_review_outcomes", path)
   found = importlib.util.module_from_spec(spec)
   spec.loader.exec_module(found)
-  more = found.unapproved(top, runs, state, "origin/" + base, head)
-  return more and "the pull request changes a Reviewed requirement its start review didn't approve as it reads: %s. Nothing was merged. (ONE_REVIEW_UNAPPROVED)" % ", ".join(more) or ""
+  more = found.blockers(top, runs, state, "origin/" + base, head)
+  return "the pull request can't be merged: %s. Nothing was merged. (ONE_REVIEW_UNAPPROVED)" % "; ".join(more) if more else ""
 
 
 def _pods():  # MON-15: workflow-monitoring's graph.py, or None

@@ -235,8 +235,16 @@ def held_ask(top, step, pending, why):
     return "%s left this for you: %s" % (step, safe(top, "; ".join(pending) or why or "see its reply"))
 
 def settle(top, runs, slug, stop, occ, what, words, rec, **ctx):
-    on, scope = setting(top, slug)
     retry(top, runs, slug)
+    try:
+        with open(os.path.join(runs, slug + ".json"), encoding="utf-8") as handle:
+            held = json.load(handle)
+    except (OSError, ValueError):
+        held = {}
+    if held.get("one_review"):  # DLF-1.3: after its start review no stop waits on the owner
+        import outcomes
+        return outcomes.settle(top, runs, held, stop, occ, what, words, rec, ctx)
+    on, scope = setting(top, slug)
     subject = SAFETY[3] if safe(top, what) != what else classify(stop, what, ctx.get("paths", ()), ctx.get("diff", ""), ctx.get("label", ""), ctx.get("cls", ""), ctx.get("template", False))
     ask = "the operation answers it (goal.py answer %s)" % slug
     if not on:

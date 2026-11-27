@@ -314,3 +314,11 @@ Kept and built: E1 to E5, E7, E10, E15, E19's first part, RT1, RT2 (ruling A), R
 Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans under TD2170 so far: 2, both clean; the filing tool scans the posted text again.
 
 - E19 safe option built: machines.py handover refuses a one-review goal, or one needing a start review (ONE_REVIEW_HANDOVER). The toy was seen red first. test-machines.py passes.
+
+### Plan core, first part: stops become decisions, findings
+
+- New outcomes.py (not in the plan's Files list, within the goal's touches). dlf.settle hands a one-review goal's stop to it: no class takes the recommendation (listed and filed); inside an approved item goes on under it; otherwise an open finding. Private text is withheld and is a finding, so dlf's private-data wait no longer holds such a goal (TD2180). Deliver-first off in the committed base, the working copy or by always-ask keeps today's wait (E16).
+- A stop that names no files is inside no item: no program can match its action, so it takes the safe option.
+- pr and merge refuse while a finding is open, open one for each uncovered class and file of the branch diff, and reopen a dropped one whose files changed again. goal.py finding-close (drop, not-taken, stop) and decide are operation-only. plan-accept refuses a safety-class break.
+- Not built yet: closing by fix (needs the finding's own row with a recorded red run, E14). Until then the safe option is drop or stop.
+- Toy: dev/toy/test-one-review-findings.py (not in the plan's Files list).

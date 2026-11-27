@@ -274,6 +274,11 @@ def start_answer():
     return found
 
 
+def outcomes():
+    import outcomes as found
+    return found
+
+
 def cmd_adopt(g, args):
     return monitor("batch").cmd_adopt(g, args)
 

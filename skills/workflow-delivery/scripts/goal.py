@@ -307,6 +307,9 @@ def main():
     add("start-items", lambda args: fit.start_answer().cmd_items(ME, args), ("--file", {"required": True}))
     add("start-review", lambda args: fit.start_answer().cmd_show(ME, args))
     add("start", lambda args: fit.start_answer().cmd_start(ME, args), ("--owner-record", {"required": True}))
+    add("finding-close", lambda args: fit.outcomes().cmd_close(ME, args), ("number", {"type": int}), ("--how", {"required": True, "choices": ("drop", "not-taken", "stop")}),
+        ("--why", {"required": True}), ("--files", {"default": ""}))
+    add("decide", lambda args: fit.outcomes().cmd_decide(ME, args), ("--finding", {"required": True}), ("--class", {"dest": "cls", "required": True}), ("--files", {"default": ""}))
     add("step", cmd_step, ("name", {}), ("--note", {"default": ""}), ("--tokens", {"type": int, "default": 0}))
     add("record", cmd_record, ("step", {"choices": FLOW}), ("--file", {"required": True}), ("--in-session", {"action": "store_true"}),
         ("--tokens", {"default": ""}))

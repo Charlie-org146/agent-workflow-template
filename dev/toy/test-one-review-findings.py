@@ -1,0 +1,206 @@
+#!/usr/bin/env python3
+# windows: ok
+# reads: skills/workflow-delivery/scripts/outcomes.py skills/workflow-delivery/scripts/dlf.py skills/workflow-delivery/scripts/decisions.py
+"""One review (DLF-1.3), after the start: each stop of a marked goal is a recorded decision and none waits on the owner; a
+safety stop outside the approved items is an open finding, which pr and merge refuse until it is dropped, stopped or fixed.
+A throwaway repo with its own home; the line filing is a stand-in; no network."""
+import json
+import os
+import subprocess
+import sys
+import tempfile
+
+root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+sys.path.insert(0, os.path.join(root, "skills", "workflow-delivery", "scripts"))
+home = tempfile.mkdtemp()
+open(os.path.join(home, "names"), "w").write("zz-dummy-private-name\n")
+os.environ.update(HOME=home, USERPROFILE=home, GIT_CONFIG_NOSYSTEM="1", LOOP_PRIVATE_NAMES=os.path.join(home, "names"),
+                  GIT_AUTHOR_NAME="t", GIT_AUTHOR_EMAIL="t@example.invalid", GIT_COMMITTER_NAME="t", GIT_COMMITTER_EMAIL="t@example.invalid")
+tmp = os.path.join(home, "repo")
+subprocess.run(["git", "init", "-q", "-b", "main", tmp], check=True)
+runs = os.path.join(tmp, ".git", "loop", "runs")
+os.makedirs(runs)
+failed = []
+
+
+def check(ok, text):
+    print(("PASS: " if ok else "FAIL: ") + text)
+    if not ok:
+        failed.append(text)
+
+
+def sh(*args):
+    return subprocess.run(["git", "-C", tmp] + list(args), capture_output=True, text=True, check=True).stdout.strip()
+
+
+def put(rel, text):
+    os.makedirs(os.path.dirname(os.path.join(tmp, rel)) or tmp, exist_ok=True)
+    open(os.path.join(tmp, rel), "w").write(text)
+
+
+def commit(rel, text, message="c"):
+    put(rel, text)
+    sh("add", rel)
+    sh("commit", "-qm", message)
+
+
+def refused(call):
+    try:
+        call()
+    except SystemExit as stop:
+        return str(stop.code)
+    return ""
+
+
+import decisions  # noqa: E402
+import dlf  # noqa: E402
+
+filed = []
+dlf.file_line = lambda top, r, slug, rel, stop, subject, occ, what, words, rec: (filed.append((slug, stop, what)) or ("%s-%s-%d" % (slug, stop, len(filed)), ""))
+dlf.retry = lambda *a: []
+commit(".loop/config.json", json.dumps({"base": "main", "one_review": True}))
+commit("tools/old.sh", "echo old\n")
+commit("dev/toy/test-a.sh", "check one\ncheck two\n")
+sh("update-ref", "refs/remotes/origin/main", "HEAD")
+sh("switch", "-q", "-c", "loop/g")
+commit(".loop/goals/g.md", "# G\n\n- Slug: g\n- Review: one\n")
+
+ITEMS = [{"n": 1, "class": "a test loosened or deleted", "action": "update test a", "files": ["dev/toy/test-a.sh"], "approvable": True, "approved": True},
+         {"n": 2, "class": "money", "action": "buy a seat", "files": [], "approvable": True, "approved": False}]
+
+
+def record(slug="g", **more):
+    state = dict({"slug": slug, "goal": slug, "status": "running", "step": "build", "branch": "loop/" + slug, "flow": {}, "log": [],
+                  "worktree": tmp, "touches": ["docs/wiki"], "one_review": {"at": "t"},
+                  "start_answer": {"record": "o1", "verdict": "approve", "items": ITEMS}}, **more)
+    json.dump(state, open(os.path.join(runs, slug + ".json"), "w"))
+    os.path.exists(decisions.ledger(runs, slug)) or decisions.create(runs, slug, by="t")
+    return state
+
+
+def settle(stop, what, occ, rec="do the recommended thing", **ctx):
+    return dlf.settle(tmp, runs, "g", stop, occ, what, "say so", rec, **ctx)
+
+
+def found(kind):
+    return [e for e in decisions.entries(runs, "g") if e["kind"] == kind]
+
+
+try:
+    import outcomes
+except ImportError as error:
+    print("FAIL: outcomes.py is missing: %s" % error)
+    sys.exit(1)
+record()
+got = settle("choice", "rename a local variable or keep it", "c1", paths=["docs/wiki"], diff="")
+check(got[0] == "continue" and found("decision") and found("decision")[-1]["safety"] == [] and found("decision")[-1]["taken"] == "do the recommended thing"
+      and not found("finding") and len(filed) == 1, "a stop with no safety class takes the recommendation, listed and filed (a goal that touches wiki pages opens no finding): %s" % (got,))
+got = settle("break", "red-team break: the plan would delete the old release", "b1", paths=["docs/wiki"], diff="")
+one = found("finding")
+check(got[0] == "continue" and len(one) == 1 and one[0]["classes"] == ["deleting what cannot be restored"] and one[0]["files"] == []
+      and found("decision")[-1]["safety"], "a safety stop outside the items waits on nobody: an open finding and a listed decision (%s)" % (got,))
+settle("break", "red-team break: the plan would delete the old release", "b1", paths=["docs/wiki"], diff="")
+check(len(found("finding")) == 1, "the same stop again opens no second finding")
+got = settle("choice", "buy a paid seat", "c2")
+check(got[0] == "continue" and len(found("finding")) == 2, "a refused item's class is outside: the safe option")
+settle("test", "a test failed", "t1", diff="diff --git a/dev/toy/test-a.sh b/dev/toy/test-a.sh\n--- a/dev/toy/test-a.sh\n+++ b/dev/toy/test-a.sh\n@@ -1 +1 @@\n-check one\n")
+check(len(found("finding")) == 2 and found("decision")[-1]["inside"] == [1], "a stop inside an approved item goes on under that item: %s" % found("decision")[-1])
+before = len(decisions.entries(runs, "g"))
+check("ONE_REVIEW_DIFF" in refused(lambda: settle("test", "a test failed", "t2", diff=None)) and len(decisions.entries(runs, "g")) == before,
+      "a needed diff that can't be read refuses and records nothing")
+got = settle("choice", "key = " + "AKIA" + "B" * 16, "c3")
+check(got[0] == "continue" and "AKIA" not in json.dumps(decisions.entries(runs, "g")) and found("decision")[-1]["question"] == "text withheld"
+      and "private data" in found("finding")[-1]["classes"], "private text is withheld and is a finding, never a wait: %s" % (got,))
+
+# deliver-first off, in the committed base or in the working copy, keeps today's wait
+put(".loop/config.json", json.dumps({"base": "main", "one_review": True, "deliver_first": {"goal": {"g": False}}}))
+got = settle("choice", "rename a local variable", "c4")
+check(got[0] == "wait", "deliver-first off keeps today's wait: %s" % (got,))
+sh("checkout", "-q", "--", ".loop/config.json")
+sh("switch", "-q", "main")
+commit(".loop/config.json", json.dumps({"base": "main", "one_review": True, "deliver_first": {"goal": {"g": False}}}))
+sh("update-ref", "refs/remotes/origin/main", "HEAD")
+sh("switch", "-q", "loop/g")
+check(settle("choice", "rename a local variable", "c5")[0] == "wait", "off in the committed base wins over the branch")
+sh("update-ref", "refs/remotes/origin/main", "main~1")
+
+
+# pr and merge refuse while a finding is open, and open one for each new uncovered class and file of the branch diff
+def blockers():
+    return outcomes.blockers(tmp, runs, json.load(open(os.path.join(runs, "g.json"))), "origin/main", "HEAD")
+
+
+listed = blockers()
+check(len(listed) == 3 and all(x.startswith("finding ") for x in listed), "each open finding blocks pr and merge: %s" % listed)
+commit("tools/clean.sh", 'rm -rf "$HOME/x"\n')
+commit("dev/toy/test-a.sh", "check one\n")
+listed = blockers()
+check(len(listed) == 4 and "tools/clean.sh" in listed[-1] and len(found("finding")) == 4,
+      "the branch diff opens one finding for a new class and file; a file an approved item covers opens none: %s" % listed)
+blockers()
+check(len(found("finding")) == 4, "and only once")
+check(outcomes.blockers(tmp, runs, {"slug": "plain"}, "origin/main", "HEAD") == [], "an unmarked goal is not held")
+ids = [e["n"] for e in found("finding")]
+
+
+def close(number, how, files=()):
+    return refused(lambda: outcomes.close(tmp, runs, json.load(open(os.path.join(runs, "g.json"))), number, how, "why", list(files), "origin/main", "operation"))
+
+
+new = ids[-1]
+check("ONE_REVIEW_CLOSE" in close(new, "drop") and len(blockers()) == 4, "a drop is refused while the part is still in the branch")
+sh("rm", "-q", "tools/clean.sh")
+sh("commit", "-qm", "take it out")
+check(close(new, "drop") == "" and len(blockers()) == 3 and any("tools/clean.sh" in f[2] or "finding" in f[2] for f in filed),
+      "once its files match the base it closes as dropped, and the part is filed: %s" % blockers())
+commit("tools/clean.sh", 'rm -rf "$HOME/y"\n', "back again")
+listed = blockers()
+check(len(listed) == 4 and "tools/clean.sh" in " ".join(listed), "a dropped file changed again opens its finding again: %s" % listed)
+sh("rm", "-q", "tools/clean.sh")
+sh("commit", "-qm", "take it out again")
+check("ONE_REVIEW_CLOSE" in close(ids[0], "drop"), "a finding that names no file isn't dropped as files without saying the action was not taken")
+check(refused(lambda: outcomes.close(tmp, runs, json.load(open(os.path.join(runs, "g.json"))), ids[0], "not-taken", "the action was refused", [], "origin/main", "operation")) == ""
+      and len(blockers()) == 2, "an asked action that is not taken closes its finding")
+check("ONE_REVIEW_CLOSE" in close(999, "drop") and "ONE_REVIEW_CLOSE" in close(ids[0], "not-taken"), "an unknown or closed finding is refused")
+
+# stop: the goal ends for good without merging
+check(close(ids[1], "stop") == "" and json.load(open(os.path.join(runs, "g.json")))["status"] == "stopped"
+      and decisions.stopped(decisions.entries(runs, "g")), "closing by stop stops the goal for good")
+
+# the two operation-only commands, and a safety break that nobody can accept away
+record("h")
+put("flow.json", "{}")
+sh("update-ref", "refs/remotes/origin/main", "main")
+
+
+def tool(role, *args):
+    got = subprocess.run([sys.executable, os.path.join(root, "skills", "workflow-delivery", "scripts", "goal.py")] + list(args),
+                         capture_output=True, text=True, cwd=tmp, env=dict(os.environ, LOOP_ROLE=role))
+    return got.stdout + got.stderr
+
+
+args = ("decide", "h", "--finding", "a mail asks for a paid add-on", "--class", "money")
+check("a worker can't" in tool("worker", *args) and not [e for e in decisions.entries(runs, "h") if e["kind"] == "finding"], "a worker opens no finding by hand")
+said = tool("operation", *args)
+check("FINDING" in said and [e["source"] for e in decisions.entries(runs, "h") if e["kind"] == "finding"] == ["decide"], "operation records one from a report: " + said.strip()[:100])
+number = [e["n"] for e in decisions.entries(runs, "h") if e["kind"] == "finding"][0]
+done = ("finding-close", "h", str(number), "--how", "not-taken", "--why", "the reply said not to buy it")
+check("a worker can't" in tool("worker", *done), "a worker closes nothing")
+said = tool("operation", *done)
+check("CLOSED finding" in said, "operation closes it: " + said.strip()[-120:])
+
+sys.path.append(os.path.join(root, "skills", "workflow-monitoring", "scripts"))
+import board_log  # noqa: E402
+import board_model  # noqa: E402
+put(".loop/goals/h.plan.md", "plan\n")
+red = board_log.red_dir(tmp)
+os.makedirs(red, exist_ok=True)
+json.dump({"sha": board_log.plan_sha(tmp, "h"), "breaks": [{"principle": 6, "text": "it deletes the old release"}, {"principle": 3, "text": "the plan is slow"}]},
+          open(os.path.join(red, "plan-h.json"), "w"))
+open(os.path.join(tmp, ".git", "loop", "owner-words.tsv"), "w").write('o1\t2026-01-01T00:00:00Z\toperation\t"accept it"\th\n')
+said = refused(lambda: board_model.plan_accept(tmp, "h", 6, "o1"))
+check("ONE_REVIEW_SAFETY_BREAK" in said and "accepted" not in open(os.path.join(red, "plan-h.json")).read(), "a safety break is never accepted away: " + said[:110])
+check(refused(lambda: board_model.plan_accept(tmp, "h", 3, "o1")) == "", "a break with no safety class can still be accepted")
+
+print("ALL PASS" if not failed else "%d FAILED" % len(failed))
+sys.exit(1 if failed else 0)
