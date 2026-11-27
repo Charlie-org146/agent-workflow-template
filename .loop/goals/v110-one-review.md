@@ -350,3 +350,9 @@ Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans und
 - A one-review goal that waits, is stopped, failed, silent or held is listed under "Held by the operation" in the check-in, not under Needs you, and is not counted as waiting on the owner. No owner mail is sent for its stops or its ETA. goal.py answer is a listed decision. A marked goal asks no pre-flight questions. Every such wait is a waiting status, so goal.py wait, a worker's waiting report, repeated refusals, a bad flow marker and the merge round cap are covered by this one place; the hand list for the pull request still has to confirm it.
 
 - RT16 built: goal.py revert after a merge queues the removal goal (undo-SLUG-N) in .loop/queue.md of the folder it runs in; when that goal is frozen with the setting on, the revert command is its start answer, for the reverted files and safety classes only.
+
+### Approved page wording applied
+
+- criteria.py revise DLF-1 (o1048, the TD2136 unit), revise DEL-3 (o1046, TD2128 A) and revise OPS-1 (o1048, TD2128 B, the Full auto bullet): one call per ID. The Operation non-goal and metric (TD2128 C and D) and the DLF-1 metric under Success metrics are page lines outside a unit. The DLF-1 heading is copied into its README, Home and How-to rows. Generated blocks and START.md are rebuilt. The requirement guard passes.
+- DLF-1 now reads Unreviewed. No review mark was made; whether the re-review of RT9 rests on o1048 is asked of operation.
+- The edit was practised first in a throwaway clone with made-up owner records of the same IDs.

@@ -101,7 +101,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `merge_queue` | false | true: GitHub's merge queue checks a moved base; merge.py waits for MERGED. |
 | `milestones_source` | (empty) | Opt-in: url:<link> or mcp:<server>:<id> (mcp:notion: plus 32 hex), an outside Milestones page docs sync follows. |
 | `min_free_memory_gb` | 3.0 | Free GB below which no lane or goal starts; 0 off. |
-| `one_review` | true |  |
+| `one_review` | true | true: a goal asks the owner once, at its start (DLF-1.3). Read from committed config. false: later stops wait again; open findings stay. |
 | `parallel` | 0 | Workers running at once; 0 means unlimited. |
 | `plan_pause_percent` | 80 | Weekly plan % above which no goal starts; 0 is off. |
 | `pool_size` | 20 | Idle worker sessions the pool keeps; low, the operation session asks you for more. |

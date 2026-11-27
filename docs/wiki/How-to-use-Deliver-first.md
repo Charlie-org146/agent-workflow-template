@@ -25,7 +25,7 @@ Nothing is built yet, so there is nothing to say or run. Goal v110-dlf-1 builds 
 
 Each requirement and how it is delivered:
 
-- DLF-1: Deliver first: a goal never waits for me, unless it's a safety class. Written, not built; goal v110-dlf-1 builds it.
+- DLF-1: Deliver first: a goal waits for me once, at its start. Written, not built; goal v110-dlf-1 builds it.
 
 ### Skill: workflow-delivery
 - **Say:** none
