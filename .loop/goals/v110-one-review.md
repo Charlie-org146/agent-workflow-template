@@ -219,3 +219,26 @@ E1 to E5 are under Build order above. Every item below is required unless it say
 - RT16: after a merge, the owner's revert command opens a revert goal for that part and is its start review; each decision records what it let go on, and its revert line says what it stops.
 - RT17: the kept owner rules (hand merge with auto_merge off, cut or leave, the DLF-1.4 accept list, modes the owner switched off) are named in the PR and beside the metric.
 - RT18: a fresh reader gives a verdict on each fix.
+
+### DEL-21 comparison (RT15), written after E2 to E5
+
+RT15 asks for this before the E1 to E5 code. It was written after E2 to E5 were committed (78d2c1b05, 3af6c6f17, 2b7969ae5) and before any E1 code. Sources, read 2026-11-26: GitHub Docs pages "About protected branches", "Managing environments for deployment" and "Available rules for rulesets".
+
+| Need | Required status checks | Environment required reviewers |
+|---|---|---|
+| What it holds | A merge into a protected branch or ruleset target, until the named check passes. Admins can bypass unless bypass is turned off. | An Actions job that names the environment, until one of up to 6 listed reviewers approves. |
+| Who decides | Whoever may report the status; a rule can name one GitHub App as the source. It records no owner decision. | A listed reviewer. Self-approval can be prevented. |
+| Approve some items, refuse others | Not offered. | Not stated in the docs read. |
+| Approval bound to exact requirement text | Not offered. A pull request approval can be set to lapse when the diff changes. | Not stated in the docs read. |
+| Local steps (freeze, build, local release step, run records) | Not affected. | Not affected; only Actions jobs. |
+| Availability | Plan limits are not stated on the pages read. | On a free plan, public repositories only. |
+
+- E2 (recovery of a cut-off freeze), E3's adopt rule, E4 (decisions file) and E5 (permanent stop) act on this machine's run records and git history before or apart from a merge. Neither feature acts there, so neither replaces them. These parts are tagged own.
+- E3's merge hold is the one part a required status check could also enforce, on GitHub's side. It would add to the local refusal, not replace it, and needs a repository protection setting, which is the owner's. Filed as a DLF-1.1 later line, not built here.
+- E1's start approval needs one answer that approves some items, refuses others and binds exact text. Neither feature offers that. The owner's recorded answer stays, tagged own.
+- Environment reviewers could gate a release job once the release runs in Actions (RT6, filed later).
+
+### Build record: slices
+
+- 78d2c1b05: E4 and E5. 3af6c6f17: E3. 2b7969ae5: E2. Next: E1.
+- E2 readings, sent to operation: a decisions file holding only its first mark entry, with no record, counts as the empty one of B6; a queued record's report lines are not later activity.
