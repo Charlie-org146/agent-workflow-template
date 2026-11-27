@@ -315,7 +315,22 @@ def stepcheck():
     check(len(goal) == 1 and sh(top2, "git", "log", "--oneline").stdout == before and "revert" not in open(os.path.join(top2, ".github", "workflows", "regression.yml")).read().replace("git revert", "git revert", 0).lower().split("# written")[0], "the run adds no commit to the repository")
 
 
-cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck}
+def second():
+    print("== item 15: a silent failing row's second run takes the job time that is left")
+    # Value: protects=the loud rerun of a silent failing row never outlives the job; fails_when=it gets the row's whole limit
+    #   with no time left, or runs at all; why_new=the rerun used the row's limit alone
+    import time
+    l2 = l2mod()
+    l2.time = time
+    seen = []
+    again = lambda row_s, job_s, ago: l2.l2_again(lambda c, limit: seen.append(limit) or (1, "loud"), row_s, job_s, time.time() - ago, 9)
+    check(again(900, 100, 0)("c") == (1, "loud") and 99 <= seen[-1] <= 100, "with 100 s of job time left the second run gets 100 s, not the row's 900")
+    check(again(30, 100, 0)("c") == (1, "loud") and seen[-1] == 30, "with more time than the row's limit it gets the row's limit")
+    seen.clear()
+    check(again(900, 100, 150)("c") == (9, "") and seen == [], "with no time left the second run is not run, and the issue gets the exit code and no output")
+
+
+cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
