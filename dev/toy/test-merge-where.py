@@ -17,8 +17,8 @@ import subprocess
 import sys
 import tempfile
 
-# an inherited GIT_DIR would point git at the caller's repo; the caller's choice of git config files is kept
-for name in [n for n in os.environ if n.startswith("GIT_") and n not in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GIT_CONFIG_NOSYSTEM")]:
+# an inherited GIT_DIR would point git at the caller's repo; its git config choices and discovery limit are kept
+for name in [n for n in os.environ if n.startswith("GIT_") and not n.startswith("GIT_CONFIG_") and n != "GIT_CEILING_DIRECTORIES"]:
     del os.environ[name]
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 sys.path.insert(0, os.path.join(root, "skills", "workflow-release", "scripts"))

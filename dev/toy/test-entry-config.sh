@@ -8,7 +8,7 @@
 # usage: test-entry-config.sh   (ENTRY=path overrides the entry.py under test)
 set -u
 unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH
-for v in ${!GIT_@}; do case $v in GIT_CONFIG_GLOBAL|GIT_CONFIG_SYSTEM|GIT_CONFIG_NOSYSTEM) ;; *) unset "$v" ;; esac; done
+for v in ${!GIT_@}; do case $v in GIT_CONFIG_*|GIT_CEILING_DIRECTORIES) ;; *) unset "$v" ;; esac; done
 here=$(cd "$(dirname "$0")/../.." && pwd)
 entry=${ENTRY:-$here/skills/workflow-docs/scripts/entry.py}
 die() { echo "FAIL: setup ($1)"; exit 1; }
@@ -50,16 +50,21 @@ merge_two() {  # $1 = the entry.py that writes START.md, $2 = a name for the wor
   ( cd "$m" || exit 3
     git config user.email "$mail" && git config user.name "$who" || exit 3
     add() { python3 -c "import json,sys; c=json.load(open('.loop/config.json')); l=c['public_origins']; l.insert(0, sys.argv[1]) if sys.argv[2] == 'top' else l.append(sys.argv[1]); open('.loop/config.json', 'w').write(json.dumps(c, indent=2, ensure_ascii=False) + '\n')" "$1" "$2"
-      python3 "$3" write --repo "$m" >/dev/null 2>&1; git commit -qam "add $1"; }
+      python3 "$3" write --repo "$m" >/dev/null 2>&1; git commit -qam "add $1" >/dev/null 2>&1 || exit 3; }
     python3 "$1" write --repo "$m" >/dev/null 2>&1; git commit -qam base >/dev/null 2>&1
     base=$(git rev-parse HEAD); add https://one.example top "$1"; one=$(git rev-parse HEAD)
     git checkout -q --detach "$base"; add https://two.example end "$1"
+    [ "$one" != "$base" ] && [ "$(git rev-parse HEAD)" != "$base" ] || exit 3  # two real commits, or the merge proves nothing
     git merge -q --no-edit "$one" >/dev/null 2>&1 ) ; local rc=$?
   git -C "$m" merge --abort >/dev/null 2>&1; return $rc
 }
-merge_two "$entry" new && ok "two branches adding different public_origins entries merge with no conflict" || bad "the merge conflicts"
-python3 "$entry" write --repo "$t/new" >/dev/null 2>&1; python3 "$entry" check --repo "$t/new" 2>&1 | tail -1 | grep -qx "ENTRY OK" && ok "the merged START.md regenerates and passes entry check" || bad "entry check fails after the merge"
-merge_two "$t/src/skills/workflow-docs/scripts/entry.py" old; [ $? -eq 1 ] && ok "negative control: main's one-line list conflicts" || bad "negative control: main's entry.py did not conflict"
+merge_two "$entry" new; rc=$?
+if [ $rc -eq 0 ]; then
+  ok "two branches adding different public_origins entries merge with no conflict"
+  python3 "$entry" write --repo "$t/new" >/dev/null 2>&1; python3 "$entry" check --repo "$t/new" 2>&1 | tail -1 | grep -qx "ENTRY OK" && ok "the merged START.md regenerates and passes entry check" || bad "entry check fails after the merge"
+elif [ $rc -eq 3 ]; then bad "setup (fixture commit)"; else bad "the merge conflicts"; fi
+merge_two "$t/src/skills/workflow-docs/scripts/entry.py" old; rc=$?
+if [ $rc -eq 1 ]; then ok "negative control: main's one-line list conflicts"; elif [ $rc -eq 3 ]; then bad "setup (fixture commit)"; else bad "negative control: main's entry.py did not conflict"; fi
 # Line 4: the checkout is as it was. Each probe also has to find this run's own entries in the clone, so a probe that sees
 # nothing cannot pass. A message says only found or changed; it never prints a name or an address.
 read=ok; after=$(probe "$here") || read=failed; cloned=$(probe "$t/repo") || read=failed

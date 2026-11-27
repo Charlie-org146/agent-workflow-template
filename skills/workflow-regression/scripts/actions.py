@@ -20,11 +20,11 @@ ROW_DROP = ("GH_TOKEN", "GITHUB_TOKEN", "GITHUB_STEP_SUMMARY", "GITHUB_ENV", "GI
             "LOOP_ROW_TIMES", "REGRESSION_SHARD", "REGRESSION_LEVELS", "REGRESSION_TARGET", "REGRESSION_CLEANUP")
 LANE_DROP = ("_LOOP_LANE_NOTE", "_LOOP_LANE_QUEUED", "_LOOP_LANE_STARTED")  # the lane runner's own handoff files
 GIT_KEEP = ("GIT_TERMINAL_PROMPT", "GIT_EDITOR", "GIT_ASKPASS",  # set above, so no row's git waits
-            "GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GIT_CONFIG_NOSYSTEM")  # the caller's config choice; other GIT_ names go
+            "GIT_CEILING_DIRECTORIES")  # a caller's limit; its GIT_CONFIG_ files and settings stay too; other GIT_ names go
 
 
 def row_env():
-    return dict({k: v for k, v in os.environ.items() if k not in ROW_DROP + LANE_DROP and (k in GIT_KEEP or not k.startswith("GIT_"))}, LOOP_PRIVATE_NAMES=os.environ.get("LOOP_PRIVATE_NAMES") or os.devnull)
+    return dict({k: v for k, v in os.environ.items() if k not in ROW_DROP + LANE_DROP and (k in GIT_KEEP or k.startswith("GIT_CONFIG_") or not k.startswith("GIT_"))}, LOOP_PRIVATE_NAMES=os.environ.get("LOOP_PRIVATE_NAMES") or os.devnull)
 
 
 WORKFLOW = r"""# Written by workflow-regression. It reads .loop/regression.tsv and .loop/regression-known.tsv.

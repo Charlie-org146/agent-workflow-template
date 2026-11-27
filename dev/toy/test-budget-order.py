@@ -10,8 +10,8 @@ import subprocess
 import sys
 import tempfile
 
-# the caller's git environment is not passed on; its choice of git config files is kept
-for name in [n for n in os.environ if n.startswith("GIT_") and n not in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GIT_CONFIG_NOSYSTEM")]:
+# the caller's git environment is not passed on; its git config choices and discovery limit are kept
+for name in [n for n in os.environ if n.startswith("GIT_") and not n.startswith("GIT_CONFIG_") and n != "GIT_CEILING_DIRECTORIES"]:
     del os.environ[name]
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 sys.path.insert(0, os.path.join(root, "skills", "workflow-regression", "scripts"))
@@ -70,7 +70,8 @@ for name, value in kept_before.items():
         del os.environ[name]
     else:
         os.environ[name] = value
-theirs = {"GIT_DIR": "/nowhere/git", "GIT_INDEX_FILE": "/nowhere/index", "GIT_WORK_TREE": "/nowhere/tree", "GIT_CONFIG_COUNT": "0"}
+theirs = {"GIT_DIR": "/nowhere/git", "GIT_INDEX_FILE": "/nowhere/index", "GIT_WORK_TREE": "/nowhere/tree", "GIT_CONFIG": "/nowhere/one",
+          "GIT_AUTHOR_NAME": "caller"}
 kept_before = {name: os.environ.get(name) for name in theirs}
 os.environ.update(theirs)
 given = actions.row_env()
@@ -87,6 +88,17 @@ kept_before = {name: os.environ.get(name) for name in chosen}
 os.environ.update(chosen)
 given = actions.row_env()
 check({name: given.get(name) for name in chosen} == chosen, "a row keeps the caller's choice of git config files")
+for name, value in kept_before.items():
+    if value is None:
+        del os.environ[name]
+    else:
+        os.environ[name] = value
+limits = {"GIT_CEILING_DIRECTORIES": "/nowhere/ceiling", "GIT_CONFIG_COUNT": "1", "GIT_CONFIG_KEY_0": "core.hooksPath",
+          "GIT_CONFIG_VALUE_0": "/nowhere/hooks", "GIT_CONFIG_PARAMETERS": "'core.hooksPath=/nowhere/hooks'"}
+kept_before = {name: os.environ.get(name) for name in limits}
+os.environ.update(limits)
+given = actions.row_env()
+check({name: given.get(name) for name in limits} == limits, "a row keeps the caller's git limit and injected git settings")
 for name, value in kept_before.items():
     if value is None:
         del os.environ[name]

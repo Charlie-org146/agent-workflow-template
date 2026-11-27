@@ -831,4 +831,6 @@
 | <a id="t-toy-leak-entry-config"></a>toy-leak-entry-config | requirement | done line v110-toy-leak-fixes:4 | not run | - | local | 2026-11-26 |
 | <a id="t-done-toy-leak-fixes-5"></a>done-toy-leak-fixes-5 | workflow | done line v110-toy-leak-fixes:5 | not run | - | local | no |
 | <a id="t-toy-leak-row-merge"></a>toy-leak-row-merge | requirement | done line v110-toy-leak-fixes:2 | not run | - | local | 2026-11-27 |
-| <a id="t-toy-leak-config-keep"></a>toy-leak-config-keep | requirement | done line v110-toy-leak-fixes:2 | not run | - | local | 2026-11-27 |
+| <a id="t-toy-leak-config-keep"></a>toy-leak-config-keep | requirement | done line v110-toy-leak-fixes:2 | not run | - | local | no |
+| <a id="t-toy-leak-row-setup"></a>toy-leak-row-setup | requirement | done line v110-toy-leak-fixes:4 | not run | - | local | no |
+| <a id="t-toy-leak-entry-commit"></a>toy-leak-entry-commit | requirement | done line v110-toy-leak-fixes:4 | not run | - | local | no |
