@@ -124,7 +124,7 @@ def cover_results(root, run_rows, rows):
     import completion
     from levels import State
     if not completion.armed(root):
-        return {}
+        return None  # an unlevelled table: a covered row keeps the old display
     ran = {r[0]: (r + [""] * 6)[:6] for r in run_rows}
     known = {r[0] for r in tsv_of(root, "regression-known.tsv")}
     out = {}

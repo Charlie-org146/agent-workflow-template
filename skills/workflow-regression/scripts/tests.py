@@ -154,7 +154,7 @@ def entries(root, results=None, markdown=False, raw=False):
     except ImportError:
         level_words = None  # in the workflow: a covered row has no result of its own to show (R2)
     cover = level_words.cover_results(root, tsv(root, "regression-runs.tsv"), rows) if level_words else {}
-    ran.update({n: cover.get(n, ("no result", "", "")) for n, r in rows.items() if r[1] == "covered"}) if results is None else None
+    ran.update({n: cover.get(n, ("no result", "", "")) for n, r in rows.items() if r[1] == "covered"}) if results is None and cover is not None else None
     order = [name for name in rows if rows[name][1] != "draft"] if results is None else list(results)
     for name in order:
         row = rows.get(name) or [name, "", "", "-", "", "", "-", ""]
