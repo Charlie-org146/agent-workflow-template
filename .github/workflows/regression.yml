@@ -515,6 +515,7 @@ jobs:
               for row in table:
                   row[1:2] == ["draft"] and print("not run: draft " + row[0])
 
+
           def armed(table):
               """The table holds lvl-armed and regression-pr.yml is this tool's: only then are L0 and L1 targets (completion.armed)."""
               try:
@@ -1258,6 +1259,7 @@ jobs:
               for row in table:
                   row[1:2] == ["draft"] and print("not run: draft " + row[0])
 
+
           def armed(table):
               """The table holds lvl-armed and regression-pr.yml is this tool's: only then are L0 and L1 targets (completion.armed)."""
               try:
@@ -1291,7 +1293,12 @@ jobs:
 
 
           # Everything below runs in the summary job only (it embeds this whole file); the runner copies only the block above.
-          ORDER = ("no result", "FAIL", "SKIPPED", "KNOWN", "EXEMPT", "PASS")  # worst first
+          ORDER = ("FAIL", "FLAKY", "no result", "draft", "SKIPPED", "KNOWN", "EXEMPT", "excepted", "PASS")  # worst first; the one order (level_words reads it)
+
+
+          def rank(state):
+              """Where a state sits in ORDER; a state not in it ranks worst, never raises."""
+              return ORDER.index(state) if state in ORDER else -1
           FIX = {"out of job time": "raise the job budget or move rows to another shard", "cannot run here": "list it in .loop/regression-skips.tsv with a reason, or make it runnable",
                  "no result (shard did not finish)": "rerun the workflow and read that shard's log"}
 
@@ -1346,10 +1353,10 @@ jobs:
                   if not cells[4] and cells[7].startswith("excepted"):
                       lines.append("excepted (record) " + cells[0])
                       continue
-                  worst = min(((states.get(c) or "no result") for c in cells[4].split(",") if c), key=ORDER.index, default="no result")
+                  worst = min(((states.get(c) or "no result") for c in cells[4].split(",") if c), key=rank, default="no result")
                   via = [c for c in cells[4].split(",") if (states.get(c) or "no result") == worst][:1]
                   lines.append("L2_COVERED %s -> %s via %s" % (cells[0], worst, via[0] if via else "-"))
-                  if worst == "no result":
+                  if worst == "no result" or worst not in ORDER:  # an unknown state is never green: it counts with the covers that have no result
                       incomplete.append(cells[0])
               return lines, incomplete
 

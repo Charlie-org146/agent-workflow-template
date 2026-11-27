@@ -98,7 +98,7 @@ def settings():
     check(cfg.get("goal_levels") == "L1", "this repo's config sets goal_levels to L1 (the level that selects what land did)")
     page = open(os.path.join(root, "docs", "wiki", "How-to-use-Setup.md"), encoding="utf-8").read()
     line = [l for l in page.splitlines() if l.startswith("| `goal_levels` |")]
-    check(len(line) == 1 and "L0 (the default), L1 or L2" in line[0] and "`L0` | default" in line[0], "the How-to-use-Setup row for goal_levels names L0, L1 and L2 and the default L0")
+    check(len(line) == 1 and "L0 (the default), L1 or L2" in line[0] and "| `L0` | **overridden:** `L1` |" in line[0], "the How-to-use-Setup row for goal_levels names L0, L1 and L2, the default L0 and this repository's override L1")
 
 
 def moved():
@@ -551,7 +551,9 @@ def prlevel():
     committed = open(os.path.join(root, ".github", "workflows", "regression-pr.yml"), encoding="utf-8").read()
     cover = open(os.path.join(root, "skills", "workflow-delivery", "scripts", "cover.py"), encoding="utf-8").read()
     sha = hashlib.sha1(committed.strip().replace("\r\n", "\n").encode()).hexdigest()
-    check('WF_SHA = "%s"' % sha in cover, "cover.py's WF_SHA is the sha1 of the committed regression-pr.yml (they move together)")
+    sys.path.insert(0, os.path.join(root, "skills", "workflow-delivery", "scripts"))
+    import cover as cover_mod
+    check(tuple(cover_mod.WF_SHA) == ("533fbed6f28fac049a2bd2c45eaa3bdbffed1ac6", sha), "cover.py's WF_SHA is exactly two shas: the nightly-line text and the sha1 of the committed regression-pr.yml (they move together)", cover_mod.WF_SHA)
     check("run L1 --reuse --tier goal" in committed, "this repository's regression-pr.yml names L1")
 
 

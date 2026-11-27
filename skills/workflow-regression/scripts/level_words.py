@@ -107,12 +107,12 @@ def cover_unmet(root, row, rows, run):
     return ""
 
 
-ORDER = ("FAIL", "FLAKY", "no result", "draft", "SKIPPED", "KNOWN", "excepted")  # worst first; PASS is better than all of them
+from l2 import ORDER, rank  # noqa: E402,F401  the one worst-state order, worst first (the summary job reads the same text)
 
 
 def worst(states):
-    """The worst of a list of cover states by ORDER; PASS only when nothing else is there."""
-    return next((s for s in ORDER if s in states), "PASS")
+    """The worst of a list of cover states by ORDER (an unknown state is worst); PASS only when nothing else is there."""
+    return min(states, key=rank, default="PASS")
 
 
 def cover_results(root, run_rows, rows):
