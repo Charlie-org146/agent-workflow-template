@@ -402,3 +402,11 @@ This stands in for the deferred automated inventory. "Toy" means a case in the n
 - RT8: revert takes the lock merge takes, so it waits for a merge under way and then sees the goal merged.
 - E8: where a person merges by hand (auto_merge off, or release ask), goal.py pr says the one-review checks are not enforced on that merge.
 - Not built, a question for operation: full auto's fixed reply and its own finding for a safety question. Today such a question stays waiting, held by the operation, so the action is not taken.
+
+## PR notes
+
+- Full test run: no full local run happened. 34 of 698 affected rows ran locally in the qa lane (0 FAIL), and `python3 dev/package.py` (full, 135 files) and `regression.py levels --check` (valid: 757 rows) passed. GitHub's full regression run on the PR head is the full-run proof.
+- No leak-reader pair ran (o1040).
+- merge.py (R1/R2) and levels_gate.py (E15) are owner-approved, ledger o1075. They merge only under the TD1229 checks, through operation-mac.
+- Review is at the cap (3 of 3): rounds 2 and 3 were each one fresh read-only reader, both CLEAN, with no must-fix.
+- TD2307, the qa cause: the first qa lane failed orv-no-owner-wait, orv-safe-option and orv-checkin-revert (the same toy, "2 FAILED"). The lane passes LOOP_ROLE=worker down, and the toy's check-in helper handed it to checkin.py --owner, an operation command, which then marked nothing. Red: the rows failed alone, and the toy failed on a06c6a32f under LOOP_ROLE=worker. Fix a77a29aa7 (toy only); after it the toy and each row pass. free_gb was not logged at the first failure (4.9 read afterwards, TD2239 not met). The first lane's log was overwritten; deliver-first line v110-one-review-break-5 asks that a rerun keep it.
