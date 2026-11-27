@@ -63,6 +63,10 @@ def goal():
     for armed in (True, False):
         got, out, err, code = plan(armed, None)
         check(got == "land" and code is None and not out + err, "goal_levels not set: a goal lane plans as it always did, in silence (%s table)" % ("levelled" if armed else "not levelled"))
+    for value, level in (("land", "L1"), ("nightly", "L2")):
+        got, out, err, code = plan(True, value)
+        check(out.strip() == 'SETTINGS (GOAL_LEVELS_OLD): goal_levels "%s" in .loop/config.json is read as %s. Fix: set "goal_levels": "%s" and commit it.' % (value, level, level),
+              "the old-word line for %r names exactly what to set: %s" % (value, level))
     got, out, err, code = plan(True, "weekly")
     check(code not in (None, 0) and "REFUSED (GOAL_LEVELS_BAD)" in err and "Nothing was run." in err, "levelled table: goal_levels 'weekly' is refused before any work")
     for value, want in (("land", "land"), ("nightly", "nightly"), ("L0", "land"), ("L1", "nightly"), ("L2", "nightly")):
