@@ -1,7 +1,7 @@
 # One set of level words: L0, L1, L2
 
 - Slug: v110-lvl-retire-old-words-2
-- Touches: skills/workflow-regression, skills/workflow-setup, skills/workflow-delivery, skills/workflow-health, skills/workflow-docs, skills/workflow-release, skills/loop-files.md, dev/toy, .loop/regression.tsv, .loop/config.json, docs/wiki, .github/workflows/regression-pr.yml, .github/workflows/regression.yml, .loop/START.md, .loop/regression-relevel.tsv, skills/workflow-regression/scripts/level_words.py
+- Touches: skills/workflow-regression, skills/workflow-setup, skills/workflow-delivery, skills/workflow-health, skills/workflow-docs, skills/workflow-release, skills/loop-files.md, dev/toy, .loop/regression.tsv, .loop/config.json, docs/wiki, .github/workflows/regression-pr.yml, .github/workflows/regression.yml, .loop/START.md, .loop/regression-relevel.tsv, skills/workflow-regression/scripts/level_words.py, skills/workflow-health/scripts/health.py, skills/workflow-regression/scripts/completion.py, skills/workflow-regression/scripts/cutgate.py, skills/workflow-regression/scripts/l2.py, skills/workflow-delivery/scripts/mend_tables.py, skills/workflow-regression/scripts/lanes.py, skills/workflow-setup/scripts/update.py
 - ETA: 1060 active minutes (estimate 848m plus a 25% margin, rough)
 
 ## Done lines
