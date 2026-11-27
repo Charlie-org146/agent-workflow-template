@@ -14,6 +14,16 @@ Frozen. A wrong done line needs a new goal.
 3. Given a covered row, when the table is read, then it takes the highest level of the rows its list names and is green when they all are, and a covered row whose list doesn't resolve to row IDs is refused.
 4. Given the package, when the goal's checks run, then every script stays under 20,480 bytes, no test is loosened, no row turns red, and committed text never names the service repo.
 
+## Notes
+
+- NOTE, line (4): "every script stays under 20,480 bytes" means every packaged script, checked by dev/package.py (TD2015's reading, carried over by TD2209).
+- Line (3) is met with the two covered rows excused on record (o988, TD2022) named in the pull request as exceptions (TD2209).
+- Line (5) of the earlier goal v110-lvl-retire-old-words (the release cut's wait for a green full run, o996) is split into its own later goal (TD2201).
+
+## Later work
+
+- Build: give the covered rows done-gap-wave1-small-4 and done-pkg-secret-print-3 real covers lists, and then drop their two fixed entries in levels.py (deliver-first; TD2209).
+
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
