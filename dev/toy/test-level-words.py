@@ -166,7 +166,46 @@ def superset():
     check(len({r["id"] for r in runs.chosen(rows, "L0")}) < 20, "L0 keeps only L0's rows")
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset}
+def state():
+    print("== R4: the record's state column")
+    # Value: protects=a draft's mark is in its own column and records written before still read; fails_when=the ninth cell is refused, a
+    #   bad state passes, a mismatch with the table's own word passes, or a writer still writes eight cells
+    from lvl_fixture import Repo, entry, row
+    risks = ["label\tsecurity\tsecurity\tfixture label"]
+
+    def nine(e, state_cell):
+        return dict(e, state=state_cell)
+
+    def run(rows, lines):
+        repo = Repo(rows, [], risks)
+        repo.write(".loop/regression-relevel.tsv", "".join(lines))
+        repo.commit()
+        got = repo.run("run", "alpha")
+        repo.close()
+        return got
+    cols = ("id", "old", "level", "risk", "covers", "seconds", "cmdhash", "reason")
+    line = lambda e, extra=(): "\t".join([e[c] for c in cols] + list(extra)) + "\n"
+    base = [row("alpha"), row("drf", level="draft")]
+    a, d = entry("alpha"), entry("drf", old="draft")
+    status, said = run(base, [line(a), line(d)])
+    check(status == 0, "control: eight-cell lines (a record written before this goal) still read, and the draft's state comes from the table's own word")
+    status, said = run(base, [line(a, [""]), line(d, ["draft"])])
+    check(status == 0, "nine-cell lines with a blank state and a draft state read")
+    status, said = run(base, [line(a, ["bogus"]), line(d, ["draft"])])
+    check(status == 2 and "LEVELS_BAD_STATE" in said and "alpha" in said, "a state that is neither blank nor draft is refused (LEVELS_BAD_STATE)")
+    status, said = run(base, [line(a, [""]), line(d, [""])])
+    check(status == 2 and "LEVELS_STATE_MISMATCH" in said and "drf" in said, "a draft row (table word draft) whose nine-cell state is blank is a mismatch")
+    status, said = run(base, [line(a, ["draft"]), line(d, ["draft"])])
+    check(status == 2 and "LEVELS_STATE_MISMATCH" in said and "alpha" in said, "a land row whose nine-cell state says draft is a mismatch")
+    repo = Repo([row("alpha")], [entry("alpha")], risks)
+    repo.commit()
+    done, said = repo.run("level", "alpha", "--test-level", "L2")
+    text = repo.read(".loop/regression-relevel.tsv")
+    check(done == 0 and all(len(l.split("\t")) == 9 for l in text.splitlines()), "a writer writes nine cells, header included")
+    repo.close()
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
