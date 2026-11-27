@@ -39,4 +39,6 @@ Departures from the plan (the reviewed text), each with its reason:
 - Departures 1 and 2 above are changes to the reviewed plan; the verdict and its outputs are unchanged.
 - test-body-file.sh (1 failure) and test-regression.sh (7 failures) fail the same way on main without this change; they have open issues. test-automation-email.sh's "codes documented" also fails without this change.
 - The workflow changes (target default L2, concurrency off main only, the copied code block, the summary job, the verdict artifact) have owner approval: o1032. permissions, triggers and secrets are unchanged.
+- dev/toy/test-ci-target.sh: two assertions are changed to match, not weakened: the target-input check now expects the nightly target expression, and the bad-target checks expect the same full line with L2 added to the listed targets.
+- Check 12 (the second run of a silent failing row with no job time left) was not seen red on its own assertion: on the commit before l2.py it stops with ModuleNotFoundError, which is the missing code and not the check's assertion. It is not claimed as red first.
 - No full local test run happened for this goal: GitHub's full regression run on the PR head is the full-run proof.
