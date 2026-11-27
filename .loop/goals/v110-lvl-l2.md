@@ -41,4 +41,5 @@ Departures from the plan (the reviewed text), each with its reason:
 - The workflow changes (target default L2, concurrency off main only, the copied code block, the summary job, the verdict artifact) have owner approval: o1032. permissions, triggers and secrets are unchanged.
 - dev/toy/test-ci-target.sh: two assertions are changed to match, not weakened: the target-input check now expects the nightly target expression, and the bad-target checks expect the same full line with L2 added to the listed targets.
 - Check 12 (the second run of a silent failing row with no job time left) was not seen red on its own assertion: on the commit before l2.py it stops with ModuleNotFoundError, which is the missing code and not the check's assertion. It is not claimed as red first.
+- No leak-reader pair ran for this goal (o1040); the stored form `leak-readers full 2` does not mean one ran.
 - No full local test run happened for this goal: GitHub's full regression run on the PR head is the full-run proof.
