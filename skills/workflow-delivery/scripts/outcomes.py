@@ -201,14 +201,22 @@ def blockers(top, runs, state, base, head):
             out.append("decision %d reverted: record that the done lines are still met (goal.py revert %s %d --met WHY)"
                        % (item["decision"], slug, item["decision"]))
     for number, item in sorted(closed.items()):
-        back = changed(top, point, head, item["files"]) if item["how"] in ("drop", "not-taken") else []
-        back and out.append("finding %d is open again: %s changed after it was closed" % (number, ", ".join(back)))
-        if item["how"] == "fix":
-            if git(top, "merge-base", "--is-ancestor", item["at_fix"], head)[0]:
-                out.append("finding %d is open again: its fix has left the branch" % number)
-            elif changed(top, item["at_fix"], head, item["files"]) and rescan(top, point, head, item["files"], item["classes"]):
-                out.append("finding %d is open again: %s changed into a new match" % (number, ", ".join(item["files"])))
+        again = reopened(top, item, point, head)
+        again and out.append("finding %d is open again: %s" % (number, again))
     return out
+
+
+def reopened(top, item, point, head):
+    """Why a closed finding is open again at `head`, or ""."""
+    if item["how"] in ("drop", "not-taken"):
+        back = changed(top, point, head, item["files"])
+        return "%s changed after it was closed" % ", ".join(back) if back else ""
+    if item["how"] != "fix":
+        return ""
+    if git(top, "merge-base", "--is-ancestor", item["at_fix"], head)[0]:
+        return "its fix has left the branch"
+    again = changed(top, item["at_fix"], head, item["files"]) and rescan(top, point, head, item["files"], item["classes"])
+    return "%s changed into a new match" % ", ".join(item["files"]) if again else ""
 
 
 def write_record(runs, state, why):
@@ -259,8 +267,10 @@ def proven_fix(top, item, number, slug, names, base, row, reader):
 def close(top, runs, state, number, how, why, files, base, by, save=None, row="", reader=""):
     """Close one open finding by its fix, by dropping its part, as an asked action not taken, or by stopping the goal."""
     slug = state["slug"]
-    still, _ = findings(decisions.require(runs, state))
+    still, closed = findings(decisions.require(runs, state))
     item = still.get(number)
+    if not item and number in closed and reopened(top, closed[number], base_point(top, base, "HEAD"), "HEAD"):
+        item = closed[number]  # open again, so it can be closed again
     item or refuse("finding %s is not open on %s" % (number, slug), "ONE_REVIEW_CLOSE")
     how in ("fix", "drop", "not-taken", "stop") or refuse("a finding closes by fix, drop, not-taken or stop", "ONE_REVIEW_CLOSE")
     why = " ".join(why.split())
