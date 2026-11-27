@@ -588,7 +588,7 @@ settings-default-row	PASS	2026-11-26
 settings-entry	PASS	2026-11-26	
 settings-overridden	PASS	2026-11-26	
 settings-reference	PASS	2026-11-27	
-settings-reference-fresh	PASS	2026-11-16	
+settings-reference-fresh	PASS	2026-11-27	
 settings-refresh	PASS	2026-11-26	
 settings-render-fresh	PASS	2026-11-25	
 settings-start-fresh	PASS	2026-11-16	
