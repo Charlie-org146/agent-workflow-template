@@ -12,6 +12,9 @@ import sys
 import tempfile
 import types
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.dont_write_bytecode = True
+
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 sys.path.insert(0, os.path.join(root, "skills", "workflow-regression", "scripts"))
 os.environ["HOME"] = os.environ["USERPROFILE"] = tempfile.mkdtemp(prefix="test-level-words-home.")
@@ -112,7 +115,34 @@ def moved():
     check(not lanes.entry_moved(top, at, "a", memo), "an unchanged line does not read as moved")
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved}
+def coverlevel():
+    print("== R3: a covered row's stored level is the one its covers give")
+    # Value: protects=line 3 (a covered row takes the highest level of the rows its list names); fails_when=a hand-edited record
+    #   keeps a covered row at a level its covers don't give, and nothing says so
+    from lvl_fixture import Repo, entry, row
+    base = [row("alpha"), row("beta"), row("done-x", level="covered", command="proved elsewhere")]
+
+    def run(stored, covers, alpha_level="L1"):
+        alpha = entry("alpha", level=alpha_level, seconds="1.0" if alpha_level == "L0" else "", cmdhash=__import__("hashlib").sha1(b"true").hexdigest() if alpha_level == "L0" else "")
+        repo = Repo(base, [alpha, entry("beta", level="L2"), entry("done-x", old="covered", level=stored, covers=covers, reason="covers")], risks=["label\tsecurity\tsecurity\tfixture label"])
+        repo.commit()
+        status, said = repo.run("run", "alpha")
+        repo.close()
+        return status, said
+    status, said = run("L1", "alpha")
+    check(status == 0, "control: a covered row stored at the level its covers give runs")
+    status, said = run("L2", "alpha")
+    check(status == 2 and "LEVELS_COVER_LEVEL" in said and "done-x" in said and "L1" in said and "level done-x --covers" in said,
+          "a covered row stored at L2 over an L1 cover is refused, naming the level it should have and the repair")
+    status, said = run("L1", "beta")
+    check(status == 2 and "LEVELS_COVER_LEVEL" in said, "a covered row stored at L1 over an L2 cover is refused")
+    status, said = run("L1", "alpha,beta")
+    check(status == 2 and "LEVELS_COVER_LEVEL" in said, "the highest of two covers decides: L2, not the stored L1")
+    status, said = run("L0", "alpha", alpha_level="L0")
+    check(status == 0, "a covered row over an L0 cover is L0 when stored as L0")
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
