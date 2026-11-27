@@ -234,7 +234,7 @@ RT15 asks for this before the E1 to E5 code. It was written after E2 to E5 were 
 | Availability | Plan limits are not stated on the pages read. | On a free plan, public repositories only. |
 
 - E2 (recovery of a cut-off freeze), E3's adopt rule, E4 (decisions file) and E5 (permanent stop) act on this machine's run records and git history before or apart from a merge. Neither feature acts there, so neither replaces them. These parts are tagged own.
-- E3's merge hold is the one part a required status check could also enforce, on GitHub's side. It would add to the local refusal, not replace it, and needs a repository protection setting, which is the owner's. Filed as a DLF-1.1 later line, not built here.
+- E3's merge hold is the one part a required status check could also enforce, on GitHub's side. It would add to the local refusal, not replace it, and needs a repository protection setting, which is the owner's. Not built here; to be filed as a DLF-1.1 later line with the other deliver-first items (not filed yet).
 - E1's start approval needs one answer that approves some items, refuses others and binds exact text. Neither feature offers that. The owner's recorded answer stays, tagged own.
 - Environment reviewers could gate a release job once the release runs in Actions (RT6, filed later).
 
