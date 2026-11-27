@@ -783,7 +783,7 @@
 | <a id="t-done-gap-wave1-small-4"></a>done-gap-wave1-small-4 | workflow | done line gap-wave1-small:4 | not run | - | local | no |
 | <a id="t-eta-ledger"></a>eta-ledger | requirement | done line eta-honesty:1 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-20 |
 | <a id="t-eta-health"></a>eta-health | requirement | done line eta-honesty:2 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-20 |
-| <a id="t-shard-balance"></a>shard-balance | requirement | done line shard-balance:3 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-20 |
+| <a id="t-shard-balance"></a>shard-balance | requirement | done line shard-balance:3 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-20 |
 | <a id="t-retired-id-exists"></a>retired-id-exists | requirement | done line retired-ids-check:1 | PASS | 2026-11-26 | [CI 2026-11-26](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-26) | 2026-11-20 |
 | <a id="t-keep-what-this-is"></a>keep-what-this-is | requirement | done line keep-what-this-is:1 | not run | - | local | 2026-11-20 |
 | <a id="t-operate-loop-under-load"></a>operate-loop-under-load | requirement | done line lane-control:6 | not run | - | local | 2026-11-20 |
