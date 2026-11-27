@@ -38,6 +38,7 @@ Departures from the plan (TD2073: the plan no longer matched the code it was wri
 9. The private-name scan is loaded by path from the delivery skill; the secret-shape pattern is copied.
 10. Step 1's local mapping is dropped (ruled by top): only the pull request's `nightly` run is L1. While the cover claims L1, the goal's local lane runs the L0 rows and the planned rows the pull request leaves out; with the cover off it runs as before.
 11. regression-flaky.yml grants its three permissions on its one job, with `permissions: {}` at the top.
+12. Plan v7 step 5's tail in the issue is dropped (safety F2): the flaky issue carries the row, 'failed then passed', the PR, the SHA and the checks link; no failure output leaves from CI.
 
 Security:
 
