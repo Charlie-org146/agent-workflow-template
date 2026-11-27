@@ -100,7 +100,7 @@ defect-health	PASS	2026-11-27
 defect-owed-branch-proved	PASS	2026-11-25	
 defect-wording	PASS	2026-11-27	
 del-16-linked	PASS	2026-11-27	
-del-16-on-page	PASS	2026-11-26	
+del-16-on-page	PASS	2026-11-27	
 del1-new-here-main-refused	PASS	2026-11-14	
 del5-docs-bump-minor	PASS	2026-11-15	
 del5-docs-patch-default	PASS	2026-11-15	
@@ -285,7 +285,7 @@ issues-no-rows	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 issues-one-open-ci	PASS	2026-11-15	
 judge-cause-158	PASS	2026-11-26	
 judge-section-format	PASS	2026-11-19	
-known-no-block	PASS	2026-11-25	
+known-no-block	PASS	2026-11-27	
 known-recorded	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lane-affected-memory	PASS	2026-11-24	
 lane-died-signal	PASS	2026-11-27	
@@ -390,7 +390,7 @@ milestone-rows-seen-red	PASS	2026-11-27
 milestone-sync-no-source	PASS	2026-11-20	
 milestone-v1-free-form	PASS	2026-11-26	
 milestone-wording-unreviewed	PASS	2026-11-27	
-milestones-once	PASS	2026-11-26	
+milestones-once	PASS	2026-11-27	
 mon-stray-runs	PASS	2026-11-14	
 mon11-full-auto	PASS	2026-11-25	
 mon12-pool	PASS	2026-11-25	
@@ -410,10 +410,10 @@ mon9-board-fast	PASS	2026-11-10
 monitor-stray-runs-3862	PASS	2026-11-14	
 narrow-root-172	PASS	2026-11-24	
 new-binds-app-session-4257	PASS	2026-11-15	
-no-done-line-refused	PASS	2026-11-26	
+no-done-line-refused	PASS	2026-11-27	
 no-line-in-governor	PASS	2026-11-27	
 no-milestone-issue-ok	PASS	2026-11-26	
-no-token-would	PASS	2026-11-26	
+no-token-would	PASS	2026-11-27	
 notify-new-events	PASS	2026-11-18	
 one-failure	PASS	2026-11-09	
 one-link	PASS	2026-11-27	
@@ -492,11 +492,11 @@ readme-commands-in-command-map	PASS	2026-11-26
 record-in-session	PASS	2026-11-12	
 red-race-135	PASS	2026-11-27	
 refuse-replace	PASS	2026-11-20	
-refused-unmet	PASS	2026-11-26	
+refused-unmet	PASS	2026-11-27	
 reg-defect-label	PASS	2026-11-24	
 reg-local-relabel	PASS	2026-11-12	
 reg-same-env	PASS	2026-11-24	
-reg2-wording	PASS	2026-11-26	
+reg2-wording	PASS	2026-11-27	
 reg7-floor-test	PASS	2026-11-25	
 reg7-prep-setting	PASS	2026-11-26	
 reg7-unmapped-tier	PASS	2026-11-24	
@@ -512,10 +512,10 @@ release-scripts-under-19000	PASS	2026-11-25
 release-skill-no-size-4172	PASS	2026-11-26	
 release-static-rules	PASS	2026-11-26	
 reopened-shows-failing	PASS	2026-11-11	
-repeat-no-second	PASS	2026-11-24	
+repeat-no-second	PASS	2026-11-27	
 reply-hook-blocks	PASS	2026-11-10	
 reply-hook-checkin-123	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-reply-hook-mon5-wording	PASS	2026-11-24	
+reply-hook-mon5-wording	PASS	2026-11-27	
 reply-hook-scope	PASS	2026-11-24	
 repo-full-suite-limit	PASS	2026-11-11	
 repo-narrow-178	PASS	2026-11-12	
@@ -528,15 +528,16 @@ retired-id-exists	PASS	2026-11-26
 retired-leaves-waiting	PASS	2026-11-09	
 review-dated	PASS	2026-11-26	
 review-findings-skill-lines	PASS	2026-11-26	
-review-findings-wording	PASS	2026-11-26	
+review-findings-wording	PASS	2026-11-27	
 review-help-runs-alone	PASS	2026-11-24	
 review-hold-blocks	PASS	2026-11-24	
 roadmap-closed-drops	PASS	2026-11-15	
+row-env-drops-host-session	PASS	2026-11-27	
 row-timeout-holds	PASS	2026-11-27	
 rows-pr-full	PASS	2026-11-27	
 rowtail-block-in-workflow	PASS	2026-11-27	
 runs-sha	PASS	2026-11-27	
-same-lines	PASS	2026-11-26	
+same-lines	PASS	2026-11-27	
 schedule-setting	PASS	2026-11-20	
 scripts-a-monitoring-under-19000	PASS	2026-11-25	
 scripts-a-under-19000	PASS	2026-11-15	
@@ -596,7 +597,7 @@ skill-workflow-in-references	PASS	2026-11-26
 skip-list-approved	PASS	2026-11-25	
 slot-pool-112	PASS	2026-11-25	
 spec-decisions-log	PASS	2026-11-13	
-spec-decisions-wording	PASS	2026-11-26	
+spec-decisions-wording	PASS	2026-11-27	
 stale-comments-only-3122	PASS	2026-11-15	
 stale-found	PASS	2026-11-20	
 stale-groups-defect	PASS	2026-11-12	
@@ -662,6 +663,8 @@ token-diet-quiet	PASS	2026-11-25
 token-diet-step-tokens	PASS	2026-11-25	
 topics-in-reference	PASS	2026-11-13	
 toy-leak-merge-where	PASS	2026-11-27	
+toy-leak-row-merge	PASS	2026-11-27	
+toy-leak-row-setup	PASS	2026-11-27	
 toy-no-leftovers	PASS	2026-11-12	
 toys-set-userprofile	PASS	2026-11-25	
 tree-once-lock	PASS	2026-11-24	
