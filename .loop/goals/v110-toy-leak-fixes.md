@@ -98,3 +98,7 @@ One full-depth review of the build, then a fresh reader on the changes made afte
 - Deliver-first: "Build: test comments and docstrings match what the checks cover."
 - Deliver-first (the fresh reader, not blocking): "Build: the entry toy's merge check also fails when its checkout step fails."
 - Deliver-first (the fresh reader, not blocking): "Build: row toy-leak-entry-commit sets the signing format it relies on."
+
+### A named build item outside the done lines (the operation's decision; the owner can revert it)
+
+- Build: rows no longer receive the app's host session id (row row-env-drops-host-session). No done line changes. To revert: revert eff50e866.
