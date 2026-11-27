@@ -124,6 +124,13 @@ def settle(top, runs, state, stop, occ, what, words, rec, ctx):
     return "continue", lid or status or "decision %d" % entry
 
 
+def hand_note(cfg, state):
+    """What pr says where the merge won't go through merge.py: its holds can't be enforced on a merge by hand."""
+    if not state.get("one_review") or cfg.get("auto_merge") is True and state.get("release") != "ask":
+        return ""
+    return "NOTE: a merge done by hand doesn't run merge.py's one-review checks, so they are not enforced on it"
+
+
 def answered(top, runs, slug, asked):
     """An operation hold's answer is a listed decision like any other."""
     question = WITHHELD if dlf.safe(top, asked) != asked else " ".join(asked.split())[:300]

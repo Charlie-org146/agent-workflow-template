@@ -395,3 +395,10 @@ This stands in for the deferred automated inventory. "Toy" means a case in the n
 
 - Known text gap: a requirement guard refusal still names an owner record as one fix; on a one-review goal only the approved text or taking the change out passes.
 - The monitored start records no ETA; for a one-review goal the first time budget counts as the estimate (above).
+
+### Safe options for the rest of B7, D6, RT8 and E8
+
+- No queued or armed merge is withdrawn by a revert (not built, to be filed). Safe option: merge.py does not put a one-review goal in a merge queue (ONE_REVIEW_QUEUE). This repository has no merge queue, and its merge.py merges at once.
+- RT8: revert takes the lock merge takes, so it waits for a merge under way and then sees the goal merged.
+- E8: where a person merges by hand (auto_merge off, or release ask), goal.py pr says the one-review checks are not enforced on that merge.
+- Not built, a question for operation: full auto's fixed reply and its own finding for a safety question. Today such a question stays waiting, held by the operation, so the action is not taken.

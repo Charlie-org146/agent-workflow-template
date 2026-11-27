@@ -480,6 +480,28 @@ spent[0] = 250
 said = budget("n2", one_review=None)
 check("BUDGET_MINUTES" in said, "an older goal with no estimate is held as before: %s" % said[:110])
 
+# RT8: revert and merge take one lock, so a revert waits for a merge that is under way
+record("lk")
+dlf.settle(tmp, runs, "lk", "choice", "c1", "pick the shorter name", "w", "take it")
+first = [e for e in decisions.entries(runs, "lk") if e["kind"] == "decision"][0]["n"]
+lock = os.path.join(tmp, ".git", "loop", "merge.lock")
+open(lock, "w").write("%d\n" % os.getpid())  # a live holder, as a running merge is
+waiter = subprocess.Popen([sys.executable, os.path.join(root, "skills", "workflow-delivery", "scripts", "goal.py"), "revert", "lk", str(first)],
+                          cwd=tmp, env=dict(os.environ, LOOP_ROLE="operation"), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+try:
+    waiter.wait(timeout=6)
+    early = True
+except subprocess.TimeoutExpired:
+    early = False
+check(not early and not [e for e in decisions.entries(runs, "lk") if e["kind"] == "revert"], "a revert waits while a merge holds the lock")
+os.remove(lock)
+out, err = waiter.communicate(timeout=60)
+check("REVERTED lk" in out and not os.path.exists(lock), "and goes on once it is free: %s" % (out + err).strip()[-140:])
+# a merge by hand isn't checked, and the output says so
+check("not enforced" in outcomes.hand_note({"auto_merge": False}, {"one_review": {"at": "t"}}) and "not enforced" in outcomes.hand_note({"auto_merge": True}, {"one_review": {"at": "t"}, "release": "ask"})
+      and outcomes.hand_note({"auto_merge": True}, {"one_review": {"at": "t"}}) == "" and outcomes.hand_note({"auto_merge": False}, {}) == "", "pr says a hand merge is not held")
+check("hand_note(" in open(os.path.join(root, "skills", "workflow-delivery", "scripts", "goal_steps.py")).read(), "goal.py pr prints that note")
+
 import board_log  # noqa: E402
 import board_model  # noqa: E402
 put(".loop/goals/h.plan.md", "plan\n")

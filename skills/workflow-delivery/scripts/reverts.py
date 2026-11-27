@@ -175,6 +175,7 @@ def revert(top, runs, state, number, by, base, met="", cannot="", save=None):
 
 def cmd_revert(g, args):
     g.guards.operation_only(g, "revert a decision of", args.slug)
+    g.pods and g.pods.merge_lock(os.path.dirname(os.path.dirname(g.state_dir())))  # the lock merge holds (RT8): a revert waits for it
     before = len(holds(g.root()))
     revert(g.root(), g.state_dir(), g.load(args.slug), args.number, "operation", "origin/" + g.config()["base"], args.met, args.cannot, save=g.save)
     len(holds(g.root())) > before and queue_removal(g, args.slug, args.number)

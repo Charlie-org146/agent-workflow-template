@@ -214,6 +214,8 @@ def main():
     sys.exit("REFUSED: %s has no finished pull request. Fix: run goal.py pr first." % slug)
   held = one_review_unanswered(state)
   held and sys.exit("REFUSED: %s Nothing was merged. (ONE_REVIEW_UNANSWERED)" % held)
+  if cfg.get("merge_queue") and state.get("one_review"):  # a queued merge happens later, where a revert can't withdraw it yet
+    sys.exit("REFUSED: %s takes one review, and such a goal isn't put in a merge queue. Nothing was merged. Fix: the operation decides how it merges (ONE_REVIEW_QUEUE)" % slug)
   if pods:
     pods.refuse(state)
     pods.pr_queue("wait", runs, slug)  # an earlier pr lane holds the slot
