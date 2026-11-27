@@ -213,7 +213,8 @@ def cover_line():
         os.chdir(before)
         os.environ.clear()
         os.environ.update(saved)
-    check("one" not in later[0], "the cover claims no row the base moved to another level after the branch point", later)
+    check("one" not in later[0] and "one" in later[1] and later[2] in ("", "NONE"),
+          "the cover claims no row the base moved to another level after the branch point", later)
     check(status == "pass" and "COVERED 1 rows by L1" in text and seen[:1] == ["two,zero"] and claim.get("name") == "L1",
           "line 2: the test step names L1 as the cover and its local lane runs only the uncovered rows", (text, seen, claim))
     check(not [n for n in os.listdir(runs_dir) if "L1" in n], "line 2: no local L1 run is recorded", os.listdir(runs_dir))
@@ -315,6 +316,12 @@ def flaky():
     repo = flaky_repo([("sec", "security", quiet)])
     _, said = repo.run("run", "L1", LOOP_FLAKY_FILE=os.path.join(repo.top, "flaky.tsv"))
     check("FLAKY sec: failed then passed" in said, "line 5: a quiet grep security row keeps its one rerun for the verdict", said)
+    repo.close()
+
+    repo = flaky_repo([("loud", "security", "printf '\\140\\140\\140\\n@someone\\n'; exit 1"), ("mute", "security", "false")])
+    _, said = repo.run("run", "L1", "--reuse")
+    check("'''" in said and "\x60" * 3 not in said, "a failed security row's output keeps its code-fence escaping", said)
+    check("(the row printed nothing; it exited 1)" in said, "a quiet failed security row says it printed nothing", said)
     repo.close()
 
     sees = "test -z \"$LOOP_FLAKY_FILE$GITHUB_EVENT_NAME\""

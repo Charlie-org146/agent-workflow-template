@@ -195,8 +195,9 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
         print("%s %s%s" % ("ENV" if nostart else "NOTRUN" if cannot else state, key, " (%s)" % expected[key] if state == "KNOWN" else " (exit %d: could not start; rerun when memory allows)" % code if nostart else ""), flush=True)
         if signal and state != "PASS":
             print("KILLED %s: signal %s (pid %d). Note: a signal stopped this row; see the lane log" % (key, signal, pid))
-        again = state == "FAIL" and key not in secure  # shown() may run the row again; that is a security row's one rerun
-        tail = shown(lambda c: lanes.run_row(c, root, env, cap)[:2], by[key]["command"], code, text) if again else text[-1500:]
+        # shown() may run a quiet row again to see its output: a security row's one rerun is kept, so it gets what it printed
+        rerun = (lambda c: (code, text)) if key in secure else (lambda c: lanes.run_row(c, root, env, cap)[:2])
+        tail = shown(rerun, by[key]["command"], code, text) if state == "FAIL" else text[-1500:]
         if state == "FAIL" and reuse:
             print(chr(10).join("    " + x for x in tail.splitlines()[-20:]), file=sys.stderr)
         results.append({"id": key, "state": state, "tail": tail, "seconds": round(time.time() - began, 1),
