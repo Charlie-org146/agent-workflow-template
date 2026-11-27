@@ -497,7 +497,31 @@ def swallow():
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow}
+def runbook():
+    print("== line 1: the Regression runbook uses L0, L1 and L2; the old words are in one table")
+    # Value: protects=the runbook speaks one set of level words and the old words that must still be typed are listed once, each with
+    #   where and what replaces it; fails_when=an old word is back in the runbook, a level is missing, or a table line is dropped
+    import re
+    page = open(os.path.join(root, "docs", "wiki", "Regression.md"), encoding="utf-8").read()
+    book = page.split("\n## Runbook\n", 1)[1].split("\n## Requirements", 1)[0]
+    found = sorted(set(w.lower() for w in re.findall(r"\b(land|nightly|covered|draft)\b", book, re.I)))
+    check(not found, "the Runbook section holds none of land, nightly, covered, draft: %s" % (found or "none"))
+    check(all(re.search(r"\b%s\b" % level, book) for level in ("L0", "L1", "L2")) and "target L0, L1, L2 or one row id" in book, "the Runbook names the targets L0, L1, L2 and a row id")
+    how = open(os.path.join(root, "docs", "wiki", "How-to-use-Regression.md"), encoding="utf-8").read()
+    table = how.split("### Old words and the new levels", 1)
+    check(len(table) == 2, "How-to-use-Regression.md has the section 'Old words and the new levels'")
+    rows = [l for l in (table[1].split("\n##", 1)[0] if len(table) == 2 else "").splitlines() if l.startswith("| `")]
+    want = (("regression.py add --level", ("land", "nightly", "draft", "covered"), "--test-level"),
+            ("regression.py run", ("land", "nightly"), "L1"),
+            ("goal_levels", ("land", "nightly"), "L2"),
+            ("ci_levels", ("land", "nightly"), "unchanged"),
+            ("regression-limits.tsv", ("land", "nightly"), "unchanged"))
+    for where, olds, new in want:
+        line = [l for l in rows if l.split("|")[1].strip("` ").startswith(where)]
+        check(len(line) == 1 and all(w in line[0] for w in olds) and new in line[0], "the table has one line for %s with its old words and %s" % (where, new), line)
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
