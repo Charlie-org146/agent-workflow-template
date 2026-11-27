@@ -2,7 +2,7 @@
 
 - Slug: v110-plan-by-size
 - Review: one
-- Touches: skills/workflow-delivery, dev/toy, .loop/regression.tsv, skills/workflow-setup/scripts/settings.py, .loop/config.json, skills/loop-files.md, .loop/START.md, docs/wiki/How-to-use-Setup.md, .loop/regression-relevel.tsv
+- Touches: skills/workflow-delivery, dev/toy, .loop/regression.tsv, skills/workflow-setup/scripts/settings.py, skills/loop-files.md, .loop/START.md, docs/wiki/How-to-use-Setup.md, .loop/regression-relevel.tsv
 - ETA: 330 active minutes (estimate 264m plus a 25% margin)
 
 ## Done lines
@@ -19,7 +19,7 @@ Frozen. A wrong done line needs a new goal.
 
 ## PR notes
 
-What it does: a plan step with no stored size starts from a provisional row (small; large for a goal frozen large, with no frozen size, or touching a safety class or risky path) and is told that row's forms; the plan step prints REVW-5's round rule with `plan_fix_reads` (new setting, default 2, read from the base branch's config). Touches were widened through the tool to hold the setting and its generated references: settings.py, .loop/config.json, skills/loop-files.md, .loop/START.md, docs/wiki/How-to-use-Setup.md and .loop/regression-relevel.tsv.
+What it does: a plan step with no stored size starts from a provisional row (small; large for a goal frozen large, with no frozen size, or touching a safety class or risky path) and is told that row's forms; the plan step prints REVW-5's round rule with `plan_fix_reads` (new setting, default 2 in settings.py, read from the base branch's config when it sets one; .loop/config.json carries no key for it, owner o1110). Touches were widened through the tool to hold the setting and its generated references: settings.py, skills/loop-files.md, .loop/START.md, docs/wiki/How-to-use-Setup.md and .loop/regression-relevel.tsv.
 
 Found outside this change (filed as deliver-first by the operation, WHAT only):
 1. (v110-plan-by-size-later-goal-1) The shared safety-class word list misses the word "oauth", so a goal about oauth login is not detected as touching a safety class: a fail-open in safety-class detection, which the plan-start row also relies on.
@@ -35,3 +35,6 @@ QA on the Mac lane: 12 passed, 2 known, 0 failed. The known rows are ls-judge-lo
 Build red: the red for the first build commit 526d73dd2 was not its own commit. It was proved by hand on 89da3f874, where dev/toy/test-plan-by-size.py failed 10 checks.
 
 Red on main too, not from this change: dev/toy/test-settings.sh (4 failures) and dev/toy/test-review-depth.sh (9 failures) under a clean environment, the same on a clean origin/main worktree.
+
+Changed assertion (TD162), dev/toy/test-plan-by-size.py, owner o1110 (drop the plan_fix_reads key from .loop/config.json; the default 2 in settings.py stays):
+- Old: `config.json holds plan_fix_reads 2 and its help line`. New: `config.json holds no plan_fix_reads key or help line (owner o1110)`, plus a new check `with the key absent the setting reads 2 by default`. Why: the owner dropped the key, so the file must match origin/main. Not weakened: the new assertion still pins the file's exact state, red first (it failed while the key was present), and the default is asserted by a check that sets no key. dev/toy/test-settings.sh needed no change: it checks the config setup writes into a toy repo, and its 4 failures are the same as on origin/main.

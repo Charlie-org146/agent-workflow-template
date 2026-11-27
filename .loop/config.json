@@ -44,9 +44,7 @@
   "time_budget_minutes": 240,
   "token_budget": 3000000,
   "review_depth": "full",
-  "plan_fix_reads": 2,
   "_help": {
-    "plan_fix_reads": "The most reads of fixes a plan gets after its reviews, on the changes only; wording findings are build notes.",
     "review_depth": "full runs the plan and review skills' whole pipeline and refuses a condensed one; condensed allows a shorter run.",
     "checks_by_size": "One table of which checks each goal size runs (small, medium, large), each check in a named form. Fixed checks stay full in every row. Only the owner's words change it; it is read from the base branch."
   },

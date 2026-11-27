@@ -87,5 +87,6 @@ import settings  # noqa: E402
 rows = {row[0]: row for row in settings.TABLE}
 cfg = json.load(open(os.path.join(ROOT, ".loop", "config.json")))
 check(rows.get("plan_fix_reads", (0, 0, None))[2] == 2, "settings.py lists plan_fix_reads with default 2", rows.get("plan_fix_reads"))
-check(cfg.get("plan_fix_reads") == 2 and "plan_fix_reads" in cfg.get("_help", {}), "config.json holds plan_fix_reads 2 and its help line")
+check("plan_fix_reads" not in cfg and "plan_fix_reads" not in cfg.get("_help", {}), "config.json holds no plan_fix_reads key or help line (owner o1110)")
+check(prompt(SMALL, {}).count("at most `2` such reads") == 1 and "plan_fix_reads" not in BASE, "with the key absent the setting reads 2 by default")
 sys.exit(done())
