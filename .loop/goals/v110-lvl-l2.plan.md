@@ -117,7 +117,7 @@ Filed in the goal's follow-up issue after the merge. They are not built here, so
 5. Search the generated workflow for `git revert`. Expect: no match.
 
 ### Files
-Files: skills/workflow-regression/scripts/actions.py, skills/workflow-regression/scripts/actions_write.py, skills/workflow-regression/scripts/l2.py, skills/workflow-regression/scripts/slots.py, skills/workflow-regression/scripts/tests.py, skills/workflow-regression/scripts/runs.py, .github/workflows/regression.yml, dev/toy/test-l2.py, dev/toy/test-ci-target.sh, dev/toy/test-summary.sh, dev/toy/test-row-output.py, dev/toy/test-budget-order.py, dev/toy/approved-row-changes.tsv, .loop/regression.tsv, .loop/regression-relevel.tsv, skills/loop-files.md, docs/wiki/How-to-use-Guardrails.md, docs/wiki/Tests.md
+Files: skills/workflow-regression/scripts/actions.py, skills/workflow-regression/scripts/actions_write.py, skills/workflow-regression/scripts/l2.py, skills/workflow-regression/scripts/slots.py, skills/workflow-regression/scripts/tests.py, skills/workflow-regression/scripts/runs.py, skills/workflow-regression/scripts/completion.py, .github/workflows/regression.yml, dev/toy/test-l2.py, dev/toy/test-ci-target.sh, dev/toy/test-summary.sh, dev/toy/test-row-output.py, dev/toy/test-budget-order.py, dev/toy/approved-row-changes.tsv, .loop/regression.tsv, .loop/regression-relevel.tsv, skills/loop-files.md, docs/wiki/How-to-use-Guardrails.md, docs/wiki/Tests.md
 Lines: about 950
 Gates: the planning gate, the build gate, the ship gate
 Classes: security (changes to GitHub workflow files; risky path .github/workflows)
@@ -129,6 +129,7 @@ Bytes: skills/workflow-regression/scripts/actions_write.py: now 0, after about 1
 Bytes: skills/workflow-regression/scripts/slots.py: now 18,982, after about 19,600, left about 880; measured
 Bytes: skills/workflow-regression/scripts/tests.py: now 18,817, after about 19,200, left about 1,280; calls l2.py for L2
 Bytes: skills/workflow-regression/scripts/runs.py: now 18,909, after about 19,000, left about 1,480; lines move into the copied block
+Bytes: skills/workflow-regression/scripts/completion.py: now 17,530, after about 17,730, left about 2,750; now is G2 2cd9b33d6; the level pick for L2 (item 1)
 Bytes: skills/workflow-regression/scripts/l2.py: now 0, after about 9,500, left about 10,980; new (item 19)
 Bytes: dev/toy/test-l2.py: now 0, after about 18,000, left about 2,480; new
 
