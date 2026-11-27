@@ -769,3 +769,7 @@ lvl-l1-missed	land	L1	none				default
 done-lvl-l1-4	covered	L1	none	lvl-l1-select			covers
 done-lvl-l1-7	covered	L1	none	package-passes			covers
 lvl-l1-pin	land	L1	none				default
+lvl-l2-reach	land	L1	none				default
+lvl-l2-skip	land	L1	none				default
+lvl-l2-fail	land	L1	none				default
+done-lvl-l2-4	covered	L1	none	package-passes			covers
