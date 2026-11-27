@@ -751,3 +751,10 @@ lvl-sizing-levels	land	L1	none				default
 lvl-armed	land	L1	none				default
 done-lvl-relevel-6	covered	L1	none	package-passes-3800,lvl-armed			covers
 history-rows-fail-closed	land	L1	none				src:7099da4212
+lvl-l1-select	land	L1	none				default
+lvl-l1-cover	land	L1	none				default
+lvl-l1-queue	land	L1	none				default
+lvl-l1-flaky	land	L1	none				default
+lvl-l1-missed	land	L1	none				default
+done-lvl-l1-4	covered	L1	none	lvl-l1-select			covers
+done-lvl-l1-7	covered	L1	none	package-passes			covers

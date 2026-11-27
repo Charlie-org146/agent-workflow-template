@@ -276,7 +276,7 @@ def edit(root, reader, change, write, opts=None):
             entries[key] = derive(state, row, old.get(key), entries.get(key), opts if key == opts.get("id") else {})
             touched.add(key)
             if key == opts.get("id"):
-                print("LEVEL %s %s, risk %s (%s). Runs still follow the row's %s word." % (
+                print("LEVEL %s %s, risk %s (%s). The pull request run follows it; other runs follow the %s word." % (
                     key, entries[key]["level"], entries[key]["risk"], entries[key]["reason"], row["level"]))
         state.record = [(0, e) for e in entries.values()]
         state.table, state.by_id = now.table, now.by_id
