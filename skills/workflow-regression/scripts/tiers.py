@@ -47,8 +47,8 @@ def kinds(rows, kind):
 
 
 def target(root, args):
-    """S23: a goal lane plans from goal_levels: land (default), or nightly. Armed, the pull request's `nightly` run is L1."""
-    if args.tier and args.target == "nightly" and completion.armed(root):
+    """S23: a goal lane plans from goal_levels: land (default), or nightly. Armed, GitHub's pull request `nightly` run is L1."""
+    if args.tier and args.target == "nightly" and os.environ.get("GITHUB_EVENT_NAME") == "pull_request" and completion.armed(root):
         return "L1"
     return "nightly" if args.tier and args.target == "land" and config(root).get("goal_levels") == "nightly" else args.target
 
@@ -282,7 +282,8 @@ def plan(root, picked, record):
         for rid, because in (picks(root, picked, loose + gone, old, ok, cache, memo) if loose or gone else {}).items():
             why[rid] = why[rid] or because
     why = {row["id"]: why.get(row["id"]) or ("FULL" if full else "") for row in picked}
-    completion.all_private(picked, why)
+    completion.all_private(picked, why, {row["id"] for row in picked if row.get("mandatory") == "private" and (
+        lanes.closure(root, row["command"], cache)[1] or lanes.whole(root, row, {}))})
     todo = [row["id"] for row in picked if why[row["id"]]]
     near = closeness(root, picked, BASE, old["rows"] if ok else {}, cache)
     todo.sort(key=lambda rid: (rank(why[rid]), near[rid]))  # then closeness (TD476)

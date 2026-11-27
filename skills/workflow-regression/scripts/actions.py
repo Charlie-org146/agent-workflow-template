@@ -20,8 +20,11 @@ ROW_DROP = ("GH_TOKEN", "GITHUB_TOKEN", "GITHUB_STEP_SUMMARY", "GITHUB_ENV", "GI
             "LOOP_ROW_TIMES", "REGRESSION_SHARD", "REGRESSION_LEVELS", "REGRESSION_TARGET", "REGRESSION_CLEANUP")
 
 
+LANE_ONLY = ("LOOP_FLAKY_FILE", "GITHUB_EVENT_NAME")  # this run's own: no row inherits them
+
+
 def row_env():
-    return dict({k: v for k, v in os.environ.items() if k not in ROW_DROP}, LOOP_PRIVATE_NAMES=os.environ.get("LOOP_PRIVATE_NAMES") or os.devnull)
+    return dict({k: v for k, v in os.environ.items() if k not in ROW_DROP + LANE_ONLY}, LOOP_PRIVATE_NAMES=os.environ.get("LOOP_PRIVATE_NAMES") or os.devnull)
 
 
 WORKFLOW = r"""# Written by workflow-regression. It reads .loop/regression.tsv and .loop/regression-known.tsv.

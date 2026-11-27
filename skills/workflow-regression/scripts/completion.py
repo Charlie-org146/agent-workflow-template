@@ -137,11 +137,12 @@ def protected(root):
     return {k for k, v in entries(root).items() if v[1] in ("security", "private")} if armed(root) else set()
 
 
-def all_private(picked, why):
-    """A change that reaches no private row runs every private row (a reached one narrows them as any row)."""
+def all_private(picked, why, broad):
+    """A change that reaches no private row runs every private row. A row in broad (it runs on any change) and a rerun of
+    an old failure, skip or flip are not the change reaching a row."""
     private = [row["id"] for row in picked if row.get("mandatory") == "private"]
-    if private and not any(why[key] for key in private):
-        why.update((key, "private: the change reaches no private row, so every one runs") for key in private)
+    if private and not any(why[key].startswith(("reaches", "new row")) and key not in broad for key in private):
+        why.update((key, why[key] or "private: the change reaches no private row, so every one runs") for key in private)
 
 
 def pr_select(changed):
@@ -225,7 +226,8 @@ def table_changed(root, name):
 FLIP = ("FLAKY %s: failed then passed (rerun once in a fresh HOME). Fix: find the first failure in the shard log, then fix "
         "the row or the cause; a flip is a failure until then")
 FLIP_HEAD = "FLAKY: failed then passed on rerun (same commit)"
-FLIP_BYTES, FLIP_ROWS, WITHHELD = 100000, 20, "[tail withheld: private scan hit; see the job log of the pull request run]"
+FLIP_BYTES, FLIP_ROWS = 100000, 20
+FLIP_NOTE = FLIP_HEAD + "\nThe row's output is not published here; read it in the pull request run's log."
 
 
 def passes_again(root, command, cap):
@@ -244,37 +246,11 @@ def passes_again(root, command, cap):
 
 
 def flaky_write(path, item):
-    """Append `id TAB seconds TAB tail` for one flip: the first failure's last 20 lines, each cut to 200, escaped."""
+    """Append `id TAB seconds TAB note` for one flip. The row's output is never written: the issue is public."""
     if not path:
         return
-    tail = "\n".join([FLIP_HEAD] + [line[:200] for line in str(item.get("tail") or "").splitlines()[-20:]])
     with open(path, "a", encoding="utf-8") as out:
-        out.write("%s\t%s\t%s\n" % (item["id"], item.get("seconds") or 0,
-                                    tail.encode("unicode_escape").decode("ascii")))
-
-
-SECRET = re.compile(r"AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,}|sk-[A-Za-z0-9]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----")
-
-
-def delivery_scan():
-    """The delivery skill's private-name scan, loaded by path (its folder goes on the path for what it imports)."""
-    import importlib.util
-    folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts")
-    sys.path.append(folder)
-    spec = importlib.util.spec_from_file_location("private", os.path.join(folder, "private.py"))
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def safe_tail(root, tail):
-    """The tail for an issue body: withheld on a private or secret-shaped hit; no fence, comment mark or control byte."""
-    private = delivery_scan()
-    found = private.scan(root, None, texts={"tail": tail})["state"]
-    if found not in ("clean", "off", "none") or SECRET.search(tail) or private.HOME_DIR.search(tail):
-        return WITHHELD
-    tail = "".join(c for c in tail if c == "\n" or c >= " " and c != "\x7f")
-    return tail.replace("```", "\'\'\'").replace("<!--", "<!- -")
+        out.write("%s\t%s\t%s\n" % (item["id"], item.get("seconds") or 0, FLIP_HEAD))
 
 
 def flaky_results(root, paths):
@@ -296,13 +272,8 @@ def flaky_results(root, paths):
                 why = "a line is not `id, seconds, tail`"
             elif cells[0] not in rows or record.get(cells[0], ("", ""))[1] != "security":
                 why = "%r is not a security row of the default branch" % cells[0][:80]
-            else:
-                try:
-                    tail = cells[2].encode("ascii").decode("unicode_escape")
-                except (UnicodeError, ValueError):
-                    why = "a tail is not escaped text"
-                    continue
-                found.append({"id": cells[0], "state": "FAIL", "tail": safe_tail(root, tail), "seconds": float(cells[1])})
+            else:  # the third cell is never read: nothing a pull request wrote goes into the issue but a checked row id
+                found.append({"id": cells[0], "state": "FAIL", "tail": FLIP_NOTE, "seconds": float(cells[1])})
             if why:
                 break
         if why:
@@ -322,8 +293,10 @@ def file_flaky(argv):
         print("REFUSED %s; nothing from it is filed" % why)
     pr, sha = (argv[argv.index(flag) + 1] if flag in argv else "" for flag in ("--pr", "--sha"))
     if re.fullmatch(r"\d+", pr) and re.fullmatch(r"[0-9a-f]{40}", sha):
+        link = "%s/%s/commit/%s/checks" % (os.environ.get("GITHUB_SERVER_URL") or "https://github.com",
+                                           os.environ.get("GITHUB_REPOSITORY") or "OWNER/REPO", sha)
         for item in items:
-            item["tail"] = "pull request %s at %s\n%s" % (pr, sha, item["tail"])
+            item["tail"] = "pull request %s at %s\nrun: %s\n%s" % (pr, sha, link, item["tail"])
     if items:
         runs.sync_issues(items, "--live" in argv, time.strftime("%Y-%m-%d", time.gmtime()))
     print("FLIPS %d rows from %d files, %d files refused" % (len(items), len(paths), len(refused)))

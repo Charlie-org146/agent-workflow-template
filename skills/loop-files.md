@@ -831,7 +831,8 @@ when the base already holds the record; before that it reads the levels files as
 ## L1 on the pull request
 
 The table is armed when it holds `lvl-armed` and `.github/workflows/regression-pr.yml` is this tool's. On an armed
-table the pull request's `run nightly --reuse --tier goal` is L1: the changed rows at L0 or L1, every security or
+table GitHub's pull request run of `run nightly --reuse --tier goal` is L1 (the same command run anywhere else is as
+before): the changed rows at L0 or L1, every security or
 private row the change reaches, and every private row when it reaches none (never reused). An L2 row it only reaches
 waits for the scheduled run. A private row listed `nightly` in the limits file still runs, with a NOTE. `run L0`,
 `run L1` and `run L2` pick by level when typed. A documents-only change runs no row, as before. A goal's own
@@ -846,10 +847,11 @@ left out. A value that is not a whole number of at least 1 is refused (`L1_MINUT
 
 **A security row that flips.** A row tagged security that fails is run once more in a fresh HOME. If it then passes it
 stays FAIL, prints `FLAKY <id>: failed then passed ...`, and the leg uploads `flaky.tsv` (`id TAB seconds TAB tail`,
-only after a flip). No rerun after a timeout, a signal or a start failure. `.github/workflows/regression-flaky.yml`
+only after a flip; it holds none of the row's output). No rerun after a timeout, a signal or a start failure. `.github/workflows/regression-flaky.yml`
 runs from the default branch, never a pull request's code, only for a failed pull request run of this repository: it
-reads the flip files as data, refuses a malformed one or a row the default branch does not tag security, withholds a
-tail the private-name scan or a secret pattern hits, and opens or comments on one issue for each row.
+reads the flip files as data, refuses a malformed one or a row the default branch does not tag security, and opens or
+comments on one issue for each row: the row, that it failed then passed, the pull request, the commit and a link to its
+checks. No row output is published.
 
 ## Goal tier
 

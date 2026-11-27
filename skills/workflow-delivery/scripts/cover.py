@@ -40,7 +40,7 @@ def planned(word):
     picked = [r for r in tiers.kinds(regression.chosen(rows, tiers.target(root, A)), None) if r["level"] not in ("draft", "covered")]
     return picked, tiers.plan(root, picked, lanes.record_path(root))
 armed = completion.armed(root)
-pr = planned("nightly")[1][0] if armed else None  # armed: what the pull request's L1 run selects
+pr = planned("L1")[1][0] if armed else None  # armed: what the pull request's L1 run selects
 picked, (todo, reused, old, why) = planned("land")  # the local goal lane's plan, as before
 bad = [k for k, v in ((old or {}).get("rows") or {}).items() if v.get("status") in ("FAIL", "SKIPPED", "LEFT") or v.get("flaky")]
 bad += runs.unproven(root, picked, regression.SEEN)  # a row with no seen-failing date fails the lane wherever it runs
@@ -151,6 +151,13 @@ def select(root, cfg, names):
             gone |= ids_of(out, 0, only)
     todo, pr, l0 = list(plan["todo"]), plan.get("pr"), set(plan.get("l0") or ())
     runs_there = todo if pr is None else pr
+    if pr is not None:  # GitHub reads the merge ref: an entry the base changed since the branch point may not run there
+        point = sh(["git", "merge-base", "origin/%s" % base, "HEAD"], root)[1]
+        was, now = (sh(["git", "show", "%s:.loop/regression-relevel.tsv" % ref], root) for ref in (point, "origin/%s" % base))
+        if not point or now[0]:
+            return [], [], "LIST"
+        old, new = ({x.split("\t")[0]: x for x in text[1].splitlines()} for text in (was, now))
+        gone |= {key for key in set(old) | set(new) if old.get(key) != new.get(key)}
     covered = sorted(k for k in runs_there if k in reach and k not in gone)
     local = sorted((set(todo) | (set(runs_there) & l0)) - set(covered))  # L0 stays local; what L1 won't run does too
     left = [] if pr is None else [k for k in local if k not in set(pr) | l0]
