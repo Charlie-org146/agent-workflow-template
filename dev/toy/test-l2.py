@@ -65,7 +65,7 @@ def step(top, target, fail="", live=False, extra=None):
     calls, results, log = (os.path.join(top, n) for n in ("calls.log", "results.tsv", "ran.log"))
     for path in (calls, results, log):
         open(path, "w").close()
-    run_env = {"PATH": os.path.join(top, "bin") + ":" + os.environ["PATH"], "HOME": top, "FAKE_GH_DIR": top, "TOY_LOG": log,
+    run_env = {"PATH": os.path.join(top, "bin") + ":" + os.environ["PATH"], "HOME": top, "USERPROFILE": top, "FAKE_GH_DIR": top, "TOY_LOG": log,
                "REGRESSION_RESULTS": results, "SUITE_TIME_FILE": os.path.join(top, "suite-time.tsv"), "REGRESSION_TARGET": target,
                "FAKE_GH_FAIL": fail, "L": "--live" if live else ""}
     run_env.update({k: v for k, v in env.items() if v and k not in run_env})
@@ -256,7 +256,7 @@ def summary(top, results, target="L2", matrix="success", cleanup="", fail="", re
         os.makedirs(os.path.join(shards, "results-%d" % n), exist_ok=True)
         open(os.path.join(shards, "results-%d" % n, "regression-results.tsv"), "w").write(shard)
     open(os.path.join(top, "calls.log"), "w").close()
-    run_env = {"PATH": os.path.join(top, "bin") + ":" + os.environ["PATH"], "HOME": top, "FAKE_GH_DIR": top, "RUNNER_TEMP": top,
+    run_env = {"PATH": os.path.join(top, "bin") + ":" + os.environ["PATH"], "HOME": top, "USERPROFILE": top, "FAKE_GH_DIR": top, "RUNNER_TEMP": top,
                "GITHUB_STEP_SUMMARY": os.path.join(top, "step-summary.md"), "GITHUB_SHA": "abc123", "GITHUB_REF": ref, "FAKE_GH_FAIL": fail,
                "REGRESSION_TARGET": target, "REGRESSION_CLEANUP": cleanup, "MATRIX": matrix, "SHARDS": str(len(results) or 1)}
     run_env.update({k: v for k, v in env.items() if v and k not in run_env})
@@ -364,7 +364,19 @@ def usage():
         check(done.returncode == 0 and "l2.py check TARGET CLEANUP" in done.stdout and "Traceback" not in done.stderr, "l2.py run alone with %s prints its usage and exits 0" % (args or "no argument"))
 
 
-cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second, "marker": marker, "usage": usage}
+def guard():
+    print("== DEL-10: l2.py starts gh with no prompt and no editor")
+    # Value: protects=the summary job's gh calls never wait on a prompt; fails_when=l2.py runs processes without the env guard
+    #   every script that starts processes sets at import (GIT_TERMINAL_PROMPT and the rest)
+    text = open(os.path.join(root, "skills", "workflow-regression", "scripts", "l2.py")).read()
+    check("GIT_TERMINAL_PROMPT" in text and "GH_PROMPT_DISABLED" in text and "subprocess" in text, "l2.py sets the no-prompt guard where it imports subprocess")
+    env = {"PATH": os.environ["PATH"], "HOME": tempfile.mkdtemp(prefix="test-l2-home."), "GH_PROMPT_DISABLED": "0", "GIT_EDITOR": "vim"}
+    done = subprocess.run([sys.executable, "-c", "import sys, os; sys.path.insert(0, %r); import l2; print(os.environ['GIT_EDITOR'], os.environ['GH_PROMPT_DISABLED'])"
+                           % os.path.join(root, "skills", "workflow-regression", "scripts")], capture_output=True, text=True, env=env)
+    check(done.stdout.split() == ["true", "1"], "importing l2 forces GIT_EDITOR=true and GH_PROMPT_DISABLED=1")
+
+
+cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second, "marker": marker, "usage": usage, "guard": guard}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
