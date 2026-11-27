@@ -74,7 +74,7 @@ ci-issue-backlog	PASS	2026-11-10
 ci-summary	PASS	2026-11-27	
 ci-target-input	PASS	2026-11-27	
 codex-key-commands	FAIL	2026-11-25	
-codex-ro-home	FAIL	2026-11-25	
+codex-ro-home	PASS	2026-11-27	
 config-holds-topics	PASS	2026-11-14	
 config-lane-duplicate-key	PASS	2026-11-15	
 config-lane-duplicate-same	PASS	2026-11-15	
