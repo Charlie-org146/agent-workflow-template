@@ -127,15 +127,18 @@ def t_nowrite(tmp):
 def t_stale(tmp):
     import board_cards
     root, runs, items = fixture(tmp)
-    runs[0]["updated"] = iso(121 * 60)   # older than 120 minutes
-    runs[1]["updated"] = iso(120 * 60)   # exactly 120: not older
+    runs[0]["updated"] = iso(6 * 60)   # older than 5 minutes
+    runs[1]["updated"] = iso(5 * 60)   # exactly 5: not older
     runs[2].pop("updated")               # no time at all
-    got = {c["id"]: c for c in build(root, runs, items, max_age=120)}
+    got = {c["id"]: c for c in build(root, runs, items, max_age=5)}
     check(got["goal:g1"]["stale"] is True, "a card older than board_max_age is stale")
     check(got["goal:g2"]["stale"] is False, "a card exactly board_max_age old is not stale")
     check(got["goal:g3"]["stale"] is False, "a card with no time is not stale")
-    check(board_cards.setting({"board_max_age": "soon"}, "board_max_age", 120) == 120 and board_cards.setting({"board_max_age": 45}, "board_max_age", 120) == 45,
+    check(board_cards.setting({"board_max_age": "soon"}, "board_max_age", 5) == 5 and board_cards.setting({"board_max_age": 45}, "board_max_age", 5) == 45,
           "a non-number board_max_age uses the default")
+    sys.path.insert(0, os.path.join(here, "..", "..", "skills", "workflow-setup", "scripts"))
+    import settings
+    check(settings.repo_defaults()["board_max_age"] == 5, "the board_max_age default is the page's 5 minutes (BOARD-5)")
 
 
 def t_scan(tmp):
@@ -156,27 +159,47 @@ def t_gate(tmp):
     state = {}
     lines = ["CHANGE a/b step: x -> y"]
     now = NOW
-    check(notify.checkin_gate(state, lines, now, 30) == "send", "a first change is sent")
+    check(notify.checkin_gate(state, lines, now, 10) == "send", "a first change is sent")
     notify.checkin_sent(state, lines, now)
-    check(notify.checkin_gate(state, lines, now + 3600, 30) == "same", "a check-in due with nothing changed is not sent")
-    check(notify.checkin_gate(state, lines + ["CHANGE c/d step: p -> q"], now + 60, 30) == "early", "a change closer than checkin_every is held")
-    check(notify.checkin_gate(state, lines + ["CHANGE c/d step: p -> q"], now + 31 * 60, 30) == "send", "a change after checkin_every is sent")
+    check(notify.checkin_gate(state, lines, now + 3600, 10) == "same", "a check-in due with nothing changed is not sent")
+    check(notify.checkin_gate(state, lines + ["CHANGE c/d step: p -> q"], now + 60, 10) == "early", "a change closer than checkin_every is held")
+    check(notify.checkin_gate(state, lines + ["CHANGE c/d step: p -> q"], now + 11 * 60, 10) == "send", "a change after checkin_every is sent")
     held = json.dumps(state, sort_keys=True)
-    notify.checkin_gate(state, lines + ["CHANGE c/d step: p -> q"], now + 60, 30)
+    notify.checkin_gate(state, lines + ["CHANGE c/d step: p -> q"], now + 60, 10)
     check(json.dumps(state, sort_keys=True) == held, "a held attempt writes nothing")
+    import board_cards
+    sys.path.insert(0, os.path.join(here, "..", "..", "skills", "workflow-setup", "scripts"))
+    import settings
+    check(settings.repo_defaults()["checkin_every"] == 10, "the checkin_every default is task 18's 10 minutes")
+    refused = [board_cards.setting({"checkin_every": v}, "checkin_every", 10, 5, 10) for v in (4, 11, 0, "x")]
+    import contextlib
+    import io
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        board_cards.setting({"checkin_every": 11}, "checkin_every", 10, 5, 10)
+    said = err.getvalue().strip().splitlines()
+    check(len(said) == 1 and all(x in said[0] for x in ("checkin_every", "11", "5 to 10", "default 10")),
+          "an out-of-range checkin_every prints one line naming the setting, the value, the range and the default")
+    err = io.StringIO()
+    with contextlib.redirect_stderr(err):
+        board_cards.setting({"board_max_age": "soon"}, "board_max_age", 5)
+    said = err.getvalue().strip().splitlines()
+    check(len(said) == 1 and "board_max_age" in said[0] and "soon" in said[0] and "default 5" in said[0], "a board_max_age that is not a number prints one line too")
+    check(refused == [10, 10, 10, 10] and board_cards.setting({"checkin_every": 5}, "checkin_every", 10, 5, 10) == 5 and board_cards.setting({"checkin_every": 8}, "checkin_every", 10, 5, 10) == 8,
+          "checkin_every outside 5 to 10 is refused; 5 and 8 are kept")
 
 
 def t_repos(tmp):
     import board
-    a = repo(tmp, "repo-a", {"board_max_age": 10, "checkin_every": 5})
-    b = repo(tmp, "repo-b", {"board_max_age": 90, "checkin_every": 45})
+    a = repo(tmp, "repo-a", {"board_max_age": 7, "checkin_every": 5})
+    b = repo(tmp, "repo-b", {"board_max_age": 3, "checkin_every": 8})
     third = os.path.join(tmp, "elsewhere")
     os.makedirs(third)
     here_now = os.getcwd()
     os.chdir(third)
     try:
-        check(board.repo_setting(a, "board_max_age", 120) == 10 and board.repo_setting(b, "board_max_age", 120) == 90, "each repo's board_max_age is its own")
-        check(board.repo_setting(a, "checkin_every", 30) == 5 and board.repo_setting(b, "checkin_every", 30) == 45, "each repo's checkin_every is its own")
+        check(board.repo_setting(a, "board_max_age", 5) == 7 and board.repo_setting(b, "board_max_age", 5) == 3, "each repo's board_max_age is its own")
+        check(board.repo_setting(a, "checkin_every", 10) == 5 and board.repo_setting(b, "checkin_every", 10) == 8, "each repo's checkin_every is its own")
         da, db = board.board_dir(a), board.board_dir(b)
         check(da != db and os.path.realpath(da).startswith(os.path.realpath(a)) and os.path.realpath(db).startswith(os.path.realpath(b)),
               "each repo's cards go to its own board folder")

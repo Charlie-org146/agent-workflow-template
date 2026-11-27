@@ -17,13 +17,21 @@ import board_status  # noqa: E402
 OVER = ("done", "merged", "queued", "retired", "replaced")  # states that are never stale
 
 
-def setting(cfg, key, default):
-    """A positive whole number from a repo's settings, else the default."""
-    try:
-        value = int(str((cfg or {}).get(key, default)).strip())
-    except ValueError:
+def setting(cfg, key, default, low=1, high=None):
+    """A whole number in low..high from a repo's settings. A value that is not a number or is out of range is refused loudly:
+    one line on stderr names the setting, the value and the range, and the default is used. A setting that is not there is the default."""
+    if key not in (cfg or {}):
         return default
-    return value if value > 0 else default
+    raw = cfg[key]
+    try:
+        value = int(str(raw).strip())
+    except ValueError:
+        value = None
+    if value is not None and value >= low and (high is None or value <= high):
+        return value
+    where = "from %d to %d" % (low, high) if high is not None else "of %d or more" % low
+    sys.stderr.write("SETTING %s: %r is not a whole number %s; using the default %s\n" % (key, raw, where, default))
+    return default
 
 
 def stale(when, state, at, max_age):
@@ -46,7 +54,7 @@ def goal_lines(item, run, at):
     return out
 
 
-def cards(items, runs, task_rows, batches, at, root=None, max_age=120):
+def cards(items, runs, task_rows, batches, at, root=None, max_age=5):
     """items: the board's goal items; runs: run records; task_rows: board_tasks.tasks(); batches: {release: [goal slugs]}."""
     by = {r.get("slug"): r for r in runs}
     when = {s: board_log.stamp((by.get(s) or {}).get("updated")) for s in by}
@@ -129,7 +137,7 @@ def card_list(rows, deps, at, repos, setting_of):
             for slug in [x["slug"] for x in mine] + [d["slug"] for d in deps if d["repo"] == name]:
                 batches.setdefault(board_status.release_of(path, slug), []).append(slug)
             batches.pop("no release", None)
-            for c in cards(items, runs, board_tasks.tasks(path, runs), batches, at, path, setting_of(path, "board_max_age", 120)):
+            for c in cards(items, runs, board_tasks.tasks(path, runs), batches, at, path, setting_of(path, "board_max_age", 5)):
                 c["repo"], c["time"] = name, c["time"].strftime("%Y-%m-%dT%H:%M:%SZ") if c.get("time") else ""
                 out.append(c)
         return out

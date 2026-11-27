@@ -60,7 +60,7 @@ def checkin_event(state, text, needs, root, live):
             cfg = json.load(handle)
     except (OSError, ValueError):
         cfg = {}
-    if live and checkin_gate(state, lines, now, board_cards.setting(cfg, "checkin_every", 30)) == "send":
+    if live and checkin_gate(state, lines, now, board_cards.setting(cfg, "checkin_every", 10, 5, 10)) == "send":
         return [("checkin:%d" % now, "check-in", "", "check-in: " + "; ".join(lines)[:600])]
     return []
 

@@ -128,10 +128,13 @@ def write(path, text):
     os.replace(temp, path)
 
 
+RANGE = {"checkin_every": (5, 10)}  # task 18: settable from 5 to 10 minutes
+
+
 def repo_setting(path, key, default):
     """One repo's setting from its own .loop/config.json, never from the directory the command runs in."""
     top = git("rev-parse", "--show-toplevel", cwd=path) or path
-    return board_cards.setting(read_json(os.path.join(top, ".loop", "config.json")) or {}, key, default)
+    return board_cards.setting(read_json(os.path.join(top, ".loop", "config.json")) or {}, key, default, *RANGE.get(key, (1, None)))
 
 
 def board_dir(path):
