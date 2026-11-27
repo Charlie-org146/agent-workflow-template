@@ -25,10 +25,14 @@ exit 0
 """
 
 
-def check(ok, text):
+def check(ok, text, detail=""):
     print(("PASS: " if ok else "FAIL: ") + text)
     if not ok:
         failed.append(text)
+        detail and print("  " + str(detail)[:600].replace("\n", "\n  "))
+
+
+from lvl_fixture import sha  # noqa: E402
 
 
 def sh(cwd, *cmd, env=None):
@@ -387,6 +391,59 @@ def draftearly():
     check(code != 0 and "BAD_TARGET" in said and "not run: draft drf" in said.splitlines(), "a bad target is refused and the draft is named first")
 
 
+def levelrun():
+    print("== R11: the generated runner selects L0 and L1 as regression.py run <level> does, and only when armed")
+    # Value: protects=the scheduled runner and the local runner pick the same rows for L0, L1 and L2, a missing record fails loudly, and an
+    #   unarmed table is as before; fails_when=the runner has no L0 or L1, the sets differ (security, private, no entry, draft, covered, a row
+    #   named like a level), or an unarmed repository takes the new targets
+    sys.path.insert(0, os.path.join(here))
+    from lvl_fixture import Repo, entry, row
+    risks = ["label\tsecurity\tsecurity\tfixture label", "label\tprivate\tprivate\tfixture label"]
+    cmd = lambda key: 'echo %s >> "$TOY_LOG"' % key
+    spec = [("lvl-armed", "land", "L1", "none"), ("l0row", "land", "L0", "none"), ("l1row", "land", "L1", "none"), ("l2row", "nightly", "L2", "none"),
+            ("secrow", "nightly", "L1", "security"), ("privrow", "land", "L1", "private"), ("L1", "land", "L2", "none"),
+            ("drf", "draft", "L1", "none"), ("cov", "covered", "L1", "none")]
+    rows = [row(k, level=old, command=cmd(k)) for k, old, lv, rk in spec]
+    ents = [entry(k, old=old, level=lv, risk=rk, covers="l1row" if old == "covered" else "", seconds="1.0" if lv == "L0" else "",
+                  cmdhash=sha(cmd(k)) if lv == "L0" else "", reason="time:1.0" if lv == "L0" else ("risk:" + rk if rk != "none" else "default")) for k, old, lv, rk in spec]
+    for mark in (True, False):
+        repo = Repo(rows, ents, risks)
+        mark and repo.write(".github/workflows/regression-pr.yml", "# Written by workflow-regression\n")
+        repo.write(".loop/config.json", "{}")
+        repo.commit()
+        sh(repo.path, sys.executable, reg, "workflow", "--visibility", "public", env=repo.env)
+        os.makedirs(os.path.join(repo.path, "bin"), exist_ok=True)
+        open(os.path.join(repo.path, "bin", "gh"), "w").write(GH)
+        os.chmod(os.path.join(repo.path, "bin", "gh"), 0o755)
+        for level in ("L0", "L1", "L2"):
+            log = os.path.join(repo.path, "local.log")
+            open(log, "w").close()
+            done, said = repo.run("run", level, TOY_LOG=log)
+            local = sorted(open(log).read().split())
+            code, out, results, calls = step(repo.path, level)
+            ran = sorted(open(os.path.join(repo.path, "ran.log")).read().split())
+            if mark:
+                check(code == 0 and ran == local and (level == "L2" or local), "armed: the runner's %s rows equal regression.py run %s: %s" % (level, level, local), (code, ran, local, out[-300:]))
+            elif level == "L0":
+                check(code != 0 and "BAD_TARGET" in out and not ran, "unarmed: the runner refuses L0 as it did before", (code, out[-300:]))
+            elif level == "L1":
+                check(code == 0 and ran == ["L1"], "unarmed: L1 is only the row called L1, as it was before", (code, ran, out[-300:]))
+        mark and check(sorted(open(os.path.join(repo.path, "ran.log")).read().split()) != [], "control: the L2 run ran rows")
+        repo.close()
+    repo = Repo(rows, ents, risks)
+    repo.write(".github/workflows/regression-pr.yml", "# Written by workflow-regression\n")
+    repo.write(".loop/config.json", "{}")
+    repo.commit()
+    sh(repo.path, sys.executable, reg, "workflow", "--visibility", "public", env=repo.env)
+    os.makedirs(os.path.join(repo.path, "bin"), exist_ok=True)
+    open(os.path.join(repo.path, "bin", "gh"), "w").write(GH)
+    os.chmod(os.path.join(repo.path, "bin", "gh"), 0o755)
+    os.remove(os.path.join(repo.path, ".loop", "regression-relevel.tsv"))
+    code, out, results, calls = step(repo.path, "L1")
+    check(code != 0 and "NO_RECORD" in out, "armed but the committed levels record is missing: the runner refuses loudly (NO_RECORD) and selects nothing quietly", (code, out[-300:]))
+    repo.close()
+
+
 def draftrun():
     print("== R6: the scheduled runner never runs a draft, even asked for by its row id")
     # Value: protects=a draft's command never runs in the generated workflow and the log says so; fails_when=the runner runs a draft named by
@@ -399,7 +456,7 @@ def draftrun():
         check([l for l in said.splitlines() if "drf" in l] == ["not run: draft drf"], "target %s: the log names the draft once, as not run: draft drf" % target)
 
 
-cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second, "marker": marker, "usage": usage, "guard": guard, "draftrun": draftrun, "draftearly": draftearly}
+cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second, "marker": marker, "usage": usage, "guard": guard, "draftrun": draftrun, "draftearly": draftearly, "levelrun": levelrun}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
