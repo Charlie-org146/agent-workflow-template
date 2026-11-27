@@ -243,6 +243,8 @@ def check_entry(state, n, row, entry, levels_by_id):
     level = entry["level"]
     if row["level"] == "covered":
         level = covered_level(entry, levels_by_id)
+        if entry["level"] in LEVELS and entry["level"] != level:
+            say("LEVELS_COVER_LEVEL", "the stored level %s is not %s, the level its covers give" % (entry["level"], level), edit + "--covers " + entry["covers"])
         if entry["seconds"] or entry["cmdhash"]:
             say("LEVELS_BAD_FILE", "a covered row carries no seconds or command hash", "empty both cells")
         if not (excuse(row) and not covers):
