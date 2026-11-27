@@ -106,7 +106,7 @@ jobs:
               sys.exit(1)
           bad = l2_refuse(TARGET, os.environ.get("REGRESSION_CLEANUP"))
           bad and sys.exit(print(bad, file=sys.stderr) or 1)
-          SKIPS = {r[0]: (r + ["", ""])[1:3] for r in rows(".loop/regression-skips.tsv")}
+          SKIPS = {r[0]: (r[1] if len(r) > 1 else "", r[2] if len(r) > 2 else "") for r in rows(".loop/regression-skips.tsv")}
           def wanted(row):
               return row[0] == TARGET if TARGET not in ("land", "nightly", "L2") else row[1] in ("land", "nightly" if TARGET == "L2" else TARGET)
           def gh(*args, body=None):
@@ -161,7 +161,6 @@ jobs:
                   handle.write("%s\t%s\n" % (name, state))
           gh("label", "create", "regression", "--force", "--description", "A regression row is failing")
           gh("label", "create", "defect", "--description", "A test that guards it is failing")
-          gone = lambda: TARGET == "L2" and open(os.environ.get("REGRESSION_RESULTS") or os.devnull, "a").write("# gh-failed\n")
           if TARGET == "L2" and gh("label", "create", "l2-red", "--force", "--description", "A row failed in the full L2 run").returncode:
               print("FAILED label l2-red: it could not be created (FILE_FAILED)")
               gone()
@@ -311,6 +310,7 @@ jobs:
               print("CLEANUP closed %d issues%s" % (filed[0], "; stopped: rate limit" * bool(halt)))
           if failed:
               print("FILED %d issue writes; FAILED %d: %s (FILE_FAILED)" % (filed[0], len(failed), ", ".join(failed)))
+          open(os.environ.get("REGRESSION_RESULTS") or os.devnull, "a").write("# end\n")
           sys.exit(1 if red or failed or CLEANUP and issues is None else 0)
           PY
       - name: Keep the full suite's time for the health job
@@ -335,26 +335,25 @@ jobs:
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-UNSAFE = ("${{", "@CRON@", "@ROWDROP@", "@TESTS@", "@SCHEDULE@", "@LEVELS@", "@TARGET@", "@BUDGET@", "@ROWTAIL@", "@L2TAIL@", "@MATRIX@", "@SHARDS@", "@SUMMARY@", "@ROUTINE@", "TESTS_PY_EOF")
+UNSAFE = ("${{", "@CRON@", "@ROWDROP@", "@TESTS@", "@SCHEDULE@", "@LEVELS@", "@TARGET@", "@BUDGET@", "@ROWTAIL@", "@L2TAIL@", "@L2@", "@MATRIX@", "@SHARDS@", "@SUMMARY@", "@ROUTINE@", "TESTS_PY_EOF")
 
 
-def copied(name, mark):
+def copied(name, mark=None):
     with open(os.path.join(HERE, name)) as handle:
-        return "\n".join(("          " + x).rstrip() for x in handle.read().split(mark)[1].split("\n")[1:-1])
-
-
-def render(cron, levels="nightly"):
-    with open(os.path.join(HERE, "tests.py")) as handle:
         source = handle.read()
     bad = [token for token in UNSAFE if token in source]
     if bad:
-        sys.exit("REFUSED: tests.py contains %s, which the workflow can't carry. Fix: reword that line" % bad[0])
-    body = "\n".join(("          " + line).rstrip() for line in source.rstrip("\n").split("\n"))
-    tail, l2tail = (copied(name, mark) for name, mark in (("runs.py", "# rowtail:"), ("l2.py", "# l2tail:")))
+        sys.exit("REFUSED: %s contains %s, which the workflow can't carry. Fix: reword that line" % (name, bad[0]))
+    lines = source.split(mark)[1].split("\n")[1:-1] if mark else source.rstrip("\n").split("\n")
+    return "\n".join(("          " + x).rstrip() for x in lines)
+
+
+def render(cron, levels="nightly"):
+    body, l2, tail, l2tail = copied("tests.py"), copied("l2.py"), copied("runs.py", "# rowtail:"), copied("l2.py", "# l2tail:")
     schedule = "" if cron == "off" else '  schedule:\n    - cron: "%s"\n' % cron
-    return WORKFLOW.replace("@ROUTINE@", ROUTINE_STEP).replace("@SUMMARY@", SUMMARY_JOB).replace("@SCHEDULE@", schedule).replace("@CRON@", cron).replace("@TARGET@", "${{ inputs.target || (inputs.cleanup && 'nightly' || 'L2') }}" if levels == "nightly" else "${{ inputs.target }}").replace("@LEVELS@", levels).replace("@ROWDROP@", repr(ROW_DROP)) \
+    return WORKFLOW.replace("@SUMMARY@", SUMMARY_JOB).replace("@ROUTINE@", ROUTINE_STEP).replace("@SCHEDULE@", schedule).replace("@CRON@", cron).replace("@TARGET@", "${{ inputs.target || (inputs.cleanup && 'nightly' || 'L2') }}" if levels == "nightly" else "${{ inputs.target }}").replace("@LEVELS@", levels).replace("@ROWDROP@", repr(ROW_DROP)) \
         .replace("@BUDGET@", str(BUDGET_MINUTES)).replace("@SHARDS@", str(SHARDS)).replace("@MATRIX@", str(list(range(SHARDS)))) \
-        .replace("@TESTS@", body).replace("@ROWTAIL@", tail).replace("@L2TAIL@", l2tail)
+        .replace("@TESTS@", body).replace("@ROWTAIL@", tail).replace("@L2TAIL@", l2tail).replace("@L2@", l2)
 
 
 def write(root, default):

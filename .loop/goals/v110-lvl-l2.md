@@ -16,3 +16,27 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. Run `gh workflow run regression.yml -f target=L2`. Expect: the summary's first line reads `L2 GREEN`, `L2 RED` or `L2 INCOMPLETE` with counts, then the covered lines and, on main, an `L2_VERDICT` line.
+2. Run `gh workflow run regression.yml -f target=L3`. Expect: the summary's first line is `REFUSED (BAD_TARGET)` naming L2 among the targets, and the run is red.
+3. If any row was skipped without exemption or left unfinished, open the issue `Regression: L2 skipped rows`. Expect: every skipped or unfinished row with its cause and a fix line.
+4. List open issues labelled `l2-red`, then open the issue `Regression: L2 failing rows` (or the open `main-red` issue). Expect: one `L2 red: #n` line for each, and no revert commit on main.
+5. Search the generated `.github/workflows/regression.yml` for `git revert`. Expect: no match.
+
+## Notes
+
+Departures from the plan (the reviewed text), each with its reason:
+
+1. The summary step calls l2.py directly (check, issues and summary); tests.py does not load it. The plan's item 19 had tests.py load l2.py by path on the L2 path. Same outputs, tests.py untouched.
+2. The verdict is computed over the set of expected row ids, not per shard split (item 9). The rebuilt set is the same land and nightly rows the shards split among them; a row with no result line is unfinished either way.
+3. The published artifact `l2-verdict` holds one line, `L2_VERDICT <sha> red|incomplete|green`, written by l2.py's summary command on main only; no row id, output or free text.
+4. Check 12 (a silent failing row's second run with no job time left) is covered by the code (`l2_again`) but has no check of its own yet.
+5. The step checks for the summary job were written after its code; each fails on the runner commit a104cb061 (12 FAIL there), and all pass here.
+
+## PR notes
+
+- docs/wiki/Regression.md is a widening beyond the plan's Files line (TD2215): three Usage bullets (schedule, steps, full run) now describe L2 and the concurrency rule. No Reviewed requirement text is touched.
+- Departures 1 and 2 above are changes to the reviewed plan; the verdict and its outputs are unchanged.
+- test-body-file.sh (1 failure) and test-regression.sh (7 failures) fail the same way on main without this change; they have open issues. test-automation-email.sh's "codes documented" also fails without this change.
+- The workflow changes (target default L2, concurrency off main only, the copied code block, the summary job, the verdict artifact) have owner approval: o1032. permissions, triggers and secrets are unchanged.
+- No full local test run happened for this goal: GitHub's full regression run on the PR head is the full-run proof.

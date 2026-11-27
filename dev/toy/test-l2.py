@@ -190,6 +190,9 @@ def verdict():
     check(v["state"] == "RED" and l2.tally(v) == "L2 RED: ran 1, known 0, exempt 0, skipped 0, failed 1", "a failed row is RED, and the tally line reads as the plan says")
     check(got(["a", "b"], ok + ok, 2, "success")["state"] == "GREEN", "two shards that both closed are complete")
     check(got(["a", "b"], ok, 2, "success")["state"] == "INCOMPLETE", "one shard of two closed is INCOMPLETE")
+    cut = "# started 1\na\tPASS\nb\tPASS\n"
+    v = got(["a", "b"], ok + cut, 2, "success")
+    check(v["state"] == "INCOMPLETE" and not v["unfinished"] and not v["complete"], "a truncated shard file, with every row's line in from the other, is INCOMPLETE")
 
 
 def covered():
@@ -207,7 +210,112 @@ def covered():
     check(incomplete == [], "with no record file nothing is incomplete")
 
 
-cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered}
+GH2 = """#!/usr/bin/env python3
+import json, os, sys
+d = os.environ["FAKE_GH_DIR"]; a = sys.argv[1:]
+open(d + "/calls.log", "a").write(" ".join(a) + "\\n")
+if os.environ.get("FAKE_GH_FAIL") and os.environ["FAKE_GH_FAIL"] in " ".join(a):
+    sys.exit(print("HTTP 403: forbidden", file=sys.stderr) or 1)
+path = d + "/db.json"
+db = json.load(open(path)) if os.path.exists(path) else {"issues": []}
+def arg(name):
+    return a[a.index(name) + 1] if name in a else ""
+def body():
+    return open(arg("--body-file")).read() if "--body-file" in a else arg("--body")
+labels = [a[i + 1] for i, x in enumerate(a) if x == "--label"]
+if a[:2] == ["issue", "list"]:
+    print(json.dumps([{"number": i["number"], "body": i["body"]} for i in db["issues"] if i["state"] == "open" and all(l in i["labels"] for l in labels)]))
+elif a[:2] == ["issue", "create"]:
+    n = len(db["issues"]) + 1
+    db["issues"].append({"number": n, "title": arg("--title"), "labels": labels, "body": body(), "comments": [], "state": "open"})
+    print("https://example.test/issues/%d" % n)
+elif a[:2] in (["issue", "edit"], ["issue", "close"], ["issue", "comment"], ["issue", "view"]):
+    i = [x for x in db["issues"] if x["number"] == int(a[2])][0]
+    if a[1] == "edit":
+        i["title"], i["body"] = arg("--title"), body()
+    elif a[1] == "close":
+        i["state"] = "closed"
+    elif a[1] == "comment":
+        i["comments"].append(body())
+    else:
+        print("\\n".join([i["body"]] + i["comments"]))
+json.dump(db, open(path, "w"))
+"""
+SUMMARY = "      - name: Write one run summary, one table per feature\n"
+
+
+def summary(top, results, target="L2", matrix="success", cleanup="", fail="", ref="refs/heads/main", routine="true"):
+    """Run the yml's summary step as GitHub would, over the shard result files given; returns (rc, output, calls, issues)."""
+    text = open(os.path.join(top, ".github", "workflows", "regression.yml")).read()
+    part = text.split(SUMMARY, 1)[1].split("\n      - ", 1)[0]
+    head, body = part.split("        run: |\n", 1)
+    env = dict(re.findall(r"^          ([A-Z_]+): \"?([^\"$\n#]*?)\"?\s*(?:#.*)?$", head, re.M))
+    open(os.path.join(top, "sum.sh"), "w").write("\n".join(line[10:] for line in body.split("\n")))
+    shards = os.path.join(top, "shards")
+    for n, shard in enumerate(results):
+        os.makedirs(os.path.join(shards, "results-%d" % n), exist_ok=True)
+        open(os.path.join(shards, "results-%d" % n, "regression-results.tsv"), "w").write(shard)
+    open(os.path.join(top, "calls.log"), "w").close()
+    run_env = {"PATH": os.path.join(top, "bin") + ":" + os.environ["PATH"], "HOME": top, "FAKE_GH_DIR": top, "RUNNER_TEMP": top,
+               "GITHUB_STEP_SUMMARY": os.path.join(top, "step-summary.md"), "GITHUB_SHA": "abc123", "GITHUB_REF": ref, "FAKE_GH_FAIL": fail,
+               "REGRESSION_TARGET": target, "REGRESSION_CLEANUP": cleanup, "MATRIX": matrix, "SHARDS": str(len(results) or 1)}
+    run_env.update({k: v for k, v in env.items() if v and k not in run_env})
+    done = subprocess.run(["bash", "sum.sh"], cwd=top, capture_output=True, text=True, env=run_env)
+    db = os.path.join(top, "db.json")
+    return done.returncode, done.stdout + done.stderr, open(os.path.join(top, "calls.log")).read(), json.load(open(db))["issues"] if os.path.exists(db) else []
+
+
+def shim(top):
+    open(os.path.join(top, "bin", "gh"), "w").write(GH2)
+    os.chmod(os.path.join(top, "bin", "gh"), 0o755)
+
+
+def stepcheck():
+    print("== the summary step: refusals, the routine, red runs and what it files")
+    # Value: protects=done lines 2 and 3 (a short shard is red and named in one issue; a failing row is named in the main-red
+    #   goal's issue); fails_when=the step goes green after a lost shard, files twice, or names a row twice
+    top = repo(rows=[("a", "land", "true"), ("b", "land", "true"), ("c", "nightly", "true")])
+    shim(top)
+    start = "# started 1\n"
+    code, said, calls, _ = summary(top, [start], target="L3")
+    check(code == 1 and said.splitlines()[0].startswith("REFUSED (BAD_TARGET)") and calls == "", "an unknown target: the step's first line is BAD_TARGET, it exits 1 and calls no gh")
+    code, said, calls, _ = summary(top, [start], cleanup="true")
+    check(code == 1 and "REFUSED (L2_CLEANUP_EXCLUSIVE)" in said.splitlines()[0] and calls == "", "L2 with cleanup refuses and calls no gh")
+    empty = repo(rows=[("only", "covered", "true")])
+    shim(empty)
+    code, said, calls, _ = summary(empty, [start])
+    check(code == 1 and "REFUSED (L2_NO_ROWS)" in said.splitlines()[0], "an empty L2 selection is refused as L2_NO_ROWS, never green")
+    short = start + "a\tPASS\nb\tSKIPPED\n# unrun b\nc\tSKIPPED\n# unrun c\n# end\n"
+    code, said, calls, issues = summary(top, [short])
+    check(code == 1 and said.splitlines()[0].startswith("L2 RED:") and "L2_VERDICT abc123 red" in said, "a shard out of job time: the step is red, with the tally first and the verdict line")
+    skipped = [i for i in issues if "loop-l2-skipped" in i["body"]]
+    check(len(skipped) == 1 and "`b`" in skipped[0]["body"] and "`c`" in skipped[0]["body"] and skipped[0]["title"].endswith("(2)"), "one issue names each skipped row")
+    code, said, calls, issues = summary(top, [short])
+    check(len([i for i in issues if "loop-l2-skipped" in i["body"]]) == 1, "a second run edits that issue and files no second one")
+    check(re.fullmatch(r"L2_VERDICT [0-9a-f]+ (red|incomplete|green)\n", (open(os.path.join(top, "l2-verdict.txt")).read() if os.path.exists(os.path.join(top, "l2-verdict.txt")) else "")) is not None,
+          "the published l2-verdict file holds only the one L2_VERDICT line: a sha and a word, no row id or output")
+    code, said, calls, issues = summary(top, [start + "a\tPASS\nb\tPASS\nc\tPASS\n# end\n"])
+    check(code == 0 and said.splitlines()[0].startswith("L2 GREEN:") and [i["state"] for i in issues if "loop-l2-skipped" in i["body"]] == ["closed"], "a complete green run closes the skipped issue")
+    os.path.exists(os.path.join(top, "l2-verdict.txt")) and os.remove(os.path.join(top, "l2-verdict.txt"))
+    code, said, calls, issues = summary(top, [short], ref="refs/heads/topic")
+    check(code == 1 and "L2_VERDICT" not in said and not os.path.exists(os.path.join(top, "l2-verdict.txt")) and "issue" not in calls, "off main there is no verdict line or file and no issue is written")
+    code, said, calls, _ = summary(top, [short], fail="issue")
+    check(code == 1 and said.splitlines()[0].startswith("L2 "), "a crashing issue writer cannot stop the summary: the tally is still printed")
+    os.makedirs(os.path.join(top, ".loop"), exist_ok=True)
+    os.remove(os.path.join(top, "l2-verdict.txt")) if os.path.exists(os.path.join(top, "l2-verdict.txt")) else None
+    red = start + "a\tPASS\nb\tFAIL\nc\tPASS\n# end\n"
+    top2 = repo(rows=[("a", "land", "true"), ("b", "land", "true"), ("c", "nightly", "true")])
+    shim(top2)
+    json.dump({"issues": [{"number": 1, "title": "Regression: b", "labels": ["regression", "l2-red"], "body": "x", "comments": [], "state": "open"}]}, open(os.path.join(top2, "db.json"), "w"))
+    before = sh(top2, "git", "log", "--oneline").stdout
+    for _ in range(2):
+        code, said, calls, issues = summary(top2, [red])
+    goal = [i for i in issues if "loop-l2-main-red" in i["body"]]
+    check(code == 1 and len(goal) == 1 and goal[0]["comments"].count("L2 red: #1") == 1 and goal[0]["labels"] == [], "a failing row is named once in an unlabelled failing-rows issue, however often the run repeats")
+    check(len(goal) == 1 and sh(top2, "git", "log", "--oneline").stdout == before and "revert" not in open(os.path.join(top2, ".github", "workflows", "regression.yml")).read().replace("git revert", "git revert", 0).lower().split("# written")[0], "the run adds no commit to the repository")
+
+
+cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
