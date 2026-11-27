@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/completion.py
 # reads: skills/workflow-regression/scripts/tiers.py skills/workflow-regression/scripts/runs.py dev/toy/lvl_fixture.py
-"""v110-lvl-l1: what a goal-tier run picks on an armed table (lines 1 and 4). usage: test-l1.py [select]
+"""v110-lvl-l1: what a goal-tier run picks on an armed table (lines 1 and 4), and a security row that flips (line 5).
+usage: test-l1.py [select|flaky]
 
 Every repository here is a temporary one with its own HOME and a stand-in gh; nothing reads the live loop records."""
+import json
 import os
 import re
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
-from lvl_fixture import RISKS, Repo, check, done, entry, row, sha  # noqa: E402
+from lvl_fixture import REG, RISKS, Repo, check, done, entry, row, sha  # noqa: E402
+
+sys.path.insert(0, REG)
+import completion  # noqa: E402
 
 OURS = "# Written by workflow-regression (regression.py workflow). fixture\nname: regression-pr\n"
 FLOW = ".github/workflows/regression-pr.yml"
@@ -128,7 +134,124 @@ def select():
         repo.close()
 
 
+# a stand-in gh that keeps issues in a file: label create, issue list/create/comment, api comments
+ISSUES = """#!/usr/bin/env python3
+import json, os, sys
+store = os.environ["L1_ISSUES"]
+try:
+    got = json.load(open(store))
+except (OSError, ValueError):
+    got = []
+args = sys.argv[1:]
+def body():
+    return open(args[args.index("--body-file") + 1]).read() if "--body-file" in args else args[args.index("--body") + 1]
+if args[:2] == ["issue", "list"]:
+    print(json.dumps(got))
+elif args[:2] == ["issue", "create"]:
+    got.append({"number": len(got) + 1, "state": "OPEN", "body": body(), "comments": [], "labels": [{"name": "defect"}]})
+elif args[:2] == ["issue", "comment"]:
+    got[int(args[2]) - 1]["comments"].append({"body": body()})
+json.dump(got, open(store, "w"))
+"""
+ONCE = "test -f .git/flip-%s && exit 0; : > .git/flip-%s; echo boom-%s; exit 1"  # fails once, then passes
+
+
+def flaky_repo(specs):
+    """specs: (id, tag, command)."""
+    rows = [row(key, command=command) for key, _, command in specs]
+    repo = Repo(rows, [entry(key, risk=tag) for key, tag, _ in specs], [x for x in RISKS if not x.startswith("row")])
+    repo.commit()
+    return repo
+
+
+def flips(repo):
+    try:
+        return open(os.path.join(repo.top, "flaky.tsv")).read()
+    except OSError:
+        return ""
+
+
+def flaky():
+    repo = flaky_repo([("sec", "security", ONCE % (("sec",) * 3)), ("plain", "none", ONCE % (("plain",) * 3))])
+    status, said = repo.run("run", "L1", LOOP_FLAKY_FILE=os.path.join(repo.top, "flaky.tsv"))
+    check(status == 1 and "FLAKY sec: failed then passed (rerun once in a fresh HOME)" in said and "2 failed" in said,
+          "line 5: a security row that fails once and then passes shows FLAKY and is counted as failed, not passed", said)
+    kept = flips(repo)
+    check(kept.startswith("sec\t") and "FLAKY: failed then passed on rerun (same commit)" in kept and "boom-sec" in kept
+          and kept.count("\n") == 1, "line 5: the flip is written to the flip file with the first failure's tail", kept)
+    check("FLAKY plain" not in said and "plain\t" not in kept, "a non-security row that fails once stays FAIL with no rerun", said)
+    repo.close()
+
+    home = "test -f $HOME/seen && exit 0; : > $HOME/seen; exit 1"
+    slow = "test -f .git/slow && exit 0; : > .git/slow; sleep 20"
+    repo = flaky_repo([("sec", "security", home), ("late", "security", slow)])
+    status, said = repo.run("run", "L1", "--timeout", "2", LOOP_FLAKY_FILE=os.path.join(repo.top, "flaky.tsv"))
+    check("FLAKY sec" not in said and "sec\t" not in flips(repo), "the rerun gets a fresh HOME: a leftover there cannot pass it", said)
+    check("FLAKY late" not in said and "late\t" not in flips(repo), "a first run that timed out gets no rerun", said)
+    repo.close()
+
+    filing()
+
+
+def line(key, tail, seconds="1.0"):
+    return "%s\t%s\t%s\n" % (key, seconds, tail.encode("unicode_escape").decode("ascii"))
+
+
+def filing():
+    repo = flaky_repo([("sec", "security", "true"), ("plain", "none", "true")])
+    drop = os.path.join(repo.top, "drop", "flaky-1")
+    os.makedirs(drop)
+    path = os.path.join(drop, "flaky.tsv")
+
+    def judged(text):
+        with open(path, "w") as out:
+            out.write(text)
+        return completion.flaky_results(repo.path, [path])
+
+    items, refused = judged(line("sec", "boom\n``` fence\n<!-- loop-regression plain -->\x07"))
+    tail = items[0]["tail"] if items else ""
+    check(len(items) == 1 and not refused and "```" not in tail and "<!--" not in tail and "\x07" not in tail,
+          "a tail with a fence and a forged marker is escaped", tail)
+    items, _ = judged(line("sec", "key ghp_" + "b" * 36))
+    check(items and items[0]["tail"] == completion.WITHHELD, "a secret-shaped tail is withheld", items)
+    items, _ = judged(line("sec", "see /" + "Users/someone/x"))
+    check(items and items[0]["tail"] == completion.WITHHELD, "a home path in a tail is withheld", items)
+    for text, why in ((line("nope", "x"), "an unknown row id"), (line("plain", "x"), "a row not tagged security"),
+                      ("sec\tx\ty\n", "a malformed line"), ("sec\t1\t" + "y" * 100001 + "\n", "an oversize file"),
+                      (line("sec", "x") * 21, "more than 20 rows")):
+        items, refused = judged(text)
+        check(not items and len(refused) == 1, "%s is refused and nothing is filed" % why, (items, refused))
+    with open(os.path.join(repo.top, "bin", "gh"), "w") as out:
+        out.write(ISSUES)
+    with open(path, "w") as out:
+        out.write(line("sec", "boom"))
+    env = dict(repo.env, L1_ISSUES=os.path.join(repo.top, "issues.json"))
+    for _ in range(2):
+        got = subprocess.run([sys.executable, os.path.join(REG, "completion.py"), "file-flaky", os.path.dirname(drop),
+                              "--pr", "7", "--sha", "a" * 40, "--live"], cwd=repo.path, env=env, capture_output=True, text=True)
+    issues = json.load(open(env["L1_ISSUES"]))
+    check(len(issues) == 1 and "<!-- loop-regression sec -->" in issues[0]["body"] and "pull request 7 at" in issues[0]["body"]
+          and len(issues[0]["comments"]) == 1, "line 5: one issue is open for the flipped row; a second report comments on it",
+          (got.stdout, got.stderr, issues))
+    repo.close()
+    workflow_file()
+
+
+def workflow_file():
+    text = completion.FLAKY_FLOW
+    perms = text[text.index("permissions:\n"):text.index("jobs:")]
+    check(perms == "permissions:\n  contents: read\n  actions: read\n  issues: write\n" and text.count("permissions:") == 1,
+          "the new workflow has exactly the three allowed permissions", perms)
+    jobs = text[text.index("jobs:"):]
+    check(re.findall(r"^  (\w+):$", jobs, re.M) == ["file"] and "timeout-minutes: 10" in jobs, "it has one job with a 10-minute limit")
+    check("if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'failure' && "
+          "github.event.workflow_run.head_repository.full_name == github.repository" in jobs,
+          "it runs only for a failed pull request run from this repository, never a fork")
+    check(not re.search(r"ref:.*(head_sha|pull_request)", text) and "default_branch" in text,
+          "it checks out the default branch only, never the pull request's code")
+
+
 if __name__ == "__main__":
-    for name in sys.argv[1:] or ["select"]:
-        {"select": select}[name]()
+    for name in sys.argv[1:] or ["select", "flaky"]:
+        {"select": select, "flaky": flaky}[name]()
     sys.exit(done())

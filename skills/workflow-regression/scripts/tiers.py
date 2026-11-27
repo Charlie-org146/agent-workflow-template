@@ -362,6 +362,10 @@ def flaky_apply(record, results, head, clean):
     rows, (host, python), lines = previous(record) if record else {}, runner(), []
     for item in results:
         item.update(commit=head, clean="yes" if clean else "no", host=host, python=python)
+        if item.get("rerun_passed"):  # a security row that flipped within this run: it keeps its mark and fails
+            completion.flaky_write(os.environ.get("LOOP_FLAKY_FILE"), item)
+            lines.append(completion.FLIP % item["id"]) if clean else None
+            continue
         if not clean:
             continue
         item["flaky"] = compare(rows.get(item["id"]), item["state"], head, clean)

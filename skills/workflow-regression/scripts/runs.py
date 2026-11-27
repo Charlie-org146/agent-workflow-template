@@ -164,6 +164,7 @@ FLOOR, DEFAULT = 15, 15
 def execute(root, picked, todo, est, limit, timeout, expected, reuse):
     keep, left = fit(todo, est, limit) if limit else (todo[:], [])
     by, results, start, first = {row["id"]: row for row in picked}, [], time.time(), {}
+    secure = {k for k, v in completion.entries(root).items() if v[1] == "security"}
     for key in keep:
         own = completion.limit(root, key, timeout)
         remaining = limit - (time.time() - start) if limit else own
@@ -199,6 +200,10 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
             print(chr(10).join("    " + x for x in tail.splitlines()[-20:]), file=sys.stderr)
         results.append({"id": key, "state": state, "tail": tail, "seconds": round(time.time() - began, 1),
                         "pid": pid, "rc": code, "signal": signal, "notrun": cannot, "env": nostart})
+        if state == "FAIL" and key in secure and code != 124 and not signal and not nostart:  # it stays FAIL either way
+            head = completion.passes_again(root, by[key]["command"], cap)
+            if head:
+                results[-1].update(flaky=head, rerun_passed=True)
     if left:
         print("BUDGET %d min: ran %d of %d rows; LEFT %d to the scheduled full suite: %s" % (
             (limit or 0) // 60, len(results), len(results) + len(left), len(left), ", ".join(left[:20]) + (

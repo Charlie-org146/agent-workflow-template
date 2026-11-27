@@ -6,7 +6,7 @@ run's own limit. Whole-tree rows run in the tree job only (TD504)."""
 import glob
 import os
 import re
-import statistics
+import sys
 import time
 
 
@@ -221,54 +221,174 @@ def table_changed(root, name):
             if lanes.table(root, at, name, memo).get(rid) != now.get(rid)}
 
 
-# -- the miss report (v110-lvl-l1): L1 over its time goal says why; the cut gate beside it still fails an unfinished row
-def span(path):
-    """(start, end or None) of one leg's span.txt; (None, None) when there is none."""
-    marks = {}
+# -- security rows that flip (v110-lvl-l1): the row stays FAIL; one issue is filed from the default branch
+FLIP = ("FLAKY %s: failed then passed (rerun once in a fresh HOME). Fix: find the first failure in the shard log, then fix "
+        "the row or the cause; a flip is a failure until then")
+FLIP_HEAD = "FLAKY: failed then passed on rerun (same commit)"
+FLIP_BYTES, FLIP_ROWS, WITHHELD = 100000, 20, "[tail withheld: private scan hit; see the job log of the pull request run]"
+
+
+def passes_again(root, command, cap):
+    """The commit when a failed row passes one rerun in a fresh HOME, else "". The first result is kept as it was."""
+    import shutil
+    import tempfile
+    import actions
+    import lanes
+    home = tempfile.mkdtemp(prefix="loop-rerun-")
     try:
-        for line in open(path):
-            cells = line.split()
-            if len(cells) >= 2 and cells[1].isdigit():
-                marks[cells[0]] = int(cells[1])
-    except OSError:
-        pass
-    return marks.get("start"), marks.get("end")
+        env = dict(actions.row_env(), HOME=home, TOY_SKIP_FILE=os.path.join(home, "skip"))
+        code = lanes.run_row(command, root, env, cap)[0]
+    finally:
+        shutil.rmtree(home, ignore_errors=True)
+    return (lanes.git(root, "rev-parse", "HEAD") or "").strip() if code == 0 else ""
 
 
-def miss(pattern, tree_leg, goal, rows_of):
-    """The lines for a run over `goal` minutes, else []. pattern names the numbered legs' times files (its [0-7]),
-    tree_leg the tree job's; rows_of reads a times file into [id, seconds, status] rows."""
-    legs, lines = {}, []
-    for name in sorted(glob.glob(pattern)) + [tree_leg]:
-        if not os.path.exists(name):
+def flaky_write(path, item):
+    """Append `id TAB seconds TAB tail` for one flip: the first failure's last 20 lines, each cut to 200, escaped."""
+    if not path:
+        return
+    tail = "\n".join([FLIP_HEAD] + [line[:200] for line in str(item.get("tail") or "").splitlines()[-20:]])
+    with open(path, "a", encoding="utf-8") as out:
+        out.write("%s\t%s\t%s\n" % (item["id"], item.get("seconds") or 0,
+                                    tail.encode("unicode_escape").decode("ascii")))
+
+
+SECRET = re.compile(r"AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,}|sk-[A-Za-z0-9]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----")
+
+
+def delivery_scan():
+    """The delivery skill's private-name scan, loaded by path (its folder goes on the path for what it imports)."""
+    import importlib.util
+    folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts")
+    sys.path.append(folder)
+    spec = importlib.util.spec_from_file_location("private", os.path.join(folder, "private.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def safe_tail(root, tail):
+    """The tail for an issue body: withheld on a private or secret-shaped hit; no fence, comment mark or control byte."""
+    private = delivery_scan()
+    found = private.scan(root, None, texts={"tail": tail})["state"]
+    if found not in ("clean", "off", "none") or SECRET.search(tail) or private.HOME_DIR.search(tail):
+        return WITHHELD
+    tail = "".join(c for c in tail if c == "\n" or c >= " " and c != "\x7f")
+    return tail.replace("```", "\'\'\'").replace("<!--", "<!- -")
+
+
+def flaky_results(root, paths):
+    """(items for runs.sync_issues, refusals) from the uploaded flip files, read as data. The root is the default
+    branch's checkout: a row it does not tag security, or a malformed or oversize file, is refused."""
+    record, rows = entries(root), set()
+    with open(os.path.join(root, ".loop", "regression.tsv"), encoding="utf-8") as table:
+        rows = {line.split("\t")[0] for line in table}
+    items, refused = {}, []
+    for path in paths:
+        if os.path.getsize(path) > FLIP_BYTES:
+            refused.append("%s: over %d bytes" % (os.path.basename(path), FLIP_BYTES))
             continue
-        leg = os.path.basename(os.path.dirname(name))
-        start, end = span(os.path.join(os.path.dirname(name), "span.txt"))
-        if start is None or end is None:
-            lines.append("note: leg %s has no end (killed or cancelled); it is left out of the turnaround" % leg)
-            continue
-        legs[leg] = (start, end, [(r[0], float(r[1])) for r in rows_of([name])[0] if r[2] == "RAN"])
-    if not legs:
-        return lines
-    took = (max(v[1] for v in legs.values()) - min(v[0] for v in legs.values())) / 60.0
-    if took <= goal:
-        return lines
-    ran = sorted((r for v in legs.values() for r in v[2]), key=lambda r: -r[1])
-    sums = sorted(sum(s for _, s in v[2]) / 60.0 for v in legs.values())
-    top, apart = sum(s for _, s in ran[:3]) / 60.0, (max(v[0] for v in legs.values()) - min(v[0] for v in legs.values())) / 60.0
-    longest, middle = sums[-1], statistics.median(sums)
-    if longest and top >= longest / 2:
-        cause = "the three slowest rows took %.1f of the %.1f minutes" % (top, took)
-    elif longest > 2 * middle:
-        most = max(legs.values(), key=lambda v: sum(s for _, s in v[2]))
-        cause = "one leg ran %d rows past the others" % len(most[2])
-    elif apart > took / 4:
-        cause = "the legs started %.0f minutes apart: runner queue wait" % apart
-    else:
-        cause = "no single cause: the rows add up"
-    return lines + ["missed: %s" % cause,
-                    "slowest rows: %s" % ", ".join("%s %.0fs" % r for r in ran[:3]),
-                    "l1_minutes is %d; the legs took %.1f minutes (rows %.1f); queue waits between legs are in it, the wait "
-                    "before the first leg is not measured" % (goal, took, sum(sums)),
-                    "fix: move the slowest row to L2 with regression.py level <id> --test-level L2, or raise l1_minutes in "
-                    ".loop/config.json (owner)"]
+        lines = open(path, encoding="utf-8", errors="replace").read().splitlines()
+        found, why = [], "more than %d rows" % FLIP_ROWS if len(lines) > FLIP_ROWS else ""
+        for line in lines if not why else []:
+            cells = line.split("\t")
+            if len(cells) != 3 or not re.fullmatch(r"\d+(\.\d+)?", cells[1]):
+                why = "a line is not `id, seconds, tail`"
+            elif cells[0] not in rows or record.get(cells[0], ("", ""))[1] != "security":
+                why = "%r is not a security row of the default branch" % cells[0][:80]
+            else:
+                try:
+                    tail = cells[2].encode("ascii").decode("unicode_escape")
+                except (UnicodeError, ValueError):
+                    why = "a tail is not escaped text"
+                    continue
+                found.append({"id": cells[0], "state": "FAIL", "tail": safe_tail(root, tail), "seconds": float(cells[1])})
+            if why:
+                break
+        if why:
+            refused.append("%s: %s" % (os.path.basename(path), why))
+        else:
+            items.update((item["id"], item) for item in found)
+    return list(items.values()), refused
+
+
+def file_flaky(argv):
+    """file-flaky DIR [--pr N] [--sha SHA] [--live]: file one issue for each flipped security row in DIR's flip files."""
+    import runs
+    root = os.getcwd()
+    paths = sorted(glob.glob(os.path.join(argv[0], "**", "flaky.tsv"), recursive=True))
+    items, refused = flaky_results(root, paths)
+    for why in refused:
+        print("REFUSED %s; nothing from it is filed" % why)
+    pr, sha = (argv[argv.index(flag) + 1] if flag in argv else "" for flag in ("--pr", "--sha"))
+    if re.fullmatch(r"\d+", pr) and re.fullmatch(r"[0-9a-f]{40}", sha):
+        for item in items:
+            item["tail"] = "pull request %s at %s\n%s" % (pr, sha, item["tail"])
+    if items:
+        runs.sync_issues(items, "--live" in argv, time.strftime("%Y-%m-%d", time.gmtime()))
+    print("FLIPS %d rows from %d files, %d files refused" % (len(items), len(paths), len(refused)))
+    return 1 if refused else 0
+
+
+FLAKY_FLOW = """# Written by workflow-regression (regression.py workflow). One issue for each security row that flipped on a pull request.
+name: regression-flaky
+on:
+  workflow_run:
+    workflows: [regression-pr]
+    types: [completed]
+permissions:
+  contents: read
+  actions: read
+  issues: write
+jobs:
+  file:
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - id: list
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          n=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}/artifacts?per_page=100" --jq '[.artifacts[] | select(.name | startswith("flaky-"))] | length')
+          echo "flaky=$n" >> "$GITHUB_OUTPUT"
+      - if: steps.list.outputs.flaky != '0'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - if: steps.list.outputs.flaky != '0'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - if: steps.list.outputs.flaky != '0'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: flaky-*
+          path: ${{ runner.temp }}/flaky
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - if: steps.list.outputs.flaky != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.workflow_run.pull_requests[0].number }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: python3 skills/workflow-regression/scripts/completion.py file-flaky "${{ runner.temp }}/flaky" --pr "$PR" --sha "$SHA" --live
+"""
+
+
+def write_flaky_workflow(base, ours):
+    """regression.py workflow's third file, written beside regression-pr.yml; one this tool did not write is kept."""
+    path = os.path.join(base, "regression-flaky.yml")
+    if os.path.exists(path) and not ours(path):
+        sys.exit("REFUSED: %s exists, and this tool didn\'t write it. Fix: merge by hand." % path)
+    with open(path, "w") as out:
+        out.write(FLAKY_FLOW)
+    print("WROTE " + path)
+
+
+if __name__ == "__main__":
+    if sys.argv[1:2] != ["file-flaky"] or len(sys.argv) < 3:
+        print("usage: completion.py file-flaky DIR [--pr N] [--sha SHA] [--live]", file=sys.stderr)
+        sys.exit(2)
+    sys.exit(file_flaky(sys.argv[2:]))

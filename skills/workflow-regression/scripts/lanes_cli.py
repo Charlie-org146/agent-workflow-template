@@ -311,6 +311,8 @@ def workflow(root, given, write_main):
         os.makedirs(base, exist_ok=True)
         open(path, "w").write(NARROW.replace("@BASE@", str(cfg.get("base") or "main")).replace("@LEVELS@", str(cfg.get("ci_levels") or "nightly")))
         print("WROTE " + path)
+        import completion
+        completion.write_flaky_workflow(base, ours)
     return code
 
 
