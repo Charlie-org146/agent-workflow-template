@@ -251,3 +251,11 @@ RT15 asks for this before the E1 to E5 code. It was written after E2 to E5 were 
 ### Later work
 
 - From the DEL-21 comparison (RT15): a required status check could add to E3's merge hold on GitHub's side. It needs a repository protection setting, which is the owner's.
+
+### E7: the scan rules checked on past breaks and diffs
+
+safety_scan.py has one rule set for a stop's words and one for a diff. Nothing calls it yet. Run on this machine's past plan reviews and the last 100 merges on main up to 7784d862f (counts only):
+- Words, 655 distinct past breaks: 471 match no class. A change to a feature's promise: 112; private data 35; money 21; test 18; security 8; deletion 7; steward merge 4. A break may match several. The counts were not hand-checked for wrong matches.
+- Diffs, 100 merges, none unread: 30 open no finding. Test loosened or deleted: 65; security and settings: 18 (mostly workflow files and the config); deletion 3; money 1; steward merge 1; private data 0; changed Reviewed text 0.
+- The test rule as DLF-1 has it today (any removed line in a test file) is what makes 65. A narrower rule tried on the same merges (deleted test file, added skip mark, removed or edited existing row, fewer check lines in a file) still flags 41, mostly existing rows edited (30) and skip wording (19), and it detects less.
+- RT2 (ordinary test updates, loosening no check): the strict rule stays until operation rules.

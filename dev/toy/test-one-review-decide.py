@@ -132,6 +132,75 @@ open(os.path.join(there, "a.decisions.jsonl"), "a").write('{"n": 85, "kind": "de
 check("don't continue" in refused(lambda: decisions.unpack(there, {"slug": "a", "one_review": {"at": "t"}}, bundle)),
       "an older copy never replaces a longer ledger")
 
+# the safety scan: every matching class, from a stop's text and from a diff (E7, E10, CEO B1)
+import safety_scan as sc  # noqa: E402
+S = ("deleting what cannot be restored", "money", "security and sandbox settings", "private data", "steward merges",
+     "a change to what a feature promises", "a test loosened or deleted")
+for want, texts in ((S[0], ("delete the old release", "purge the backup folder", "this wipes the database", "run rm -rf on the worktree",
+                            "force-push over the branch history", "the remote branch gets removed", "erase last week's run records")),
+                    (S[1], ("buy a paid plan", "charge the card on file", "it costs $20 a month", "renew the subscription",
+                            "start a purchase for more credits", "pay the invoice")),
+                    (S[4], ("steward merge the PR", "admin-merge it", "merge the pull request as steward", "bypass the required check and merge",
+                            "put it in the merge queue", "turn on auto-merge for it")),
+                    (S[2], ("widen the sandbox", "edit settings.json", "switch to bypass permissions mode", "add the API key")),
+                    (S[6], ("remove the failing test", "disable two assertions", "mark it xfail", "comment out the check"))):
+    missed = [t for t in texts if want not in sc.text_classes(t)]
+    check(not missed, "text scan finds %s in varied wording (missed %d)" % (want, len(missed)))
+both = sc.text_classes("delete the failing test and pay the invoice")
+check({S[1], S[6]} <= set(both), "every matching class is reported: %s" % both)
+check(sc.text_classes("rename a local variable") == [], "plain wording matches no class")
+check(sc.text_classes("rename a local variable", label=S[1]) == [S[1]], "a label raises the class")
+got = sc.action("rename a local variable")
+check(got == {"state": "unknown", "classes": []}, "an action with no match is not cleared: it is held under operation (%s)" % got)
+check(sc.action("pay the invoice")["state"] == "safety", "a matching action is a safety stop")
+
+
+def diff(path, removed=(), added=(), gone=False):
+    return "diff --git a/%s b/%s\n%s--- a/%s\n+++ %s\n@@ -1 +1 @@\n%s" % (
+        path, path, "deleted file mode 100644\n" if gone else "", path, "/dev/null" if gone else "b/" + path,
+        "".join("-%s\n" % x for x in removed) + "".join("+%s\n" % x for x in added))
+
+
+def found(d, units=()):
+    return sc.diff_classes(d, units)
+
+
+check(S[6] in found(diff("dev/toy/test-a.sh", removed=["check one"])), "a removed test line is a loosened test")
+check(S[6] in found(diff("tests/a_test.py", removed=["x"], gone=True)), "a deleted test file is found")
+check(S[6] in found(diff(".loop/regression.tsv", removed=["row\tgiven"])), "a removed regression row is found")
+check(S[6] not in found(diff("dev/toy/test-a.sh", added=["check two"])), "an added test line is not")
+for path in (".claude/settings.json", ".loop/config.json", ".github/workflows/ci.yml", ".loop/permissions.tsv"):
+    check(S[2] in found(diff(path, added=["x"])), "a settings path is found: %s" % path)
+check(S[3] in found(diff("a.py", added=["key = '" + "AKIA" + "A" * 16 + "'"])), "a secret-shaped added line is private data")
+check(S[0] in found(diff("tools/x.sh", added=['rm -rf "$HOME/backups"'])), "an added destructive command is found")
+check(S[4] in found(diff("tools/x.py", added=['run(["gh", "pr", "merge", "--admin"])'])), "an added admin merge is found")
+check(found(diff("docs/wiki/Page.md", added=["plain words"])) == {}, "a wiki path alone is no promise change")
+check(found(diff("docs/wiki/Page.md", added=["x"]), units=[("docs/wiki/Page.md", "AB-1")]) == {S[5]: ["docs/wiki/Page.md"]},
+      "a changed Reviewed unit is a promise change")
+base = "- AB-1: **Reviewed** One\n  - sub line [AB-1]\n\n- AB-2: **Unreviewed** Two\n"
+check(sc.reviewed_units(base) == {"AB-1": "- AB-1: **Reviewed** One\n  - sub line [AB-1]"}, "a Reviewed unit holds its sub-bullets")
+
+# the diff is read as git sees it, with names that need quoting, and an unreadable one refuses
+repo = os.path.join(home, "scanrepo")
+subprocess.run(["git", "init", "-q", repo], check=True)
+
+
+def g(*a):
+    return subprocess.run(["git", "-C", repo, "-c", "user.name=t", "-c", "user.email=t@t"] + list(a), check=True, capture_output=True, text=True).stdout.strip()
+
+
+os.makedirs(os.path.join(repo, "docs", "wiki"))
+open(os.path.join(repo, "docs", "wiki", "P.md"), "w").write(base)
+g("add", "-A"); g("commit", "-qm", "a")
+first = g("rev-parse", "HEAD")
+open(os.path.join(repo, "docs", "wiki", "P.md"), "w").write(base.replace("sub line", "other line"))
+open(os.path.join(repo, "odd name \u00e9.bin"), "wb").write(b"\xff\xfe\x00data")
+g("add", "-A"); g("commit", "-qm", "b")
+g("config", "diff.external", "false")
+text, units = sc.read_diff(repo, first, "HEAD")
+check("other line" in text and units == [("docs/wiki/P.md", "AB-1")], "the diff is read with external tools off: %s" % (units,))
+check("ONE_REVIEW_DIFF" in refused(lambda: sc.read_diff(repo, "0" * 40, "HEAD")), "an unreadable diff refuses")
+
 # an unmarked goal saves as today
 record("u", status="stopped")
 state = goal.load("u")
