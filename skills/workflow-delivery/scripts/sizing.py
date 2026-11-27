@@ -373,7 +373,7 @@ def start(state, step):
     import fit
     try:
         return fit.start_row(state, step, runs(), base_cfg()[1], read_table()[0]) if on() else ("", "", 0)
-    except Refusal:
+    except (Refusal, KeyError, TypeError):
         return "", "", 0
 
 

@@ -18,7 +18,7 @@ RUNS = tempfile.mkdtemp()
 sizing.runs = lambda: RUNS
 BASE = {"review_depth": "full", "risky_paths": [r"^\.github/"],
         "checks_by_size": {s: sizing.DEFAULTS[s] for s in ("small", "medium", "large")}}
-TODAY = "review_depth is full: run the skill's full pipeline, every phase, reviewer and pass it has. Never condense it on your own."
+TODAY = "today's depth text"  # has no 'never condense': only the start row or the stored size can add it
 
 
 def prompt(state, cfg=None, ok=True, step="plan"):
@@ -31,7 +31,7 @@ SMALL = {"size": {"small": True, "why": "small: 3 done lines, one area"}, "goal"
 text = prompt(SMALL)
 check("plan-review one-round" in text and "red-team one-pass-no-rerun" in text,
       "a small goal's plan step starts with its row's forms named", text)
-check("provisional" in text and "never condense" not in text.lower(),
+check("provisional" in text and "never condense" not in text.lower() and TODAY not in text,
       "the start text says the row is provisional and has no 'never condense'", text)
 text = prompt(dict(SMALL, size={"small": False, "why": "large: 5 done lines"}))
 check("never condense" in text.lower() and "one-round" not in text,
@@ -43,17 +43,20 @@ check("never condense" in text.lower(), "a small goal touching a risky path is t
 text = prompt(dict(SMALL, goal="rotate the password and token handling"))
 check("never condense" in text.lower(), "a small goal whose words name a safety class is told full", text)
 text = prompt(dict(SMALL, depth_override={"depth": "condensed", "why": "owner o1096"}))
-check("owner override" in text.lower() or "one-round" not in text, "a depth_override is not changed by the start row", text)
+check(text.startswith(TODAY) and "provisional" not in text and "never condense" not in text.lower(),
+      "a depth_override is not changed by the start row", text)
 text = prompt(dict(SMALL, one_review={"at": "t", "by": "goal.py new"}))
-check("one-round" not in text, "a one_review goal keeps full at plan start", text)
+check(text.startswith(TODAY) and "one-round" not in text and "provisional" not in text,
+      "a one_review goal is left to today's depth at plan start", text)
 text = prompt(dict(SMALL, sized={"size": "medium", "reason": "r", "checks": {"plan-review": {"form": "full", "passes": 3},
                                                                              "red-team": {"form": "one-pass-no-rerun", "passes": 1}},
                                  "added": [], "evidence": {}}))
-check("provisional" not in text, "a goal with a stored size gets no provisional text", text)
+check("provisional" not in text and "never condense" in text.lower(),
+      "a goal with a stored size gets its stored depth and no provisional text", text)
 text = prompt(SMALL, ok=False)
-check("provisional" not in text and "one-round" not in text, "an unreadable base config leaves today's prompt", text)
+check(text == TODAY, "an unreadable base config leaves today's prompt", text)
 text = prompt(SMALL, step="review")
-check("provisional" not in text, "the review step is unchanged", text)
+check("provisional" not in text and "such reads" not in text, "the review step is unchanged", text)
 text = prompt(SMALL)
 check("A plan gets the reviews its size's row lists, once." in text and "at most `2` such reads" in text
       and "A finding about wording alone is a build note at any round." in text,
@@ -61,7 +64,6 @@ check("A plan gets the reviews its size's row lists, once." in text and "at most
 check("at most `3` such reads" in prompt(SMALL, {"plan_fix_reads": 3}), "plan_fix_reads from the base config is used")
 for bad in ("x", True, -1, 2.5):
     check("at most `2` such reads" in prompt(SMALL, {"plan_fix_reads": bad}), "plan_fix_reads %r falls back to 2" % (bad,))
-check("such reads" not in prompt(SMALL, {"checks_by_size": None}) or True, "control: the rule needs the size table")
 sys.path.insert(0, os.path.join(ROOT, "skills", "workflow-setup", "scripts"))
 import settings  # noqa: E402
 rows = {row[0]: row for row in settings.TABLE}
