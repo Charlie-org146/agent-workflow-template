@@ -628,7 +628,7 @@ os.environ.pop("GIT_EDITOR", None)
 reverts.merged(tmp, {"pr": "https://example.invalid/pull/14"}, "origin/main")
 reverts.subprocess.run = real14
 check("os.environ.update" not in src14 and seen14 and seen14[0].get("GIT_EDITOR") == "true" and "GIT_EDITOR" not in os.environ,
-      "R14 reverts sets the git and gh variables only on its own gh call, not process-wide: %s" % seen14[:1])
+      "R14 reverts sets the git and gh variables only on its own gh call, not process-wide")
 add_hold = reverts.add_hold
 old_row = {"op": "hold", "slug": "old1", "decision": 7, "files": ["dev/toy/test-a.sh"], "classes": [], "removal_goal": "undo-old1-7"}
 reverts.add_hold(tmp, old_row)
@@ -646,6 +646,10 @@ try:
 except KeyError as err:
     got14 = "KeyError %s" % err
 check(got14 == "" and queued and queued[0], "R14 a hold row with no removal_done queues its removal: %s" % got14)
+import hashlib  # noqa: E402
+want14 = hashlib.sha256(("1. " + reverts.removal_line("old1", 7, ["dev/toy/test-a.sh"])).encode()).hexdigest()
+got14b = reverts.start_by_revert(runs, "undo-old1-7", want14)
+check(got14b and got14b.get("record") == "revert:old1:7", "R15 an older hold row (no removal_done) still gets its removal goal's start answer: %s" % got14b)
 
 # a hold is cleared only by a later commit that takes the shipped change out
 commit("other.txt", "x%s\n" % d6)
