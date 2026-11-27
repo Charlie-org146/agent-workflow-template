@@ -85,3 +85,14 @@ One Codex pass after the size of this goal rose to large. It added three breaks 
 | N1 | 2 | de85878b | in two parts: fixed in build; the part pass 1 already raised stays deferred | The row-merge checker (dev/check-row-merge.py) starts rows with the row environment; row toy-leak-row-merge. The deferred part is DF2. |
 | N2 | 2 | fcb48bc2 | deliver-first, with DF1 (#5352) | "Build: the entry toy's old control reports a setup error apart from its expected result." |
 | N3 | 7 | 0fa1c48f | deliver-first | "Build: the entry toy runs with its own git configuration and home." |
+
+### The full-depth review and its dispositions
+
+One full-depth review of the build, then a fresh reader on the changes made after it.
+
+- Fixed in build: a new row's own setup (row toy-leak-row-setup); the git settings that rows and the toys keep (rows toy-leak-config-keep and budget-order-first); the entry toy's fixture commits (row toy-leak-entry-commit).
+- Deliver-first, with N3: "Build: the toys run with their own git configuration, hooks included."
+- Deliver-first: "__pycache__ writes during rows; git-ignored; same on main".
+- Deliver-first: "Build: the row-merge check reports a skip where /bin/dash is missing."
+- Deliver-first: "Build: the merge toy and the entry toy each get a check for their environment cleanup."
+- Deliver-first: "Build: test comments and docstrings match what the checks cover."
