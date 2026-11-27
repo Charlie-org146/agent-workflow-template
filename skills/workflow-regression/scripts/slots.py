@@ -382,22 +382,32 @@ SUMMARY_JOB = r"""  summary:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Download every shard's results
+@ROUTINE@      - name: Download every shard's results
+        if: steps.routine.outputs.on == 'true'
         continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           pattern: results-*
           path: ${{ runner.temp }}/shards
       - name: Write one run summary, one table per feature
-        continue-on-error: true
+        if: steps.routine.outputs.on == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           SHARDS: "@SHARDS@"
+          MATRIX: ${{ needs.regression.result }}
+          REGRESSION_TARGET: @TARGET@
+          REGRESSION_CLEANUP: ${{ inputs.cleanup }}
+          REGRESSION_LEVELS: "@LEVELS@"
         run: |
           here=$(mktemp -d)
           cat > "$here/tests.py" <<'TESTS_PY_EOF'
 @TESTS@
           TESTS_PY_EOF
+          cat > "$here/l2.py" <<'L2_PY_EOF'
+@L2@
+          L2_PY_EOF
+          T=${REGRESSION_TARGET:-$REGRESSION_LEVELS}; : "${T:=nightly}"
+          python3 -I "$here/l2.py" check "$T" "$REGRESSION_CLEANUP" > "$here/check.txt" || { cat "$here/check.txt" | tee -a "$GITHUB_STEP_SUMMARY"; exit 1; }
           all="$here/results.tsv"; : > "$all"
           reported=0
           for f in "$RUNNER_TEMP"/shards/*/regression-results.tsv; do
@@ -408,8 +418,10 @@ SUMMARY_JOB = r"""  summary:
           started=$(sed -n 's/^# started //p' "$all" 2>/dev/null | sort -n | head -n 1 || true)
           case "$started" in ''|*[!0-9]*) started=$(date +%s) ;; esac  # never an expression
           unrun=$(grep -c '^# unrun ' "$all" 2>/dev/null || true); unrun=${unrun:-0}
+          [ "$T" = L2 ] && { timeout 240 python3 -I "$here/l2.py" issues "$all" "$SHARDS" "$MATRIX" || echo "# gh-failed" >> "$all"; } || true
           timeout 120 python3 -I "$here/tests.py" issues --write >/dev/null || true
           took=$(( $(date +%s) - started ))
+          [ "$T" = L2 ] && { python3 -I "$here/l2.py" summary "$all" "$SHARDS" "$MATRIX" "$GITHUB_SHA" > "$here/l2.txt" || code=1; cat "$here/l2.txt"; }
           {
             GH_TOKEN= python3 -I "$here/tests.py" summary --results "$all" --took "$took" || {
               printf '## Regression\n\nThe grouped summary could not be written; see this step'"'"'s log.\n\n| Test | Result |\n|---|---|\n'
@@ -417,6 +429,16 @@ SUMMARY_JOB = r"""  summary:
             }
             printf '\nSHARDS %s of %s reported. UNRUN %s (rows skipped for out of job time).\n' "$reported" "$SHARDS" "$unrun"
           } | tee -a "$GITHUB_STEP_SUMMARY"  # the run's log shows the counts too
+          exit ${code:-0}
+      - name: Keep the L2 verdict
+        if: always() && github.ref == 'refs/heads/main' && steps.routine.outputs.on == 'true'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: l2-verdict
+          path: ${{ runner.temp }}/l2-verdict.txt
+          if-no-files-found: ignore
+          retention-days: 30
 """
 
 
