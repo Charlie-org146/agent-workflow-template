@@ -10,7 +10,8 @@ import subprocess
 import sys
 import tempfile
 
-for name in [n for n in os.environ if n.startswith("GIT_")]:  # the caller's git environment is not passed on
+# the caller's git environment is not passed on; its choice of git config files is kept
+for name in [n for n in os.environ if n.startswith("GIT_") and n not in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GIT_CONFIG_NOSYSTEM")]:
     del os.environ[name]
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 sys.path.insert(0, os.path.join(root, "skills", "workflow-regression", "scripts"))
@@ -76,6 +77,16 @@ given = actions.row_env()
 check(not [name for name in theirs if name in given], "a row never inherits the caller's git environment")
 check([given.get(name) for name in ("GIT_TERMINAL_PROMPT", "GIT_EDITOR", "GIT_ASKPASS")] == ["0", "true", "true"],
       "and a row's git still never waits for a person")
+for name, value in kept_before.items():
+    if value is None:
+        del os.environ[name]
+    else:
+        os.environ[name] = value
+chosen = {"GIT_CONFIG_GLOBAL": "/nowhere/global", "GIT_CONFIG_SYSTEM": "/nowhere/system", "GIT_CONFIG_NOSYSTEM": "1"}
+kept_before = {name: os.environ.get(name) for name in chosen}
+os.environ.update(chosen)
+given = actions.row_env()
+check({name: given.get(name) for name in chosen} == chosen, "a row keeps the caller's choice of git config files")
 for name, value in kept_before.items():
     if value is None:
         del os.environ[name]

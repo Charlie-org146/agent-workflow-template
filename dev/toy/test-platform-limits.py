@@ -13,7 +13,8 @@ import subprocess
 import sys
 import tempfile
 
-for name in [n for n in os.environ if n.startswith("GIT_")]:  # the caller's git environment is not passed on
+# the caller's git environment is not passed on; its choice of git config files is kept
+for name in [n for n in os.environ if n.startswith("GIT_") and n not in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GIT_CONFIG_NOSYSTEM")]:
     del os.environ[name]
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 scripts = os.path.join(root, "skills", "workflow-monitoring", "scripts")

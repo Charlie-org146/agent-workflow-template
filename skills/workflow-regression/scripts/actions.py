@@ -19,7 +19,8 @@ ROW_DROP = ("GH_TOKEN", "GITHUB_TOKEN", "GITHUB_STEP_SUMMARY", "GITHUB_ENV", "GI
             "REGRESSION_RESULTS", "REGRESSION_MAP", "RUNNER_TEMP", "SUITE_TIME_FILE",
             "LOOP_ROW_TIMES", "REGRESSION_SHARD", "REGRESSION_LEVELS", "REGRESSION_TARGET", "REGRESSION_CLEANUP")
 LANE_DROP = ("_LOOP_LANE_NOTE", "_LOOP_LANE_QUEUED", "_LOOP_LANE_STARTED")  # the lane runner's own handoff files
-GIT_KEEP = ("GIT_TERMINAL_PROMPT", "GIT_EDITOR", "GIT_ASKPASS")  # set above, so no row's git waits; the caller's other GIT_ ones go
+GIT_KEEP = ("GIT_TERMINAL_PROMPT", "GIT_EDITOR", "GIT_ASKPASS",  # set above, so no row's git waits
+            "GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM", "GIT_CONFIG_NOSYSTEM")  # the caller's config choice; other GIT_ names go
 
 
 def row_env():

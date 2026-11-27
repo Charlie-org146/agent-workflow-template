@@ -7,7 +7,8 @@
 # the checkout is only read, and the last two checks prove it.
 # usage: test-entry-config.sh   (ENTRY=path overrides the entry.py under test)
 set -u
-unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH ${!GIT_@}
+unset LOOP_SESSION_TOOL LOOP_OPERATION_SESSION LOOP_BATCH
+for v in ${!GIT_@}; do case $v in GIT_CONFIG_GLOBAL|GIT_CONFIG_SYSTEM|GIT_CONFIG_NOSYSTEM) ;; *) unset "$v" ;; esac; done
 here=$(cd "$(dirname "$0")/../.." && pwd)
 entry=${ENTRY:-$here/skills/workflow-docs/scripts/entry.py}
 die() { echo "FAIL: setup ($1)"; exit 1; }
