@@ -307,8 +307,8 @@ def main():
     add("start-items", lambda args: fit.start_answer().cmd_items(ME, args), ("--file", {"required": True}))
     add("start-review", lambda args: fit.start_answer().cmd_show(ME, args))
     add("start", lambda args: fit.start_answer().cmd_start(ME, args), ("--owner-record", {"required": True}))
-    add("finding-close", lambda args: fit.outcomes().cmd_close(ME, args), ("number", {"type": int}), ("--how", {"required": True, "choices": ("drop", "not-taken", "stop")}),
-        ("--why", {"required": True}), ("--files", {"default": ""}))
+    add("finding-close", lambda args: fit.outcomes().cmd_close(ME, args), ("number", {"type": int}), ("--how", {"required": True, "choices": ("fix", "drop", "not-taken", "stop")}),
+        ("--why", {"required": True}), ("--files", {"default": ""}), ("--row", {"default": ""}), ("--reader", {"default": ""}))
     add("revert", lambda args: fit.reverts().cmd_revert(ME, args), ("number", {"type": int}), ("--met", {"default": ""}), ("--cannot", {"default": ""}))
     add("hold-clear", lambda args: fit.reverts().cmd_hold_clear(ME, args), ("number", {"type": int}), ("--commit", {"required": True}))
     add("decide", lambda args: fit.outcomes().cmd_decide(ME, args), ("--finding", {"required": True}), ("--class", {"dest": "cls", "required": True}), ("--files", {"default": ""}))

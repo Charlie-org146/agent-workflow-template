@@ -4,8 +4,10 @@ the recommendation is taken and filed; inside an approved item it goes on under 
 once and the safe option applies. pr and merge refuse while a finding is open, and open one for each class and file of the
 branch diff that no approved item or earlier finding covers. Only operation closes a finding. Imported by the delivery,
 monitoring and release scripts. Standard library only."""
+import hashlib
 import json
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -125,7 +127,7 @@ def settle(top, runs, state, stop, occ, what, words, rec, ctx):
 def findings(entries):
     """(open, closed) findings by number; a close entry carries how."""
     every = {e["n"]: e for e in entries if e["kind"] == "finding"}
-    closed = {e["finding"]: dict(every[e["finding"]], how=e["how"], files=e["files"]) for e in entries
+    closed = {e["finding"]: dict(every[e["finding"]], how=e["how"], files=e["files"], at_fix=e.get("head")) for e in entries
               if e["kind"] == "close" and e["finding"] in every}
     return {n: e for n, e in every.items() if n not in closed}, closed
 
@@ -176,6 +178,11 @@ def blockers(top, runs, state, base, head):
     for number, item in sorted(closed.items()):
         back = changed(top, point, head, item["files"]) if item["how"] in ("drop", "not-taken") else []
         back and out.append("finding %d is open again: %s changed after it was closed" % (number, ", ".join(back)))
+        if item["how"] == "fix":
+            if git(top, "merge-base", "--is-ancestor", item["at_fix"], head)[0]:
+                out.append("finding %d is open again: its fix has left the branch" % number)
+            elif changed(top, item["at_fix"], head, item["files"]) and rescan(top, point, head, item["files"], item["classes"]):
+                out.append("finding %d is open again: %s changed into a new match" % (number, ", ".join(item["files"])))
     return out
 
 
@@ -187,13 +194,50 @@ def write_record(runs, state, why):
     os.replace(path + ".tmp", path)
 
 
-def close(top, runs, state, number, how, why, files, base, by, save=None):
-    """Close one open finding by dropping its part, recording that an asked action was not taken, or stopping the goal."""
+def rescan(top, point, head, names, classes):
+    """The finding's classes that what the head changes in its files, against the merge base, still matches."""
+    code, text = git(top, "diff", "--text", "--no-ext-diff", "--no-textconv", "--no-renames", "--no-color", point, head, "--", *names)
+    code and refuse("the finding's files can't be read for the rescan", "ONE_REVIEW_DIFF")
+    return sorted(set(safety_scan.diff_classes(text)) & set(classes))
+
+
+def proven_fix(top, item, number, slug, names, base, row, reader):
+    """E14: what shows a finding was fixed in the build; returns the commit and the verdict's seal."""
+    def no(why):
+        refuse("finding %d is not closed as fixed: %s" % (number, why), "ONE_REVIEW_CLOSE")
+    names or no("it names no files: add them with --files")
+    now, point = head_of(top), base_point(top, base, "HEAD")
+    since = item["head"]
+    git(top, "merge-base", "--is-ancestor", since, now)[0] and no("the commit it was opened on has left the branch")
+    changed(top, since, now, names) or no("no commit after the finding changes %s" % ", ".join(names))
+    left = rescan(top, point, now, names, item["classes"])
+    left and no("the rescan still matches %s; a class that matches by its path closes only by drop or stop" % ", ".join(left))
+
+    def rows(ref):
+        code, text = git(top, "cat-file", "blob", ref + ":.loop/regression.tsv")
+        return {line.split("\t")[0]: line.split("\t") for line in ("" if code else text).split("\n") if line and line[0] != "#"}
+    here = rows(now).get(row or "")
+    here and rows(point).get(row) != here or no("--row %s is not a row this goal added or changed" % (row or "(none)"))
+    tag = "finding:%s:%d" % (slug, number)
+    any(re.search(re.escape(tag) + r"(?!\d)", cell) for cell in here[5:]) or no("row %s does not name %s" % (row, tag))
+    len(here) > 4 and here[4].strip() or no("row %s has no recorded red run (regression.py red %s)" % (row, row))
+    try:
+        with open(reader, "rb") as handle:
+            said = handle.read()
+    except (OSError, TypeError):
+        no("--reader names a fresh reader's reply that ends VERDICT: FIXED")
+    lines = said.decode("utf-8", "replace").strip().split("\n")
+    lines[-1].strip() == "VERDICT: FIXED" or no("the reader's last line is not VERDICT: FIXED")
+    return {"head": now, "row": row, "reader": hashlib.sha256(said).hexdigest()}
+
+
+def close(top, runs, state, number, how, why, files, base, by, save=None, row="", reader=""):
+    """Close one open finding by its fix, by dropping its part, as an asked action not taken, or by stopping the goal."""
     slug = state["slug"]
     still, _ = findings(decisions.require(runs, state))
     item = still.get(number)
     item or refuse("finding %s is not open on %s" % (number, slug), "ONE_REVIEW_CLOSE")
-    how in ("drop", "not-taken", "stop") or refuse("a finding closes by drop, not-taken or stop", "ONE_REVIEW_CLOSE")
+    how in ("fix", "drop", "not-taken", "stop") or refuse("a finding closes by fix, drop, not-taken or stop", "ONE_REVIEW_CLOSE")
     why = " ".join(why.split())
     why and dlf.safe(top, why) == why or refuse("give a --why the private-name scan passes", "ONE_REVIEW_CLOSE")
     names = sorted(set(item["files"]) | set(files))  # files are added, never removed
@@ -202,15 +246,18 @@ def close(top, runs, state, number, how, why, files, base, by, save=None):
     if how == "drop" and not names:
         refuse("finding %d names no files: add them with --files, or use not-taken for an action that was asked about, or stop"
                % number, "ONE_REVIEW_CLOSE")
-    if how != "stop" and names:
+    proof = proven_fix(top, item, number, slug, names, base, row, reader) if how == "fix" else {}
+    if how in ("drop", "not-taken") and names:
         left = changed(top, base_point(top, base, "HEAD"), "HEAD", names)
         left and refuse("the part is still in the branch: %s differs from the base. Take it out, commit, then close it" % ", ".join(left),
                         "ONE_REVIEW_CLOSE")
-    decisions.add(runs, slug, "close", finding=number, how=how, why=why, files=names, by=by)
+    decisions.add(runs, slug, "close", finding=number, how=how, why=why, files=names, by=by, **proof)
     if how == "stop":
         decisions.stop(runs, slug, why, by)
         state.update(status="stopped", finding="finding %d stopped the goal: %s" % (number, why))
         (save or (lambda s, note_: write_record(runs, s, note_)))(state, state["finding"])
+    if how == "fix":
+        return None  # nothing was dropped, so nothing is filed
     dlf.file_line(top, runs, slug, dlf.brief(top, slug)[1], "break", "other", "finding%d" % number,
                   "%s: finding %d (%s) %s%s" % (slug, number, ", ".join(item["classes"]), {"drop": "part dropped", "not-taken": "action not taken",
                   "stop": "stopped the goal"}[how], " in " + ", ".join(names) if names else ""), "a goal that takes it up", "keep it out until then")
@@ -221,7 +268,8 @@ def cmd_close(g, args):
     g.guards.operation_only(g, "close a finding of", args.slug)
     state = g.load(args.slug)
     files = [f.strip() for f in args.files.split(",") if f.strip()]
-    close(g.root(), g.state_dir(), state, args.number, args.how, args.why, files, "origin/" + g.config()["base"], "operation", save=g.save)
+    close(g.root(), g.state_dir(), state, args.number, args.how, args.why, files, "origin/" + g.config()["base"], "operation", save=g.save,
+          row=args.row, reader=args.reader)
     print("CLOSED finding %d of %s: %s" % (args.number, args.slug, args.how))
     return 0
 

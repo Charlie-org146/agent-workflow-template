@@ -280,6 +280,56 @@ ran = subprocess.run(command, shell=True, capture_output=True, text=True, env=di
 check("stops without merging" in ran.stdout, "the printed command runs as it stands: %s" % (ran.stdout + ran.stderr).strip()[-160:])
 sh("switch", "-q", "loop/g")
 
+# closing by fix (E14, RT18): a later commit on the files, a clean rescan, a row of this finding seen red, and a reader's verdict
+sh("switch", "-q", "main")
+commit(".loop/regression.tsv", "# id\tlevel\tcommand\tgoal\tseen_red\tdescription\tcategory\tlink\nold-row\tland\ttrue\tD\t2026-01-01\tGiven x\tcriterion\t\n", "a row on the base")
+sh("update-ref", "refs/remotes/origin/main", "main")
+sh("switch", "-q", "-c", "loop/x", "main")
+record("x", branch="loop/x")
+commit("tools/clean.sh", 'echo start\nrm -rf "$HOME/x"\n', "risky")
+
+
+def blk():
+    return outcomes.blockers(tmp, runs, rec("x"), "origin/main", "HEAD")
+
+
+def row(link, red="2026-02-02", ident="fix-row", note="Given a clean run, then nothing outside is removed"):
+    text = open(os.path.join(tmp, ".loop/regression.tsv")).read()
+    commit(".loop/regression.tsv", text + "%s\tland\ttrue\tD\t%s\t%s\tdefect\t%s\n" % (ident, red, note, link), "add " + ident)
+
+
+verdict = os.path.join(home, "verdict.txt")
+open(verdict, "w").write("looked at the change\nVERDICT: FIXED\n")
+bad_verdict = os.path.join(home, "bad.txt")
+open(bad_verdict, "w").write("VERDICT: NOT FIXED\n")
+blk()
+n = [e["n"] for e in decisions.entries(runs, "x") if e["kind"] == "finding"][-1]
+
+
+def fix(row_id="fix-row", reader=None):
+    return refused(lambda: outcomes.close(tmp, runs, rec("x"), n, "fix", "fixed it", [], "origin/main", "operation", row=row_id, reader=reader or verdict))
+
+
+check("no commit after the finding" in fix(), "no fix without a commit on the finding's files: " + fix()[:90])
+commit("tools/clean.sh", 'echo start\nrm -rf "$HOME/x/cache"\n', "narrower, still destructive")
+row("finding:x:%d" % n)
+check("the rescan still matches" in fix(), "no fix while the rescan still matches: " + fix()[:90])
+commit("tools/clean.sh", "echo start\n", "the destructive line is gone")
+check("not a row this goal added or changed" in fix("old-row"), "not with a row this goal didn't add or change")
+row("finding:x:999", ident="other-row")
+check("does not name finding:x:" in fix("other-row"), "not with a row that names another finding")
+row("finding:x:%d" % n, red="", ident="never-red")
+check("no recorded red run" in fix("never-red"), "not with a row never seen red")
+check("VERDICT: FIXED" in fix(reader=bad_verdict), "not without a reader's verdict that it is fixed")
+check(fix() == "" and not blk(), "a real fix closes the finding: %s %s" % (fix()[:60], blk()))
+at = sh("rev-parse", "HEAD")
+commit("tools/clean.sh", 'echo start\nrm -rf "$HOME/y"\n', "the match comes back")
+check(any("open again" in x for x in blk()), "a later match opens it again: %s" % blk())
+sh("reset", "-q", "--hard", at)
+sh("reset", "-q", "--hard", "HEAD~6")
+check(any("open again" in x for x in blk()), "and so does the fix leaving the branch: %s" % blk())
+sh("switch", "-q", "loop/g")
+
 # the two operation-only commands, and a safety break that nobody can accept away
 record("h")
 put("flow.json", "{}")
