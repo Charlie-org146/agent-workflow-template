@@ -79,7 +79,7 @@ echo "== no new file under skills/ from the two merges this row guards"
 # GRD-21's package cap (200 files) stays in force.
 ALLOWED=skills/workflow-monitoring/scripts/board_tasks.py
 HIST=$here/dev/toy/hist.py
-unread() { printf '%s\n' "$1"; echo "FAILED: a history could not be read"; exit 1; }  # $1 is the code's line
+unread() { printf '%s\n' "${1:-FAILED: a history could not be read}"; exit 1; }  # $1 is the code's line; last, since the row shows one
 added_by() {  # $1 repo, $2 branch name: the skills files added by the first-parent merge of that branch's pull request on origin/main
   python3 "$HIST" added "$1" "/loop/$2\$"
 }

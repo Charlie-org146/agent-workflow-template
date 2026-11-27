@@ -50,7 +50,7 @@ def fixture(files):
 
 hist.require(root, "the full-auto-all goal's merge")
 merge, files = added(root)
-check(bool(merge) and files == [], "the full-auto-all merge is found on origin/main and adds no file under skills/ or listing.json: %s" % files)
+check(bool(merge) and files == [], "the full-auto-all merge is found on origin/main and adds no file under skills/ or listing.json: %s" % hist.shown(files))
 check(added(fixture(["docs/a.md"]))[1] == [], "control: a fixture of the merge adding only a document reads as clean")
 check(added(fixture(["skills/x/scripts/other.py"]))[1] == ["skills/x/scripts/other.py"], "negative control: a fixture of the merge adding a skills file still fails")
 check(added(fixture(["listing.json"]))[1] == ["listing.json"], "negative control: a fixture of the merge adding listing.json still fails")

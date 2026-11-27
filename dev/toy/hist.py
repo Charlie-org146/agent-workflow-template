@@ -19,6 +19,19 @@ here = os.path.dirname(os.path.abspath(__file__))
 top = os.path.abspath(os.path.join(here, "..", ".."))
 
 REF = "origin/main"
+
+
+def caller_names(environ):
+    """The private-name list of whoever runs the test: LOOP_PRIVATE_NAMES, or their default list when that is unset or empty (the
+    row runner's stand-in). A test that moves HOME reads this first and sets NAMES."""
+    given = environ.get("LOOP_PRIVATE_NAMES")
+    if given and given != os.devnull:
+        return given
+    default = os.path.join(environ.get("HOME", ""), ".workflow-loop", "private-names")
+    return default if os.path.isfile(default) else given or os.devnull
+
+
+NAMES = caller_names(os.environ)
 FETCH = "git fetch origin main:refs/remotes/origin/main"
 IDENTITY = ("-c", "user.email=t@example.test", "-c", "user.name=t")
 TEXT = {
@@ -51,7 +64,17 @@ def redact(text):
     if folder not in sys.path:
         sys.path.append(folder)  # at the end, so a test's own imports are never shadowed
     import dlf
-    return dlf.safe(top, text)
+    held = os.environ.get("LOOP_PRIVATE_NAMES")
+    os.environ["LOOP_PRIVATE_NAMES"] = NAMES
+    try:
+        return dlf.safe(top, text)
+    finally:
+        os.environ.pop("LOOP_PRIVATE_NAMES") if held is None else os.environ.update(LOOP_PRIVATE_NAMES=held)
+
+
+def shown(items):
+    """A list read from git, each item fit to print. Compare the raw list; print this one."""
+    return [screen(item) for item in items]
 
 
 def line(code, what, detail=""):

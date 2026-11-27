@@ -98,6 +98,15 @@ def toy_output(name, where, extra=None, front=""):
     return got.returncode, got.stdout + got.stderr
 
 
+def seen_by_caller(name, where, front=""):
+    """What someone who ran the row sees: the row's own command, its quiet last check printing what it was given instead (the
+    runner's rerun of a quiet row)."""
+    shown_command = re.sub(r'\| grep -qx "ALL PASS"$', "| cat", command[name])
+    env = dict(os.environ, **({"PATH": front + os.pathsep + os.environ["PATH"]} if front else {}))
+    got = sh(["bash", "-c", shown_command], where, env)
+    return got.stdout + got.stderr
+
+
 def first_fail(text):
     return next((l for l in text.splitlines() if l.startswith("FAIL")), "")
 
@@ -126,8 +135,8 @@ for name in ROWS:
     rc, out = row(name, where, front=broken)
     check(rc != 0, "%s fails when a read of the project's history fails" % name, out)
     fresh = fake_git("fails-again-" + name, history_diff(name, "diff-" + name), "fatal: injected diff failure")
-    line = first_fail(toy_output(name, where, front=fresh)[1])
-    check(coded(line, "HIST-E03", "HIST-E01"), "%s: a failed history read gives HIST-E03 with its fix on the first failing line" % name, line)
+    line = first_fail(seen_by_caller(name, where, front=fresh))
+    check(coded(line, "HIST-E03", "HIST-E01"), "%s: a failed history read gives HIST-E03 with its fix on the first failing line the row shows" % name, line)
 
 # a shallow history, and no base ref
 for code, fix, kind, args in (("HIST-E02", "git fetch --unshallow", "a shallow clone", dict(shallow=True)),
@@ -135,29 +144,42 @@ for code, fix, kind, args in (("HIST-E02", "git fetch --unshallow", "a shallow c
     for name in ROWS:
         where = copy(code + "-" + name, **args)
         rc, out = row(name, where)
-        line = first_fail(toy_output(name, where)[1])
-        check(rc != 0 and coded(line, code, fix), "%s in %s fails with %s and its fix" % (name, kind, code), line or out)
+        line = first_fail(seen_by_caller(name, where))
+        check(rc != 0 and coded(line, code, fix), "%s in %s fails with %s and its fix in what the row shows" % (name, kind, code), line or out)
 
 # a fixture that can't be built is its own code
 nofixture = fake_git("no-fixture", 'case " $* " in *" commit "*) true;; *) false;; esac', "fatal: injected commit failure")
 for name in ROWS:
     where = copy("fixture-" + name)
-    line = first_fail(toy_output(name, where, front=nofixture)[1])
-    check(coded(line, "HIST-E04", "temporary folder"), "%s: a fixture that can't be built gives HIST-E04 and not a history code" % name, line)
+    line = first_fail(seen_by_caller(name, where, front=nofixture))
+    check(coded(line, "HIST-E04", "temporary folder"), "%s: a fixture that can't be built gives HIST-E04 in what the row shows, not a history code" % name, line)
 
 # nothing private or secret-shaped reaches an error line
 names = os.path.join(work, "private-names")
 with open(names, "w") as handle:
     handle.write(WORD + "\n")
 token = "gh" + "p_" + "Q7" * 18
+# each alone: one kind must never be hidden only because another kind in the same text was withheld
 for name in ROWS:
-    where = copy("%s-%s" % (WORD, name))
-    leaky = fake_git("leaky-" + name, history_diff(name, "%s-%s" % (WORD, name)), "fatal: cannot read %s/%s/repo for %s with %s" % (work, WORD, WORD, token))
-    extra = {"LOOP_PRIVATE_NAMES": names}
-    out = toy_output(name, where, extra, leaky)[1]
-    line = first_fail(out)
-    check("HIST-E03" in line and WORD not in out and token not in out and work not in out,
-          "%s: the error line holds no listed private name, secret-shaped value or local path, and still gives its code" % name, line)
+    for kind, says, secret, what in (("name", "fatal: cannot read %s/repo for %s" % (work, WORD), WORD, "listed private name"),
+                                     ("token", "fatal: cannot read %s/repo with %s" % (work, token), token, "secret-shaped value")):
+        where = copy("%s-%s-%s" % (WORD, kind, name))
+        leaky = fake_git("leaky-%s-%s" % (kind, name), history_diff(name, "%s-%s-%s" % (WORD, kind, name)), says)
+        out = toy_output(name, where, {"LOOP_PRIVATE_NAMES": names}, leaky)[1]
+        line = first_fail(out)
+        check("HIST-E03" in line and secret not in line and secret not in out.replace(where, "") and work not in out,
+              "%s: a %s alone never reaches the error line, no local path does, and the code is still given" % (name, what), line)
+
+# the tasks test moves HOME: it still screens with the list of whoever runs it, here the default one, under the runner's stand-in
+own = os.path.join(work, "own-home")
+os.makedirs(os.path.join(own, ".workflow-loop"))
+shutil.copy(names, os.path.join(own, ".workflow-loop", "private-names"))
+where = copy("%s-own-list" % WORD)
+leaky = fake_git("leaky-own-list", history_diff(ROWS[0], "%s-own-list" % WORD), "fatal: cannot read %s/repo for %s" % (work, WORD))
+out = toy_output(ROWS[0], where, {"HOME": own, "LOOP_PRIVATE_NAMES": os.devnull}, leaky)[1]
+line = first_fail(out)
+check("HIST-E03" in line and WORD not in line and work not in line,
+      "%s: its error line is screened with the runner's own private-name list although the test moves HOME" % ROWS[0], line)
 
 # the committed headers and code lines name codes and fixes, no repository or merge
 scan = os.path.join(top, "skills", "workflow-delivery", "scripts", "private.py")

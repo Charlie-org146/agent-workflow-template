@@ -18,6 +18,7 @@ import tempfile
 here = os.path.dirname(os.path.abspath(__file__))
 top = os.path.abspath(os.path.join(here, "..", ".."))
 sys.path.insert(0, os.path.join(top, "skills", "workflow-monitoring", "scripts"))
+CALLER = dict(os.environ)  # read before HOME moves: error lines are screened with the runner's own private-name list
 home = tempfile.mkdtemp()
 for key in ("HOME", "USERPROFILE"):
     os.environ[key] = home
@@ -30,6 +31,7 @@ import live_board  # noqa: E402
 import reply_hook  # noqa: E402
 sys.path.insert(0, here)
 import hist  # noqa: E402
+hist.NAMES = hist.caller_names(CALLER)
 
 failed = []
 now = datetime.datetime.now(datetime.timezone.utc)
@@ -286,5 +288,5 @@ rows = hist.run(top, COMPARED, "diff", sha, "--", ".loop/regression.tsv").splitl
 check(not unapproved(rows, ok), "no existing regression row is changed or removed except the rows an approved record names (%d listed)" % len(ok))
 merge, added = tasks_added(top)
 check(bool(merge), "v110-tasks' pull request merge is found on origin/main by its message")
-check(added == [ALLOWED], "no file is added under skills/ except board_tasks.py (o788), by v110-tasks' own merge: %s" % added)
+check(added == [ALLOWED], "no file is added under skills/ except board_tasks.py (o788), by v110-tasks' own merge: %s" % hist.shown(added))
 sys.exit(1 if failed else 0)

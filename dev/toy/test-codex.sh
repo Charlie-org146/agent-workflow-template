@@ -22,10 +22,13 @@ want() { [ -z "$only" ] || [ "$only" = "$1" ]; }
 LIVE_DEADLINE=270  # seconds for the whole live part, strictly under the row limit of every lane that could run it
 PROBE_LIMIT=30     # seconds for each admission probe (sign-in status, one-word reply)
 CR="$here/dev/toy/codexrun.py"
-[ -z "${KEEP:-}" ] || python3 "$CR" keep - "$KEEP" "$here" || exit 2
+cr() { LOOP_PRIVATE_NAMES="${caller_names:-/dev/null}" python3 "$CR" "$@"; }  # lines, screening, kept logs
+[ -z "${KEEP:-}" ] || cr keep - "$KEEP" "$here" || exit 2
 inside_before=$(git -C "$here" status --porcelain 2>/dev/null)
 export CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"  # codex keeps its own sign-in there; HOME below is the toy's, with no private settings
 T=$(mktemp -d); toy_on_exit 'chmod -R u+w "$T" 2>/dev/null; rm -rf "$T"'
+# read before HOME moves: what is printed or kept is screened with the runner's own private-name list, not the practice one
+caller_names=$(python3 -c 'import os, sys; sys.path.insert(0, sys.argv[1]); import hist; print(hist.NAMES)' "$here/dev/toy")
 export HOME="$T/home" LOOP_BOARD_HEALTH=green; mkdir -p "$HOME"
 export USERPROFILE="$HOME"
 fails=0; live_skip=""; home_skip=""
@@ -38,7 +41,13 @@ RG="python3 $S/workflow-regression/scripts/regression.py"
 
 # The practice home's private-name list: empty, which setup needs before it writes anything.
 private_list() { mkdir -p "$HOME/.workflow-loop" && : > "$HOME/.workflow-loop/private-names"; }
-coded() { bad "$(python3 "$CR" line "$@")"; }  # CODE NAME [DETAIL]
+# CODE NAME [DETAIL]; a line the helper can't print is still a failure
+coded() { local said; said=$(cr line "$@") && [ -n "$said" ] || said="$1: $2: the line helper failed"; bad "$said"; }
+# a reason to skip the live part; if the helper can't print it, that is a failure, never a silent pass
+skip_line() {
+  local said
+  if said=$(cr line "$1" live) && [ -n "$said" ]; then live_skip=$said; else bad "live: the line helper failed for $1"; fi
+}
 
 # A toy repo at $1 (repo, origin.git), adopted by setup and merged.
 adopted() {
@@ -96,7 +105,7 @@ as_codex() {
   (cd "$R" && python3 "$CR" limited "${4:-$LIVE_DEADLINE}" -- "$2" exec --skip-git-repo-check -s workspace-write \
      -c "sandbox_workspace_write.writable_roots=[\"$(git rev-parse --absolute-git-dir)\",\"$T/$1/origin.git\",\"$HOME/.workflow-loop\"]" \
      -c model_reasoning_effort=low ${3:+-m $3} "$(prompt)" > "$T/$1.log" 2>&1); rc=$?
-  [ -z "${KEEP:-}" ] || python3 "$CR" keep "$T/$1.log" "$KEEP" "$here"
+  if [ -n "${KEEP:-}" ] && ! cr keep "$T/$1.log" "$KEEP" "$here"; then bad "$1: the kept log you asked for (KEEP) was not saved"; fi
   if [ $rc = 124 ]; then coded CODEX-E03 "$1" "${4:-$LIVE_DEADLINE} s"
   elif [ $rc != 0 ]; then coded CODEX-E04 "$1" "codex exec exit $rc"; fi
   return $rc
@@ -106,7 +115,7 @@ as_codex() {
 standin() { printf '#!/bin/bash\n%s\n' "$2" > "$1"; chmod +x "$1"; }
 # Each rule of the live part, shown on a stand-in: the run must be reported as failed, with its code.
 controls() {
-  local out
+  local out KEEP=""  # the stand-in runs below never touch the file a person asked for
   standin "$T/exit3" "bash '$here/dev/toy/fakecodex' \"\$@\"; exit 3"
   out=$(fails=0; as_codex ctl-exit "$T/exit3" "" 60; echo "fails=$fails")
   check "fake: a codex that writes every result and then exits with an error fails, with CODEX-E04" "grep -q '^FAIL: CODEX-E04: ctl-exit: .*Fix: .*In plain words: .*Side effects: PARTIAL' <<<\"\$out\" && grep -q '^fails=1' <<<\"\$out\""
@@ -117,14 +126,57 @@ controls() {
   out=$(fails=0; SECONDS=0; as_codex ctl-slow "$T/slow" "" 2; echo "fails=$fails took=$SECONDS")
   check "fake: a codex past its deadline is stopped and fails, with CODEX-E03" "grep -q '^FAIL: CODEX-E03: ctl-slow: ' <<<\"\$out\" && [ \$(sed -n 's/.*took=//p' <<<\"\$out\") -lt 15 ]"
   printf 'key ghp_%s end\n' "$(printf 'Q7%.0s' {1..18})" > "$T/raw.log"
-  python3 "$CR" keep "$T/raw.log" "$T/kept.log" "$here"
+  cr keep "$T/raw.log" "$T/kept.log" "$here"
   check "fake: a kept Codex log is screened: a secret-shaped value is not copied" "[ -s '$T/kept.log' ] && ! grep -q 'Q7Q7Q7' '$T/kept.log'"
-  out=$(python3 "$CR" keep "$T/raw.log" "$here/codex-keep-control.log" "$here"; echo "rc=$?")
+  local word="plantedname""qzx" saved=$caller_names
+  printf '%s\n' "$word" > "$T/names"; caller_names="$T/names"
+  printf 'about %s here\nan ordinary line\n' "$word" > "$T/named.log"
+  cr keep "$T/named.log" "$T/named-kept.log" "$here"
+  check "fake: a kept Codex log is screened: a listed private name alone is not copied" "grep -qx 'an ordinary line' '$T/named-kept.log' && ! grep -q '$word' '$T/named-kept.log'"
+  out=$(cr screen "cannot reach $word now"; cr line CODEX-E04 ctl-name "cannot reach $word now")
+  check "fake: an error line holds no listed private name" "grep -q 'withheld' <<<\"\$out\" && ! grep -q '$word' <<<\"\$out\""
+  caller_names=$saved
+  mkdir -p "$T/not-a-file"
+  out=$(fails=0; KEEP="$T/not-a-file"; as_codex ctl-keep "$here/dev/toy/fakecodex" "" 60; echo "fails=$fails")
+  check "fake: a kept log that can't be written fails the run and shows no local path" "grep -q '^REFUSED: the kept log could not be written' <<<\"\$out\" && grep -q '^FAIL: ctl-keep: the kept log you asked for' <<<\"\$out\" && grep -qx 'fails=1' <<<\"\$out\" && ! grep -q \"$T\" <<<\"\$out\""
+  # the two admission probes: a stand-in that hangs at sign-in status, or at the one-word reply, is a failure, not a skip
+  local stuck
+  for stuck in login exec; do
+    standin "$T/stuck-$stuck" "[ \"\$1\" = $stuck ] && sleep 20; exit 0"
+    out=$(fails=0; live_skip=""; PROBE_LIMIT=2; live_part "$T/stuck-$stuck"; echo "fails=$fails skip=$live_skip")
+    check "fake: a $stuck probe past its limit fails with CODEX-E03 and is not a skip" "grep -q '^FAIL: CODEX-E03: live: ' <<<\"\$out\" && grep -qx 'fails=1 skip=' <<<\"\$out\""
+  done
+  out=$(fails=0; live_skip=""; CR="$T/no-helper.py"; live_part "$T/no-such-codex" 2>/dev/null; echo "fails=$fails skip=$live_skip")
+  check "fake: a skip reason the helper can't print is a failure, never a silent pass" "grep -qx 'fails=1 skip=' <<<\"\$out\""
+  out=$(cr keep "$T/raw.log" "$here/codex-keep-control.log" "$here"; echo "rc=$?")
   check "fake: keeping a Codex log inside the repository is refused" "grep -q '^REFUSED: KEEP names a file inside the repository' <<<\"\$out\" && grep -qx 'rc=2' <<<\"\$out\" && [ ! -e '$here/codex-keep-control.log' ]"
   local limit
   limit=$(grep -oE -- '--timeout [0-9]+' "$here/.github/workflows/regression-pr.yml" | awk '{print $2}' | sort -n | head -1)
   check "fake: the live deadline ($LIVE_DEADLINE s) is strictly under the pull request's row limit (${limit:-unread} s)" "[ -n \"$limit\" ] && [ $LIVE_DEADLINE -lt ${limit:-0} ]"
   check "fake: the run left nothing inside the repository" "[ \"\$(git -C '$here' status --porcelain 2>/dev/null)\" = \"\$inside_before\" ]"
+}
+
+# The live part with the codex at $1. A probe past its limit is CODEX-E03; the other reasons it can't run are skips.
+live_part() {
+  local bin=$1 rc model probe pc started=$SECONDS left
+  if ! command -v "$bin" >/dev/null 2>&1; then skip_line CODEX-E01; return; fi
+  python3 "$CR" limited $PROBE_LIMIT -- "$bin" login status >/dev/null 2>&1; rc=$?
+  if [ $rc = 124 ]; then coded CODEX-E03 live "sign-in probe, $PROBE_LIMIT s"; return; fi
+  if [ $rc != 0 ]; then skip_line CODEX-E02; return; fi
+  model=${CODEX_MODEL:-$(python3 - <<'PY' 2>/dev/null
+import json, os
+slugs = [m["slug"] for m in json.load(open(os.path.join(os.environ["CODEX_HOME"], "models_cache.json")))["models"] if m.get("visibility") == "list"]
+print(next((s for s in slugs if "luna" in s), slugs[0] if slugs else ""))
+PY
+)}
+  probe=$(cd "$T" && python3 "$CR" limited $PROBE_LIMIT -- "$bin" exec --skip-git-repo-check -s read-only -c model_reasoning_effort=low ${model:+-m $model} "reply with the word OK" 2>&1); pc=$?
+  if [ $pc = 124 ]; then coded CODEX-E03 live "reply probe, $PROBE_LIMIT s"; return; fi
+  if [ $pc != 0 ] || ! grep -qi 'ok' <<<"$probe"; then
+    live_skip="codex cannot answer here (probe exit $pc): $(cr screen "$(grep -m1 'ERROR' <<<"$probe")")"
+    return
+  fi
+  left=$((LIVE_DEADLINE - (SECONDS - started)))
+  as_codex live "$bin" "$model" "$left"; verify live "$T/live/repo"
 }
 
 if want home && [ "$(id -u)" = 0 ]; then
@@ -191,24 +243,7 @@ if want fake; then
 fi
 
 if want live; then
-  bin=${CODEX_BIN:-codex}; started=$SECONDS
-  if ! command -v "$bin" >/dev/null 2>&1; then live_skip=$(python3 "$CR" line CODEX-E01 live)
-  elif ! python3 "$CR" limited $PROBE_LIMIT -- "$bin" login status >/dev/null 2>&1; then live_skip=$(python3 "$CR" line CODEX-E02 live)
-  else
-    model=${CODEX_MODEL:-$(python3 - <<'PY' 2>/dev/null
-import json, os
-slugs = [m["slug"] for m in json.load(open(os.path.join(os.environ["CODEX_HOME"], "models_cache.json")))["models"] if m.get("visibility") == "list"]
-print(next((s for s in slugs if "luna" in s), slugs[0] if slugs else ""))
-PY
-)}
-    probe=$(cd "$T" && python3 "$CR" limited $PROBE_LIMIT -- "$bin" exec --skip-git-repo-check -s read-only -c model_reasoning_effort=low ${model:+-m $model} "reply with the word OK" 2>&1); pc=$?
-    if [ $pc != 0 ] || ! grep -qi 'ok' <<<"$probe"; then
-      live_skip="codex cannot answer here (probe exit $pc): $(python3 "$CR" screen "$(grep -m1 'ERROR' <<<"$probe")")"
-    else
-      left=$((LIVE_DEADLINE - (SECONDS - started)))
-      as_codex live "$bin" "$model" "$left"; verify live "$T/live/repo"
-    fi
-  fi
+  live_part "${CODEX_BIN:-codex}"
   [ -z "$live_skip" ] || echo "SKIPPED: live: $live_skip"
 fi
 

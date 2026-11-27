@@ -59,11 +59,17 @@ def keep(source, dest, repo):
               "repository. In plain words: a log kept in the project folder could be committed by mistake. Side effects: none.")
         return 2
     if source != "-":
-        with open(source, encoding="utf-8", errors="replace") as handle:
-            lines = handle.read().splitlines()
-        handle = os.fdopen(os.open(dest, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w", encoding="utf-8")
-        with handle:
-            handle.write("".join(hist.redact(text) + "\n" for text in lines))
+        try:
+            with open(source, encoding="utf-8", errors="replace") as handle:
+                lines = handle.read().splitlines()
+            handle = os.fdopen(os.open(dest, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600), "w", encoding="utf-8")
+            with handle:
+                handle.write("".join(hist.redact(text) + "\n" for text in lines))
+        except OSError as error:
+            print("REFUSED: the kept log could not be written (%s). Fix: set KEEP to a file you can write, outside the repository. "
+                  "In plain words: the copy of Codex's log you asked for was not saved. Side effects: PARTIAL: the file may be half "
+                  "written." % hist.screen(error.strerror or type(error).__name__))
+            return 2
     return 0
 
 
