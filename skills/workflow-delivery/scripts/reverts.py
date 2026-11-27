@@ -91,7 +91,7 @@ def start_by_revert(runs, slug, done_sha):
     spent = {(r["slug"], r["decision"]) for r in rows if r["op"] in ("clear", "started")}
     for row in rows:
         queued = row["op"] == "hold" and row.get("removal_goal") == slug and (row["slug"], row["decision"]) not in spent
-        if queued and hashlib.sha256(("1. " + row.get("removal_done", "")).encode()).hexdigest() == done_sha:
+        if queued and hashlib.sha256(("1. " + (row.get("removal_done") or removal_line(row["slug"], row["decision"], row["files"]))).encode()).hexdigest() == done_sha:
             with open(path, "a", encoding="utf-8") as handle:
                 handle.write(json.dumps({"op": "started", "slug": row["slug"], "decision": row["decision"], "goal": slug,
                                          "at": decisions.stamp()}, sort_keys=True) + "\n")
