@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # windows: ok
 # reads: skills/workflow-regression/scripts/tiers.py skills/workflow-regression/scripts/runs.py skills/workflow-regression/scripts/actions.py
-# reads: skills/workflow-regression/scripts/lanes.py skills/workflow-regression/scripts/narrow.py
+# reads: skills/workflow-regression/scripts/lanes.py skills/workflow-regression/scripts/narrow.py dev/check-row-merge.py
 """budget-order (TD476): inside a shard's time budget the selected rows run closest to the change first: rows whose command
 names a changed file, then rows for a requirement the diff touches, then the rest by measured time, shortest first. A toy
 repo changes one toy; its row sits last in the file and used to be LEFT by a budget that fits two rows."""
@@ -81,6 +81,23 @@ for name, value in kept_before.items():
         del os.environ[name]
     else:
         os.environ[name] = value
+names = ("_LOOP_LANE_NOTE", "_LOOP_LANE_QUEUED", "_LOOP_LANE_STARTED", "GIT_AUTHOR_NAME")
+with tempfile.TemporaryDirectory() as tmp:
+    git(tmp, "init", "-q", "-b", "main")
+    os.makedirs(os.path.join(tmp, "dev", "toy"))
+    os.makedirs(os.path.join(tmp, ".loop"))
+    with open(os.path.join(tmp, "dev", "toy", "probe.py"), "w") as handle:
+        handle.write("import os\nheld = [n for n in %r if n in os.environ]\nprint('FAIL: held ' + ' '.join(held) if held else 'PASS: clean')\n" % (names,))
+    merged = 'out=$(python3 dev/toy/probe.py 2>&1); printf "%s\\n" "$out" | grep -qF "PASS: clean" && ! printf "%s\\n" "$out" | grep -q "^ *FAIL"'
+    with open(os.path.join(tmp, ".loop", "regression.tsv"), "w") as handle:
+        handle.write("probe\tland\t%s\tREG-4\n" % merged)
+    git(tmp, "add", ".")
+    git(tmp, "commit", "-q", "-m", "base")
+    done = subprocess.run([sys.executable, os.path.join(root, "dev", "check-row-merge.py"), "HEAD"], cwd=tmp, capture_output=True, text=True,
+                          env=dict(os.environ, **{name: "caller" for name in names}))
+    # the checker runs a row only where /bin/dash exists; there it must report this one as passed
+    ran = "dash PASS probe" in done.stdout if os.path.exists("/bin/dash") else "dash " not in done.stdout
+    check(done.returncode == 0 and ran, "the row-merge checker starts rows with the row environment")
 if sys.argv[1:] != ["--inner"]:
     with tempfile.TemporaryDirectory() as tmp:
         other = os.path.join(tmp, "second")
