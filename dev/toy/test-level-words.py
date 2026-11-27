@@ -243,7 +243,24 @@ def drafts():
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts}
+def notrun():
+    print("== R5/R6: not run: draft")
+    # Value: protects=a draft is named on every run route and never run; fails_when=a route is silent about a draft, names it twice, gives it a
+    #   result line, or runs its command (the command writes a file)
+    from lvl_fixture import Repo, entry, row
+    risks = ["label\tsecurity\tsecurity\tfixture label"]
+    rows = [row("alpha"), row("drf", level="draft", command="touch RAN-DRAFT")]
+    repo = Repo(rows, [entry("alpha"), entry("drf", old="draft", level="L1")], risks)
+    repo.commit()
+    for args in (("run", "land"), ("run", "nightly"), ("run", "drf"), ("run", "nightly", "--reuse"), ("run", "land", "--reuse", "--tier", "goal")):
+        done, said = repo.run(*args)
+        lines = [l for l in said.splitlines() if "drf" in l]
+        check(lines == ["not run: draft drf"], "%s: the draft is named only in its own line (not run: draft drf)" % " ".join(args), said)
+    check(not os.path.exists(os.path.join(repo.path, "RAN-DRAFT")), "no route ran the draft's command")
+    repo.close()
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
