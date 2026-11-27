@@ -252,6 +252,21 @@ RT15 asks for this before the E1 to E5 code. It was written after E2 to E5 were 
 
 - From the DEL-21 comparison (RT15): a required status check could add to E3's merge hold on GitHub's side. It needs a repository protection setting, which is the owner's.
 
+Deferred under TD2188 and TD2194 until after the v1.1.0 cut. The pull request names each as not built:
+- CEO B8, dropped and filed (v110-one-review-choice-2): a mistaken revert has no undo yet.
+- CEO B6, the rest: blocked minutes on the board by who they wait for and why. (The part naming the kept owner rules beside the metric is kept.)
+- DX D17: a hold's age, last progress, responsible session and next command.
+- DX D15 beyond E2: recovering a record lost after work started. Such a goal refuses.
+- E19's receiver version check. Safe option taken instead: a one-review goal is not handed over.
+- DX D2, the rest of D5, D8, D10, the rest of D11, D13's mode display, D16 and the extra How-to pages.
+- E8, the rest: marking an open pull request, and a check before a hand-merged pull request is released (the output says it is not enforced).
+- E17, the rest: resending, mail priority and mail-reply handling (operation records the answer's words).
+- E18, the rest: paging the list and a drop rule for releases left or done by hand (undelivered decisions stay listed).
+- CEO B9 and B10: naming a pending removal and a replacement; ordering the list.
+- The board's metric, board and live-board wording, and the automated inventory check (a hand list in the pull request stands in).
+- The combined-head check for a batch. Safe option taken: a one-review goal merges on its own.
+- RT6 and RT10, already filed later.
+
 ### E7: the scan rules checked on past breaks and diffs
 
 safety_scan.py has one rule set for a stop's words and one for a diff. Nothing calls it yet. Run on this machine's past plan reviews and the last 100 merges on main up to 7784d862f (counts only):
@@ -287,6 +302,13 @@ As first committed (234b981d4), the scan did not read a Reviewed requirement in 
 - One comparison, in start_answer.py. revise, review and the requirement guard ask it through its command; goal.py pr and merge.py call it on the head given. It compares the whole unit, sub-lines included, against the copy in the run record, and refuses when the base unit is no longer the one the owner was shown.
 - A start record is used once per ID and command at revise and review, reviews only approved IDs and no page, retires nothing, and is void while the goal is stopped or failed and for good after a reject, a permanent stop or a retire. On a marked goal neither a done line nor a plain record passes the guard.
 - Safe option taken for batches: a one-review goal always merges on its own; the combined-head check for batches is not built and is to be filed.
-- Not built, to be filed: voiding single items after a files revert (comes with revert, which is not built); refusing indented text left outside a unit.
+- Voiding single items after a files revert comes with revert (in the KEEP set). A tagged requirement line added outside its unit is now refused (7907adead); of 191 indented lines outside a unit on today's pages, none is tagged.
 - Checks, one toy at a time under operation's load rule: both new toys, test-criteria.sh, test-merge-batch.sh, test-dlf-merge.py and test-goal.sh pass. test-milestones.sh fails one case ("setup mentions a milestone") the same way on untouched main.
 
+### TD2194: the KEEP set (top's answer to the flags)
+
+Kept, still to build: the plan's core (each stop becomes a decision; findings closed by fix, drop or stop; pr and merge scan and refuse; the decide command; plan-accept refuses a safety break; operation holds replace owner waits, pre-flight and full auto included); the removal of dlf's private-data wait; the check-in's "Decided for you" and revert before and after merge, with RT16's revert goal (TD2127(2), needed for done line 4) and the release holds (E9); the head-scan part of E8; E11, E12, E13, E14, E16; E18's printed-ids part with DX D9; E19's safe option; CEO B3, B4, B5, B7; DX D6, D7, D12; RT3, RT8, RT12, RT13, RT18; B6's kept-owner-rules naming beside the metric (TD2127(1)); full-depth review for marked goals; the setting; the approved page wording with RT5, RT9, RT11; five rows; the command lines the package checks need; a hand list of every owner wait in the pull request.
+
+Kept and built: E1 to E5, E7, E10, E15, E19's first part, RT1, RT2 (ruling A), RT4, RT7, RT14, RT15, DX D3, D4, D14, CEO B2 with E6 and DX D1.
+
+Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans under TD2170 so far: 2, both clean; the filing tool scans the posted text again.
