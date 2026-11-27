@@ -1,0 +1,31 @@
+# id	value: a covered row's proving rows (comma list), or `own N` for a defect link that is a bare or #N number.
+done-hard-eta-1	eta-freeze,eta-checkin-table,eta-header-margin-setting
+done-hard-eta-2	eta-freeze,eta-budget-raise
+done-hard-eta-3	eta-health-missing,eta-health-rules
+done-home-stale-1	home-stale-clears
+done-home-stale-2	home-stale-clears
+done-held-time-charge-1	held-charge-pauses
+done-held-time-charge-2	held-charge-idle
+done-judge-stable-keys-1	judge-key-savings
+done-judge-stable-keys-2	judge-key-savings
+done-apply-rerender-1	apply-rerender-tables,apply-rerender-blocks
+done-docs-v2-6	apply-rerender-tables,apply-rerender-blocks
+done-apply-rerender-2	apply-rerender-blocks
+done-toys-no-leak-1	toys-no-leak-lane-pool,home-sandbox-4859
+done-toys-no-leak-2	home-guard-catches-leak,toys-no-leak-schedule
+done-homeguard-skills-main-1	toys-no-leak-schedule
+done-homeguard-skills-main-2	toys-no-leak-schedule
+done-docs-v2-1	doc19-diagram-passes,docs-v2-repo-passes
+done-docs-v2-2	doc19-diagram-passes,docs-v2-repo-passes
+done-docs-v2-3	doc19-diagram-passes,doc19-kind-row,doc18-howto-missing
+done-docs-v2-4	doc18-howto-missing,docs-v2-repo-passes
+done-docs-v2-5	doc18-howto-missing
+done-agent-routing-1	agent-routing
+del1-new-here-main-refused	own 3468
+lane-affected-memory	own 4151
+lane-order	own 531
+lane-fail-text	own 3911
+owed-close	own 3907
+migration-runs	own 3821
+hook-count	own 4345
+depth-marker-rows-4557	own 4557

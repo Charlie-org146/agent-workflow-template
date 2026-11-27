@@ -549,7 +549,7 @@ fewer, no gate and no safety class; medium is 10 files or fewer and no safety cl
 under a safety class. The reason is stored with the size (`sized` in the goal's run record, separate from DEL-5's `size`). The
 checks come from the table `checks_by_size` in the base branch's `.loop/config.json`, read from `origin/<base>` so a goal's own
 branch can't lighten it; a row that drops or lightens a fixed check (build gate, full test run, two leak readers, every safety
-class) is refused (`SIZING_BAD_TABLE`). Sizing is off, and nothing here applies, until the base config carries the key. A size
+class) is refused (`SIZING_BAD_TABLE`). A size row may list its test levels, `"levels": ["L0","L1"]` (plus "L2"): it is not a check, must hold L0 and L1, and any other list is refused (`SIZING_BAD_LEVELS`, naming the size and the level); without the key, small and medium run L0 and L1, large L0, L1 and L2. Sizing is off, and nothing here applies, until the base config carries the key. A size
 only goes up: it is re-sized from the diff when review, qa and ship start and at `pr`, the checks the size adds are stored in
 `sized.added`, and ship and `pr` refuse (`SIZING_ADDED_UNMET`) until each has a `CHECK:` line. A failed diff or config read
 refuses with `SIZING_READ_FAILED`. The owner raises a size with `sizeline.py set SLUG SIZE --owner-record ID` (never down, never

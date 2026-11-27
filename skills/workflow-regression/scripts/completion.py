@@ -4,6 +4,7 @@
 seconds; the word `nightly` keeps a nightly row out of the PR shards (it still runs in the nightly run). A row not on it keeps the
 run's own limit. Whole-tree rows run in the tree job only (TD504)."""
 import os
+import time
 
 
 def limits(root):
@@ -47,3 +48,28 @@ def tree_timeouts(results):
     for r in results:
         if r["state"] == "KNOWN" and r["rc"] == 124:
             r["state"] = "FAIL"
+
+
+def split(ids, times, n):
+    """n shards of ids: longest time first to the least-loaded shard; no time weighs the median."""
+    seen = sorted(times[k] for k in ids if k in times)
+    weight, load, shards = {k: times.get(k, seen[len(seen) // 2] if seen else 1) for k in ids}, [0] * n, [[] for _ in range(n)]
+    for key in sorted(ids, key=lambda k: (-weight[k], k)):
+        j = min(range(n), key=lambda x: (load[x], x))
+        shards[j].append(key)
+        load[j] += weight[key]
+    return shards
+
+
+def merge_runs(root):
+    """The lane record's row results, with any flaky flag (tiers.py), into regression-runs.tsv."""
+    import lanes, runs, slots
+    record, _ = lanes.load(lanes.record_path(root), root)
+    rows = (record or {}).get("rows") or {}
+    done = [dict(id=key, state=value.get("status"), **{k: value[k] for k in ("flaky",) if k in value})
+            for key, value in sorted(rows.items()) if value.get("status") in ("PASS", "FAIL")]
+    if done:
+        day = time.strftime("%Y-%m-%d", time.gmtime())
+        head = (lanes.git(root, "rev-parse", "HEAD") or "").strip()
+        slots.edit(root, "regression-runs.tsv", lambda: runs.write(root, done, day, head))
+    return 0
