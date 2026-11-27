@@ -379,7 +379,19 @@ def guard():
     check(done.stdout.split()[2:] == ["0", "1", "true", "true", "true"], "the gh call's own env sets GIT_TERMINAL_PROMPT=0, GH_PROMPT_DISABLED=1, GIT_EDITOR, GIT_ASKPASS and SSH_ASKPASS")
 
 
-cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second, "marker": marker, "usage": usage, "guard": guard}
+def draftrun():
+    print("== R6: the scheduled runner never runs a draft, even asked for by its row id")
+    # Value: protects=a draft's command never runs in the generated workflow and the log says so; fails_when=the runner runs a draft named by
+    #   its id, or a run says nothing about it
+    top = repo(rows=[("l1", "land", 'echo l1 >> "$TOY_LOG"'), ("drf", "draft", 'echo drf >> "$TOY_LOG"')])
+    for target in ("drf", "nightly", "L2"):
+        code, said, results, calls = step(top, target)
+        ran = open(os.path.join(top, "ran.log")).read().split()
+        check("drf" not in ran, "target %s: the draft's command did not run" % target)
+        check([l for l in said.splitlines() if "drf" in l] == ["not run: draft drf"], "target %s: the log names the draft once, as not run: draft drf" % target)
+
+
+cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second, "marker": marker, "usage": usage, "guard": guard, "draftrun": draftrun}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
