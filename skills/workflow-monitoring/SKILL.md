@@ -92,6 +92,10 @@ nothing is left. `operate.py send SLUG "<text>"` gives a worker an answer or fol
 `scripts/board_page.py` draws `board.html` and `board-artifact.html` from `board.json`, both carrying the live board.
 Any command that would build, plan or run a goal step from this session (`build`, `plan`, `idea`, `review`, `qa`, `ship`, `step`, `pr`, `record`, `run`) refuses with one line naming `batch.py start NAME`.
 
+`checkin.py` lists under "Decided for you" every decision made for the owner on a `one_review` goal, each with its
+revert command, and under "Held by the operation" what such goals wait for. When this session shows the owner a
+check-in, it runs `checkin.py --owner`, which marks only the printed decisions as shown; a worker is refused.
+
 `scripts/sessions.py`: `assign SLUG` (watch.py runs it: a free or new session from `session_command`, renamed
 `worker · <goal>`, sent the goal; it holds a `parallel` slot), `bind SLUG ID [--force] [--cwd DIR]` (a session started with the app's tools; before the goal is frozen it records the handoff, shown as freezing; it prints the WORKER command and the WORKTREE, and refuses a folder outside it), `free SLUG` (give back a stopped session's goal and slot),
 `list`, `send` (operate.py send uses it) and `report SLUG --step S | --status merged|failed|waiting [--pr URL | --ask Q] [--hold]` (a done goal stays done). States and messages: `loop-files.md`.

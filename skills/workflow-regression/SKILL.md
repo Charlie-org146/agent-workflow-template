@@ -18,7 +18,8 @@ Rows live in `.loop/regression.tsv`: id, level, command, goal, and the date it w
 | `covered` | Nothing. The done line is proved elsewhere; say where in the command. On a levelled table, name the proving rows with `--covers A,B` |
 
 On a **levelled** table (`.loop/regression-relevel.tsv` exists, or the row `lvl-armed`), each row also has a test level
-L0, L1 or L2 and a risk tag (security, private or none), kept beside the table; the words above still select what runs.
+L0, L1 or L2 and a risk tag (security, private or none), kept beside the table. The pull request run follows the level
+(`loop-files.md`, "L1 on the pull request"); the words above select what the scheduled run and a goal lane run.
 Reading a wrong level or a missing tag is refused. Rules and codes: `loop-files.md`, "Row levels and risk tags".
 
 ## `add <id> --level <level> --command "<command>" [--goal <criterion>|<slug>:<n>] [--category criterion|workflow|defect --link <url>]`

@@ -140,8 +140,11 @@ def common_of(top):
     return os.path.join(release.git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=top, check=False), "loop")
 
 
+START_ANSWER = re.compile(r'"(\\[ntr]|\s)*(approve|reject)(\\[ntr]|\s)+start\b', re.I)  # DLF-1.3: no other permission (E15, M1)
+
+
 def table(top, name):
-    return tsv(common_of(top), name)
+    return [r for r in tsv(common_of(top), name) if not (name == "owner-words.tsv" and len(r) > 3 and START_ANSWER.match(r[3]))]
 
 
 def waivers(top, kind):
@@ -288,6 +291,11 @@ def promote(top, cfg, ver, rec, ref, run=""):
         print(NL.join("GATE REFUSED v%d.0 (%s): %s" % (ver, c, s) for c, s, _ in bad) + NL + "NOT PROMOTED %s: no tag, branch or release." % tag)
         return 1
     sha = release.git("rev-parse", ref + "^{commit}", cwd=top)
+    import autorelease
+    held = autorelease.release_hold(top, sha)
+    if held:
+        print(held + NL + "NOT PROMOTED %s: no tag, branch or release." % tag)
+        return 1
     text, path = state_report(top, ver, tag, sha, facts), os.path.join(common_of(top), "gate", tag + ".md")
     open(path, "w").write(text)
     release.git("tag", "-a", tag, sha, "-m", "Release " + tag, cwd=top)

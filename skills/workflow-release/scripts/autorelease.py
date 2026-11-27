@@ -327,7 +327,29 @@ def status_held(state, url, number, seen=None):
     "(%s)" % (url, number, why, state["slug"], "RELEASE_STATUS_" + state["release_status"].upper().replace("FAILURE", "FAILED")))
 
 
+def release_hold(top, commit):
+  """DLF-1.3: why this commit can't be released while a reverted part's removal is pending, or ""."""
+  here = os.path.dirname(os.path.abspath(__file__))
+  tool = os.path.join(here, "..", "..", "workflow-delivery", "scripts", "reverts.py")
+  common = sh(["git", "rev-parse", "--git-common-dir"], cwd=top).stdout.strip()
+  pending = os.path.exists(os.path.join(top or ".", common, "loop", "release-holds.jsonl"))
+  if not os.path.exists(tool):
+    return "release holds are recorded and reverts.py is missing; nothing was released (ONE_REVIEW_HOLD)" if pending else ""
+  if not pending:
+    return ""
+  spec = importlib.util.spec_from_file_location("one_review_reverts", tool)
+  found = importlib.util.module_from_spec(spec)
+  spec.loader.exec_module(found)
+  try:
+    found.release_check(top or os.getcwd(), commit)
+  except SystemExit as stop:
+    return str(stop.code)
+  return ""
+
+
 def create_release(top, cfg, state, version, target):
+  held = release_hold(top, target)
+  held and fail(state, held)
   tag, text = "v" + version, notes_text(state)
   check(state, top, None, {"release notes": text})
   seen = sh(["gh", "release", "view", tag, "--json", "targetCommitish,url"], cwd=top)
@@ -366,6 +388,8 @@ def finish(top, cfg, state):
   if cfg.get("merge_queue"):  # REL-15: release.yml tags on push to the base; no commit, no pull request
     print("RELEASE from CI: tags %s (part %s)" % (state["slug"], state.get("release_part")))
     return True
+  held = release_hold(top, "origin/" + base)  # asked before any version is pushed
+  held and fail(state, held)
   if not state.get("release_pushed"):
     stage_notes(top, state, cfg)
     stage_part(top, state)

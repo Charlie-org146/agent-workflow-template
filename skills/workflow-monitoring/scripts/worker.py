@@ -92,6 +92,8 @@ def save(state, note=None):
     if note:
         state.setdefault("log", []).append("%s %s" % (state["updated"], note))
         print("%s %s: %s" % (state["updated"], state["slug"], note))
+    import graph
+    graph.keep_stop(path_of(state["slug"]), state)
     temp = path_of(state["slug"]) + ".%d.tmp" % os.getpid()
     with open(temp, "w") as handle:
         json.dump(state, handle, indent=2)
@@ -305,6 +307,7 @@ def cmd_bind(g, args):
     name = args.name or g.name_of(args.slug)
     worker = os.environ.get("LOOP_ROLE") == "worker"
     g.graph.refuse(g.load(args.slug) or {})
+    g.finish_first(g.load(args.slug) or {})
     if args.id in g.reserved():
         sys.exit("REFUSED: %s is the governing session; it is never a worker (OPERATION_SESSION)." % args.id)
     tree = (g.load(args.slug) or {}).get("worktree") or ""

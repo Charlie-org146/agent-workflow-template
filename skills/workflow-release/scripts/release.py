@@ -63,6 +63,14 @@ def save(state, note=None):
     if note:
         state.setdefault("log", []).append("%s %s" % (state["updated"], note))
     path = state_path(state["slug"])
+    if state.get("one_review") or os.path.exists(path[:-5] + ".decisions.jsonl"):
+        import importlib.util
+        mon = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-monitoring", "scripts")
+        sys.path.append(mon)  # graph's proctree
+        spec = importlib.util.spec_from_file_location("pods_graph", os.path.join(mon, "graph.py"))
+        graph = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(graph)
+        graph.keep_stop(path, state)
     temp = path + ".%d.tmp" % os.getpid()
     with open(temp, "w") as handle:
         json.dump(state, handle, indent=2)
@@ -299,6 +307,9 @@ def cmd_cut(args):
         sys.exit("REFUSED: uncommitted changes in %s. Fix: commit or set them aside first." % cwd)
     cfg = read_config(cwd)
     base = base_of(cwd, cfg)
+    import autorelease
+    held = autorelease.release_hold(cwd, "HEAD")
+    held and sys.exit(held)
     import release_docs
     steps = release_docs.verify_steps(cwd, slug)
     if not steps:

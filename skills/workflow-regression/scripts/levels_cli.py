@@ -301,7 +301,7 @@ def register(sub, top):
     for action in add._actions:
         if action.dest == "level":
             action.type, action.help = old_word, "the old word; it still selects what runs"
-    add.add_argument("--test-level", choices=LEVELS[1:] + LEVELS[:1], help="recorded now; runs don't follow it yet")
+    add.add_argument("--test-level", choices=LEVELS[1:] + LEVELS[:1], help="what the pull request's L1 run follows")
     add.add_argument("--risk", choices=TAGS)
     add.add_argument("--covers", help="a covered row: the ids of the rows that prove it")
     owner(add)

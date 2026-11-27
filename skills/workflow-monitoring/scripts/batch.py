@@ -339,6 +339,7 @@ def cmd_adopt(g, args):
         g.no("not on %s. Fix: run this in its worktree." % branch)
     if g.run(["git", "fetch", "origin", branch]).returncode or g.run(["git", "merge-base", "--is-ancestor", "FETCH_HEAD", "HEAD"]).returncode:
         g.no("%s is not on origin, or this worktree lacks its commits. Fix: push, then fetch." % branch)
+    review = g.fit.start_review().adopt_check(g.root(), slug, g.state_dir())  # adopt marks no goal
     sha, lines, text = g.git("rev-parse", "--short", "FETCH_HEAD"), g.done_lines(slug), g.read(g.goal_file(slug))
     seen = g.run(["gh", "pr", "view", branch, "--json", "url,state"])
     info = json.loads(seen.stdout) if seen.returncode == 0 else {}
@@ -350,10 +351,12 @@ def cmd_adopt(g, args):
     state = dict(slug=slug, goal=args.goal, status="running", step="qa", tries=0, branch=branch, worktree=g.root(), touches=touches,
                  pid=None, pr=info["url"], batch=False, done_sha=g.done_sha(lines), release="", waiting=None, finding="", log=[],
                  flow={s: "done on another machine: " + sha for s in g.FLOW[:3]}, **g.fit.frozen_fields(g, args, lines, touches))
+    state.update(review)
     g.guards.stamp(state, "qa")
     g.pods and g.pods.stamp(state)
     g.save(state, "adopted from origin/%s @ %s (%s)%s" % (branch, sha, info["url"], note))
     print("ADOPTED %s at qa from origin/%s @ %s%s; qa, ship and pr run here" % (slug, branch, sha, note))
+    review and print("NOTE: %s needs the owner's start review (%s); merge refuses until it is answered" % (slug, review["start_required"]["why"]))
     return 0
 
 

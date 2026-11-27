@@ -742,8 +742,8 @@ only; bash reads are covered by the static rules above.
 ## Row levels and risk tags
 
 A row has a test level, L0, L1 or L2, and a risk tag, security, private or none, kept beside the table. The table's
-own `level` cell keeps the old words (land, nightly, draft, covered), which still select what runs. Running rows by test
-level comes later.
+own `level` cell keeps the old words (land, nightly, draft, covered): they select what the scheduled run and a goal
+lane run. The pull request run follows the test level (below).
 
 **Levelled tables.** A table is levelled when `.loop/regression-relevel.tsv` exists or the table holds the row
 `lvl-armed`. Any other table is read and written as before, and `--test-level`, `--risk`, `--covers` and `level` are
@@ -828,6 +828,31 @@ command or `# reads:` header names the changed levels file; not every row that r
 when the base already holds the record; before that it reads the levels files as any other file. `lvl-armed`
 (`dev/toy/test-lvl-armed.sh`) reads the runner, the table, the record, the risk data and the Principles page.
 
+## L1 on the pull request
+
+The table is armed when it holds `lvl-armed` and `.github/workflows/regression-pr.yml` is this tool's. On an armed
+table GitHub's pull request run of `run nightly --reuse --tier goal` is L1 (the same command run anywhere else is as
+before): the changed rows at L0 or L1, every security or
+private row the change reaches, and every private row when it reaches none (never reused). An L2 row it only reaches
+waits for the scheduled run. A private row listed `nightly` in the limits file still runs, with a NOTE. `run L0`,
+`run L1` and `run L2` pick by level when typed; a typed `run L2` picks every land and nightly row, the same rows the scheduled run runs, and not a covered row (it is proved by its cover). A documents-only change runs no row, as before. A goal's own
+local lane is unchanged, except while the cover claims L1: it then runs its L0 rows and the planned rows the pull
+request leaves out (`NOT COVERED by L1: <ids>`), and records no L1 run. With the cover off, the lane runs as before.
+The merge queue runs no row.
+
+**Time goal.** Each shard writes `span.txt` (`start <epoch>`, then `end <epoch> <exit>`) and uploads it with its times
+file. When the legs, latest end minus earliest start, take longer than `l1_minutes` (10), the `affected` job prints
+`missed: <cause>`, the three slowest rows and the fix; it reports and fails nothing. A leg with no end is named and
+left out. A value that is not a whole number of at least 1 is refused (`L1_MINUTES_BAD`).
+
+**A security row that flips.** A row tagged security that fails is run once more in a fresh HOME. If it then passes it
+stays FAIL, prints `FLAKY <id>: failed then passed ...`, and the leg uploads `flaky.tsv` (`id TAB seconds TAB tail`,
+only after a flip; it holds none of the row's output). No rerun after a timeout, a signal or a start failure. `.github/workflows/regression-flaky.yml`
+runs from the default branch, never a pull request's code, only for a failed pull request run of this repository: it
+reads the flip files as data, refuses a malformed one or a row the default branch does not tag security, and opens or
+comments on one issue for each row: the row, that it failed then passed, the pull request, the commit and a link to its
+checks. No row output is published.
+
 ## Goal tier
 
 A goal lane runs `run land --reuse --tier goal` (`scripts/tiers.py`). It plans from the branch's record only when A land or nightly run that has rows to run first waits while free memory (Windows: free virtual memory) is below `min_free_memory_gb` (default 4), logs `LANE_MEMORY`, never stops a run already going, and gives up with exit 6 (EXIT_ENV, a MEMORY_WAIT note, no try used) after four times the lane's time limit.
@@ -908,8 +933,9 @@ settings. The Regression wiki page holds the requirements (REG-1..REG-9); this s
 | goal lane, pr | the same; a path no row declares, or a deleted one, adds the rows that name it and the runners, never the full suite | no |
 | goal lane with no merge-base (shallow clone, missing base) | every row is a candidate (`FULL (no merge-base with <base>)`), kept to `test_budget_minutes` | yes |
 | hand run `regression.py run land\|nightly\|ID [--kind K]` | what you name; a plain `run nightly` is the full suite and records its time | when it is a full run |
-| GitHub Actions, on the `regression_cron` schedule (every 4 hours by default; `off` stops it) and every v* tag | `ci_levels` (default nightly: every row, the full suite; land: land rows only) | n/a (a runner) |
-| GitHub Actions, run by hand | its `target` input: land, nightly or a row id (empty: `ci_levels`); the workflow's own runner checks it, so a repo without the skills folder works | n/a |
+| hand run `regression.py run L2` | every land and nightly row, whatever a change reached; a covered row is proved by its cover and is not run | when it is a full run |
+| GitHub Actions, on the `regression_cron` schedule (every 4 hours by default; `off` stops it) and every v* tag | `ci_levels` (default nightly: the schedule's default target is L2, which runs every land and nightly row whatever a change reached; a covered row is proved by its cover and is not run; land: land rows only) | n/a (a runner) |
+| GitHub Actions, run by hand | its `target` input: land, nightly, L2 or a row id (empty: `ci_levels`, so L2 by default; a cleanup run with an empty target stays nightly); the workflow's own runner checks it, so a repo without the skills folder works | n/a |
 
 ship and release reuse the qa lane's results when no code changed since (`REUSED`). Before a pull request merges,
 merge.py checks the base: a move in paths this goal's rows reach refuses (`BASE_MOVED`); `goal.py pr` then merges the
@@ -944,8 +970,11 @@ part is advice and never blocks.
 | UNMAPPED | tiers.py | — | a changed or deleted path no row declares (Note) | declare it in the `# reads:` header of the row that tests it, or let pr run the full suite once |
 | KILLED | regression.py | — | a signal stopped a row: `KILLED <row>: signal <name> (pid <n>)` (Note) | see the lane log |
 | FLAKY | regression.py | per result | a row gave different results on the same clean commit, runner and python (Note): the raw result counts, the flag stays on that commit (regression-runs.tsv's flaky column, tests.py list, health's TESTS block) and the row is never reused | find the nondeterminism in the row's command; FLAKY clears when a later commit's clean run passes |
-| SUITE_TIME | regression.py / CI run step | — | a plain full run's time (`regression.py run nightly`, or a CI run whose target is nightly), appended to `<git common dir>/loop/suite-times.tsv` for health's REG-7 check; CI keeps its line as artifact `suite-time`, which the scheduled health job downloads with a `ci` column | none |
-| REFUSED (BAD_TARGET) | CI run step | 1 | the run-by-hand `target` input is not land, nightly or a row id: `REFUSED (BAD_TARGET): bad target "<value>": use land, nightly or a row id from regression.py list. Fix: rerun the workflow with one of those`; no row ran | rerun the workflow with one of those |
+| SUITE_TIME | regression.py / CI run step | — | a plain full run's time (`regression.py run nightly`, or a CI run whose target is nightly or L2), appended to `<git common dir>/loop/suite-times.tsv` for health's REG-7 check; CI keeps its line as artifact `suite-time`, which the scheduled health job downloads with a `ci` column | none |
+| REFUSED (BAD_TARGET) | CI run step | 1 | the run-by-hand `target` input is not land, nightly, L2 or a row id: `REFUSED (BAD_TARGET): bad target "<value>": use land, nightly, L2 or a row id from regression.py list. Fix: rerun the workflow with one of those`; no row ran | rerun the workflow with one of those |
+| L2_NO_ROWS | CI run step and summary step | 1 | the target is L2 and the table has no land or nightly row to select (counted over the whole table before the shards split); the summary step prints this code as its first line and writes no issue, verdict or artifact, and the run is red | add land or nightly rows with `regression.py add`, then rerun the workflow |
+| L2_CLEANUP_EXCLUSIVE | CI run step and summary step | 1 | a run with `cleanup` true and target L2 (a cleanup is its own run and stays nightly); no row ran, and the summary step refuses the same way | rerun with cleanup off, or leave the target empty for a cleanup |
+| `# gh-failed` | CI shard (L2) | — | a result-file line a shard writes at L2 when an issue or label write fails, or when it cannot read the issues (a `defect` label that already exists is not such a write); the run is then not complete, so its verdict is INCOMPLETE and never GREEN | read the shard's log, then rerun the workflow once `gh` works; a row that failed only because it failed leaves the run complete |
 | REFUSED (BASE_MOVED) | merge.py | 2 | the base moved in paths this goal's rows reach since the pr lane, or it can't tell (the planner or `git diff` failed): an unknown never merges | `goal.py pr SLUG`, then `merge.py SLUG` |
 | REFUSED (BASE_FETCH) | merge.py | 3 | origin can't be fetched to check the base; nothing merged | run `merge.py SLUG` again when the remote answers |
 | REFUSED (HEAD_MOVED) | merge.py | 4 | the pull request head moved since the pr lane by a commit that isn't only wiki pages (a `wiki.py prepare` commit only notes it and merges) | `goal.py pr SLUG`, then `merge.py SLUG` |
@@ -987,7 +1016,7 @@ lane ends.
 - A goal lane has no limit of its own beside its budget (`test_budget_minutes`, REG-7). The scheduled full suite has a fixed
   30-minute limit that health warns above.
 - `goal_levels` (land) and `ci_levels` (nightly): the levels a goal lane plans from (nightly adds the nightly rows a
-  change reaches) and the CI target. A CI run cut short by its job time still records its time, so health warns.
+  change reaches) and the CI target (with nightly, the schedule's default target is L2; a cleanup stays nightly; land is unchanged). A CI run cut short by its job time still records its time, so health warns.
 - Each lane child gets its own `TMPDIR` and `LOOP_LANE_PORT_BASE` (a leased range of 100 ports from 20000); a row that
   binds ports uses that range or picks a free port itself. The `TMPDIR` is a new folder per lane start,
   `<system temp>/loop-lane-<repo key>-<goal>-<lane>-<random>` (mode 0700), never inside a git checkout, so a test that
@@ -1009,8 +1038,12 @@ regression workflow's run-by-hand gains a `target` input.
 
 GitHub's merge queue and "require branches to be up to date" make merges atomic on the platform; the loop keeps its
 own base check for repos without them, and the window between its check and the merge is closed only by those
-settings. Actions concurrency groups already keep one regression run at a time in CI. Running AFFECTED lanes in CI
+settings. Actions concurrency groups (per ref) already keep one regression run at a time in CI: on main a newer run waits and never cancels a running one, so one run writes issues at a time; on other branches a newer run still cancels the older one. GitHub keeps one pending run per group, so a waiting run can be replaced by a newer one, and the next schedule runs again. Running AFFECTED lanes in CI
 was left out: CI runs the full suite only (REG-4).
+
+### Reading an L2 run
+
+The scheduled run is L2. Its summary starts with the tally `L2 GREEN|RED|INCOMPLETE: ran n, known n, exempt n, skipped n, failed n`. RED: a row failed, a row was skipped without exemption (it never started because job time ran out, or it was cut by the job budget) or a row is unfinished. INCOMPLETE: nothing is red, but a shard's results are missing or cut short, the matrix did not succeed, or a `# gh-failed` line was written. GREEN needs none of these. A skip by design (a row on the skip list) counts as run and is shown apart as `# exempt`. On main only, the summary then prints `L2_VERDICT <sha> red|incomplete|green` and publishes it as the artifact `l2-verdict`: `gh run download <id> -n l2-verdict`. One open issue `Regression: L2 skipped rows` names every skipped or unfinished row with its cause; a complete run rewrites it to the current list and closes it when the list is empty, an incomplete run only adds ids. A failing row's one issue also gets the label `l2-red`, and each open `l2-red` issue is named once, as `L2 red: #n`, in the main-red goal's issue. The run never reverts, resets or pushes anything.
 
 ## Exact command entries (moved from the retired Usage section on the Automation page)
 
@@ -1915,8 +1948,10 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |
 | `automation` | `[]` | Routines the Automation table lists: {name, does, cadence, runs}. |
 | `deliver_first` | `{}` | Deliver first, default on: {goal: {ID: false}, task: {...}, release: {...}} turns it off for a scope (most specific wins); set only with an owner reference: dlf.py set deliver_first off --scope S --id ID --owner-record R. |
+| `one_review` | `false` | true: a goal asks the owner once, at its start (DLF-1.3). Read from committed config. false: later stops wait again; open findings stay. |
 | `topics` | `{}` | Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column. |
 | `ci_levels` | `nightly` | Target of scheduled and tag regression runs: nightly (every row) or land. |
+| `l1_minutes` | `10` | L1's time goal on a pull request, in minutes; a longer run prints missed: and why. |
 | `time_budget_minutes` | `240` | Active minutes before no new step starts; 0 is none. |
 | `max_merge_rounds` | `8` | Merge rounds goal.py pr may take before it waits. |
 | `max_active_goals` | `20` | Goals live at once (or parallel, if smaller); 0 is none. |

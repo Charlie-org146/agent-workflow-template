@@ -48,7 +48,7 @@ python3 - <<'PY' && ok "the written regression.yml has an optional target input 
 text = open(".github/workflows/regression.yml").read()
 part = text.split("  workflow_dispatch:\n", 1)[1].split("permissions:", 1)[0]
 assert "    inputs:\n      target:\n" in part and "required: false" in part and 'default: ""' in part, part
-assert "REGRESSION_TARGET: ${{ inputs.target }}" in text and "${{ inputs.target }}" not in text.split("        run: |")[2].split("      - ")[0]
+assert "REGRESSION_TARGET: ${{ inputs.target || (inputs.cleanup && 'nightly' || 'L2') }}" in text and "${{ inputs.target" not in text.split("        run: |")[2].split("      - ")[0]
 PY
 # Value: protects=target=ID runs only that row, through the embedded runner (E-7); fails_when=the target is ignored or the
 #   step calls regression.py, which an adopting repo lacks; why_new=CI ran every row; seam=none; no_claim=a real runner
@@ -66,7 +66,7 @@ rm -f "$FAKE_GH_DIR/calls.log"
 for value in 'x;touch HACKED' 'no-such-row' '$(touch HACKED)'; do
   out=$(step "$value"); rc=$?
   if [ "$rc" = 1 ] && [ -z "$(ran)" ] && [ ! -e HACKED ] && [ -z "$(cat "$FAKE_GH_DIR/calls.log" 2>/dev/null)" ] \
-     && grep -qxF "REFUSED (BAD_TARGET): bad target \"$value\": use land, nightly or a row id from regression.py list. Fix: rerun the workflow with one of those" <<<"$out"; then
+     && grep -qxF "REFUSED (BAD_TARGET): bad target \"$value\": use land, nightly, L2 or a row id from regression.py list. Fix: rerun the workflow with one of those" <<<"$out"; then
     ok "target '$value' fails with the BAD_TARGET line, exit 1, no row run and no issue touched"
   else bad "target '$value': rc=$rc ran=$(ran) $out"; fi
   rm -f HACKED "$FAKE_GH_DIR/calls.log"

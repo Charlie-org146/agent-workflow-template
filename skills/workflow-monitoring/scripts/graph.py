@@ -431,3 +431,22 @@ def merge_lock(common):
         except OSError:
             pass
     atexit.register(release)
+
+
+def decisions_of(slug):
+    """workflow-delivery's decisions.py; a marked goal refuses, naming it, when it is missing."""
+    found = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "workflow-delivery", "scripts", "decisions.py")
+    if not os.path.exists(found):
+        sys.exit("REFUSED: %s is a one-review goal and %s is missing. Fix: reinstall the skills (ONE_REVIEW_SCRIPT)"
+                 % (slug, os.path.normpath(found)))
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("one_review_decisions", found)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def keep_stop(path, state):
+    """DLF-1.3: a stopped one-review goal never turns queued, running or waiting again. path is its run record."""
+    if state.get("one_review") or os.path.exists(path[:-5] + ".decisions.jsonl"):
+        decisions_of(state.get("slug")).hold(os.path.dirname(path), state)

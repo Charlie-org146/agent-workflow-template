@@ -16,6 +16,7 @@ import time
 import actions
 import completion
 import lanes
+from completion import budget, fit, minutes  # noqa: F401
 
 # A prompt from gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -47,6 +48,14 @@ def shown(run, command, code, text):
         text = run(again(command))[1]
     lines = [line[:400] for line in text.rstrip().splitlines()[-LAST:]]
     return "\n".join(lines).replace("`" * 3, "'" * 3) or "(the row printed nothing; it exited %s)" % code
+
+TOOL = r"(?:pnpm|node|npm|npx|yarn|corepack)"
+MISSING = re.compile(r"\b%s: (?:command )?not found|^'?%s'? is not recognized as an internal|No module named '(?:fcntl|termios|pwd|grp|resource)'"
+                     r"|spawn %s ENOENT" % (TOOL, TOOL, TOOL), re.M)
+
+
+def unrunnable(code, text):
+    return bool(code and MISSING.search(text or ""))
 # rowtail:end
 
 
@@ -160,37 +169,10 @@ def sync_issues(results, live, day):
 FLOOR, DEFAULT = 15, 15
 
 
-def minutes(cfg, key, default=DEFAULT):
-    value = cfg.get(key, default)
-    if isinstance(value, bool) or not isinstance(value, int) or value < FLOOR:
-        sys.exit("REFUSED: %s is %r in .loop/config.json, under the %d-minute floor. Fix: set it to %d or more." % (
-            key, value, FLOOR, FLOOR))
-    return value
-
-
-def budget(root):
-    try:
-        with open(path_of(root, "config.json")) as handle:
-            cfg = json.load(handle)
-    except (OSError, ValueError):
-        cfg = {}
-    return minutes(cfg if isinstance(cfg, dict) else {}, "test_budget_minutes") * 60
-
-
-def fit(todo, est, limit):
-    keep, left, used = [], [], 0.0
-    for key in todo:
-        if used + est.get(key, 0) <= limit:
-            keep.append(key)
-            used += est.get(key, 0)
-        else:
-            left.append(key)
-    return keep, left
-
-
 def execute(root, picked, todo, est, limit, timeout, expected, reuse):
     keep, left = fit(todo, est, limit) if limit else (todo[:], [])
     by, results, start, first = {row["id"]: row for row in picked}, [], time.time(), {}
+    secure = {k for k, v in completion.entries(root).items() if v[1] == "security"}
     for key in keep:
         own = completion.limit(root, key, timeout)
         remaining = limit - (time.time() - start) if limit else own
@@ -221,11 +203,17 @@ def execute(root, picked, todo, est, limit, timeout, expected, reuse):
         print("%s %s%s" % ("ENV" if nostart else "NOTRUN" if cannot else state, key, " (%s)" % expected[key] if state == "KNOWN" else " (exit %d: could not start; rerun when memory allows)" % code if nostart else ""), flush=True)
         if signal and state != "PASS":
             print("KILLED %s: signal %s (pid %d). Note: a signal stopped this row; see the lane log" % (key, signal, pid))
-        tail = shown(lambda c: lanes.run_row(c, root, env, cap)[:2], by[key]["command"], code, text) if state == "FAIL" else text[-1500:]
+        # shown() may run a quiet row again to see its output: a security row's one rerun is kept, so it gets what it printed
+        rerun = (lambda c: (code, text)) if key in secure else (lambda c: lanes.run_row(c, root, env, cap)[:2])
+        tail = shown(rerun, by[key]["command"], code, text) if state == "FAIL" else text[-1500:]
         if state == "FAIL" and reuse:
             print(chr(10).join("    " + x for x in tail.splitlines()[-20:]), file=sys.stderr)
         results.append({"id": key, "state": state, "tail": tail, "seconds": round(time.time() - began, 1),
                         "pid": pid, "rc": code, "signal": signal, "notrun": cannot, "env": nostart})
+        if state == "FAIL" and key in secure and code != 124 and not signal and not nostart:  # it stays FAIL either way
+            head = completion.passes_again(root, by[key]["command"], cap)
+            if head:
+                results[-1].update(flaky=head, rerun_passed=True)
     if left:
         print("BUDGET %d min: ran %d of %d rows; LEFT %d to the scheduled full suite: %s" % (
             (limit or 0) // 60, len(results), len(results) + len(left), len(left), ", ".join(left[:20]) + (
@@ -274,6 +262,9 @@ def criterion_rows(rows, key):
 
 
 def chosen(rows, target):
+    if target in ("L0", "L1", "L2"):  # before row ids: a row named like a level never replaces the run
+        top = (lanes.git(".", "rev-parse", "--show-toplevel") or ".").strip()
+        return completion.at_level(list(rows.values()), target, completion.entries(top))
     if target in rows:
         return [rows[target]]
     if target == "land":
@@ -347,15 +338,6 @@ def unproven(root, rows, seen):
         elif not seen.match(row["seen_red"]):
             out.append(row["id"])
     return out
-
-
-TOOL = r"(?:pnpm|node|npm|npx|yarn|corepack)"
-MISSING = re.compile(r"\b%s: (?:command )?not found|^'?%s'? is not recognized as an internal|No module named '(?:fcntl|termios|pwd|grp|resource)'"
-                     r"|spawn %s ENOENT" % (TOOL, TOOL, TOOL), re.M)
-
-
-def unrunnable(code, text):
-    return bool(code and MISSING.search(text or ""))
 
 
 def owed_issue(root, key, ids, title, text, live, word="owed"):

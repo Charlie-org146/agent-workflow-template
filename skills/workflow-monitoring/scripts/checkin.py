@@ -104,6 +104,7 @@ def render(root=None, at=None, stamp=None):
     root = root or bs.git("rev-parse", "--show-toplevel")
     at = at or datetime.datetime.now(datetime.timezone.utc)
     stamp = stamp or last_at(root) or "0000"
+    import review_view
     mine = gather(root, at, stamp)
     folder, cfg, runs, found, why, taken, states, live, queue = (mine[k] for k in (
         "folder", "cfg", "runs", "found", "why", "taken", "states", "live", "queue"))
@@ -114,7 +115,7 @@ def render(root=None, at=None, stamp=None):
     counts = lambda *names, live=None: sum(s in names and live in (None, v) for _, s, v in rows)
     parked, old = counts("running", "held", "silent", "waiting", live=False), [k for k, s, v in rows if s in ("failed", "stopped") and not v]  # TD481, TD502
     pool_line = pl.status_line(found or {}, cfg) if found is not None else "pool: unreadable"
-    out = ["%d running, %d waiting on you, %d queued%s; %s" % (counts("running", "held", "silent", live=True), counts("waiting", "failed", "stopped", live=True),
+    out = ["%d running, %d waiting on you, %d queued%s; %s" % (counts("running", "held", "silent", live=True), counts("waiting", "failed", "stopped", live=True) - review_view.operations_count(pod),
                                                               sum(len(g["queue"]) for g in pod), ", %d parked" % parked * bool(parked) + ", %d old" % len(old) * bool(old), pool_line),
            *machines.lines(root, cfg, bs.machine_line(cfg)), *["Old: " + ", ".join(old)] * bool(old)]
     for g in pod:
@@ -170,7 +171,7 @@ def render(root=None, at=None, stamp=None):
     out += ["", "Needs you"]
     needs, readonly = [], []
     owned = lambda prefix, run: "- %s%s asks (owned by %s, read-only here)" % (prefix, run["slug"], graph.foreign(run))
-    for run in live:
+    for run in [r for r in live if review_view.owners(root, r)]:  # DLF-1.3: the rest is held by the operation
         state, ask = states[run["slug"]], run.get("waiting") or {}
         run.get("review_wait") and needs.append("%s: merge waiting on review; review.py record %s" % (run["slug"], run["slug"]))
         if line := bs.stalled_line(run, state, at, cfg, lb.worker_of(run, taken)):
@@ -186,7 +187,7 @@ def render(root=None, at=None, stamp=None):
                 run["slug"], graph.silent_for(run, at) // 60))
         elif state == "held":
             needs.append("%s is held with no worker; give it a session (sessions.py bind %s ID)" % (run["slug"], run["slug"]))
-    needs += replan.preflight_lines([auto.eta_seen(root, r) for r in live]) + notify.timer_lines(folder, bd.cadence_of(os.path.dirname(folder), cfg.get("cadence")))
+    needs += replan.preflight_lines([auto.eta_seen(root, r) for r in live if not r.get("one_review")]) + notify.timer_lines(folder, bd.cadence_of(os.path.dirname(folder), cfg.get("cadence")))
     stuck = board_lines.stuck(live, cfg.get("resume_on_limit") is True)
     needs += [" ".join(line.split()) for line in stuck if line.startswith("- ")]
     for hold in ready and (replan.plan_pause(cfg), replan.memory_hold(cfg)):
@@ -219,7 +220,7 @@ def render(root=None, at=None, stamp=None):
     for g in pod[1:]:
         for run in g["live"]:
             ask = run.get("waiting") or {}
-            if g["states"][run["slug"]] == "waiting":
+            if g["states"][run["slug"]] == "waiting" and review_view.owners(g["root"], run):
                 readonly.append(owned(g["name"] + "/", run)) if graph.foreign(run) else needs.append("%s/%s asks: %s; options: %s" % (
                     g["name"], run["slug"], lb.plain(ask.get("ask"), 160), quoted(ask.get("words") or ["go on"])))
     needs += ["%s: can't be read (%s); the other repos are shown" % item for item in broken]
@@ -235,6 +236,7 @@ def render(root=None, at=None, stamp=None):
     out[spot:spot] = grouped(blocks, at, {(n, i["slug"]): tags[keys(n, i["slug"])] for n, items in blocks for i in items if keys(n, i["slug"]) in tags}, folder)
     out += ["%d. %s" % (i, text) for i, text in enumerate(needs, 1)] or ["Nothing needs you"]
     out += readonly
+    out += review_view.held_section(pod, lb.plain, lambda g, r: bs.stalled_line(r, g["states"].get(r["slug"]), at, g["cfg"], lb.worker_of(r, g["taken"])))
     out += ["", "Coming up"] + ([operation] if operation else [])
     for run in live:
         if states[run["slug"]] == "done":
@@ -300,9 +302,15 @@ def missing(text, cwd=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--since", default="")
+    parser.add_argument("--owner", action="store_true", help="the operation session shows the owner this run: mark its decisions delivered")
     args = parser.parse_args()
     args.since and bs.timed(args.since, "--since %r")
+    args.owner and os.environ.get("LOOP_ROLE") == "worker" and sys.exit("REFUSED: only the operation session shows the owner a check-in (ONE_REVIEW_OWNER_FLAG)")
     lines = render(stamp=args.since or None)
+    import review_view  # after the line fitting: each revert command stands whole on its own line (DLF-1.3)
+    at = lines.index("Coming up") - 1 if "Coming up" in lines else len(lines)
+    lines[at:at] = review_view.decided([bs.git("rev-parse", "--show-toplevel")] + [path for _, path, _ in bd.followed()
+                                       if os.path.realpath(path) != os.path.realpath(bs.git("rev-parse", "--show-toplevel"))], args.owner)
     lines[1:1] = sl.load(bs.git("rev-parse", "--show-toplevel"))["banner"]
     print("\n".join(lines))
     try:  # an op-tokens.tsv row (proctree.op_append) for the quiet hook; never fail a check-in

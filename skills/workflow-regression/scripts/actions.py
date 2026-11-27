@@ -18,10 +18,17 @@ SHARDS = 16  # REG-4, REG-7
 ROW_DROP = ("GH_TOKEN", "GITHUB_TOKEN", "GITHUB_STEP_SUMMARY", "GITHUB_ENV", "GITHUB_OUTPUT", "GITHUB_PATH", "GITHUB_STATE",
             "REGRESSION_RESULTS", "REGRESSION_MAP", "RUNNER_TEMP", "SUITE_TIME_FILE",
             "LOOP_ROW_TIMES", "REGRESSION_SHARD", "REGRESSION_LEVELS", "REGRESSION_TARGET", "REGRESSION_CLEANUP")
+LANE_DROP = ("_LOOP_LANE_NOTE", "_LOOP_LANE_QUEUED", "_LOOP_LANE_STARTED")  # the lane runner's own handoff files
+APP_DROP = ("CLAUDE_CODE_HOST_SESSION_ID",)  # app-session names, never set on GitHub, so not mirrored in the workflow
+GIT_KEEP = ("GIT_TERMINAL_PROMPT", "GIT_EDITOR", "GIT_ASKPASS",  # set above, so no row's git waits
+            "GIT_CEILING_DIRECTORIES")  # a caller's limit; its GIT_CONFIG_ files and settings stay too; other GIT_ names go
+
+
+LANE_ONLY = ("LOOP_FLAKY_FILE", "GITHUB_EVENT_NAME")  # this run's own: no row inherits them
 
 
 def row_env():
-    return dict({k: v for k, v in os.environ.items() if k not in ROW_DROP}, LOOP_PRIVATE_NAMES=os.environ.get("LOOP_PRIVATE_NAMES") or os.devnull)
+    return dict({k: v for k, v in os.environ.items() if k not in ROW_DROP + LANE_DROP + APP_DROP + LANE_ONLY and (k in GIT_KEEP or k.startswith("GIT_CONFIG_") or not k.startswith("GIT_"))}, LOOP_PRIVATE_NAMES=os.environ.get("LOOP_PRIVATE_NAMES") or os.devnull)
 
 
 WORKFLOW = r"""# Written by workflow-regression. It reads .loop/regression.tsv and .loop/regression-known.tsv.
@@ -45,7 +52,7 @@ permissions:
   pull-requests: read
 concurrency:
   group: regression-${{ github.ref }}
-  cancel-in-progress: true  # GRD-7
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}  # GRD-7
 jobs:
   regression:
     runs-on: ubuntu-latest
@@ -70,7 +77,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REGRESSION_RESULTS: ${{ runner.temp }}/regression-results.tsv
           SUITE_TIME_FILE: ${{ runner.temp }}/suite-time.tsv
-          REGRESSION_TARGET: ${{ inputs.target }}
+          REGRESSION_TARGET: @TARGET@
           REGRESSION_CLEANUP: ${{ inputs.cleanup }}
           REGRESSION_LEVELS: "@LEVELS@"
           LOOP_PRIVATE_NAMES: /dev/null  # o675
@@ -89,15 +96,19 @@ jobs:
                   return []
               return [line.rstrip("\n").split("\t") for line in open(path) if line.strip() and not line.startswith("#")]
 @ROWTAIL@
+@L2TAIL@
           known = {row[0] for row in rows(".loop/regression-known.tsv")}
           TARGET = os.environ.get("REGRESSION_TARGET") or os.environ.get("REGRESSION_LEVELS") or "nightly"
-          if not re.fullmatch(r"land|nightly|[A-Za-z0-9_.-]+", TARGET) or TARGET not in ("land", "nightly") and \
+          if not re.fullmatch(r"land|nightly|L2|[A-Za-z0-9_.-]+", TARGET) or TARGET not in ("land", "nightly", "L2") and \
                   TARGET not in [row[0] for row in rows(".loop/regression.tsv")]:
-              print("REFUSED (BAD_TARGET): bad target %s: use land, nightly or a row id from regression.py list. Fix: rerun the "
+              print("REFUSED (BAD_TARGET): bad target %s: use land, nightly, L2 or a row id from regression.py list. Fix: rerun the "
                     "workflow with one of those" % json.dumps(TARGET), file=sys.stderr)
               sys.exit(1)
+          bad = l2_refuse(TARGET, os.environ.get("REGRESSION_CLEANUP"))
+          bad and sys.exit(print(bad, file=sys.stderr) or 1)
+          SKIPS = {r[0]: (r[1] if len(r) > 1 else "", r[2] if len(r) > 2 else "") for r in rows(".loop/regression-skips.tsv")}
           def wanted(row):
-              return row[0] == TARGET if TARGET not in ("land", "nightly") else row[1] in ("land", TARGET)
+              return row[0] == TARGET if TARGET not in ("land", "nightly", "L2") else row[1] in ("land", "nightly" if TARGET == "L2" else TARGET)
           def gh(*args, body=None):
               if args[0] != "api" and "--live" not in sys.argv[1:]:
                   print("WOULD gh " + " ".join(args)[:70])
@@ -150,6 +161,9 @@ jobs:
                   handle.write("%s\t%s\n" % (name, state))
           gh("label", "create", "regression", "--force", "--description", "A regression row is failing")
           gh("label", "create", "defect", "--description", "A test that guards it is failing")
+          if TARGET == "L2" and gh("label", "create", "l2-red", "--force", "--description", "A row failed in the full L2 run").returncode:
+              print("FAILED label l2-red: it could not be created (FILE_FAILED)")
+              gone()
           guards = {cells[1]: cells for cells in rows(os.environ.get("REGRESSION_MAP") or os.devnull) if len(cells) > 4}
           out = gh("api", "--paginate", "repos/{owner}/{repo}/issues?state=open&labels=regression&per_page=100", "--jq",
                    '.[] | select(.pull_request == null) | {number, state: "OPEN", body, labels}')
@@ -171,6 +185,7 @@ jobs:
               done = gh(*args, body=body)
               if done.returncode:
                   failed.append(what)
+                  gone()
                   halt.extend(["rate limit"] * ("rate limit" in done.stderr.lower()))
                   print("FAILED %s: %s (FILE_FAILED)" % (what, done.stderr.strip()[:160]))
               else:
@@ -220,7 +235,11 @@ jobs:
                       write("close duplicate #%d" % item["number"], "issue", "close", str(item["number"]), "--comment",
                             "Duplicate of #%d, kept for row %s." % (hit["number"], row[0]))
               state = "PASS" if code == 0 else "SKIPPED" if skipped or code == 77 else "KNOWN" if row[0] in known else "FAIL"
-              print(state, row[0])
+              reason = ""
+              if TARGET == "L2":
+                  state, note, reason = l2_state(row[0], code, said, skipped, known, SKIPS)
+                  note and open(os.environ.get("REGRESSION_RESULTS") or os.devnull, "a").write(note + "\n")
+              print(state, row[0], *["(%s)" % reason] * bool(reason))
               result(row[0], state)
               if code == 0:
                   if hit and hit["state"] == "OPEN":
@@ -231,9 +250,9 @@ jobs:
                           dupes[0] -= 1
                           write("close skipped #%d" % item["number"], "issue", "close", str(item["number"]), "--comment",
                                 "Closed: a skipped row files no issue.")
-              elif row[0] not in known and code != 77:
+              elif state == "FAIL":
                   red.append(row[0])
-                  text = shown(lambda c: run(c, ROW_SECONDS), row[2], code, said)
+                  text = shown(l2_again(run, ROW_SECONDS, JOB_SECONDS, start, code), row[2], code, said)
                   note = "#### FAIL %s\n```\n%s\n```" % (row[0], "\n".join(text.splitlines()[-20:]))
                   print(note)
                   with open(os.environ.get("GITHUB_STEP_SUMMARY") or os.devnull, "a") as handle:
@@ -246,9 +265,14 @@ jobs:
                   about = "- Feature: %s\n- Guards: %s\n- Checks: %s\n\n" % (cells[0] or "-", cells[3] or "-", cells[4] or "-")
                   body = "%s\nThe row `%s` %s.\n\n%s```\n%s\n```\n" % (mark, row[0], "fails", about,
                                                                  text)
+                  tag = ["--label", "l2-red"] * (TARGET == "L2")
                   if not hit:
                       make = ["issue", "create", "--title", "Regression: " + row[0], "--label", "regression", "--label", "defect"]
-                      made = gh(*make, *(["--label", label] if label else []), body=body)
+                      made = gh(*make, *(["--label", label] if label else []), *tag, body=body + "\nLabelled l2-red.\n" * bool(tag))
+                      if made.returncode and tag:
+                          print("FAILED label l2-red: %s (FILE_FAILED)" % made.stderr.strip()[:160])
+                          gone()
+                          made = gh(*make, *(["--label", label] if label else []), body=body)
                       if made.returncode and label and "label" in made.stderr.lower():
                           print("FAILED label %s: %s" % (label, made.stderr.strip()[:160]))
                           made = gh(*make, body=body)
@@ -268,8 +292,10 @@ jobs:
                           write("label #" + n, "issue", "edit", n, "--add-label", "defect")
                       if label and label not in names:
                           write("feature label #" + n, "issue", "edit", n, "--add-label", label)
+                      if TARGET == "L2" and "l2-red" not in names:
+                          write("l2 label #" + n, "issue", "edit", n, "--add-label", "l2-red")
                       write("comment #" + n, "issue", "comment", n, body="Still failing.")
-          if TARGET == "nightly" and not CLEANUP:
+          if TARGET in ("nightly", "L2") and not CLEANUP:
               took, sha = int(time.time() - start), subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
               with open(os.environ.get("SUITE_TIME_FILE") or os.devnull, "w") as handle:
                   handle.write("%s\tfull\t%d\t%s\t%d\n" % (sha, took, time.strftime("%Y-%m-%d", time.gmtime()), unrun[0]))
@@ -284,6 +310,7 @@ jobs:
               print("CLEANUP closed %d issues%s" % (filed[0], "; stopped: rate limit" * bool(halt)))
           if failed:
               print("FILED %d issue writes; FAILED %d: %s (FILE_FAILED)" % (filed[0], len(failed), ", ".join(failed)))
+          open(os.environ.get("REGRESSION_RESULTS") or os.devnull, "a").write("# end\n")
           sys.exit(1 if red or failed or CLEANUP and issues is None else 0)
           PY
       - name: Keep the full suite's time for the health job
@@ -308,43 +335,27 @@ jobs:
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-UNSAFE = ("${{", "@CRON@", "@ROWDROP@", "@TESTS@", "@SCHEDULE@", "@LEVELS@", "@BUDGET@", "@ROWTAIL@", "@MATRIX@", "@SHARDS@", "@SUMMARY@", "@ROUTINE@", "TESTS_PY_EOF")
+UNSAFE = ("${{", "@CRON@", "@ROWDROP@", "@TESTS@", "@SCHEDULE@", "@LEVELS@", "@TARGET@", "@BUDGET@", "@ROWTAIL@", "@L2TAIL@", "@L2@", "@MATRIX@", "@SHARDS@", "@SUMMARY@", "@ROUTINE@", "TESTS_PY_EOF")
 
 
-def render(cron, levels="nightly"):
-    with open(os.path.join(HERE, "tests.py")) as handle:
+def copied(name, mark=None):
+    with open(os.path.join(HERE, name)) as handle:
         source = handle.read()
     bad = [token for token in UNSAFE if token in source]
     if bad:
-        sys.exit("REFUSED: tests.py contains %s, which the workflow can't carry. Fix: reword that line" % bad[0])
-    body = "\n".join(("          " + line).rstrip() for line in source.rstrip("\n").split("\n"))
-    with open(os.path.join(HERE, "runs.py")) as handle:
-        tail = "\n".join(("          " + x).rstrip() for x in handle.read().split("# rowtail:")[1].split("\n")[1:-1])
+        sys.exit("REFUSED: %s contains %s, which the workflow can't carry. Fix: reword that line" % (name, bad[0]))
+    lines = source.split(mark)[1].split("\n")[1:-1] if mark else source.rstrip("\n").split("\n")
+    return "\n".join(("          " + x).rstrip() for x in lines)
+
+
+def render(cron, levels="nightly"):
+    body, l2, tail, l2tail = copied("tests.py"), copied("l2.py"), copied("runs.py", "# rowtail:"), copied("l2.py", "# l2tail:")
     schedule = "" if cron == "off" else '  schedule:\n    - cron: "%s"\n' % cron
-    return WORKFLOW.replace("@ROUTINE@", ROUTINE_STEP).replace("@SUMMARY@", SUMMARY_JOB).replace("@SCHEDULE@", schedule).replace("@CRON@", cron).replace("@LEVELS@", levels).replace("@ROWDROP@", repr(ROW_DROP)) \
+    return WORKFLOW.replace("@SUMMARY@", SUMMARY_JOB).replace("@ROUTINE@", ROUTINE_STEP).replace("@SCHEDULE@", schedule).replace("@CRON@", cron).replace("@TARGET@", "${{ inputs.target || (inputs.cleanup && 'nightly' || 'L2') }}" if levels == "nightly" else "${{ inputs.target }}").replace("@LEVELS@", levels).replace("@ROWDROP@", repr(ROW_DROP)) \
         .replace("@BUDGET@", str(BUDGET_MINUTES)).replace("@SHARDS@", str(SHARDS)).replace("@MATRIX@", str(list(range(SHARDS)))) \
-        .replace("@TESTS@", body).replace("@ROWTAIL@", tail)
+        .replace("@TESTS@", body).replace("@ROWTAIL@", tail).replace("@L2TAIL@", l2tail).replace("@L2@", l2)
 
 
 def write(root, default):
-    try:
-        with open(os.path.join(root, ".loop", "config.json")) as handle:
-            cfg = json.load(handle)
-    except (OSError, ValueError):
-        cfg = {}
-    cfg = cfg if isinstance(cfg, dict) else {}
-    cron, levels = cfg.get("regression_cron") or default, cfg.get("ci_levels") or "nightly"
-    if levels not in ("land", "nightly"):
-        sys.exit("REFUSED: ci_levels is %r, not land or nightly. Fix: edit .loop/config.json." % (levels,))
-    if cron != "off" and not (isinstance(cron, str) and re.fullmatch(r"[0-9A-Za-z*/,\- ]+", cron) and len(cron.split()) == 5):
-        sys.exit("REFUSED: regression_cron is not five cron fields or off. Fix: edit .loop/config.json.")
-    path = os.path.join(root, ".github", "workflows", "regression.yml")
-    if os.path.exists(path):
-        with open(path) as handle:
-            if not handle.read().startswith("# Written by workflow-regression"):
-                sys.exit("REFUSED: %s exists, and this tool didn't write it. Fix: merge by hand." % path)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w") as handle:
-        handle.write(render(cron, levels))
-    print("WROTE " + path)
-    return 0
+    import actions_write
+    return actions_write.write(root, default, render)

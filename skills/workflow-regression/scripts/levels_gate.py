@@ -12,6 +12,9 @@ from levels import (CODE, MARKER, RANK, RECORD, RISKS, SHOWN, TABLE, Problem, St
                     text_of, validate)
 
 
+START_ANSWER = re.compile(r'"(\\[ntr]|\s)*(approve|reject)(\\[ntr]|\s)+start\b', re.I)  # DLF-1.3: no other permission (E15, M1)
+
+
 def common_dir(root):
     found = git(root, "rev-parse", "--git-common-dir")
     return os.path.abspath(os.path.join(root, found.strip())) if found else None
@@ -31,7 +34,7 @@ def ledger(root):
         return None
     except (OSError, UnicodeError):
         return {}  # a ledger that can't be read covers nothing
-    return {r[0]: r[4].split(",") for r in rows if len(r) >= 5}
+    return {r[0]: r[4].split(",") for r in rows if len(r) >= 5 and not START_ANSWER.match(r[3])}
 
 
 def covers_subject(root, rows, record, subject):
