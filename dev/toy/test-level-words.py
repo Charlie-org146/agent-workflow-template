@@ -510,7 +510,7 @@ def runbook():
     how = open(os.path.join(root, "docs", "wiki", "How-to-use-Regression.md"), encoding="utf-8").read()
     table = how.split("**Old words and the new levels**", 1)
     check(len(table) == 2, "How-to-use-Regression.md has the block 'Old words and the new levels'")
-    rows = [l for l in (table[1].split("\n#", 1)[0] if len(table) == 2 else "").splitlines() if l.startswith("| `")]
+    rows = [l for l in (table[1].split("**Run targets**", 1)[0].split("\n#", 1)[0] if len(table) == 2 else "").splitlines() if l.startswith("| `")]
     want = (("regression.py add --level", ("land", "nightly", "draft", "covered"), "--test-level"),
             ("regression.py run", ("land", "nightly"), "L1"),
             ("goal_levels", ("land", "nightly"), "L2"),
@@ -807,7 +807,8 @@ def targets():
     #   as for the old words; fails_when=a level target skips the memory wait, or a table line is dropped or says something the tool does not do
     import re
     from lvl_fixture import Repo, entry, row
-    repo = Repo([row("a")], [entry("a")], ["label\tsecurity\tsecurity\tfixture label"])
+    from lvl_fixture import sha
+    repo = Repo([row("a")], [entry("a", level="L0", seconds="1.0", cmdhash=sha("true"), reason="time:1.0")], ["label\tsecurity\tsecurity\tfixture label"])
     repo.commit()
     for target in ("land", "nightly", "L0", "L1", "L2"):
         done, said = repo.run("run", target, LOOP_FREE_GB="0.5", LOOP_MEMORY_WAIT_SECONDS="1")
@@ -829,7 +830,8 @@ def targets():
             ("review.py", ("run nightly", "major gate", "covers")),
             ("goal lane", ("goal_levels", "L0 by default", "--reuse --tier goal", "cover", "regression-pr.yml")))
     for name, tokens in want:
-        got = [l for l in lines if name in l.split("|")[1]]
+        cell = lambda l: l.split("|")[1].replace("`", "").strip()
+        got = [l for l in lines if cell(l) == name or cell(l).startswith(name + " (")]
         check(len(got) == 1 and all(t in got[0] for t in tokens), "the Run targets table has one line for %s with %s" % (name, ", ".join(tokens)), got)
 
 

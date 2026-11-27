@@ -300,9 +300,10 @@ def cmd_run(args):
         mine = split(todo, {k: v[0] for k, v in seen.items() if v[0] > 0}, n)
         print("SPLIT %d/%d: %d of %d rows" % (i, n, len(mine[i]), len(todo)))
         todo = [key for key in todo if key in mine[i]]
-    if todo and (args.target in ("land", "nightly") or ids):
+    heavy = args.target in ("land", "nightly", "L0", "L1", "L2") or ids
+    if todo and heavy:
         lanes_cli.wait_memory(root)
-    if todo and (args.target in ("land", "nightly") or ids) and (why or not args.reuse or ids):
+    if todo and heavy and (why or not args.reuse or ids):
         slot = slots.acquire(root, os.environ.get("_LOOP_LANE_LABEL") or os.path.basename(root) + " by hand", head, unclean)
     else:
         slots.started()
