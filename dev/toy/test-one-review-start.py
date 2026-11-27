@@ -680,6 +680,16 @@ ledger_tool.stop(runs, "page", "t", "t")
 check(unapproved() != [], "a permanent stop voids the approval for good")
 os.chdir(root)
 
+# a one-review goal's reviews keep full depth, however small and wherever it was started
+import fit  # noqa: E402
+small = {"size": {"small": True, "why": "small"}}
+check(fit.depth_for("condensed", small)[0] == "condensed" and fit.depth_for("condensed", dict(small, one_review={"at": "t"}))[0] == "full"
+      and fit.depth_for("condensed", dict(small, one_review={"at": "t"}, depth_override={"depth": "condensed", "why": "o"}))[0] == "condensed",
+      "a one-review goal keeps full review depth unless the owner overrode it")
+settings = open(os.path.join(root, "skills", "workflow-setup", "scripts", "settings.py"), encoding="utf-8").read()
+check('("one_review", REPO, False,' in settings and json.load(open(os.path.join(root, ".loop", "config.json"))).get("one_review") is True,
+      "the setting is off in the package and on in this repository")
+
 os.environ.get("TOY_SHOW") and print(open(os.path.join(home, "last.txt")).read())
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
 sys.exit(1 if failed else 0)

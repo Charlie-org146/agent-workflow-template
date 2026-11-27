@@ -83,6 +83,8 @@ def depth_for(setting, seen):
     over = seen.get("depth_override")
     if isinstance(over, dict) and over.get("depth") in ("full", "condensed"):
         return over["depth"], "owner override: %s" % (over.get("why") or "set per goal")
+    if seen.get("one_review"):
+        return "full", "a one-review goal keeps full depth"
     if setting != "condensed":
         return "full", "review_depth full holds every goal to full"
     size = seen.get("size") if isinstance(seen.get("size"), dict) else None
