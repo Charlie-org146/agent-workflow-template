@@ -336,7 +336,6 @@ Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans und
 ### Still owed in the KEEP set (as of 20:36)
 
 - E9: release holds shared across machines (today they are on this machine only).
-- RT16, needed for done line 4: a revert after a merge opens the revert goal itself (today the output says to queue it).
 - Full auto's fixed reply and its own finding for a safety question (today such a question is held by the operation, which can open a finding with goal.py decide); board and live-board wording is deferred.
 - The one_review setting (settings.py, START.md, this repo's config), full-depth review and the ETA at the monitored start.
 - The approved page wording with README, Principles and Home regenerated; five rows; command lines; the hand list of owner waits.
@@ -349,3 +348,5 @@ Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans und
 ### Plan core, fifth part: operation holds
 
 - A one-review goal that waits, is stopped, failed, silent or held is listed under "Held by the operation" in the check-in, not under Needs you, and is not counted as waiting on the owner. No owner mail is sent for its stops or its ETA. goal.py answer is a listed decision. A marked goal asks no pre-flight questions. Every such wait is a waiting status, so goal.py wait, a worker's waiting report, repeated refusals, a bad flow marker and the merge round cap are covered by this one place; the hand list for the pull request still has to confirm it.
+
+- RT16 built: goal.py revert after a merge queues the removal goal (undo-SLUG-N) in .loop/queue.md of the folder it runs in; when that goal is frozen with the setting on, the revert command is its start answer, for the reverted files and safety classes only.

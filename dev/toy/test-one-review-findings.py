@@ -386,6 +386,28 @@ check("ANSWERED w1" in got and last and last[-1]["stop"] == "hold" and "pick the
 import start_review  # noqa: E402
 check(start_review.mark(runs, "w3", "t").get("preflight") == {"items": []}, "a marked goal asks no pre-flight questions")
 
+# RT16: after a merge the revert command itself queues the removal goal, and is that goal's start review
+sh("switch", "-q", "main")
+sh("reset", "-q", "--hard")
+record("z", branch="loop/z", status="done", release="merged")
+dlf.settle(tmp, runs, "z", "test", "t1", "a test failed", "w", "update the test",
+           diff="diff --git a/dev/toy/test-a.sh b/dev/toy/test-a.sh\n--- a/dev/toy/test-a.sh\n+++ b/dev/toy/test-a.sh\n@@ -1 +1 @@\n-check two\n")
+shipped = [e for e in decisions.entries(runs, "z") if e["kind"] == "decision"][0]["n"]
+os.makedirs(os.path.join(home, "f"), exist_ok=True)
+flow = os.path.join(home, "f", "flow.json")
+open(flow, "w").write(json.dumps({"steps": {x: "x" for x in ("idea", "plan", "review", "qa", "ship")}}))
+os.environ["LOOP_FLOW"] = flow
+said = tool("operation", "revert", "z", str(shipped))
+queue = open(os.path.join(tmp, ".loop", "queue.md")).read() if os.path.exists(os.path.join(tmp, ".loop", "queue.md")) else ""
+new_slug = "undo-z-%d" % shipped
+check("QUEUED %s" % new_slug in said and "- slug: %s | touches: dev/toy/test-a.sh" % new_slug in queue and "done: " in queue,
+      "the revert queues the removal goal: %s" % said.strip()[-200:])
+made = start_review.mark(runs, new_slug, "t")
+check(made.get("start_answer", {}).get("verdict") == "approve" and made["start_answer"]["record"] == "revert:z:%d" % shipped
+      and [(i["class"], i["files"], i["approved"]) for i in made["start_answer"]["items"]] == [("a test loosened or deleted", ["dev/toy/test-a.sh"], True)]
+      and start_review.unanswered(dict(made, slug=new_slug)) == "", "the owner's revert command is its start review, for those files and classes only: %s" % made.get("start_answer"))
+check("start_answer" not in start_review.mark(runs, "undo-z-999", "t"), "a goal no revert queued gets no such answer")
+
 import board_log  # noqa: E402
 import board_model  # noqa: E402
 put(".loop/goals/h.plan.md", "plan\n")

@@ -3,6 +3,7 @@
 only stops work: it undoes no safety fix, brings back no dropped part and reopens no safety item. A decision that let named
 files go on is reverted by taking them out; any other stops the goal. After the merge nothing is taken back: the revert is
 filed, and named files hold every release until their removal is in the commit released. Standard library only."""
+import argparse
 import json
 import os
 import shlex
@@ -46,18 +47,52 @@ def merged(top, state, base):
     return bool(state.get("pr_head")) and outcomes.git(top, "merge-base", "--is-ancestor", state["pr_head"], base)[0] == 0
 
 
+def removal_name(slug, number):
+    return ("undo-%s" % slug)[:44].rstrip("-") + "-%d" % number
+
+
+def queue_removal(g, slug, number):
+    """RT16: the removal goal is queued by the revert itself; its start review is that revert command."""
+    held = next((r for r in holds(g.root()) if r["slug"] == slug and r["decision"] == number), None)
+    if not held:
+        return
+    name, files = held["removal_goal"], held["files"]
+    try:
+        g.fit.cmd_queue(g, argparse.Namespace(slug=name, goal="Take out what decision %d of %s let into %s" % (number, slug, ", ".join(files)),
+                                              done=["%s no longer carries the change decision %d of %s let in" % (", ".join(files), number, slug)],
+                                              touches=",".join(files), depends_on="", release=""))
+    except SystemExit as stop:
+        print("NOT QUEUED %s: %s. Queue it by hand under that name; the release hold stands" % (name, stop.code))
+
+
+def start_by_revert(runs, slug):
+    """The start answer of a removal goal a revert queued: approved for the held files and their classes, nothing else."""
+    for row in hold_rows_at(os.path.join(runs, "..", "release-holds.jsonl")):
+        if row["op"] == "hold" and row.get("removal_goal") == slug:
+            items = [{"n": n, "class": kind, "action": "take the reverted change out", "files": row["files"], "recommend": "approve",
+                      "approvable": True, "approved": True, "by": "revert"} for n, kind in enumerate(row.get("classes") or [], 1)]
+            record = "revert:%s:%d" % (row["slug"], row["decision"])
+            return {"record": record, "at": row["at"], "verdict": "approve", "text": "goal.py revert %s %d" % (row["slug"], row["decision"]),
+                    "items": items}
+    return None
+
+
 def holds_file(top):
     return os.path.join(outcomes.top_loop(top), "release-holds.jsonl")
 
 
-def hold_rows(top):
+def hold_rows_at(path):
     try:
-        with open(holds_file(top), encoding="utf-8") as handle:
+        with open(path, encoding="utf-8") as handle:
             return [json.loads(line) for line in handle if line.strip()]
     except FileNotFoundError:
         return []
     except (OSError, ValueError):
-        refuse("the release holds can't be read (%s). Fix: repair the file" % holds_file(top), "ONE_REVIEW_HOLD")
+        refuse("the release holds can't be read (%s). Fix: repair the file" % path, "ONE_REVIEW_HOLD")
+
+
+def hold_rows(top):
+    return hold_rows_at(holds_file(top))
 
 
 def add_hold(top, row):
@@ -117,11 +152,12 @@ def revert(top, runs, state, number, by, base, met="", cannot="", save=None):
 
     if not done and merged(top, state, base):
         decisions.add(runs, slug, "revert", decision=number, effect="after-merge", files=entry.get("files") or [], by=by)
-        entry.get("files") and add_hold(top, {"op": "hold", "slug": slug, "decision": number, "files": entry["files"]})
+        entry.get("files") and add_hold(top, {"op": "hold", "slug": slug, "decision": number, "files": entry["files"],
+                                              "classes": entry.get("safety") or [], "removal_goal": removal_name(slug, number)})
         file("%s #%d reverted after its merge: %s" % (slug, number, ", ".join(entry.get("files") or []) or "no named files"),
              "a removal goal for the reverted part")
         return print("REVERTED %s #%d after its merge: what merged or shipped is not taken back.%s" % (slug, number, " Releases (the "
-                     "manual cut, the automatic release and promote) hold until the removal of %s is in: queue that goal." %
+                     "manual cut, the automatic release and promote) hold until the removal of %s is in." %
                      ", ".join(entry["files"]) if entry.get("files") else " It is recorded only."))
     if cannot or kind == "stop":
         done or decisions.add(runs, slug, "revert", decision=number, effect="stop", files=[], by=by)
@@ -139,7 +175,9 @@ def revert(top, runs, state, number, by, base, met="", cannot="", save=None):
 
 def cmd_revert(g, args):
     g.guards.operation_only(g, "revert a decision of", args.slug)
+    before = len(holds(g.root()))
     revert(g.root(), g.state_dir(), g.load(args.slug), args.number, "operation", "origin/" + g.config()["base"], args.met, args.cannot, save=g.save)
+    len(holds(g.root())) > before and queue_removal(g, args.slug, args.number)
     return 0
 
 

@@ -138,7 +138,12 @@ def marked_text(text):
 def mark(runs, slug, by):
     """The record fields of a newly marked goal; its ledger is made here, once."""
     os.path.exists(decisions.ledger(runs, slug)) or decisions.create(runs, slug, by=by)
-    return {"one_review": {"at": decisions.stamp(), "by": by}, "preflight": {"items": []}}  # a marked goal asks no pre-flight
+    made = {"one_review": {"at": decisions.stamp(), "by": by}, "preflight": {"items": []}}  # a marked goal asks no pre-flight
+    if os.path.exists(os.path.join(runs, "..", "release-holds.jsonl")):
+        import reverts  # a removal goal a revert queued: that command was its start review (RT16)
+        answer = reverts.start_by_revert(runs, slug)
+        answer and made.update(start_answer=answer)
+    return made
 
 
 def committed(top, ref, slug):
