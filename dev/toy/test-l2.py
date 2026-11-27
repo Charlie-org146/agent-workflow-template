@@ -406,8 +406,11 @@ def levelrun():
     rows = [row(k, level=old, command=cmd(k)) for k, old, lv, rk in spec]
     ents = [entry(k, old=old, level=lv, risk=rk, covers="l1row" if old == "covered" else "", seconds="1.0" if lv == "L0" else "",
                   cmdhash=sha(cmd(k)) if lv == "L0" else "", reason="time:1.0" if lv == "L0" else ("risk:" + rk if rk != "none" else "default")) for k, old, lv, rk in spec]
-    for mark in (True, False):
+    for mark, nine in ((True, False), (True, True), (False, False)):
         repo = Repo(rows, ents, risks)
+        if nine:  # a record written by this goal's tools: a ninth cell, the state; level and risk stay cells 3 and 4
+            text = repo.read(".loop/regression-relevel.tsv")
+            repo.write(".loop/regression-relevel.tsv", "".join(l + ("\tdraft" if l.startswith("drf\t") else "\t") + "\n" for l in text.splitlines()))
         mark and repo.write(".github/workflows/regression-pr.yml", "# Written by workflow-regression\n")
         repo.write(".loop/config.json", "{}")
         repo.commit()
@@ -423,13 +426,33 @@ def levelrun():
             code, out, results, calls = step(repo.path, level)
             ran = sorted(open(os.path.join(repo.path, "ran.log")).read().split())
             if mark:
-                check(code == 0 and ran == local and (level == "L2" or local), "armed: the runner's %s rows equal regression.py run %s: %s" % (level, level, local), (code, ran, local, out[-300:]))
+                check(code == 0 and ran == local and (level == "L2" or local), "armed, %s-cell record: the runner's %s rows equal regression.py run %s: %s" % ("nine" if nine else "eight", level, level, local), (code, ran, local, out[-300:]))
             elif level == "L0":
                 check(code != 0 and "BAD_TARGET" in out and not ran, "unarmed: the runner refuses L0 as it did before", (code, out[-300:]))
             elif level == "L1":
                 check(code == 0 and ran == ["L1"], "unarmed: L1 is only the row called L1, as it was before", (code, ran, out[-300:]))
         mark and check(sorted(open(os.path.join(repo.path, "ran.log")).read().split()) != [], "control: the L2 run ran rows")
         repo.close()
+    # a row with no record entry cannot be in a valid table (every run refuses LEVELS_NO_ENTRY), so it is compared as functions: l2.level_pick against
+    # completion.at_level on one record that lacks the row
+    scripts = os.path.join(root, "skills", "workflow-regression", "scripts")
+    sys.path.insert(0, scripts)
+    import completion, l2
+    table = [["noent", "land"], ["recd", "land"], ["sec", "nightly"]]
+    record = {"recd": ("L2", "none"), "sec": ("L2", "security")}
+    cwd = os.getcwd()
+    folder = tempfile.mkdtemp(prefix="test-l2-fn.")
+    os.makedirs(os.path.join(folder, ".loop"))
+    open(os.path.join(folder, ".loop", "regression-relevel.tsv"), "w").write("".join("\t".join([k, "x", lv, rk, "", "", "", "default", ""]) + "\n" for k, (lv, rk) in record.items()))
+    os.chdir(folder)
+    try:
+        for level in ("L0", "L1"):
+            l2.level_pick.__defaults__[0].clear()
+            want = sorted(r["id"] for r in completion.at_level([{"id": k, "level": lv} for k, lv in table], level, record))
+            got = sorted(r[0] for r in table if l2.level_pick(level, r))
+            check(got == want, "%s: l2.level_pick equals completion.at_level on a record with no entry for one row: %s" % (level, want), (got, want))
+    finally:
+        os.chdir(cwd)
     repo = Repo(rows, ents, risks)
     repo.write(".github/workflows/regression-pr.yml", "# Written by workflow-regression\n")
     repo.write(".loop/config.json", "{}")

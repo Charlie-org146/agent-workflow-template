@@ -50,6 +50,36 @@ def not_run(table):
     """Name each draft row of the table: a draft is never run, whatever the target."""
     for row in table:
         row[1:2] == ["draft"] and print("not run: draft " + row[0])
+
+def armed(table):
+    """The table holds lvl-armed and regression-pr.yml is this tool's: only then are L0 and L1 targets (completion.armed)."""
+    try:
+        with open(".github/workflows/regression-pr.yml", encoding="utf-8") as flow:
+            return any(row[0] == "lvl-armed" for row in table) and flow.readline().startswith("# Written by workflow-regression")
+    except OSError:
+        return False
+
+
+def level_names(table):
+    """The level targets: land, nightly and L2 as always; L0 and L1 too once the table is armed."""
+    return ("land", "nightly", "L2") + (("L0", "L1") if armed(table) else ())
+
+
+def level_pick(target, row, record=[]):
+    """Does `row` run for the target? land, nightly and L2 as they always did; for L0 or L1 completion.at_level's rule from the committed levels record: L0 is the rows
+    recorded L0; L1 is L0 and L1 and every security or private row; no entry is L1; drafts and covered rows never run."""
+    if target in ("land", "nightly", "L2"):
+        return row[1] in ("land", "nightly" if target == "L2" else target)
+    if row[1] in ("draft", "covered"):
+        return False
+    if not record:
+        try:
+            with open(".loop/regression-relevel.tsv", encoding="utf-8") as handle:
+                record.append({c[0]: (c[2], c[3]) for c in (line.rstrip("\n").split("\t") for line in handle if line.strip() and line[0] != "#") if len(c) > 3})
+        except OSError:
+            sys.exit("REFUSED (NO_RECORD): .loop/regression-relevel.tsv is not in the checkout, so no L0 or L1 row can be picked. Fix: commit the levels record")
+    level, risk = record[0].get(row[0], ("L1", ""))
+    return level in (("L0",) if target == "L0" else ("L0", "L1")) or (target == "L1" and risk in ("security", "private"))
 # l2tail:end
 
 
