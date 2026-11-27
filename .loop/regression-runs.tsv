@@ -428,6 +428,9 @@ operate-all	PASS	2026-11-25
 operate-toy-no-check	PASS	2026-11-25	
 operate-wait-99	PASS	2026-11-25	
 ops-findings-filed	PASS	2026-11-19	
+orv-checkin-revert	PASS	2026-11-27	
+orv-no-owner-wait	PASS	2026-11-27	
+orv-safe-option	PASS	2026-11-27	
 package-caps-held	PASS	2026-11-25	
 package-gate-controls	PASS	2026-11-25	
 package-gate-head	PASS	2026-11-25	
