@@ -8,7 +8,6 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DELIVERY = os.path.join(HERE, "..", "..", "workflow-delivery", "scripts")
-DAILY = 20  # check-ins per 24 hours at most (they take no budget slot, so they get their own cap)
 
 
 def outgoing_refusal(units, strict=True):
@@ -32,14 +31,13 @@ def checkin_gate(state, lines, now, every):
     key = "|".join(sorted(lines))
     if last and last.get("lines") == key:
         return "same"
-    if last and (now - last.get("at", 0) < every * 60 or len([t for t in last.get("sent", []) if now - t < 86400]) >= DAILY):
-        return "early"  # too soon, or already DAILY check-ins in the last 24 hours
+    if last and now - last.get("at", 0) < every * 60:
+        return "early"
     return "send"
 
 
 def checkin_sent(state, lines, now):
-    old = [t for t in (state.get("checkin") or {}).get("sent", []) if now - t < 86400]
-    state["checkin"] = {"lines": "|".join(sorted(lines)), "at": now, "sent": old + [now]}
+    state["checkin"] = {"lines": "|".join(sorted(lines)), "at": now}
 
 
 
