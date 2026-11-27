@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/completion.py
 # reads: skills/workflow-regression/scripts/tiers.py skills/workflow-regression/scripts/runs.py dev/toy/lvl_fixture.py
-# reads: skills/workflow-delivery/scripts/cover.py
+# reads: skills/workflow-delivery/scripts/cover.py .github/workflows/regression-pr.yml
 """v110-lvl-l1: what a goal-tier run picks on an armed table (lines 1 and 4), and a security row that flips (line 5).
-usage: test-l1.py [select|cover|flaky]
+usage: test-l1.py [select|cover|pin|flaky]
 
 Every repository here is a temporary one with its own HOME and a stand-in gh; nothing reads the live loop records."""
 import json
@@ -172,6 +172,48 @@ def cover_line():
     repo.close()
 
 
+def pin():
+    """The cover's pin: a workflow on the base that differs from the reviewed one in any way turns the cover off."""
+    sys.path.insert(0, DELIVERY)
+    import cover
+    with open(os.path.join(os.path.dirname(REG), "..", "..", FLOW), newline="") as handle:
+        reviewed = handle.read()
+    check(cover.pinned(reviewed), "control: the committed pull request workflow matches the pin")
+    edits = (("a comment added", reviewed + "# one more line\n"),
+             ("a changed shard budget", reviewed.replace("B=866", "B=867")),
+             ("a step added to the affected job", reviewed.replace('      - run: test "${{ needs.shard.result }}" = success',
+                                                                  '      - run: echo more\n      - run: test "${{ needs.shard.result }}" = success')))
+    for what, changed in edits:
+        check(changed != reviewed and not cover.pinned(changed), "the cover refuses a workflow with %s" % what)
+    real, before, saved = cover.sh, os.getcwd(), dict(os.environ)
+
+    def local_remote(argv, cwd=None, env=None):
+        if argv[:3] == ["git", "remote", "get-url"]:
+            return 0, "https://github.com/o/r.git"
+        return (0, "") if argv[:2] == ["git", "fetch"] else real(argv, cwd, env)
+
+    codes = []
+    try:
+        cover.sh = local_remote
+        for text in (reviewed, edits[0][1]):
+            repo = Repo(risks=None)
+            repo.write(FLOW, text)
+            repo.commit()
+            repo.git("update-ref", "refs/remotes/origin/main", "main")
+            os.chdir(repo.path)
+            os.environ.update(repo.env)
+            codes.append(cover.facts(repo.path, {"base": "main", "regression_runs": "actions"})[0])
+            os.chdir(before)
+            repo.close()
+    finally:
+        cover.sh = real
+        os.chdir(before)
+        os.environ.clear()
+        os.environ.update(saved)
+    check(codes[1:] == ["WF"], "the cover is refused (WF) when the base's workflow differs from the pin", codes)
+    check(codes[:1] not in (["WF"], [""]), "control: the reviewed workflow gets past the pin to the next check", codes)
+
+
 # a stand-in gh that keeps issues in a file: label create, issue list/create/comment, api comments
 ISSUES = """#!/usr/bin/env python3
 import json, os, sys
@@ -292,6 +334,6 @@ def workflow_file():
 
 
 if __name__ == "__main__":
-    for name in sys.argv[1:] or ["select", "cover", "flaky"]:
-        {"select": select, "cover": cover_line, "flaky": flaky}[name]()
+    for name in sys.argv[1:] or ["select", "cover", "pin", "flaky"]:
+        {"select": select, "cover": cover_line, "pin": pin, "flaky": flaky}[name]()
     sys.exit(done())
