@@ -32,8 +32,9 @@ caller_names=$(python3 -c 'import os, sys; sys.path.insert(0, sys.argv[1]); impo
 export HOME="$T/home" LOOP_BOARD_HEALTH=green; mkdir -p "$HOME"
 export USERPROFILE="$HOME"
 fails=0; live_skip=""; home_skip=""
-ok() { echo "PASS: $1"; }
-bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
+ran=0; FAKE_CHECKS=22  # the checks the fake part makes: any other count means one did not run, or this number is out of date
+ok() { ran=$((ran + 1)); echo "PASS: $1"; }
+bad() { ran=$((ran + 1)); echo "FAIL: $1"; fails=$((fails + 1)); }
 check() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 S="$here/skills"
 G="python3 $S/workflow-delivery/scripts/goal.py"; SS="python3 $S/workflow-monitoring/scripts/sessions.py"
@@ -112,7 +113,8 @@ as_codex() {
 }
 
 # A stand-in script at $1 whose body is the rest.
-. "$here/dev/toy/codex-controls.sh"  # standin() and controls(): each rule of the live part, shown on a stand-in
+# standin() and controls(): each rule of the live part, shown on a stand-in
+. "$here/dev/toy/codex-controls.sh" || { echo "FAIL: the stand-in controls (dev/toy/codex-controls.sh) could not be loaded"; exit 1; }
 
 # The live part with the codex at $1. A probe past its limit is CODEX-E03; the other reasons it can't run are skips.
 live_part() {
@@ -198,8 +200,11 @@ if want skip; then
 fi
 
 if want fake; then
+  before=$ran
   as_codex fake "$here/dev/toy/fakecodex"; verify fake "$T/fake/repo"
   controls
+  counted=$((ran - before))
+  [ $counted = $FAKE_CHECKS ] || bad "fake: $counted checks ran, expected $FAKE_CHECKS"
 fi
 
 if want live; then
