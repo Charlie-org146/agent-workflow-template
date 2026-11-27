@@ -368,27 +368,41 @@ def check(state, step, text):
         return no("ship refused: added checks lack evidence: " + ", ".join(unmet(state["sized"])), "ADDED_UNMET")
 
 
+def start(state, step):
+    """(row, forms, passes) a plan step starts from before it is sized (fit.start_row); empty once sized, overridden, one_review or off."""
+    import fit
+    try:
+        return fit.start_row(state, step, runs(), base_cfg()[1], read_table()[0]) if on() else ("", "", 0)
+    except (Refusal, KeyError, TypeError):
+        return "", "", 0
+
+
 def prompted(fn):
     def wrapped(step, state=None, runs=None):
         text = fn(step, state, runs)
         if state is None or not on():
             return text
         doc = open(os.path.join(HERE, os.pardir, "references", "commands.md"), newline="").read().replace("\r\n", "\n")
+        import fit
+        row, words, _ = start(state, step)
 
         def part(name):
             found = re.search(r"^## sizing %s\n(.*?)(?=^## |\Z)" % name, doc, re.M | re.S)
-            return found.group(1).strip().format(path=os.path.join(HERE, "sizing.py"), slug=state["slug"], step=step) if found else ""
+            return found.group(1).strip().format(path=os.path.join(HERE, "sizing.py"), slug=state["slug"], step=step, row=row, forms=words,
+                                                 reads=fit.plan_reads(base_cfg()[1])) if found else ""
         d = depth(state, step)
-        return "\n".join(x for x in (part("depth " + d) if d else text, part("plan" if step == "plan" else "check") if step in ("plan", "review", "qa", "ship") else "") if x)
+        lead = part("start") if row and d == "condensed" else part("depth " + d) if d else text
+        return "\n".join(x for x in (lead, part("plan" if step == "plan" else "check") if step in ("plan", "review", "qa", "ship") else "",
+                                     part("rounds") if step == "plan" else "") if x)
     return wrapped
 
 
 def depth(state, step):
     import fit
-    if fit.view(state, runs()).get("depth_override"):
+    if fit.overridden(fit.view(state, runs())):
         return ""
-    got = (state.get("sized") or {}).get("checks", {}).get(DEPTH_AT.get(step, ""))
-    return ("full" if got["passes"] > 1 else "condensed") if got else ""
+    got = (state.get("sized") or {}).get("checks", {}).get(DEPTH_AT.get(step, "")) or {"passes": start(state, step)[2]}
+    return ("full" if got["passes"] > 1 else "condensed") if got["passes"] else ""
 
 
 def lite(c, v):
