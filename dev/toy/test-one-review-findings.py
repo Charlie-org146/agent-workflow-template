@@ -251,7 +251,7 @@ dlf.settle(tmp, runs, "k", "choice", "c1", "pick the shorter name", "w", "take i
 
 def checkin(*flags):
     got = subprocess.run([sys.executable, os.path.join(root, "skills", "workflow-monitoring", "scripts", "checkin.py")] + list(flags),
-                         capture_output=True, text=True, cwd=tmp, env=dict(os.environ))
+                         capture_output=True, text=True, cwd=tmp, env={k: v for k, v in os.environ.items() if k != "LOOP_ROLE"})  # --owner is the operation's command
     return got.stdout + got.stderr
 
 
