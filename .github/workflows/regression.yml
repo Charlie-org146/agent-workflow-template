@@ -507,7 +507,25 @@ jobs:
               """The refusal line for a target and cleanup that L2 does not take, else an empty string."""
               if target == "L2" and cleanup == "true":
                   return "REFUSED (L2_CLEANUP_EXCLUSIVE): cleanup runs no row and L2 runs every row. Fix: rerun with cleanup off, or with target nightly"
-              return ""
+              return covered_by(target)
+
+
+          def covered_by(target):
+              """A covered row asked for by its id is refused: it never runs, so it never makes a PASS of its own (R2). Fail closed: once the table
+              says the row is covered, an unreadable levels record still refuses."""
+              try:
+                  with open(".loop/regression.tsv", encoding="utf-8") as table:
+                      kind = {line.split("\t")[0]: line.split("\t")[1:2] for line in table if line.strip() and line[0] != "#"}
+              except OSError:
+                  return ""
+              if kind.get(target) != ["covered"]:
+                  return ""
+              try:
+                  with open(".loop/regression-relevel.tsv", encoding="utf-8") as record:
+                      covers = next((c[4] for c in (line.split("\t") for line in record) if c[0] == target and len(c) > 4), "")
+              except OSError:
+                  covers = "(levels record unreadable)"
+              return "REFUSED (COVERED_ROW): %s is covered by %s; run those" % (target, covers or "no listed row")
 
 
           def not_run(table):
@@ -1251,7 +1269,25 @@ jobs:
               """The refusal line for a target and cleanup that L2 does not take, else an empty string."""
               if target == "L2" and cleanup == "true":
                   return "REFUSED (L2_CLEANUP_EXCLUSIVE): cleanup runs no row and L2 runs every row. Fix: rerun with cleanup off, or with target nightly"
-              return ""
+              return covered_by(target)
+
+
+          def covered_by(target):
+              """A covered row asked for by its id is refused: it never runs, so it never makes a PASS of its own (R2). Fail closed: once the table
+              says the row is covered, an unreadable levels record still refuses."""
+              try:
+                  with open(".loop/regression.tsv", encoding="utf-8") as table:
+                      kind = {line.split("\t")[0]: line.split("\t")[1:2] for line in table if line.strip() and line[0] != "#"}
+              except OSError:
+                  return ""
+              if kind.get(target) != ["covered"]:
+                  return ""
+              try:
+                  with open(".loop/regression-relevel.tsv", encoding="utf-8") as record:
+                      covers = next((c[4] for c in (line.split("\t") for line in record) if c[0] == target and len(c) > 4), "")
+              except OSError:
+                  covers = "(levels record unreadable)"
+              return "REFUSED (COVERED_ROW): %s is covered by %s; run those" % (target, covers or "no listed row")
 
 
           def not_run(table):
