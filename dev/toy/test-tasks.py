@@ -23,6 +23,7 @@ home = tempfile.mkdtemp()
 for key in ("HOME", "USERPROFILE"):
     os.environ[key] = home
 os.environ["LOOP_MACHINE_NAME"] = "pc"
+os.environ.setdefault("LOOP_MACHINE", "64,64,10,0,0")  # a fixed machine reading, as reap.sh gives the shell toys (#4375): two renders compare alike
 import board_lines  # noqa: E402
 import board_model  # noqa: E402
 import board_tasks  # noqa: E402

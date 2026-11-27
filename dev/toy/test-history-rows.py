@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # reads: .loop/regression.tsv dev/toy/approved-row-changes.tsv dev/toy/hist.py dev/toy/test-tasks.py dev/toy/test-full-auto-files.py
-# reads: dev/toy/test-guards-null-report.sh dev/toy/reap.sh skills/
+# reads: dev/toy/test-guards-null-report.sh dev/toy/reap.sh dev/toy/test-codex.sh dev/toy/codex-controls.sh dev/toy/codexrun.py skills/
 """The three history rows (tasks-rows-only-added, guards-null-report-nofiles, full-auto-no-new-file) fail, with a code and its fix,
 whenever they can't read the history they compare. Each case runs a row's own command from the table in a throwaway copy of this
 repo. The codes: HIST-E01 the base ref is missing; HIST-E02 the history is shallow; HIST-E03 a git command failed; HIST-E04 a
@@ -16,7 +16,7 @@ top = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "
 ROWS = ("tasks-rows-only-added", "guards-null-report-nofiles", "full-auto-no-new-file")
 TOYS = ("dev/toy/test-tasks.py", "dev/toy/test-guards-null-report.sh", "dev/toy/test-full-auto-files.py")
 TOUCHED = ("skills/workflow-regression/scripts/actions.py",) + TOYS + ("dev/toy/hist.py", "dev/toy/test-history-rows.py",
-           "dev/toy/test-codex.sh", "dev/toy/codexrun.py")
+           "dev/toy/test-codex.sh", "dev/toy/codex-controls.sh", "dev/toy/codexrun.py")
 LIMIT = 20 * 1024  # dev/package.py's MAX_SCRIPT
 WORD = "plantedname" + "qzx"  # a made-up private name, listed only in this test's own list
 
@@ -180,6 +180,17 @@ out = toy_output(ROWS[0], where, {"HOME": own, "LOOP_PRIVATE_NAMES": os.devnull}
 line = first_fail(out)
 check("HIST-E03" in line and WORD not in line and work not in line,
       "%s: its error line is screened with the runner's own private-name list although the test moves HOME" % ROWS[0], line)
+
+# the shell test's DEBUG output of a failed check is screened too
+where = copy("debug-list")
+planted = os.path.join(work, "plants-a-name")
+os.makedirs(planted)
+with open(os.path.join(planted, "git"), "w") as handle:
+    handle.write('#!/bin/sh\nif %s; then echo "skills/%s.py"; exit 0; fi\nexec %s "$@"\n' % (history_diff(ROWS[1], "debug-list"), WORD, real_git))
+os.chmod(os.path.join(planted, "git"), 0o755)
+out = toy_output(ROWS[1], where, {"LOOP_PRIVATE_NAMES": names, "DEBUG": "1"}, planted)[1]
+check("FAIL: the change this row was written for" in out and "withheld" in out and WORD not in out,
+      "%s: with DEBUG set, a failed check prints nothing the private-name screen refuses" % ROWS[1], first_fail(out) + " | " + str(WORD in out))
 
 # the committed headers and code lines name codes and fixes, no repository or merge
 scan = os.path.join(top, "skills", "workflow-delivery", "scripts", "private.py")

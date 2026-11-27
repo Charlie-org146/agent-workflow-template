@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # reads: dev/toy/hist.py
 """Helpers for the Codex part of test-codex.sh. usage:
-  codexrun.py limited SECONDS -- CMD...   run CMD with closed input; past SECONDS its whole process group is killed and the exit is 124
+  codexrun.py limited SECONDS -- CMD...   run CMD with closed input; past SECONDS the exit is 124; either way its process group is stopped
   codexrun.py line CODE NAME [DETAIL...]  print one error line: what happened, "Fix:", "In plain words:", "Side effects:"
   codexrun.py screen TEXT...              print TEXT fit to show: addresses and local paths as their kind, secrets and private names withheld
   codexrun.py keep SOURCE DEST REPO       copy a log to DEST, screened line by line; a DEST inside REPO is refused"""
@@ -40,12 +40,21 @@ def limited(seconds, command):
     try:
         return child.wait(timeout=max(1, seconds))
     except subprocess.TimeoutExpired:
-        if os.name == "nt":
-            child.kill()
-        else:
-            os.killpg(child.pid, signal.SIGKILL)
-        child.wait()
         return 124
+    finally:
+        stop(child)
+
+
+def stop(child):
+    """Stop the program and whatever it left running in its process group, so nothing goes on holding its output open."""
+    if os.name == "nt":
+        child.kill()
+    else:
+        try:
+            os.killpg(child.pid, signal.SIGKILL)
+        except OSError:  # nothing is left in the group
+            pass
+    child.wait()
 
 
 def inside(path, folder):

@@ -15,7 +15,7 @@ want() { for c in "${cases[@]}"; do [ "$c" = "$1" ] && return 0; done; return 1;
 T=$(mktemp -d); fails=0
 ok() { echo "PASS: $1"; }
 bad() { echo "FAIL: $1"; fails=$((fails + 1)); }
-check() { if eval "$2"; then ok "$1"; else bad "$1"; [ -z "${DEBUG:-}" ] || printf "%s\n" "$out" | head -8; fi; }
+check() { if eval "$2"; then ok "$1"; else bad "$1"; [ -z "${DEBUG:-}" ] || printf "%s\n" "$out" | head -8 | python3 "$here/dev/toy/hist.py" redact; fi; }
 r() { out=$(eval "$@" 2>&1); rc=$?; }
 if want reset; then
 echo "== a reset leaves report as an empty record"

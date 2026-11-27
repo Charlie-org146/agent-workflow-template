@@ -9,7 +9,7 @@ HIST-E03 a git command failed.
 HIST-E04 a fixture could not be built.
 Each error is one line: what could not be done, "Fix:", "In plain words:" and "Side effects: none." Anything read from git is cut
 and screened before it is printed: addresses and local paths become their kind, and text the loop's private-name and secret
-screen refuses is withheld. usage: hist.py added REPO GREP | fixture REPO GIT-ARGS..."""
+screen refuses is withheld. usage: hist.py added REPO GREP | fixture REPO GIT-ARGS... | redact (stdin, line by line)"""
 import os
 import re
 import subprocess
@@ -129,6 +129,10 @@ def added(repo, grep, *paths, what="a past goal's merge"):
 
 
 def main(argv):
+    if argv == ["redact"]:
+        for text in sys.stdin.read().splitlines():
+            print(redact(text))
+        return 0
     if argv[:1] == ["added"] and len(argv) == 3:
         merge, files = added(argv[1], argv[2], "skills")
         print("\n".join(files) if merge else "NOMERGE")
@@ -139,7 +143,7 @@ def main(argv):
     if argv[:1] == ["fixture"] and len(argv) > 2:
         fixture(argv[1], *argv[2:])
         return 0
-    sys.exit("usage: hist.py added REPO GREP | require REPO | fixture REPO GIT-ARGS...")
+    sys.exit("usage: hist.py added REPO GREP | require REPO | fixture REPO GIT-ARGS... | redact")
 
 
 if __name__ == "__main__":
