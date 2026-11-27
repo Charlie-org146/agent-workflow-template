@@ -824,7 +824,8 @@ with a risk-data file (`requirement`, `-`, `none` and why, if it has no such req
 and `lvl-armed`.
 
 **Which rows a levels change selects:** the rows whose entry changed, the rows that read the table, and the rows whose
-command or `# reads:` header names the changed levels file; not every row that reaches the runner. `lvl-armed`
+command or `# reads:` header names the changed levels file; not every row that reaches the runner. `lanes_cli.py affected` applies this only
+when the base already holds the record; before that it reads the levels files as any other file. `lvl-armed`
 (`dev/toy/test-lvl-armed.sh`) reads the runner, the table, the record, the risk data and the Principles page.
 
 ## Goal tier

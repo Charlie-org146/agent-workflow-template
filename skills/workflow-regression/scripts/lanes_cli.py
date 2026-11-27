@@ -102,6 +102,9 @@ def table_changed(root, name):
 def affected(root, rows, paths, cache):
     """(rerun ids, notes) for a change to paths: plan()'s rules, no record."""
     ids, notes, real = set(), [], False
+    base = tiers.config(root).get("base") or "main"  # a base with no record yet reads the level files as any file
+    levels = lanes.LEVEL_FILES if any(lanes.git(root, "cat-file", "-e", at + ":" + lanes.LEVEL_FILES[0]) is not None
+                                      for at in ("origin/" + base, base)) else ()
     known = table_changed(root, "regression-known.tsv") if ".loop/regression-known.tsv" in paths else None
     edited = table_changed(root, "regression.tsv") if lanes.TABLE in paths else None
     for row in rows:
@@ -121,12 +124,12 @@ def affected(root, rows, paths, cache):
             or lanes.closure(root, r["command"], cache)[1]}
         elif path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped
             hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}
-        elif path in lanes.LEVEL_FILES:
+        elif path in levels:
             moved = table_changed(root, "regression-relevel.tsv")  # None (no base): every entry may have moved
             hit = {r["id"] for r in rows if lanes.level_change(root, r, path, moved is None or r["id"] in moved, cache)}
         else:
             hit = {r["id"] for r in rows if lanes.touches(root, r["command"], path, cache)}
-        no_effect = path in (lanes.TABLE, ".loop/regression-known.tsv", *lanes.LEVEL_FILES) or lanes.no_effect(path)
+        no_effect = path in (lanes.TABLE, ".loop/regression-known.tsv", *levels) or lanes.no_effect(path)
         if not hit and not no_effect and not any(lanes.hits(path, lanes.closure(root, r["command"], cache)[0])
             for r in rows):
             ids |= picked(root, rows, path, cache)
