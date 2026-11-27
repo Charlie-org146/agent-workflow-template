@@ -260,7 +260,23 @@ def notrun():
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun}
+def syncdraft():
+    print("== R5: sync --write drafts")
+    # Value: protects=a drafted row is a draft at L1 whose state says so, and the DRAFT line names the command that readies it;
+    #   fails_when=the drafted row has no draft state or a level other than L1, or the line says nothing of --ready or "not enforced"
+    from lvl_fixture import Repo, entry, row
+    repo = Repo([row("alpha")], [entry("alpha")], ["label\tsecurity\tsecurity\tfixture label"])
+    repo.write("docs/wiki/Page.md", "# Page\n\n## Requirements\n\n- ABC-1: it works\n")
+    repo.commit()
+    done, said = repo.run("sync", "--write")
+    line = [l for l in said.splitlines() if l.startswith("DRAFT ABC-1")]
+    check(len(line) == 1 and "level ABC-1 --ready" in line[0] and "not enforced" in line[0], "the DRAFT line names the ready command and says not enforced", said)
+    cells = [l.split("\t") for l in (repo.read(".loop/regression-relevel.tsv") or "").splitlines() if l.startswith("ABC-1\t")]
+    check(len(cells) == 1 and cells[0][1:3] == ["draft", "L1"] and cells[0][8:] == ["draft"], "the drafted row is draft, L1, state draft in the record", cells)
+    repo.close()
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
