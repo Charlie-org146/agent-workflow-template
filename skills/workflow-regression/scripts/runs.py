@@ -24,7 +24,7 @@ if not sys.stdin or not sys.stdin.isatty():
     os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
 
 NAME = "regression-runs.tsv"
-HEADER = "# id\tstatus\tdate\trun\tflaky\n"
+HEADER = "# id\tstatus\tdate\trun\tflaky\tcommit\n"
 ISSUE_LIMIT = 1000
 WAITS = (0, 5, 20)  # seconds before each of three tries
 SKIP_CODE = 77
@@ -69,7 +69,7 @@ def read(root):
             rows = [line.rstrip("\n").split("\t") for line in handle if line.strip() and line[0] != "#"]
     except OSError:
         return {}
-    return {cells[0]: (cells + [""] * 5)[:5] for cells in rows}
+    return {cells[0]: (cells + [""] * 6)[:6] for cells in rows}
 
 
 def where():
@@ -85,9 +85,9 @@ def write(root, results, date, sha):
         if item["state"] == "SKIPPED" and ran.get(item["id"], "--")[1] in ("PASS", "FAIL"):
             continue  # a skip says nothing against the last result
         flag = item["flaky"] if "flaky" in item else ran.get(item["id"], [""] * 5)[4]
-        ran[item["id"]] = [item["id"], item["state"] if item["state"] in ("PASS", "SKIPPED") else "FAIL", date, run, flag[:12]]
+        ran[item["id"]] = [item["id"], item["state"] if item["state"] in ("PASS", "SKIPPED") else "FAIL", date, run, flag[:12], sha[:12]]
     with open(path(root), "w") as handle:
-        handle.write(HEADER + "".join("\t".join(ran[key][:4 + bool(ran[key][4])]) + "\n" for key in sorted(ran)))
+        handle.write(HEADER + "".join("\t".join(ran[key][:6 if ran[key][5] else 4 + bool(ran[key][4])]) + "\n" for key in sorted(ran)))
 
 
 def gh(*args, body=None):

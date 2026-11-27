@@ -428,7 +428,76 @@ def coverstate():
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate}
+def mixedruns():
+    print("== R13: a run record with 5-cell and 6-cell lines survives a union merge")
+    # Value: protects=the merge repair unions regression-runs.tsv lines of both formats and keeps the later date; fails_when=the repair
+    #   gives up on a pair of lines that differ only in the new commit cell, or a reader fails on a 6-cell line
+    import subprocess
+    from lvl_fixture import Repo, row, ROOT
+    sys.path.insert(0, os.path.join(ROOT, "skills", "workflow-delivery", "scripts"))
+    import mend_tables
+    repo = Repo([row("a"), row("b")], None, None)
+    head = "# id\tstatus\tdate\trun\tflaky\tcommit\n"
+    repo.write(".loop/regression-runs.tsv", head + "a\tPASS\t2026-11-01\t\t\nb\tPASS\t2026-11-01\t\t\n")
+    repo.commit("base")
+    repo.git("checkout", "-q", "-b", "other")
+    repo.write(".loop/regression-runs.tsv", head + "a\tPASS\t2026-11-03\t\t\nb\tPASS\t2026-11-01\t\t\n")  # an old-format line, later date
+    repo.commit("old format")
+    repo.git("checkout", "-q", "main")
+    repo.write(".loop/regression-runs.tsv", head + "a\tPASS\t2026-11-02\t\t\tabc123456789\nb\tPASS\t2026-11-04\t\t\tabc123456789\n")  # new format
+    repo.commit("new format")
+    merged = repo.git("merge", "other", "--no-edit", check_it=False)
+    git = lambda *a: subprocess.run(["git"] + list(a), cwd=repo.path, env=repo.env, capture_output=True, text=True)
+    cwd = os.getcwd()
+    os.chdir(repo.path)
+    try:
+        ok = mend_tables.mend(git, [".loop/regression-runs.tsv"], "other")
+    finally:
+        os.chdir(cwd)
+    text = repo.read(".loop/regression-runs.tsv") or ""
+    check(merged.returncode != 0 and ok and "a\tPASS\t2026-11-03" in text and "b\tPASS\t2026-11-04\t\t\tabc123456789" in text,
+          "the repair unions a 5-cell line (later date) and a 6-cell line, keeping each id's later date", text)
+    repo.close()
+
+
+def swallow():
+    print("== TD2346: a failing cover_results fails the run; in CI (level_words absent) a covered row shows its raw record")
+    # Value: protects=an error inside level_words is never swallowed as "not installed", and the raw CI state of a covered row is known;
+    #   fails_when=an ImportError or ValueError raised inside cover_results is hidden, or the CI case below changes
+    import shutil, subprocess
+    from lvl_fixture import Repo, entry, row, REG
+    risks = ["label\tsecurity\tsecurity\tfixture label"]
+    rows = [row("lvl-armed"), row("good"), row("bad", command="false"), row("c", level="covered", command="read by a person")]
+    ents = [entry("lvl-armed"), entry("good"), entry("bad"), entry("c", old="covered", covers="bad")]
+    repo = Repo(rows, ents, risks)
+    repo.write(".github/workflows/regression-pr.yml", "# Written by workflow-regression\n")
+    repo.write(".loop/regression-runs.tsv", "# id\tstatus\tdate\trun\tflaky\tcommit\nbad\tFAIL\t2026-11-27\t\t\tabc123456789\nc\tPASS\t2026-11-01\t\t\t\n")
+    repo.commit()
+    tests_py = os.environ.get("LW_TESTS_PY") or os.path.join(REG, "tests.py")
+
+    def listing(fake):
+        folder = tempfile.mkdtemp(prefix="test-level-words-ci.")
+        shutil.copy(tests_py, os.path.join(folder, "tests.py"))
+        fake and open(os.path.join(folder, "level_words.py"), "w").write(fake)
+        got = subprocess.run([sys.executable, os.path.join(folder, "tests.py"), "list", "--tsv"], cwd=repo.path, env=dict(repo.env, PYTHONPATH=""),
+                             capture_output=True, text=True)
+        shutil.rmtree(folder, ignore_errors=True)
+        return got
+    for name, fake in (("ValueError", "def cover_results(*a):\n    raise ValueError('boom')\n"),
+                       ("ImportError", "def cover_results(*a):\n    import no_such_module_anywhere\n")):
+        got = listing(fake)
+        check(got.returncode != 0 and ("boom" in got.stderr or "no_such_module_anywhere" in got.stderr), "a %s raised inside cover_results fails the run" % name, got.stderr[-300:])
+    got = listing("")
+    line = [l.split("\t") for l in got.stdout.splitlines() if l.split("\t")[1:2] == ["c"]]
+    raw = line[0][6] if line else got.stdout + got.stderr
+    check(got.returncode == 0 and raw.startswith("PASS"), "in CI (level_words absent) a covered row with a stale own PASS shows PASS although its cover fails: the raw state CAN be greener than the local worst-of-covers", raw)
+    real = subprocess.run([sys.executable, os.path.join(REG, "tests.py"), "list", "--tsv"], cwd=repo.path, env=repo.env, capture_output=True, text=True)
+    local = [l.split("\t")[6] for l in real.stdout.splitlines() if l.split("\t")[1:2] == ["c"]]
+    check(local and local[0].startswith("FAIL abc123456789"), "locally the same row shows the worst of its covers: FAIL with the commit", local)
+    repo.close()
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """One set of level words, L0, L1 and L2 (goal v110-lvl-retire-old-words-2): what the goal_levels setting means, on a levelled table and
 on one that is not. An old word is read, never silently: a levelled table prints one line; another value is refused there."""
+import os
 import sys
 
 OLD = {"land": "L1", "nightly": "L2"}  # the old words, translated on a levelled table: the level that selects at least the same rows (TD2334)
@@ -104,3 +105,59 @@ def cover_unmet(root, row, rows, run):
         if rows[key]["level"] != "covered" and not run(rows[key]):
             return "cover %s fails" % key
     return ""
+
+
+ORDER = ("FAIL", "FLAKY", "no result", "draft", "SKIPPED", "KNOWN", "excepted")  # worst first; PASS is better than all of them
+
+
+def worst(states):
+    """The worst of a list of cover states by ORDER; PASS only when nothing else is there."""
+    return next((s for s in ORDER if s in states), "PASS")
+
+
+def cover_results(root, run_rows, rows):
+    """{covered row id: (state + commit, date, flag)} for the Runs column: the worst of its covers, bound to a commit. Covers that ran at
+    different commits, or have no commit recorded (an older record), count as no result; a page never says bare green."""
+    import completion
+    from levels import State
+    if not completion.armed(root):
+        return {}
+    ran = {r[0]: (r + [""] * 6)[:6] for r in run_rows}
+    known = {r[0] for r in tsv_of(root, "regression-known.tsv")}
+    out = {}
+    for key, entry in State(root).entries().items():
+        if rows.get(key, {}) and rows[key][1] != "covered":
+            continue
+        covers = [k for k in (entry.get("covers") or "").split(",") if k]
+        if not covers:
+            out[key] = ("excepted", "", "")
+            continue
+        states, commits, days = [], set(), []
+        for cover in covers:
+            record = ran.get(cover)
+            if cover in rows and rows[cover][1] == "draft":
+                states.append("draft")
+            elif not record or not record[5]:
+                states.append("no result")
+            elif record[1] == "FAIL":
+                states.append("KNOWN" if cover in known else "FAIL")
+            elif record[1] == "SKIPPED":
+                states.append("SKIPPED")
+            elif record[4]:
+                states.append("FLAKY")
+            else:
+                states.append("PASS")
+            record and record[5] and (commits.add(record[5]), days.append(record[2]))
+        state = worst(states)
+        state = "no result" if state == "PASS" and len(commits) != 1 else state
+        out[key] = ("no result recorded", "", "") if state == "no result" else (
+            "%s %s" % (state, sorted(commits)[0] if len(commits) == 1 else ", ".join(sorted(commits))), max(days) if days else "", "")
+    return out
+
+
+def tsv_of(root, name):
+    try:
+        with open(os.path.join(root, ".loop", name), encoding="utf-8") as handle:
+            return [l.rstrip("\n").split("\t") for l in handle if l.strip() and l[0] != "#"]
+    except OSError:
+        return []
