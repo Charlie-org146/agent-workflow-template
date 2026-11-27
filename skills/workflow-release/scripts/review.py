@@ -83,14 +83,16 @@ def main():
 def proven(top):
     """Row ids with a PASS on this commit in a lane record (loop/tests/*.json); not regression-runs.tsv."""
     head = release.git("rev-parse", "HEAD", cwd=top, check=False)
-    found = set()
+    found, bad = set(), set()
     for path in glob.glob(os.path.join(common_of(top), "tests", "*.json")):
         try:
             rows = json.load(open(path)).get("rows") or {}
         except (OSError, ValueError, AttributeError):
             continue
-        found |= {key for key, item in rows.items() if isinstance(item, dict) and item.get("status") == "PASS" and item.get("commit") == head}
-    return found
+        for key, item in rows.items():
+            if isinstance(item, dict) and item.get("commit") == head:
+                (found if item.get("status") == "PASS" and not item.get("flaky") else bad).add(key)
+    return found - bad  # a FAIL or FLAKY record for the same commit beats a PASS
 
 
 def tsv(*path):
@@ -110,6 +112,7 @@ def criteria(top, cfg, doc_rows, fails):
     """(unmet, left): requirements with no passing row, and rows the cut left unrun (LOOP_CUT_SECONDS, 900)."""
     rows, stop = tsv(top, ".loop", "regression.tsv"), time.time() + float(os.environ.get("LOOP_CUT_SECONDS") or 900)
     out, left, skip = [], [], proven(top) | {r[0] for r in tsv(top, ".loop", "regression-known.tsv")}
+    cover, by = {r[0]: [k for k in r[4].split(",") if k] for r in tsv(top, ".loop", "regression-relevel.tsv")}, {r[0]: r for r in rows}  # levelled tables only
     for page in doc_rows(top):
         try:
             part = (re.split(r"\n## (?:Requirements|Criteria)[ \t]*\n", re.sub(r"(?ms)^```.*?^```[^\n]*$", "", open(os.path.join(
@@ -120,6 +123,9 @@ def criteria(top, cfg, doc_rows, fails):
             found = [r for r in rows if key in (r[0], r[3])]
             out += ["%s (no regression row)" % key] * (not found)
             for row in found:
+                if row[1] == "covered":  # through its covers, as any row: a failing, draft or missing cover leaves it unmet
+                    bad = [c for c in cover.get(row[0], []) if c not in skip and (c not in by or by[c][1] == "draft" or fails(by[c][2], top))]
+                    out += ["%s (covered row %s: cover %s fails, is a draft or is missing)" % (key, row[0], c) for c in bad[:1]]
                 if row[1] == "covered" or row[0] in skip:
                     continue
                 if row[1] != "draft" and time.time() >= stop:
