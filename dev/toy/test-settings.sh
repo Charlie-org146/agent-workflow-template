@@ -20,7 +20,7 @@ export HOME="$T/home"; mkdir -p "$HOME"; unset LOOP_FLOW LOOP_HEALTH
 export USERPROFILE="$HOME"
 ref=$($SET reference)
 missing=""
-for k in parallel cadence auto_approve auto_merge pr_bumps_version version_file routines regression_cron step_limit token_budget mend max_tries resume_on_limit base wiki_dir risky_paths command allowed_tools model steps overrides rules repos; do
+for k in parallel cadence board_max_age checkin_every auto_approve auto_merge pr_bumps_version version_file routines regression_cron step_limit token_budget mend max_tries resume_on_limit base wiki_dir risky_paths command allowed_tools model steps overrides rules repos; do
   grep -q "^| \`$k\` | .* | .[A-Za-z0-9]" <<<"$ref" || missing="$missing $k"
 done
 check "the reference lists every repo and private setting with a default and a line" '[ -z "$missing" ]'

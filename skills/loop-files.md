@@ -1922,6 +1922,8 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `check_slots` | `2` | Open PRs with unfinished checks allowed before a push. |
 | `parallel` | `0` | Workers running at once; 0 means unlimited. |
 | `cadence` | `30` | Minutes between operation check-ins, 1 to 60, or off. |
+| `board_max_age` | `120` | Minutes after which a board card whose state has not changed shows as stale. |
+| `checkin_every` | `30` | Minutes between mailed check-ins at the least; one goes only when something changed. |
 | `auto_approve` | `false` | true approves what a flow step leaves for the owner, logged auto-approved. |
 | `auto_merge` | `false` | true lets the release step merge a goal's PR and publish. |
 | `merge_queue` | `false` | true: GitHub's merge queue checks a moved base; merge.py waits for MERGED. |
