@@ -22,10 +22,11 @@ os.environ["HOME"] = os.environ["USERPROFILE"] = tempfile.mkdtemp(prefix="test-l
 failed = []
 
 
-def check(ok, text):
+def check(ok, text, detail=""):
     print(("PASS: " if ok else "FAIL: ") + text)
     if not ok:
         failed.append(text)
+        detail and print("  " + str(detail)[:500].replace("\n", "\n  "))
 
 
 def folder(armed, goal_levels):
@@ -211,7 +212,38 @@ def state():
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state}
+def drafts():
+    print("== R5: making and readying a draft")
+    # Value: protects=a draft is made with the level it will have and readied by a command, and every refusal leaves both tables as they were;
+    #   fails_when=add --level draft needs no --test-level, a refusal still writes, --ready readies a placeholder command, or the state stays draft
+    from lvl_fixture import Repo, entry, row
+    risks = ["label\tsecurity\tsecurity\tfixture label"]
+    repo = Repo([row("alpha")], [entry("alpha")], risks)
+    repo.commit()
+    before = (repo.read(".loop/regression.tsv"), repo.read(".loop/regression-relevel.tsv"))
+    done, said = repo.run("add", "drf", "--level", "draft", "--command", "echo write a test")
+    check(done != 0 and "LEVELS_NO_STAGE" in said and "--test-level L1" in said and "add drf --level draft --test-level" in said,
+          "add --level draft without --test-level is refused (LEVELS_NO_STAGE) with the values and the whole command", said)
+    check((repo.read(".loop/regression.tsv"), repo.read(".loop/regression-relevel.tsv")) == before, "the refusal changed neither table")
+    done, said = repo.run("add", "drf", "--level", "draft", "--test-level", "L2", "--command", "echo write a test")
+    check(done == 0, "add --level draft --test-level L2 makes the draft", said)
+    cells = [l.split("\t") for l in repo.read(".loop/regression-relevel.tsv").splitlines() if l.startswith("drf\t")]
+    check(len(cells) == 1 and cells[0][1:3] == ["draft", "L2"] and cells[0][8] == "draft", "the record holds old draft, level L2 and state draft", cells)
+    done, said = repo.run("level", "drf", "--ready")
+    check(done != 0 and "real command" in said, "--ready refuses a draft whose command is still the placeholder, and says a real command is needed", said)
+    done, said = repo.run("add", "drf", "--level", "draft", "--test-level", "L2", "--command", "true")
+    done, said = repo.run("level", "drf", "--ready")
+    check(done == 0 and "drf" in said and "L2" in said, "--ready readies a draft with a real command and prints what it changed", said)
+    cells = [l.split("\t") for l in repo.read(".loop/regression-relevel.tsv").splitlines() if l.startswith("drf\t")]
+    table = [l.split("\t") for l in repo.read(".loop/regression.tsv").splitlines() if l.startswith("drf\t")]
+    check(len(cells) == 1 and cells[0][1] == "nightly" and cells[0][2] == "L2" and cells[0][8] == "" and table[0][1] == "nightly",
+          "afterwards the state is blank and the table's own word is the level's (nightly for L2)", (cells, table))
+    done, said = repo.run("level", "alpha", "--ready")
+    check(done != 0 and "not a draft" in said, "--ready on a row that is not a draft is refused and says so", said)
+    repo.close()
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
