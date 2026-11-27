@@ -61,6 +61,35 @@ The other build items are listed under Build list below.
   - DLF-1 metric: "**Metric.** Minutes a goal waits for me after its start review. Target 0."
 - Revert rule, a required build item (TD2128): each decision records what it let go on, and its revert line says "stops the goal" when that is the whole goal.
 - The Delivery wording above is the one top approved; it takes the place of the earlier DEL-3 draft under Words used for the page edit.
+- The DEL-3 edit holds the merge for the owner's own typed word (TD2135c); it does not hold the build.
+
+### Target text: the DLF-1 unit
+
+Top approved this unit under TD2136 with option K: the DLF-1.3 Metric and Test lines stay unchanged, so the part marked open below is settled. It rests on o1038, o1045, TD2128 E and F, and TD2136. It governs over the plan's sentence that puts the approved metric under DLF-1.3. The pull request names the short window in which the leak-read clause is stale. The file is copied as written:
+
+```
+# v110-one-review: resulting DLF-1 unit (operation-mac, 17:11, TD2134 option A; for top's DOC-2 check before the worker uses it)
+
+Base: docs/wiki/Deliver-first.md on main 7784d862f. Exactly three changes; every other line of the unit (lines 18-52) and the page is unchanged. The history row (line 76) is untouched.
+
+1. Line 18 heading (o1045, TD2128 F):
+BEFORE: Deliver first: a goal never waits for me, unless it's a safety class
+AFTER:  Deliver first: a goal waits for me once, at its start
+
+2. Line 25 DLF-1.1 metric AND line 66 under Success metrics (o1045, TD2128 E):
+BEFORE: **Metric.** Minutes a goal spends waiting for my word on anything outside DLF-1.3. Target 0.
+AFTER:  **Metric.** Minutes a goal waits for me after its start review. Target 0.
+
+3. Lines 30-36, DLF-1.3's heading, its five bullets and 'Every other stop in the loop is removed or turned into DLF-1.1's issue line.', are replaced by the o1038 text, verbatim:
+  - DLF-1.3 **One review, at the start.** A goal waits for me once: at its start, where I approve its done lines and the safety items it is known to touch (deleting what can't be restored, money, security and sandbox settings, private data, steward merges, a change to what a feature promises, a test loosened or deleted). After that nothing waits for me. A safety item found later takes the safe option without asking: it is fixed in the build, or that part is dropped and filed as a DLF-1.1 line; nothing is waived or loosened that the start review didn't approve. The leak read before any push and the PR's reached-test run before a merge stay as automatic checks, not waits for me. Every decision made in my place is listed in the next check-in with a one-line revert.
+
+OPEN for top: DLF-1.3's Metric and Test lines (37-38):
+  - **Metric.** Goals merged past one of these. Target 0.
+  - **Test.** A goal whose only break loosens a test does not merge, and the board names that as the reason.
+'Goals merged past one of these' loses its list once the bullets go. Option K: keep both lines unchanged ('these' then reads as the safety items DLF-1.3 names). Option R: reword 'one of these' to 'a safety item DLF-1.3 names', which needs your DOC-2 approval. operation-mac recommends K (says no more than o1038).
+
+Unchanged on purpose: Non-goals line 46/60 'It never skips the leak read ...' and DLF-1.3's leak-read clause: v110-no-leak-gate line 4 deletes them after one-review merges (o1040). The PR body names that stale window (TD2134).
+```
 
 ### Red-team dispositions (plan file sha1 defb36a61622)
 
