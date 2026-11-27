@@ -742,8 +742,8 @@ only; bash reads are covered by the static rules above.
 ## Row levels and risk tags
 
 A row has a test level, L0, L1 or L2, and a risk tag, security, private or none, kept beside the table. The table's
-own `level` cell keeps the old words (land, nightly, draft, covered), which still select what runs. Running rows by test
-level comes later.
+own `level` cell keeps the old words (land, nightly, draft, covered): they select what the scheduled run and a goal
+lane run. The pull request run follows the test level (below).
 
 **Levelled tables.** A table is levelled when `.loop/regression-relevel.tsv` exists or the table holds the row
 `lvl-armed`. Any other table is read and written as before, and `--test-level`, `--risk`, `--covers` and `level` are
@@ -827,6 +827,31 @@ and `lvl-armed`.
 command or `# reads:` header names the changed levels file; not every row that reaches the runner. `lanes_cli.py affected` applies this only
 when the base already holds the record; before that it reads the levels files as any other file. `lvl-armed`
 (`dev/toy/test-lvl-armed.sh`) reads the runner, the table, the record, the risk data and the Principles page.
+
+## L1 on the pull request
+
+The table is armed when it holds `lvl-armed` and `.github/workflows/regression-pr.yml` is this tool's. On an armed
+table GitHub's pull request run of `run nightly --reuse --tier goal` is L1 (the same command run anywhere else is as
+before): the changed rows at L0 or L1, every security or
+private row the change reaches, and every private row when it reaches none (never reused). An L2 row it only reaches
+waits for the scheduled run. A private row listed `nightly` in the limits file still runs, with a NOTE. `run L0`,
+`run L1` and `run L2` pick by level when typed. A documents-only change runs no row, as before. A goal's own
+local lane is unchanged, except while the cover claims L1: it then runs its L0 rows and the planned rows the pull
+request leaves out (`NOT COVERED by L1: <ids>`), and records no L1 run. With the cover off, the lane runs as before.
+The merge queue runs no row.
+
+**Time goal.** Each shard writes `span.txt` (`start <epoch>`, then `end <epoch> <exit>`) and uploads it with its times
+file. When the legs, latest end minus earliest start, take longer than `l1_minutes` (10), the `affected` job prints
+`missed: <cause>`, the three slowest rows and the fix; it reports and fails nothing. A leg with no end is named and
+left out. A value that is not a whole number of at least 1 is refused (`L1_MINUTES_BAD`).
+
+**A security row that flips.** A row tagged security that fails is run once more in a fresh HOME. If it then passes it
+stays FAIL, prints `FLAKY <id>: failed then passed ...`, and the leg uploads `flaky.tsv` (`id TAB seconds TAB tail`,
+only after a flip; it holds none of the row's output). No rerun after a timeout, a signal or a start failure. `.github/workflows/regression-flaky.yml`
+runs from the default branch, never a pull request's code, only for a failed pull request run of this repository: it
+reads the flip files as data, refuses a malformed one or a row the default branch does not tag security, and opens or
+comments on one issue for each row: the row, that it failed then passed, the pull request, the commit and a link to its
+checks. No row output is published.
 
 ## Goal tier
 
@@ -1918,6 +1943,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `one_review` | `false` | true: a goal asks the owner once, at its start (DLF-1.3). Read from committed config. false: later stops wait again; open findings stay. |
 | `topics` | `{}` | Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column. |
 | `ci_levels` | `nightly` | Target of scheduled and tag regression runs: nightly (every row) or land. |
+| `l1_minutes` | `10` | L1's time goal on a pull request, in minutes; a longer run prints missed: and why. |
 | `time_budget_minutes` | `240` | Active minutes before no new step starts; 0 is none. |
 | `max_merge_rounds` | `8` | Merge rounds goal.py pr may take before it waits. |
 | `max_active_goals` | `20` | Goals live at once (or parallel, if smaller); 0 is none. |

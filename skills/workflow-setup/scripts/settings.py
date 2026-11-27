@@ -48,6 +48,7 @@ TABLE = [
     ("one_review", REPO, False, "true: a goal asks the owner once, at its start (DLF-1.3). Read from committed config. false: later stops wait again; open findings stay."),
     ("topics", REPO, {}, "Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column."),
     ("ci_levels", REPO, "nightly", "Target of scheduled and tag regression runs: nightly (every row) or land."),
+    ("l1_minutes", REPO, 10, "L1's time goal on a pull request, in minutes; a longer run prints missed: and why."),
     ("time_budget_minutes", REPO, 240, "Active minutes before no new step starts; 0 is none."),
     ("max_merge_rounds", REPO, 8, "Merge rounds goal.py pr may take before it waits."),
     ("max_active_goals", REPO, 20, "Goals live at once (or parallel, if smaller); 0 is none."),

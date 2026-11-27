@@ -186,6 +186,7 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `one_review` | true: a goal asks the owner once, at its start (DLF-1.3). Read from committed config. false: later stops wait again; open findings stay. | set "one_review" in .loop/config.json | `false` | **overridden:** `true` |
 | `topics` | Home's Topic column: {topic: [feature pages]} in order; unlisted pages go under Other; empty is no column. | set "topics" in .loop/config.json | `{}` | **overridden:** `{"Build loop": ["Delivery", "Monitoring", "Operation", "Check-in-and-board", "Deliver-first", "Checks-by-size", "Autonomous-sizing"], "Quality": ["Regression", "Health", "Guardrails", "Fast-checks", "Cheap-checks"], "Operations": ["Automation", "Setup", "Machines", "Task-first"], "Docs": ["Documentation"]}` |
 | `ci_levels` | Target of scheduled and tag regression runs: nightly (every row) or land. | set "ci_levels" in .loop/config.json | `nightly` | default |
+| `l1_minutes` | L1's time goal on a pull request, in minutes; a longer run prints missed: and why. | set "l1_minutes" in .loop/config.json | `10` | default |
 | `time_budget_minutes` | Active minutes before no new step starts; 0 is none. | set "time_budget_minutes" in .loop/config.json | `240` | default |
 | `max_merge_rounds` | Merge rounds goal.py pr may take before it waits. | set "max_merge_rounds" in .loop/config.json | `8` | default |
 | `max_active_goals` | Goals live at once (or parallel, if smaller); 0 is none. | set "max_active_goals" in .loop/config.json | `20` | default |
