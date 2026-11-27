@@ -277,7 +277,7 @@ hlt4-feature-milestones	PASS	2026-11-26
 hlt6-branches	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 hlt6-controls-fire	PASS	2026-11-27			415e53b2441d
 hlt6-refused	PASS	2026-11-27			7387185f2ce1
-hlt7-fast-check	FAIL	2026-11-27			2ec6d2106c97
+hlt7-fast-check	PASS	2026-11-27			69ecadfa7770
 home-guard-catches-leak	PASS	2026-11-27			f193b2c55f09
 home-header-both	PASS	2026-11-14	
 home-milestone-optional	PASS	2026-11-26	
@@ -619,7 +619,7 @@ setup-fit	PASS	2026-11-27
 setup-owner-words-up-front	PASS	2026-11-24	
 setup-refusal-writes-120	PASS	2026-11-27	
 setup-zero-tests-119	PASS	2026-11-27	
-shard-balance	FAIL	2026-11-27			52a3f45b7e8e
+shard-balance	PASS	2026-11-27			69ecadfa7770
 shard-fits-budget	PASS	2026-11-25	
 size-140	PASS	2026-11-12	
 size-budget	PASS	2026-11-24	
