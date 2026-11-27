@@ -444,6 +444,42 @@ check(made.get("start_answer", {}).get("verdict") == "approve" and made["start_a
       and start_review.unanswered(dict(made, slug=new_slug)) == "", "the owner's revert command is its start review, for those files and classes only: %s" % made.get("start_answer"))
 check("start_answer" not in start_review.mark(runs, "undo-z-999", "t"), "a goal no revert queued gets no such answer")
 
+# RT3: a one-review goal with no estimate (any monitored start) takes its time budget as the estimate: it rises by itself up
+# to twice that budget and then keeps working, so no step waits for the owner's words; an older goal is as before
+sh("update-ref", "refs/remotes/origin/main", "main")
+import fit  # noqa: E402
+spent = [250]
+fit.active_minutes = lambda *a, **k: spent[0]
+fit.spent_tokens = lambda *a, **k: 0
+CFG = {"time_budget_minutes": 240}
+
+
+def budget(slug, **more):
+    state = record(slug, budget={"minutes": 240, "tokens": 0}, **more)
+    if "one_review" in more and more["one_review"] is None:
+        state.pop("one_review")
+        json.dump(state, open(os.path.join(runs, slug + ".json"), "w"))
+    return refused(lambda: dlf.budget_stop(slug, json.load(open(os.path.join(runs, slug + ".json"))), runs, CFG, top=tmp))
+
+
+def raised(slug):
+    try:
+        return json.load(open(os.path.join(runs, slug + ".extra.json")))["set"]["budget"]["minutes"]
+    except (OSError, KeyError):
+        return 240
+
+
+said = budget("n1")
+check(said == "" and 250 < raised("n1") <= 480, "with no estimate the budget rises by itself: %s %s" % (said[:90], raised("n1")))
+first = raised("n1")
+spent[0] = 600
+before = len(filed)
+said = refused(lambda: dlf.budget_stop("n1", json.load(open(os.path.join(runs, "n1.json"))), runs, CFG, top=tmp))
+check(said == "" and first <= raised("n1") <= 480 and len(filed) == before + 1, "past twice the first budget it files one line and keeps working at the cap: %s %s" % (said[:90], raised("n1")))
+spent[0] = 250
+said = budget("n2", one_review=None)
+check("BUDGET_MINUTES" in said, "an older goal with no estimate is held as before: %s" % said[:110])
+
 import board_log  # noqa: E402
 import board_model  # noqa: E402
 put(".loop/goals/h.plan.md", "plan\n")

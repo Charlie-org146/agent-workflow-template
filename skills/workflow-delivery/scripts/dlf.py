@@ -290,6 +290,8 @@ def budget_stop(slug, state, runs, cfg_, at=None, save=None, top=""):
     for name, spent in (("minutes", minutes), ("tokens", fit.spent_tokens(state, bool(held["tokens"])))):
         if held[name] and spent >= held[name]:
             est = (seen.get("eta") or {}).get("estimate") if name == "minutes" else cfg_.get("token_budget")
+            if name == "minutes" and not est and state.get("one_review"):  # RT3: its first time budget stands in, so the cap is twice that
+                est = (state.get("budget") or {}).get("minutes") or cfg_.get("time_budget_minutes") or 240
             new, capped = raise_budget(held[name], est, spent, share * (est or 0))
             raised, was = on and est and new > held[name], stored[name] or held[name]
             if raised:
