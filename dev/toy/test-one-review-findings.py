@@ -587,6 +587,16 @@ decisions.add(runs, "p6", "revert", decision=d6, effect="after-merge", files=["d
 reverts.revert(tmp, runs, rec("p6"), d6, "operation", "origin/main")
 check([(h["slug"], h["decision"]) for h in reverts.holds(tmp) if h["slug"] == "p6"] == [("p6", d6)], "R6 and an after-merge revert cut off before its hold adds it")
 
+# a finding that is open again can be closed again
+one("p3")
+decisions.add(runs, "p3", "finding", key="k3", classes=["money"], files=["r3.txt"], question="q", source="pr diff", head=sh("rev-parse", "HEAD"))
+n3 = [e["n"] for e in decisions.entries(runs, "p3") if e["kind"] == "finding"][0]
+decisions.add(runs, "p3", "close", finding=n3, how="drop", why="w", files=["r3.txt"], by="operation")
+commit("r3.txt", "changed after the close %s\n" % os.getpid())
+check(any("open again" in x for x in outcomes.blockers(tmp, runs, rec("p3"), "origin/main", "HEAD")), "R3 setup: the dropped finding opens again")
+got3 = refused(lambda: outcomes.close(tmp, runs, rec("p3"), n3, "stop", "why", [], "origin/main", "operation"))
+check(got3 == "", "R3 a reopened finding can be closed: %s" % got3)
+
 # a hold is cleared only by a later commit that takes the shipped change out
 commit("other.txt", "x%s\n" % d6)
 check("ONE_REVIEW_HOLD" in refused(lambda: reverts.clear_hold(tmp, "p6", d6, sh("log", "--format=%H", "-1", "--", "dev/toy/test-a.sh"), "operation")),
