@@ -98,6 +98,7 @@ jobs:
 @ROWTAIL@
 @L2TAIL@
           known = {row[0] for row in rows(".loop/regression-known.tsv")}
+          not_run(rows(".loop/regression.tsv"))
           TARGET = os.environ.get("REGRESSION_TARGET") or os.environ.get("REGRESSION_LEVELS") or "nightly"
           if not re.fullmatch(r"land|nightly|L2|[A-Za-z0-9_.-]+", TARGET) or TARGET not in ("land", "nightly", "L2") and \
                   TARGET not in [row[0] for row in rows(".loop/regression.tsv")]:
@@ -207,7 +208,6 @@ jobs:
           red, start, dupes, unrun = [], time.time(), [600 if CLEANUP else 20], [0]
           with open(os.environ.get("REGRESSION_RESULTS") or os.devnull, "w") as handle:
               handle.write("# started %d\n" % start)
-          not_run(rows(".loop/regression.tsv"))
           mine, seen = (os.environ.get("REGRESSION_SHARD") or "0/1").split("/"), 0
           mine, shards = int(mine[0]), int(mine[1])
           for row in rows(".loop/regression.tsv"):

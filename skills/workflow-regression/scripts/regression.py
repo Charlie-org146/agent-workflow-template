@@ -113,7 +113,7 @@ def cmd_add(args):
     if not ID.match(args.id):
         sys.exit("REFUSED: bad id. Fix: letters, digits, dots, dashes.")
     root = top()
-    level_words.need_stage(args)
+    level_words.need_stage(root, args)
     if args.category == "defect" and not args.link:
         sys.exit("REFUSED: a defect row links to its issue or finding. Fix: add --link URL or finding:SLUG.")
 
@@ -256,13 +256,13 @@ def cmd_run(args):
     root = top()
     levels_gate.check_read(root)
     rows = read_rows(root)
+    level_words.not_run(rows)
     if not rows:
         print("NO ROWS: nothing to run" if args.reuse else "NO ROWS: run add first")
         return 0 if args.reuse else 1
     ids = [i for i in (args.ids or "").split(",") if i]
     bad = [i for i in ids if i not in rows]
     bad and sys.exit("REFUSED: no row called %s." % ", ".join(bad))
-    level_words.not_run(rows)
     args.reuse = args.reuse or bool(ids)  # an ids lane (SKP-1.1) reuses and keeps the record, never writes a tracked file
     expected, picked = known(root), []
     for row in tiers.kinds([rows[i] for i in ids] if ids else chosen(rows, tiers.target(root, args)), args.kind):

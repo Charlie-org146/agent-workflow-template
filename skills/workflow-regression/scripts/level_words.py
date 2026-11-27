@@ -34,9 +34,10 @@ PLACEHOLDER = "echo write a test"  # regression.py's draft(): a command that che
 READY_WORD = {"L0": "land", "L1": "land", "L2": "nightly"}  # the table's own word for a readied draft: land rows run at L1, nightly at L2
 
 
-def need_stage(args):
-    """add --level draft names the level the row will have; without it nothing is written."""
-    if args.level == "draft" and not args.test_level:
+def need_stage(root, args):
+    """add --level draft names the level the row will have on a levelled table; without it nothing is written."""
+    from levels import State
+    if args.level == "draft" and not args.test_level and State(root).levelled():
         sys.exit("REFUSED (LEVELS_NO_STAGE): a draft needs the level it will have. Fix: regression.py add %s --level draft --test-level L1 "
                  "--command '...' (L0, L1 or L2). Nothing was written." % args.id)
 
@@ -93,6 +94,9 @@ def draft_line(key):
 def cover_unmet(root, row, rows, run):
     """Why a covered row is not met, or '': one of its covers is missing, a draft, or fails at HEAD. `run(row)` is True when the row passes."""
     from levels import State
+    import completion
+    if not completion.armed(root):
+        return ""  # R10: what runs changes only where the pull request run is armed
     entry = State(root).entries().get(row["id"]) or {}
     for key in [k for k in (entry.get("covers") or "").split(",") if k]:
         if key not in rows or rows[key]["level"] == "draft":
