@@ -8,6 +8,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DELIVERY = os.path.join(HERE, "..", "..", "workflow-delivery", "scripts")
+DAILY = 20  # check-ins per 24 hours at most (they take no budget slot, so they get their own cap)
 
 
 def outgoing_refusal(units, strict=True):
@@ -18,10 +19,10 @@ def outgoing_refusal(units, strict=True):
         private = importlib.import_module("private")  # another skill's script: no static import, so the package scan sees none
         found = private.scan(".", "", texts=units)
     except Exception as err:  # noqa: BLE001 - a scan that cannot run refuses; it never lets text through
-        return "the private-name scan crashed: " + type(err).__name__
+        return "the private-name scan crashed: " + type(err).__name__ if strict else ""  # a board file is held back only by a hit
     if strict and found["state"] in ("none", "broken"):  # a mail fails closed; a board file is held back only by a hit
         return "the private-name scan could not run: " + str(found.get("note", found["state"]))
-    return "; ".join(found["hits"]) if found["state"] == "hit" else ""
+    return "; ".join(found["hits"]) if found["hits"] else ""  # a scan cut short keeps the hits it had
 
 
 def checkin_gate(state, lines, now, every):
@@ -31,20 +32,21 @@ def checkin_gate(state, lines, now, every):
     key = "|".join(sorted(lines))
     if last and last.get("lines") == key:
         return "same"
-    if last and now - last.get("at", 0) < every * 60:
-        return "early"
+    if last and (now - last.get("at", 0) < every * 60 or len([t for t in last.get("sent", []) if now - t < 86400]) >= DAILY):
+        return "early"  # too soon, or already DAILY check-ins in the last 24 hours
     return "send"
 
 
 def checkin_sent(state, lines, now):
-    state["checkin"] = {"lines": "|".join(sorted(lines)), "at": now}
+    old = [t for t in (state.get("checkin") or {}).get("sent", []) if now - t < 86400]
+    state["checkin"] = {"lines": "|".join(sorted(lines)), "at": now, "sent": old + [now]}
 
 
 
 def checkin_lines(text, needs):
     """What a check-in says, without its clock: its headline and its Needs you items."""
     first = re.sub(r"\d{1,2}:\d{2}", "", next((x.strip() for x in str(text or "").splitlines() if x.strip()), ""))  # no clock in the key
-    return ([first] if first else []) + needs(text)
+    return ([first] if first else []) + [re.sub(r"\d{1,2}:\d{2}|\d+\s?[mh]", "", x) for x in needs(text)]
 
 
 def checkin_event(state, text, needs, root, live):
@@ -88,3 +90,16 @@ def save(path, state):
     with open(temp, "w") as handle:
         json.dump(state, handle, indent=1, sort_keys=True)
     os.replace(temp, path)
+
+
+def drop_pending(folder, qid):
+    """A refused mail's question entry is removed from mailbox.json: text the scan refused is not kept there."""
+    path = os.path.join(folder, "mailbox.json")
+    try:
+        with open(path, encoding="utf-8") as handle:
+            pending = json.load(handle)
+        if pending.pop(qid, None) is not None:
+            with open(path, "w", encoding="utf-8") as handle:
+                json.dump(pending, handle, indent=1, sort_keys=True)
+    except (OSError, ValueError, AttributeError):
+        pass

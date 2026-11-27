@@ -134,6 +134,14 @@ def saved(base, slug):
         return {}
 
 
+def bars_of(path, run):
+    """A goal's done-line bars the way the check-in makes them (board_lines.progress); none when they cannot be read."""
+    try:
+        return board_lines.progress(path, run["slug"], run, board_log.current(run), [])
+    except Exception:  # noqa: BLE001 - a card without bars is still a card
+        return []
+
+
 def card_list(rows, deps, at, repos, setting_of):
     """The cards for board.json, per repo (repos: board.followed()): a failure to build them never stops the board."""
     try:
@@ -141,8 +149,9 @@ def card_list(rows, deps, at, repos, setting_of):
         out = []
         for name, path, base in repos:
             mine = [r for r in rows if r["repo"] == name]
-            items = [{"mark": r["status"], "slug": r["slug"], "left": r.get("left"), "machine": r.get("machine") or "", "bars": []} for r in mine]
             runs = [dict({"slug": r["slug"], "status": r["status"], "updated": r.get("last") or ""}, **saved(base, r["slug"])) for r in mine]
+            items = [{"mark": r["status"], "slug": r["slug"], "left": r.get("left"), "machine": r.get("machine") or "", "bars": bars_of(path, run)}
+                     for r, run in zip(mine, runs)]
             batches = {}
             for slug in [x["slug"] for x in mine] + [d["slug"] for d in deps if d["repo"] == name]:
                 batches.setdefault(board_status.release_of(path, slug), []).append(slug)

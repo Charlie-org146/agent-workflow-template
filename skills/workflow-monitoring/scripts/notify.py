@@ -213,6 +213,7 @@ def cmd_send(args):
             del sent[key]
             kind == "check-in" or mailbox.claim(folder, key, flow_path(), args.root, release=True)
             say("not sent %s: private scan refused %s" % (kind, refused))
+            gate.drop_pending(folder, mailbox.qid(key))
             save(path, state)
             continue
         try:
@@ -222,7 +223,7 @@ def cmd_send(args):
             outcome, detail = "unknown", type(err).__name__
         if outcome == "refused":
             del sent[key]
-            mailbox.claim(folder, key, flow_path(), args.root, release=True)
+            kind == "check-in" or mailbox.claim(folder, key, flow_path(), args.root, release=True)
             say("not sent %s %s: %s (MAIL_REFUSED)" % (kind, slug, detail))
         elif outcome == "unknown":
             say("%s %s may have been sent: %s; kept, so it is not sent twice (MAIL_UNKNOWN)" % (kind, slug, detail))

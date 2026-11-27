@@ -318,7 +318,7 @@ def cmd_board(args):
     text = json.dumps(doc, indent=2, sort_keys=True) + "\n"
     said = board_views.notify_gate.outgoing_refusal({"board.json": text}, strict=False)
     print("BOARD_REFUSED the private-name scan refused %s; board.json was not written" % said) if said else write(path, text)
-    for name, repo_path, base in followed():  # BOARD-7: each repo's cards and views go to its own folder
+    for name, repo_path, base in [] if args.out else followed():  # BOARD-7: each repo's cards and views go to its own folder
         print(board_views.publish(name, repo_path, base, doc["runs"], doc["dependencies"], clock(args.at), repo_setting, write) or "", end="")
     helper =os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "live_board.py")
     if os.path.exists(helper):
