@@ -127,17 +127,17 @@ deployments-counts-pages	PASS	2026-11-26
 deps-graph-94	PASS	2026-11-27	
 depth-auto-approve-gate	PASS	2026-11-18	
 depth-base-branch	PASS	2026-11-18	
-depth-condensed-refused	PASS	2026-11-25	
+depth-condensed-refused	PASS	2026-11-27	
 depth-condensed-when-set	PASS	2026-11-18	
 depth-fill-repo-help	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-depth-in-pr-body	PASS	2026-11-25	
+depth-in-pr-body	PASS	2026-11-27	
 depth-loop-flow	PASS	2026-11-18	
 depth-marker-rows-4557	PASS	2026-11-25	
 depth-markers	PASS	2026-11-18	
-depth-on-board	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
+depth-on-board	PASS	2026-11-27	
 depth-recorded	PASS	2026-11-18	
 depth-reference	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-depth-setup	PASS	2026-11-25	
+depth-setup	PASS	2026-11-27	
 desk-lists	PASS	2026-11-18	
 desk-lists-4805	PASS	2026-11-18	
 digest-backlog	PASS	2026-11-10	
@@ -645,7 +645,7 @@ stale-own-main-reported	PASS	2026-11-15
 status-graph-board	PASS	2026-11-25	
 status-graph-levels	PASS	2026-11-12	
 status-graph-marks	PASS	2026-11-12	
-status-graph-order	PASS	2026-11-25	
+status-graph-order	PASS	2026-11-27	
 status-graph-total	PASS	2026-11-12	
 status-roadmap-features	PASS	2026-11-25	
 step-label-live	PASS	2026-11-12	
@@ -743,5 +743,6 @@ windows-safe-posix-names	PASS	2026-11-27
 worker-per-goal	PASS	2026-11-20	
 worker-refuses	PASS	2026-11-27	
 worker-save-159	PASS	2026-11-27	
+workers-setting-listed	PASS	2026-11-27	
 workflow-goal-to-release	PASS	2026-11-10	
 workflow-kind-shown	PASS	2026-11-25	
