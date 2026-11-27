@@ -597,6 +597,28 @@ check(any("open again" in x for x in outcomes.blockers(tmp, runs, rec("p3"), "or
 got3 = refused(lambda: outcomes.close(tmp, runs, rec("p3"), n3, "stop", "why", [], "origin/main", "operation"))
 check(got3 == "", "R3 a reopened finding can be closed: %s" % got3)
 
+# state-matrix cells that must refuse or stop (the review's untested cells): none lets a goal through
+one("c1")
+decisions.add(runs, "c1", "finding", key="kc1", classes=["money"], files=["c1.txt"], question="q", source="pr diff", head=sh("rev-parse", "HEAD"))
+c1n = [e["n"] for e in decisions.entries(runs, "c1") if e["kind"] == "finding"][0]
+check("ONE_REVIEW_CLOSE" in refused(lambda: outcomes.close(tmp, runs, rec("c1"), c1n, "not-taken", "why", [], "origin/main", "operation"))
+      and outcomes.findings(decisions.entries(runs, "c1"))[0], "CELL pr-diff x not-taken is refused and the finding stays open")
+refused(lambda: outcomes.close(tmp, runs, rec("c1"), c1n, "stop", "why", [], "origin/main", "operation"))
+check(decisions.stopped(decisions.entries(runs, "c1")) != "" and rec("c1")["status"] == "stopped", "CELL pr-diff x stop closes it and stops the goal")
+one("c2")
+dlf.settle(tmp, runs, "c2", "choice", "c2", "pick the shorter name", "w", "take it")
+c2n = [e["n"] for e in decisions.entries(runs, "c2") if e["kind"] == "decision"][0]
+reverts.revert(tmp, runs, rec("c2"), c2n, "operation", "origin/main")
+for flag in ("met", "cannot"):
+    got = refused(lambda: reverts.revert(tmp, runs, rec("c2"), c2n, "operation", "origin/main", **{flag: "words"}))
+    check("ONE_REVIEW_REVERT" in got, "CELL stop-decision x %s is refused: %s" % (flag, got[:90]))
+one("c3")
+decisions.add(runs, "c3", "decision", key="kc3", stop="pr", question="q", taken="t", safety=["money"], inside=[1], files=["dev/toy/test-a.sh"])
+c3n = [e["n"] for e in decisions.entries(runs, "c3") if e["kind"] == "decision"][0]
+reverts.revert(tmp, runs, rec("c3"), c3n, "operation", "origin/main")
+reverts.revert(tmp, runs, rec("c3"), c3n, "operation", "origin/main", cannot="cannot be met")
+check(decisions.stopped(decisions.entries(runs, "c3")) != "" and rec("c3")["status"] == "stopped", "CELL files-decision x cannot stops the goal for good")
+
 # a hold is cleared only by a later commit that takes the shipped change out
 commit("other.txt", "x%s\n" % d6)
 check("ONE_REVIEW_HOLD" in refused(lambda: reverts.clear_hold(tmp, "p6", d6, sh("log", "--format=%H", "-1", "--", "dev/toy/test-a.sh"), "operation")),
