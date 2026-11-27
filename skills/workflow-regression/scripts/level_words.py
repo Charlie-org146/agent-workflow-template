@@ -140,7 +140,7 @@ def cover_results(root, run_rows, rows):
             record = ran.get(cover)
             if cover in rows and rows[cover][1] == "draft":
                 states.append("draft")
-            elif not record or not record[5]:
+            elif cover not in rows or not record or not record[5]:
                 states.append("no result")
             elif record[1] == "FAIL":
                 states.append("KNOWN" if cover in known else "FAIL")

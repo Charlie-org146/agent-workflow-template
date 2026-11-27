@@ -124,7 +124,7 @@ def criteria(top, cfg, doc_rows, fails):
             out += ["%s (no regression row)" % key] * (not found)
             for row in found:
                 if row[1] == "covered":  # through its covers, as any row: a failing, draft or missing cover leaves it unmet
-                    bad = [c for c in cover.get(row[0], []) if c not in skip and (c not in by or by[c][1] == "draft" or fails(by[c][2], top))]
+                    bad = [c for c in cover.get(row[0]) or ["-"] * bool(cover) if c not in skip and (c not in by or by[c][1] == "draft" or fails(by[c][2], top))]
                     out += ["%s (covered row %s: cover %s fails, is a draft or is missing)" % (key, row[0], c) for c in bad[:1]]
                 if row[1] == "covered" or row[0] in skip:
                     continue

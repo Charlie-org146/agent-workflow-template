@@ -849,7 +849,21 @@ def targets():
         check(len(got) == 1 and all(t in got[0] for t in tokens), "the Run targets table has one line for %s with %s" % (name, ", ".join(tokens)), got)
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "draftl0": draftl0, "wfrows": wfrows, "gate": gate, "targets": targets, "mixedrecord": mixedrecord, "wfpin": wfpin}
+def typoword():
+    print("== review round 1: an unknown level word fails loudly where every pull request run reads the table")
+    # Value: protects=the runner may skip a row whose level word it does not know because regression.py refuses the table first;
+    #   fails_when=regression.py run L1, run land or levels --check accept a table with a typo'd level word
+    from lvl_fixture import Repo, entry, row
+    repo = Repo([row("a"), row("typo", level="Draft")], [entry("a"), entry("typo")], ["label\tsecurity\tsecurity\tfixture label"])
+    repo.commit()
+    for args in (("run", "L1"), ("run", "land"), ("levels", "--check")):
+        done, said = repo.run(*args)
+        check(done == 2 and "LEVELS_BAD_OLD_WORD" in said and "typo" in said and "regression.tsv:2" in said,
+              "regression.py %s refuses a level cell 'Draft' (exit 2, LEVELS_BAD_OLD_WORD, names the row and line; levels.py:290)" % " ".join(args), said[:200])
+    repo.close()
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "draftl0": draftl0, "wfrows": wfrows, "gate": gate, "typoword": typoword, "targets": targets, "mixedrecord": mixedrecord, "wfpin": wfpin}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))

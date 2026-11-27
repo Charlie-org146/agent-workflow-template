@@ -121,6 +121,7 @@ def cmd_level(root, args):
     state = State(root)
     need_levelled(state)
     if args.ready:
+        any([args.test_level, args.risk, args.covers, args.retime, args.refresh, args.rename, args.remove]) and stop("LEVELS_BAD_FLAGS", "--ready goes alone")
         return level_words.ready(root, args)
     edits = [args.test_level, args.risk, args.covers, args.retime, args.refresh]
     if args.rename or args.remove:
