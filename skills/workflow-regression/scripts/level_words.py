@@ -76,3 +76,14 @@ def ready(root, args):
     done = levels_cli.State(root).entries()[args.id]
     print("READY %s: level %s, the table's word %s, state blank (it runs from now on)" % (args.id, done["level"], word["new"]))
     return 0
+
+
+def not_run(rows):
+    """Every run, whatever it picks, names each draft row of the whole table once; a draft is never run."""
+    for key in sorted(k for k, r in rows.items() if r["level"] == "draft"):
+        print("not run: draft " + key)
+
+
+def draft_line(key):
+    return ("DRAFT %s: not run, and its requirement is not enforced, until it is ready. Fix: regression.py add %s --level draft "
+            "--test-level L1 --command '<a real command>', then regression.py level %s --ready" % (key, key, key))

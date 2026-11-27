@@ -114,7 +114,7 @@ $reg sync > "$d/o5"; rc=$?; cat "$d/o5"
 [ $rc = 1 ] && [ "$(grep -c '^GAP' "$d/o5")" = 2 ] && ok "two gaps" || bad "gaps"
 $reg sync --write >/dev/null
 grep -q "add-median-1.*draft" .loop/regression.tsv && ok "draft written" || bad "draft"
-$reg run nightly | grep -q add-median && bad "ran a draft" || ok "drafts don't run"
+[ "$($reg run nightly | grep add-median | grep -vc '^not run: draft add-median-[12]$')" = 0 ] && $reg run nightly | grep -q '^not run: draft add-median-1$'  && ok "drafts don't run: the draft's id is only in its not-run line" || bad "ran a draft"
 $reg add add-median-1 --level land --command "test -e calc.py" --goal add-median:1
 $reg add add-median-2 --level covered --command "read by a person" --goal add-median:2
 git add -A; git commit -qm "Rows for the goal"

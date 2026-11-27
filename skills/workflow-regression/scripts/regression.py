@@ -177,7 +177,7 @@ def cmd_sync(args):
         edit_rows(root, lambda current: [current.setdefault(k, v) for k, v in drafted.items()])
     drafts = [row["id"] for row in rows.values() if row["level"] == "draft"]
     for key in drafts:
-        print("DRAFT %s: not run until it has a command and level" % key)
+        print(level_words.draft_line(key))
     never = runs.unproven(root, [row for row in rows.values() if row["level"] in ("land", "nightly")], SEEN)
     for key in never:
         print("UNPROVEN %s: never seen failing. Run red." % key)
@@ -261,11 +261,12 @@ def cmd_run(args):
     ids = [i for i in (args.ids or "").split(",") if i]
     bad = [i for i in ids if i not in rows]
     bad and sys.exit("REFUSED: no row called %s." % ", ".join(bad))
+    level_words.not_run(rows)
     args.reuse = args.reuse or bool(ids)  # an ids lane (SKP-1.1) reuses and keeps the record, never writes a tracked file
     expected, picked = known(root), []
     for row in tiers.kinds([rows[i] for i in ids] if ids else chosen(rows, tiers.target(root, args)), args.kind):
         if row["level"] in ("draft", "covered"):
-            print("SKIP %s: %s" % (row["id"], row["level"]))
+            row["level"] == "covered" and print("SKIP %s: covered" % row["id"])
         else:
             picked.append(row)
     head, record, unclean = git("rev-parse", "HEAD"), lanes.record_path(root), lanes.dirty(root)

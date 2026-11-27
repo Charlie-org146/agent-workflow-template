@@ -881,7 +881,7 @@ setting for tests only; the LANE line says when it is in effect. Without `--tier
 A goal lane's planning step works out, for every row, which files it reads. That closure is computed once per lane and kept
 per branch in `<git common dir>/loop/plans/<branch file name>` (zlib-compressed JSON, next to the lane records in `loop/tests/`,
 never in the worktree). The next lane at the same HEAD loads it instead of recomputing. `PLAN_CACHE: <state>` is the first line the
-planner prints (`regression.py run` prints a `SKIP <id>: draft` or `SKIP <id>: covered` line for such rows before it); the rest of the plan output, and the planned rows, are the same with the cache on or off.
+planner prints (`regression.py run` prints a `not run: draft <id>` line for each draft and a `SKIP <id>: covered` line for a covered row picked, before it); the rest of the plan output, and the planned rows, are the same with the cache on or off.
 
 | State and token | Means | What to do |
 |---|---|---|
