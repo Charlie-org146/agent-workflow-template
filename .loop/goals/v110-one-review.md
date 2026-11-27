@@ -277,3 +277,8 @@ safety_scan.py has one rule set for a stop's words and one for a diff. Nothing c
 - goal.py start-items records the items and then calls notify.py start-mail: one mail per code, tried again after a refused or over-budget send, kept when it may have gone out. The mail carries only its own answer forms. A text the private-name scan doesn't pass is not stored for mailing. The mail code moved to review_view.py (notify.py had no room).
 - Checks: the start toy, test-email-notify.py and test-mailbox.py pass (single toys, under operation's load rule). Still open in E1: the whole-unit comparison at revise, review, guard and merge, and the uses voided as B2 rules.
 - The KEEP/DEFER sort under TD2188 is in the shared session notes (spare-worker-a-one-review-KEEP-DEFER.md), with its flagged items for operation.
+
+### Correction to the E7 counts
+
+As first committed (234b981d4), the scan did not read a Reviewed requirement in the pages' own form, which carries a date and a seal. Its toy used a form no page has. The "changed Reviewed text 0" and "30 open no finding" figures above are wrong. Fixed, with the toy now using the real form and a real page, and rerun on the same 100 merges: 24 open no finding; changed Reviewed text 10; the other class counts are unchanged (test 65, security and settings 18, deletion 3, money 1, steward merge 1, private data 0). The counts over past break texts don't use this part.
+

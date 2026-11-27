@@ -30,7 +30,8 @@ ACTS = {DELETE: r"\brm\s+-[a-z]*r|\breset\s+--hard\b|\bpush\b[^\n]*(\s-f\b|--for
         MONEY: r"\b(stripe|paypal|braintree)\b",
         SECURITY: r"bypass[-_ ]?permissions|dangerously[-_]skip|--no-sandbox\b|danger-full-access"}
 SETTINGS = (dlf.PATHS[SECURITY], r"^\.loop/config\.json$|^\.loop/permissions\.tsv$")
-UNIT = re.compile(r"^- ([A-Z]{2,5}-\d+): \*\*Reviewed\*\*")
+# a page's requirement line: mark (with its date), heading, and the seal comment a review leaves
+UNIT = re.compile(r"^- ([A-Z]{2,5}-\d+): \*\*(Unreviewed|Reviewed(?: \d{4}-\d\d-\d\d)?)\*\* (.*?)(?: <!-- reviewed \w+ -->)?$")
 PAGES = "docs/wiki/"
 
 
@@ -52,19 +53,32 @@ def action(text, paths=(), label=""):
     return {"state": "safety" if classes else "unknown", "classes": classes}
 
 
-def reviewed_units(text):
-    """{ID: unit text} of a page's Reviewed requirements; a unit is its line and the indented lines under it."""
+def units(text, reviewed=False):
+    """{ID: unit text} of a page's requirements, or of its Reviewed ones: the heading and the indented lines under it,
+    without the mark, its date or the seal, so the text alone is compared."""
     found, current = {}, None
     for line in text.split("\n"):
-        start = UNIT.match(line)
+        start = UNIT.match(line.rstrip())
         if start:
-            current = start.group(1)
-            found[current] = line
+            current = None if reviewed and start.group(2) == "Unreviewed" else start.group(1)
+            if current:
+                found[current] = start.group(3)
         elif current and line.startswith("  ") and line.strip():
-            found[current] += "\n" + line
+            found[current] += "\n" + line.rstrip()
         else:
             current = None
     return found
+
+
+def reviewed_units(text):
+    return units(text, True)
+
+
+def changed_units(before, after):
+    """IDs whose Reviewed text changed: reviewed before and now different or gone, or reviewed now with new text."""
+    gone = {key for key, text in reviewed_units(before).items() if units(after).get(key) != text}
+    new = {key for key, text in reviewed_units(after).items() if units(before).get(key) != text}
+    return sorted(gone | new)
 
 
 def sections(diff):
@@ -121,7 +135,7 @@ def read_diff(top, base, head):
     for path in [p for p in must("diff", "-z", "--name-only", *quiet, start, head).split("\0") if p]:
         if not (path.startswith(PAGES) and path.endswith(".md")):
             continue
-        before, after = (reviewed_units(out if not code else "") for code, out in
+        before, after = (out if not code else "" for code, out in
                          (git(top, "cat-file", "blob", "%s:%s" % (ref, path)) for ref in (start, head)))
-        changed += [(path, ident) for ident in sorted(set(before) | set(after)) if before.get(ident) != after.get(ident)]
+        changed += [(path, ident) for ident in changed_units(before, after)]
     return text, changed

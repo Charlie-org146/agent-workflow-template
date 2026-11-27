@@ -177,8 +177,13 @@ check(S[4] in found(diff("tools/x.py", added=['run(["gh", "pr", "merge", "--admi
 check(found(diff("docs/wiki/Page.md", added=["plain words"])) == {}, "a wiki path alone is no promise change")
 check(found(diff("docs/wiki/Page.md", added=["x"]), units=[("docs/wiki/Page.md", "AB-1")]) == {S[5]: ["docs/wiki/Page.md"]},
       "a changed Reviewed unit is a promise change")
-base = "- AB-1: **Reviewed** One\n  - sub line [AB-1]\n\n- AB-2: **Unreviewed** Two\n"
-check(sc.reviewed_units(base) == {"AB-1": "- AB-1: **Reviewed** One\n  - sub line [AB-1]"}, "a Reviewed unit holds its sub-bullets")
+base = "- AB-1: **Reviewed 2026-11-24** One <!-- reviewed 2069271e -->\n  - sub line [AB-1]\n\n- AB-2: **Unreviewed** Two\n"
+check(sc.reviewed_units(base) == {"AB-1": "One\n  - sub line [AB-1]"}, "a Reviewed unit, in the pages' own form, holds its heading and sub-bullets: %s" % sc.reviewed_units(base))
+real = open(os.path.join(root, "docs", "wiki", "Deliver-first.md"), encoding="utf-8").read()
+marked = len(__import__("re").findall(r"^- [A-Z]{2,5}-\d+: \*\*Reviewed", real, __import__("re").M))
+check(marked and len(sc.reviewed_units(real)) == marked, "every Reviewed requirement of a real page is read (%d of %d)" % (len(sc.reviewed_units(real)), marked))
+check(sc.units(base.replace("**Reviewed 2026-11-24**", "**Unreviewed**").replace(" <!-- reviewed 2069271e -->", ""))["AB-1"] == "One\n  - sub line [AB-1]",
+      "losing the mark alone doesn't change the unit's text")
 
 # the diff is read as git sees it, with names that need quoting, and an unreadable one refuses
 repo = os.path.join(home, "scanrepo")
@@ -193,7 +198,7 @@ os.makedirs(os.path.join(repo, "docs", "wiki"))
 open(os.path.join(repo, "docs", "wiki", "P.md"), "w").write(base)
 g("add", "-A"); g("commit", "-qm", "a")
 first = g("rev-parse", "HEAD")
-open(os.path.join(repo, "docs", "wiki", "P.md"), "w").write(base.replace("sub line", "other line"))
+open(os.path.join(repo, "docs", "wiki", "P.md"), "w").write(base.replace("sub line", "other line").replace("**Reviewed 2026-11-24**", "**Unreviewed**"))
 open(os.path.join(repo, "odd name \u00e9.bin"), "wb").write(b"\xff\xfe\x00data")
 g("add", "-A"); g("commit", "-qm", "b")
 g("config", "diff.external", "false")
