@@ -321,23 +321,48 @@ def critcover():
     #   draft; fails_when=a covered row is met whatever its covers do
     from lvl_fixture import Repo, entry, row
     page = "# Page\n\n## Requirements\n\n- ABC-1: **Unreviewed** covers a passing row\n- ABC-2: **Unreviewed** covers a failing row\n- ABC-3: **Unreviewed** covers a draft\n"
-    rows = [row("good"), row("bad", command="false"), row("drf", level="draft"),
+    rows = [row("lvl-armed"), row("good"), row("bad", command="false"), row("drf", level="draft"),
             row("ABC-1", level="covered", command="read by a person"), row("ABC-2", level="covered", command="read by a person"),
             row("ABC-3", level="covered", command="read by a person")]
-    ents = [entry("good"), entry("bad"), entry("drf", old="draft"), entry("ABC-1", old="covered", covers="good"),
+    ents = [entry("lvl-armed"), entry("good"), entry("bad"), entry("drf", old="draft"), entry("ABC-1", old="covered", covers="good"),
             entry("ABC-2", old="covered", covers="bad"), entry("ABC-3", old="covered", covers="drf")]
     repo = Repo(rows, ents, ["label\tsecurity\tsecurity\tfixture label"])
     repo.write("docs/wiki/Page.md", page)
+    repo.write(".github/workflows/regression-pr.yml", "# Written by workflow-regression\n")
     repo.commit()
     done, said = repo.run("criteria")
     lines = said.splitlines()
     check(not any(l.startswith("ABC-1") for l in lines), "a covered row whose cover passes is met", said)
     check(any(l.startswith("ABC-2") and "bad" in l for l in lines), "a covered row whose cover fails is unmet, and names the cover", said)
     check(any(l.startswith("ABC-3") and "drf" in l for l in lines), "a covered row whose cover is a draft is unmet, and names the cover", said)
+    os.remove(os.path.join(repo.path, ".github", "workflows", "regression-pr.yml"))
+    done, said = repo.run("criteria")
+    check("ABC-2" not in said and "ABC-3" not in said, "R10: levelled but not armed, a covered row is not checked against its covers (what ran before)", said)
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft}
+def unarmed():
+    print("== R10: what runs switches on armed(), not on levelled")
+    # Value: protects=a levelled table that is not armed (no lvl-armed row) plans from land for goal_levels L0, as before this goal;
+    #   fails_when=an unarmed levelled repository takes the level words
+    import completion, tiers
+    from lvl_fixture import Repo, entry, row
+    repo = Repo([row("a"), row("b")], [entry("a"), entry("b")], ["label\tsecurity\tsecurity\tfixture label"])
+    repo.write(".loop/config.json", json.dumps({"goal_levels": "L0"}))
+    repo.commit()
+    args = types.SimpleNamespace(tier=True, target="land")
+    check(not completion.armed(repo.path), "control: the fixture is levelled and not armed")
+    got = tiers.target(repo.path, args)
+    check(got == "land", "levelled but unarmed, goal_levels L0: the lane plans from land", got)
+    repo.write(".loop/config.json", json.dumps({"goal_levels": "land"}))
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        got = tiers.target(repo.path, args)
+    check(got == "land" and out.getvalue() == "", "levelled but unarmed, the old word land: no translation line, still land", out.getvalue())
+    repo.close()
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
