@@ -1,7 +1,7 @@
 # One review at the start: a goal asks the owner once, and no later step waits on the owner (owner o1037, o1038)
 
 - Slug: v110-one-review
-- Touches: skills/workflow-delivery, skills/workflow-monitoring, dev/toy, .loop/regression.tsv, docs/wiki/Delivery.md, docs/wiki/Deliver-first.md, docs/wiki/How-to-use-Deliver-first.md, docs/wiki/Operation.md, docs/wiki/How-to-use-Operation.md, docs/wiki/Tests.md, skills/loop-files.md, listing.json, docs/wiki/Home.md, skills/workflow-release, .loop/config.json, .loop/START.md, skills/workflow-setup/scripts/settings.py, docs/wiki/How-to-use-Delivery.md, skills/workflow-docs/scripts/deployments.py, skills/workflow-docs/scripts/milestones.py, skills/workflow-docs/scripts/criteria.py, README.md, docs/wiki/Principles.md
+- Touches: skills/workflow-delivery, skills/workflow-monitoring, dev/toy, .loop/regression.tsv, docs/wiki/Delivery.md, docs/wiki/Deliver-first.md, docs/wiki/How-to-use-Deliver-first.md, docs/wiki/Operation.md, docs/wiki/How-to-use-Operation.md, docs/wiki/Tests.md, skills/loop-files.md, listing.json, docs/wiki/Home.md, skills/workflow-release, .loop/config.json, .loop/START.md, skills/workflow-setup/scripts/settings.py, docs/wiki/How-to-use-Delivery.md, skills/workflow-docs/scripts/deployments.py, skills/workflow-docs/scripts/milestones.py, skills/workflow-docs/scripts/criteria.py, README.md, docs/wiki/Principles.md, .loop/regression-relevel.tsv, skills/workflow-regression/scripts/levels_gate.py
 - ETA: 870 active minutes (estimate 694m plus a 25% margin)
 
 ## Words used
