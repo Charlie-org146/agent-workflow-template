@@ -113,8 +113,11 @@ def entries(root):
 
 
 def pick(rows, level, record):
-    """The rows a level runs by their recorded stage: L0; L1 is L0 and L1; L2 is every row. A row with no entry is L1."""
-    stages = {"L0": ("L0",), "L1": ("L0", "L1"), "L2": ("L0", "L1", "L2")}[level]
+    """The rows a level runs by their recorded stage: L0; L1 is L0 and L1. A row with no entry is L1. L2 is every land and
+    nightly row, whatever its stage; a covered row is proved by its cover and is not one of them (TD2224)."""
+    if level == "L2":
+        return [row for row in rows if row["level"] in ("land", "nightly")]
+    stages = {"L0": ("L0",), "L1": ("L0", "L1")}[level]
     return [row for row in rows if record.get(row["id"], ("L1",))[0] in stages]
 
 
