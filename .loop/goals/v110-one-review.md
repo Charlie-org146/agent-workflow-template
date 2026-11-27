@@ -242,3 +242,12 @@ RT15 asks for this before the E1 to E5 code. It was written after E2 to E5 were 
 
 - 78d2c1b05: E4 and E5. 3af6c6f17: E3. 2b7969ae5: E2. Next: E1.
 - E2 readings, sent to operation: a decisions file holding only its first mark entry, with no record, counts as the empty one of B6; a queued record's report lines are not later activity.
+- operation-mac accepted E3 (3af6c6f17) and E2 (2b7969ae5), both E2 readings included.
+- B7 at merge: the hold reads the mark committed on the goal branch when the record lost it; its toy case was seen red with that read switched off.
+- TD2180 (speed, scope frozen): only what the recorded plan and dispositions require is built; anything new becomes a deliver-first line for after the v1.1.0 cut unless it blocks the merge. The removal of dlf's private-data wait stays in this build.
+- Filed deliver-first: v110-one-review-choice-1 (three toys fail in an isolated local clone on main while GitHub passes them). Explicit pre-scans under TD2170: 1, clean; the filing tool scans the posted text again.
+- test-monitoring.sh, run to completion on untouched main 7784d862f in the isolated clone: 38 pass, 2 fail, the same two "watch.py alone" cases as on this branch (the toy's copied list lacks batch.py). Pre-existing. An earlier run here that showed 7 fails did not repeat, and one earlier run on main hit the 7 minute limit.
+
+### Later work
+
+- From the DEL-21 comparison (RT15): a required status check could add to E3's merge hold on GitHub's side. It needs a repository protection setting, which is the owner's.

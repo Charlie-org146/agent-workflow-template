@@ -311,6 +311,12 @@ json.dump(done, open(os.path.join(runs, "new-era.json"), "w"))
 merge_py = os.path.join(root, "skills", "workflow-release", "scripts", "merge.py")
 got = subprocess.run([sys.executable, merge_py, "new-era"], capture_output=True, text=True, cwd=tmp, env=env)
 check("ONE_REVIEW_UNANSWERED" in got.stdout + got.stderr, "merge refuses an unanswered goal: %s" % (got.stdout + got.stderr).strip()[:140])
+lost = {k: v for k, v in done.items() if k not in ("one_review", "start_required")}
+lost.update(slug="bg", goal="Do bg", branch="loop/bg")
+json.dump(lost, open(os.path.join(runs, "bg.json"), "w"))
+got = subprocess.run([sys.executable, merge_py, "bg"], capture_output=True, text=True, cwd=tmp, env=env)
+check("ONE_REVIEW_UNANSWERED" in got.stdout + got.stderr,
+      "merge reads the committed mark when the record lost it: %s" % (got.stdout + got.stderr).strip()[:140])
 import start_review  # noqa: E402
 check(start_review.unanswered({"slug": "x"}) == "" and start_review.unanswered({"slug": "x", "start_required": {"why": "t"}}) != ""
       and start_review.unanswered({"slug": "x", "start_required": {"why": "t"}, "start_answer": {"record": "o1"}}) == ""
