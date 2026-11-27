@@ -67,7 +67,7 @@ None
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [sizing-cbs-1-1](Tests#t-sizing-cbs-1-1) | requirement | CBS-1 | Given the checks table, when a small goal is sized, then its record shows exactly the table's small checks, each in its named form. | PASS 2026-11-25 |
-| [sizing-cbs-1-2](Tests#t-sizing-cbs-1-2) | requirement | CBS-1 | Given a table row that skips the full test run for small goals, when the table is read, then it is refused naming the row and the check. | PASS 2026-11-25 |
-| [sizing-cbs-1-3](Tests#t-sizing-cbs-1-3) | requirement | CBS-1 | Given a medium goal, when its red team runs light, then its record names the form and shows one pass, and the full form is refused. | PASS 2026-11-25 |
-| [sizing-cbs-1-4](Tests#t-sizing-cbs-1-4) | requirement | CBS-1 | Given three goals that skip a check, when cutcheck runs, then it lists all three, and a required full run runs the check first and fails the cut when it fails. | PASS 2026-11-25 |
+| [sizing-cbs-1-1](Tests#t-sizing-cbs-1-1) | requirement | CBS-1 | Given the checks table, when a small goal is sized, then its record shows exactly the table's small checks, each in its named form. | PASS 2026-11-27 |
+| [sizing-cbs-1-2](Tests#t-sizing-cbs-1-2) | requirement | CBS-1 | Given a table row that skips the full test run for small goals, when the table is read, then it is refused naming the row and the check. | PASS 2026-11-27 |
+| [sizing-cbs-1-3](Tests#t-sizing-cbs-1-3) | requirement | CBS-1 | Given a medium goal, when its red team runs light, then its record names the form and shows one pass, and the full form is refused. | PASS 2026-11-27 |
+| [sizing-cbs-1-4](Tests#t-sizing-cbs-1-4) | requirement | CBS-1 | Given three goals that skip a check, when cutcheck runs, then it lists all three, and a required full run runs the check first and fails the cut when it fails. | PASS 2026-11-27 |

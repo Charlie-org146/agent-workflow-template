@@ -40,3 +40,5 @@ Each requirement and how it is delivered:
 
 - PRD page: [Fast-checks](Fast-checks)
 - Backlog: [Backlog](https://github.com/jcl2018/agent-workflow-template/milestones)
+
+<!-- Still true at v110-main-red: the scheduled regression job's full-history checkout changes nothing on this page. -->

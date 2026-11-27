@@ -271,7 +271,7 @@ None
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | [mon7-govern-blocks](Tests#t-mon7-govern-blocks) | requirement | GRD-4 | Given the operation session, when it tries an edit, a commit or a push, then the govern hook refuses it with the fix, while workers, other sessions and the off switch pass. | PASS 2026-11-25 |
-| [machine-no-prompt-mode](Tests#t-machine-no-prompt-mode) | requirement | GRD-4 | Given a task with no recorded mode or a prompting one, when machine check runs, then it fails, and a no-prompt mode passes. | PASS 2026-11-26 |
+| [machine-no-prompt-mode](Tests#t-machine-no-prompt-mode) | requirement | GRD-4 | Given a task with no recorded mode or a prompting one, when machine check runs, then it fails, and a no-prompt mode passes. | PASS 2026-11-27 |
 | [grd4-touches](Tests#t-grd4-touches) | requirement | GRD-4 | Given GRD-4, when test-guards.sh runs its 2 cases, then each passes: the command refuses; the command refuses with WORKER_SELF_REPAIR. | PASS 2026-11-25 |
 | [grd4-budget](Tests#t-grd4-budget) | requirement | GRD-4 | Given a worker session, when it tries to set its own goal's budget, then the command refuses. | PASS 2026-11-25 |
 | [grd4-govern](Tests#t-grd4-govern) | requirement | GRD-4 | Given the operation session governing goals, when workers build, then the governing checkout gets no commit. | not run |

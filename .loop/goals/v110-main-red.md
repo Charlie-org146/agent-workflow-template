@@ -1,0 +1,40 @@
+# Make the four rows that are red on main pass on main in the clean env, by finding and fixing each cause, with no row loosened, skipped or added to a known list (owner o1015, ledger o961; done lines and the regression.yml full-history change approved by owner o1026, ledger o966; issues #5870, #5871, #5872, #5895; a patch, no version task)
+
+- Slug: v110-main-red
+- Touches: dev/toy, .loop/regression.tsv, .github/workflows/regression.yml, skills/workflow-regression/scripts, docs/wiki/Tests.md, docs/wiki/Fast-checks.md, docs/wiki/How-to-use-Fast-checks.md, docs/wiki/How-to-use-Regression.md, docs/wiki/Regression.md
+- ETA: 450 active minutes (estimate 357m plus a 25% margin)
+
+## Done lines
+
+Frozen. A wrong done line needs a new goal.
+
+1. Given main, when the row tasks-rows-only-added runs in the clean env, then it passes.
+2. Given main, when the row guards-null-report-nofiles runs in the clean env, then it passes.
+3. Given main, when the row full-auto-no-new-file runs in the clean env, then it passes.
+4. Given main, when the row codex-key-commands runs in the clean env, then it passes.
+5. Given the package, when the goal's checks run, then every script stays under 20,480 bytes, no test is loosened, no row turns red, and committed text never names the service repo.
+
+## For the pull request
+
+Fixes #5870 (row tasks-rows-only-added).
+
+- #5871 (row guards-null-report-nofiles) and #5872 (row full-auto-no-new-file) stay open at merge. Main's scheduled run marks each "Passing again" and shuts it once its row passes there.
+- Workflow change, stated plainly: the checkout of the scheduled regression job now fetches full history (fetch depth zero). It is set in the generator, actions.py, and regression.yml is regenerated; no other workflow line changes (owner o966).
+- Done line 5, how it is read (TD2015): "every script stays under 20,480 bytes" means every packaged script.
+- Row change (TD1995, o1074): tasks-rows-only-added now also fails whenever its test ends with an error. Stricter only; it has its approved-row-changes line.
+- The tasks test now uses a fixed machine reading, the same one the shell tests get (#4375); every one of its conditions is unchanged. Separately, in the tasks test and the full-auto test, the forced failure for a missing origin/main became an exit with a HIST code that still fails: HIST-E01 for a missing ref, HIST-E02 for a shallow history, HIST-E03 for a git command that failed.
+- Five wiki pages change: one line each on the two Regression pages and the two Fast-checks pages, plus the Tests re-render.
+- New row: history-rows-fail-closed. A history row that can't read the history it compares fails with a code and its fix.
+- Codex test, one expected value corrected, not loosened (TD2111): one check expected setup to refuse a bare agent command. That refusal was removed on purpose by aeca3f9c8 ("adoption never blocks"); the check now requires exit 0 and the agent_command gap line with its fix.
+- Line 4's live proof was dropped under o1038 (top's TD2110), revertible by the owner typing "allow main-red's live Codex runs". Done line 4 is not shown met, and #5895 stays open. The lanes of this goal run with no Codex program, and codex-key-commands is a nightly row they do not run: nothing here shows it passing.
+- Line 4's live proof is not here: two live runs of codex-key-commands on 190768bae, allowed by the owner's o1050, failed. The first kept no record of which check failed; the second shows CODEX-E05, `go` exited 1. See #5917, lines v110-main-red-choice-1 and v110-main-red-choice-2. #5895 stays open and moves to the goal codex-live-go-fix.
+- Red-team break 2 was decided by top under the owner's o1037 standing rule (TD2098(1)) and is revertible.
+- Build review: three full rounds. Round 3 did not pass: codex adversarial failed (a controls file could be silently omitted, now fixed with a red-then-green check; deadline bypass by a process leaving its group, deliver-first; screening a saved log can run past the time limit, only when a person opts to keep the log, deliver-first; one further item held off public text); native review passed with minor findings. Settled under TD2125. A fresh reader then checked that fix alone and passed it; no fourth full round was run.
+- How the lanes ran (TD2141): this goal's lanes run under env -i, a clean environment that does not carry CLAUDE_CODE_HOST_SESSION_ID, which app sessions set. With that variable present, the rows del6-depth-by-size, del7-kill-resume, del9-pr-refuses and issue-38-verdicts fail, on main too; nothing in these lanes shows them passing in that case. See #5917 and v110-toy-leak-fixes' row filter fix. GitHub's checks on this pull request's exact head decide (TD1229).
+- Not run in the qa lane: its 15-minute budget did not reach full-auto-no-new-file, settings-render-fresh or docs-v2-repo-passes, and it does not run codex-key-commands, a nightly row. Where they run: the first three are land rows, which the pr lane runs if its budget reaches them, and main's scheduled full suite runs in any case; codex-key-commands is left to the scheduled full suite, whose workflow installs no Codex, so the row is skipped there by design. None of the four is claimed as passed.
+- CI on 190768bae had one failure, toys-set-userprofile, caused by this goal's own new test toy: one case set HOME without USERPROFILE. The change is one line in dev/toy/test-history-rows.py (TD2176); no delta reader was used for this one-line change in its own new test toy. Red, on 190768bae: "FAIL: every toy that sets HOME also sets USERPROFILE (Python's expanduser reads it on Windows)  test-history-rows.py". Green, with the line: "PASS: every toy that sets HOME also sets USERPROFILE (Python's expanduser reads it on Windows)".
+- The four make-room rows (make-room-2-identical, make-room-4-surface, make-room-b-2-identical, make-room-b-4-surface) can only be shown by the first scheduled run on main that contains this change. That check is not met at merge.
+
+## Verify by hand
+
+<!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->

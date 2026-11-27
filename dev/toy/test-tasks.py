@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # windows: ok
 # reads: dev/toy/approved-row-changes.tsv skills/workflow-monitoring/scripts/board_lines.py skills/workflow-monitoring/scripts/live_board.py skills/workflow-monitoring/scripts/checkin.py
+# reads: dev/toy/hist.py skills/workflow-delivery/scripts/dlf.py skills/workflow-delivery/scripts/private.py
+# History codes, each printed with its fix (dev/toy/hist.py): HIST-E01 the base ref is missing; HIST-E02 the history is shallow;
+# HIST-E03 a git command failed; HIST-E04 a fixture could not be built. A history that can't be read fails this test.
 """DEL-23: tasks. Each brief under .loop/tasks/ becomes one line of the Tasks list on the check-in and the live board, by name, with its
 state (queued, running, waiting, done or replaced), its goals and progress, and its ETA. A fixture repo holds toy briefs and fake run
 records; nothing here touches the real .git/loop, a network or a held toy."""
@@ -15,16 +18,21 @@ import tempfile
 here = os.path.dirname(os.path.abspath(__file__))
 top = os.path.abspath(os.path.join(here, "..", ".."))
 sys.path.insert(0, os.path.join(top, "skills", "workflow-monitoring", "scripts"))
+CALLER = dict(os.environ)  # read before HOME moves: error lines are screened with the runner's own private-name list
 home = tempfile.mkdtemp()
 for key in ("HOME", "USERPROFILE"):
     os.environ[key] = home
 os.environ["LOOP_MACHINE_NAME"] = "pc"
+os.environ.setdefault("LOOP_MACHINE", "64,64,10,0,0")  # a fixed machine reading, as reap.sh gives the shell toys (#4375): two renders compare alike
 import board_lines  # noqa: E402
 import board_model  # noqa: E402
 import board_tasks  # noqa: E402
 import checkin  # noqa: E402
 import live_board  # noqa: E402
 import reply_hook  # noqa: E402
+sys.path.insert(0, here)
+import hist  # noqa: E402
+hist.NAMES = hist.caller_names(CALLER)
 
 failed = []
 now = datetime.datetime.now(datetime.timezone.utc)
@@ -216,10 +224,6 @@ check(all("## Purpose" in b and "## Done when" in b for b in bodies), "every rea
 check(not any(re.search("ther" + "mis", b, re.I) for b in bodies), "no real brief names the service repo")
 check(all(re.search(r"^- Source: .+", b, re.M) for b in bodies), "every real brief carries its source record")
 # done line 5: nothing added under skills/, no existing regression row changed
-def git(*args):
-    return subprocess.run(["git", *args], cwd=top, capture_output=True, text=True)
-
-
 def unapproved(diff_rows, ok):
     """The changed or removed existing rows in a diff whose id the approved list does not name."""
     return [l for l in diff_rows if l.startswith("-") and not l.startswith("---") and l[1:].split("\t")[0] not in ok]
@@ -235,48 +239,40 @@ ALLOWED = "skills/workflow-monitoring/scripts/board_tasks.py"  # owner o788: the
 PR = r"^Merge pull request #[0-9]* from .*/loop/v110-tasks$"
 
 
-def git_in(repo, *args):
-    return subprocess.run(["git", "-c", "user.email=t@example.test", "-c", "user.name=t", *args], cwd=repo, capture_output=True, text=True)
-
-
 def tasks_added(repo):
     """The files under skills/ that v110-tasks' own merge added: the first-parent merge of its pull request on origin/main, found by
     its message (TD1176; no sha is pinned), compared with that merge's first parent. (merge found, added files)."""
-    merge = git_in(repo, "log", "origin/main", "--first-parent", "--merges", "--format=%H", "-1", "--grep", PR).stdout.strip()
-    if not merge:
-        return "", []
-    out = git_in(repo, "diff", "--name-status", "--diff-filter=A", merge + "^1", merge, "--", "skills").stdout
-    return merge, [l.split("\t")[-1] for l in out.splitlines() if l.strip()]
+    return hist.added(repo, PR, "skills", what="v110-tasks' merge")
 
 
 def fixture(extra):
     """A repo whose origin/main has v110-tasks' pull request merged, adding board_tasks.py and the files in extra."""
     repo = tempfile.mkdtemp()
-    git_in(repo, "init", "-q", "-b", "main", ".")
+    hist.fixture(repo, "init", "-q", "-b", "main", ".")
     os.makedirs(os.path.join(repo, ".loop"))
     with open(os.path.join(repo, ".loop", "regression.tsv"), "w") as f:
         f.write("a\tland\ttrue\nb\tland\ttrue\n")
-    git_in(repo, "add", "-A")
-    git_in(repo, "commit", "-qm", "base")
-    git_in(repo, "checkout", "-q", "-b", "loop/v110-tasks")
+    hist.fixture(repo, "add", "-A")
+    hist.fixture(repo, "commit", "-qm", "base")
+    hist.fixture(repo, "checkout", "-q", "-b", "loop/v110-tasks")
     for name in [ALLOWED] + extra:
         os.makedirs(os.path.dirname(os.path.join(repo, name)), exist_ok=True)
         open(os.path.join(repo, name), "w").write("x\n")
-    git_in(repo, "add", "-A")
-    git_in(repo, "commit", "-qm", "tasks")
-    git_in(repo, "checkout", "-q", "main")
-    git_in(repo, "merge", "-q", "--no-ff", "-m", "Merge pull request #1 from o/loop/v110-tasks", "loop/v110-tasks")
-    git_in(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
+    hist.fixture(repo, "add", "-A")
+    hist.fixture(repo, "commit", "-qm", "tasks")
+    hist.fixture(repo, "checkout", "-q", "main")
+    hist.fixture(repo, "merge", "-q", "--no-ff", "-m", "Merge pull request #1 from o/loop/v110-tasks", "loop/v110-tasks")
+    hist.fixture(repo, "update-ref", "refs/remotes/origin/main", "HEAD")
     return repo
 
 
 def row_changes(repo, change):
     """Unapproved changed or removed rows when a PR branch of the fixture applies change to .loop/regression.tsv."""
-    git_in(repo, "checkout", "-q", "-b", "pr")
-    base = git_in(repo, "merge-base", "origin/main", "HEAD").stdout.strip()
+    hist.fixture(repo, "checkout", "-q", "-b", "pr")
+    base = hist.fixture(repo, "merge-base", "origin/main", "HEAD").strip()
     path = os.path.join(repo, ".loop", "regression.tsv")
     open(path, "w").write(change)
-    return unapproved(git_in(repo, "diff", base, "--", ".loop/regression.tsv").stdout.splitlines(), set())
+    return unapproved(hist.run(repo, "a practice change to the rows", "diff", base, "--", ".loop/regression.tsv").splitlines(), set())
 
 
 # negative controls: a fixture of v110-tasks' merge adding another skills file fails, and a PR changing an existing row fails
@@ -286,15 +282,12 @@ check([f for f in tasks_added(fixture(["skills/x/other.py"]))[1] if f != ALLOWED
 check(len(row_changes(fixture([]), "a\tland\tfalse\nb\tland\ttrue\n")) == 1, "negative control: a change to an existing row fails on any PR")
 check(len(row_changes(fixture([]), "a\tland\ttrue\n")) == 1, "negative control: removing an existing row fails on any PR")
 check(row_changes(fixture([]), "a\tland\ttrue\nb\tland\ttrue\nc\tland\ttrue\n") == [], "a row added by a PR is not a change to an existing row")
-base = git("merge-base", "origin/main", "HEAD")
-added = []
-if base.returncode:
-    check(False, "origin/main is missing here, so skills/ and the regression rows cannot be compared")
-else:
-    sha = base.stdout.strip()
-    rows = git("diff", sha, "--", ".loop/regression.tsv").stdout.splitlines()  # the working tree against the merge base
-    check(not unapproved(rows, ok), "no existing regression row is changed or removed except the rows an approved record names (%d listed)" % len(ok))
-    merge, added = tasks_added(top)
-    check(bool(merge), "v110-tasks' pull request merge is found on origin/main by its message")
-check(added == [ALLOWED], "no file is added under skills/ except board_tasks.py (o788), by v110-tasks' own merge: %s" % added)
+COMPARED = "the skills files and the regression rows this test compares"
+hist.require(top, COMPARED)
+sha = hist.run(top, COMPARED, "merge-base", "origin/main", "HEAD").strip()
+rows = hist.run(top, COMPARED, "diff", sha, "--", ".loop/regression.tsv").splitlines()  # the working tree against the merge base
+check(not unapproved(rows, ok), "no existing regression row is changed or removed except the rows an approved record names (%d listed)" % len(ok))
+merge, added = tasks_added(top)
+check(bool(merge), "v110-tasks' pull request merge is found on origin/main by its message")
+check(added == [ALLOWED], "no file is added under skills/ except board_tasks.py (o788), by v110-tasks' own merge: %s" % hist.shown(added))
 sys.exit(1 if failed else 0)
