@@ -102,3 +102,11 @@ One full-depth review of the build, then a fresh reader on the changes made afte
 ### A named build item outside the done lines (the operation's decision; the owner can revert it)
 
 - Build (TD2140): APP_DROP in actions.row_env, so rows no longer receive the app's host session id (row row-env-drops-host-session). Outside the frozen done lines, and listed for the owner to revert: revert eff50e866. No done line changes.
+
+### Notes on this goal's runs
+
+- This goal's lanes ran under env -i (HOME, PATH, TERM=dumb, LOOP_ROLE=worker).
+- Under an app session's environment, four rows (del6-depth-by-size, del7-kill-resume, del9-pr-refuses, issue-38-verdicts) failed on main too: the variable CLAUDE_CODE_HOST_SESSION_ID reached them. See #5917 (v110-lvl-relevel-choice-1 and -choice-2).
+- This PR fixes that: row_env() also drops APP_DROP's names (row row-env-drops-host-session red then green; the four rows pass with the full inherited environment, with the home, temp folder and git's global config isolated).
+- While this pull request's tests ran, a stray run record in the shared run folder was written by the nightly run on main, row merge-refuses-worktree. A change of the shared git user name in the same period matches the nightly run's row entry-committed-config (from timing, not proven). This branch's run did not write the record.
+- The size check counted the tool's own bookkeeping commit (spec row 56).
