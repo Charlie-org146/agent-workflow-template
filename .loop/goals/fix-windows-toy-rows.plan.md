@@ -29,7 +29,8 @@ Anything beyond the four rows (OPS-1.10); no new rows; no change to product code
 - test-shard-balance.py: the fix is `Path(...).as_posix()` for the cutgate.py path inside the bash command text only; `cwd=work` stays native. If `all.tsv` is still missing, the cause is elsewhere and step 1's capture says where.
 - test-one-review-start.py, likely cause: the fixture's `put()` (lines 50 to 52) and `commit()` (55 to 58) and the owner-words writes (about 445 and 465) use text-mode `open()` with no `newline`, so autocrlf turns the page into CRLF: the fix is `newline="
 "` in the fixture, a line-ending fix, not a changed comparison and not a path normaliser. The backslash in "docs/wiki\F.md" is built in product code (`skills/workflow-delivery/scripts/start_answer.py:313`, from `safety_scan.read_diff`): if step 1 shows the refusal text still carries a backslash after the fixture writes LF, that is a product defect outside Touches and the goal STOPS and reports to the operation session; it does not narrow done line 2 and it does not patch around it in the toy.
-- toy-leak-row-setup: step 4 is gated on step 1 naming the failing step of the borrowed `toy-leak-config-keep` command (it runs test-budget-order.py, test-merge-where.py and under it test-entry-config.sh). `dev/toy/test-entry-config.sh` joins Files conditionally; a failing layer outside dev/toy or `.loop/regression.tsv` stops the goal the same way. Any edit to the `toy-leak-config-keep` command is shown by a diff read to change handling only, never what it checks. If a CRLF-tolerant staged-file check is needed it uses `tr -d ''` on the output, never a looser pattern. Done line 3's wording ("CRLF") may not match the root cause; the true cause is recorded.
+- toy-leak-row-setup: step 4 is gated on step 1 naming the failing step of the borrowed `toy-leak-config-keep` command (it runs test-budget-order.py, test-merge-where.py and under it test-entry-config.sh). `dev/toy/test-entry-config.sh` joins Files conditionally; a failing layer outside dev/toy or `.loop/regression.tsv` stops the goal the same way. Any edit to the `toy-leak-config-keep` command is shown by a diff read to change handling only, never what it checks. If a CRLF-tolerant staged-file check is needed it uses `tr -d '
+'` on the output, never a looser pattern. Done line 3's wording ("CRLF") may not match the root cause; the true cause is recorded.
 - Neighbours to rerun on Windows by row name after each fix: shard-balance, budget-order-first, toy-leak-merge-where, toy-leak-row-merge, toy-leak-config-keep, and the toys beside the edited ones (test-shard-budget.py, test-one-review-decide.py, test-one-review-findings.py).
 - Package line (done line 5): the 20,480-byte cap is for scripts under skills/*/scripts (the package caps check names `skills/workflow-x/scripts/`), not for dev/toy files, so edits to test-one-review-start.py (45 KB) do not trip it; the package gate head is run at the end to show it.
 - Linux: the same commands run on Linux with only path and line-ending handling changed; GitHub's run on the PR head is the proof for "stays green on Linux" (no local Linux run).
@@ -38,6 +39,11 @@ Anything beyond the four rows (OPS-1.10); no new rows; no change to product code
 ## PENDING
 PENDING: 1. Whether test-one-review-start.py's failure is a fixture line-ending problem (in scope) or a backslash built in product code (stop and report): resolved by step 1.
 PENDING: 2. Which layer of the `toy-leak-config-keep` command fails on Windows and whether it lies in dev/toy: resolved by step 1.
+
+## Build notes (wording from the fixes read)
+- No fix is written before step 1's red capture for that row exists.
+- If the STOP for a product-code backslash fires, done line 2 stays unmet in this goal; no toy-side normaliser is added.
+- test-entry-config.sh is in Files only if step 1 names it as the failing layer.
 
 Files: dev/toy/test-shard-balance.py, dev/toy/test-one-review-start.py, dev/toy/test-budget-order.py, dev/toy/test-merge-where.py, dev/toy/test-entry-config.sh, .loop/regression.tsv
 Lines: 60
