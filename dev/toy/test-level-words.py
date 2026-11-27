@@ -815,6 +815,50 @@ def mixedrecord():
     repo.close()
 
 
+def runsmend():
+    print("== the run record: a 5-cell line against the same line plus a sixth commit cell merges; any other same-date difference is left to the person")
+    # Value: protects=a branch that merges main after the run record gained its sixth (commit) cell does not stop at a table conflict the tool can resolve,
+    #   and two lines that differ in more than the sixth cell are still left to the person; fails_when=the repair returns False for a line with and without
+    #   the commit cell, or it resolves two lines whose first five cells differ
+    import subprocess
+    from lvl_fixture import Repo, row, ROOT
+    sys.path.insert(0, os.path.join(ROOT, "skills", "workflow-delivery", "scripts"))
+    import mend_tables
+    runs = ".loop/regression-runs.tsv"
+    head = "# id\tstatus\tdate\trun\tflaky\n"
+
+    def merged(ours, theirs):
+        repo = Repo([row("a"), row("b")], None, ["label\tsecurity\tsecurity\tfixture label"])
+        repo.write(runs, head + "a\tPASS\t2026-11-20\t\nb\tPASS\t2026-11-20\t\n")
+        repo.commit("base")
+        repo.git("checkout", "-q", "-b", "other")
+        repo.write(runs, head + theirs)
+        repo.commit("main's line")
+        repo.git("checkout", "-q", "main")
+        repo.write(runs, head + ours)
+        repo.commit("this branch's line")
+        got = repo.git("merge", "other", "--no-edit", check_it=False)
+        git = lambda *a: subprocess.run(["git"] + list(a), cwd=repo.path, env=repo.env, capture_output=True, text=True)
+        ok = None
+        if got.returncode:
+            cwd = os.getcwd()
+            os.chdir(repo.path)
+            try:
+                ok = mend_tables.mend(git, [runs], "other")
+            finally:
+                os.chdir(cwd)
+        text = repo.read(runs)
+        repo.close()
+        return got.returncode, ok, text
+    code, ok, text = merged("a\tPASS\t2026-11-27\t\t\t4495d93d3902\nb\tPASS\t2026-11-20\t\n", "a\tPASS\t2026-11-27\t\nb\tPASS\t2026-11-20\t\n")
+    check(code != 0 and ok is True and "a\tPASS\t2026-11-27\t\t\t4495d93d3902\n" in text and "<<<<" not in text,
+          "one id with a 5-cell line on one side and the same first five cells plus a sixth commit cell on the other, on the same date, is merged by the repair, keeping the sixth", (code, ok, text))
+    code, ok, text = merged("a\tPASS\t2026-11-27\t\t\t4495d93d3902\nb\tPASS\t2026-11-20\t\n", "a\tFAIL\t2026-11-27\t\nb\tPASS\t2026-11-20\t\n")
+    check(code != 0 and ok is False, "a same-date difference in the first five cells (PASS against FAIL) is still left to the person merging", (code, ok))
+    code, ok, text = merged("a\tPASS\t2026-11-27\t\t\t4495d93d3902\nb\tPASS\t2026-11-20\t\n", "a\tPASS\t2026-11-27\t\t\tc739d0b8dcfa\nb\tPASS\t2026-11-20\t\n")
+    check(code != 0 and ok is False, "two different sixth cells on the same date are still left to the person merging", (code, ok))
+
+
 def targets():
     print("== R11: the run targets table, one asserted case per line; L0, L1 and L2 wait for memory like land and nightly")
     # Value: protects=every surface that takes a target is listed once with what it does, and the memory wait is the same for the level words
@@ -863,7 +907,7 @@ def typoword():
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "draftl0": draftl0, "wfrows": wfrows, "gate": gate, "typoword": typoword, "targets": targets, "mixedrecord": mixedrecord, "wfpin": wfpin}
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "draftl0": draftl0, "wfrows": wfrows, "gate": gate, "typoword": typoword, "targets": targets, "mixedrecord": mixedrecord, "runsmend": runsmend, "wfpin": wfpin}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
