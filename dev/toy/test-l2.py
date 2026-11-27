@@ -160,7 +160,54 @@ def concurrency():
           "the group stays per ref and only runs off main are cancelled")
 
 
-cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency}
+def l2mod():
+    sys.path.insert(0, os.path.join(root, "skills", "workflow-regression", "scripts"))
+    import l2
+    return l2
+
+
+def verdict():
+    print("== items 9 and 10: one verdict, with completeness apart from colour")
+    # Value: protects=an L2 run is never green after a shard was lost, a row did not run or a write failed; fails_when=a
+    #   missing shard, an unrun row, a failed write or a cancelled matrix reads green; why_new=no verdict existed
+    l2 = l2mod()
+    ok = "# started 1\na\tPASS\nb\tPASS\n# end\n"
+    got = lambda *args, **kw: l2.verdict(*args, **kw)
+    v = got(["a", "b"], ok, 1, "success")
+    check(v["state"] == "GREEN" and v["complete"], "every row passed, every shard closed, the matrix succeeded: GREEN")
+    v = got(["a", "b", "c"], ok, 1, "success")
+    check(v["state"] == "RED" and v["unfinished"] == ["c"], "a row with no result line is unfinished and the run is RED")
+    v = got(["a", "b"], "a\tPASS\nb\tPASS\n", 1, "success")
+    check(v["state"] == "INCOMPLETE" and not v["complete"], "a shard file with no closing line makes the run INCOMPLETE, not green")
+    check(got(["a", "b"], ok, 1, "cancelled")["state"] == "INCOMPLETE", "a cancelled matrix is INCOMPLETE")
+    check(got(["a", "b"], ok + "# gh-failed\n", 1, "success")["state"] == "INCOMPLETE", "a failed issue write makes the run INCOMPLETE")
+    check(got(["a", "b"], "", 1, "failure")["state"] == "RED", "no results file at all: every row is unfinished, RED")
+    v = got(["a", "b"], "a\tPASS\nb\tSKIPPED\n# unrun b\n# end\n", 1, "success")
+    check(v["state"] == "RED" and v["skipped"] == {"b": "out of job time"}, "a row that never started is RED and named with its cause")
+    v = got(["a", "b"], "a\tPASS\n# exempt b macOS only\nb\tSKIPPED\n# end\n", 1, "success")
+    check(v["state"] == "GREEN" and v["exempt"] == 1 and not v["skipped"], "a by-design skip is exempt and the run stays GREEN")
+    v = got(["a", "b"], "a\tPASS\nb\tFAIL\n# end\n", 1, "failure")
+    check(v["state"] == "RED" and l2.tally(v) == "L2 RED: ran 1, known 0, exempt 0, skipped 0, failed 1", "a failed row is RED, and the tally line reads as the plan says")
+    check(got(["a", "b"], ok + ok, 2, "success")["state"] == "GREEN", "two shards that both closed are complete")
+    check(got(["a", "b"], ok, 2, "success")["state"] == "INCOMPLETE", "one shard of two closed is INCOMPLETE")
+
+
+def covered():
+    print("== checks 22 and 23: covered rows in the report")
+    # Value: protects=a covered row reads as its worst cover; two rows excused by the record print excepted (record);
+    #   fails_when=an excused row makes the run incomplete or a covered row prints nothing
+    l2 = l2mod()
+    record = "# id\told\tlevel\trisk\tcovers\tseconds\tcmdhash\treason\n" \
+             "c1\tcovered\tL1\tnone\tx,y\t\t\tcovers\ne1\tcovered\tL1\tnone\t\t\t\texcepted:o988\nc2\tcovered\tL1\tnone\tz\t\t\tcovers\n"
+    states = {"x": "PASS", "y": "FAIL"}
+    lines, incomplete = l2.covered_lines(record, states)
+    check("L2_COVERED c1 -> FAIL via y" in lines and "excepted (record) e1" in lines, "a covered row reads its worst cover, and an excused row reads excepted (record)")
+    check(incomplete == ["c2"], "a covered row whose cover has no result makes the run incomplete, and an excused row does not")
+    lines, incomplete = l2.covered_lines(None, states)
+    check(incomplete == [], "with no record file nothing is incomplete")
+
+
+cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
