@@ -60,8 +60,8 @@ backlog-setup-makes	PASS	2026-11-19
 bad-schedule-refused	PASS	2026-11-12	
 batch-cut-user	PASS	2026-11-09	
 blockers-first	PASS	2026-11-14	
-board-estimates-overrun	PASS	2026-11-25	
-board-tz-mixed-stamps	PASS	2026-11-25	
+board-estimates-overrun	PASS	2026-11-27	
+board-tz-mixed-stamps	PASS	2026-11-27	
 breaking-asks	PASS	2026-11-09	
 budget-fair-base-moved	PASS	2026-11-25	
 budget-fair-failed-stays	PASS	2026-11-15	
@@ -250,10 +250,10 @@ health-timing	PASS	2026-11-11
 health-tokens-124	PASS	2026-11-26	
 health-unreviewed-warn-issue-118	PASS	2026-11-26	
 health-workflow-no-milestone	PASS	2026-11-12	
-held-all	PASS	2026-11-25	
+held-all	PASS	2026-11-27	
 held-charge-idle	PASS	2026-11-25	
 held-charge-pauses	PASS	2026-11-25	
-held-stale-next	PASS	2026-11-25	
+held-stale-next	PASS	2026-11-27	
 held-time-3878	PASS	2026-11-25	
 held-time-over-still-stops	PASS	2026-11-25	
 held-time-owner-wait	PASS	2026-11-14	
@@ -546,7 +546,7 @@ repo-full-suite-limit	PASS	2026-11-11
 repo-narrow-178	PASS	2026-11-12	
 repo-rules-run	PASS	2026-11-26	
 repo-rules-setup	PASS	2026-11-24	
-report-done-final	PASS	2026-11-25	
+report-done-final	PASS	2026-11-27	
 report-header	PASS	2026-11-26	
 rerun-both-touched	PASS	2026-11-24	
 retired-id-exists	PASS	2026-11-26	
@@ -706,7 +706,7 @@ tree-rules-first	PASS	2026-11-26
 trim-package-98	PASS	2026-11-26	
 trim-setup-under-19000	PASS	2026-11-25	
 two-lanes-toy-435	PASS	2026-11-10	
-unattended-checkin-line	PASS	2026-11-25	
+unattended-checkin-line	PASS	2026-11-27	
 unattended-loop-recreate	PASS	2026-11-24	
 unattended-sends-warn	PASS	2026-11-19	
 unproven-blocks	PASS	2026-11-27	
