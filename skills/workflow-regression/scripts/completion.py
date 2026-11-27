@@ -3,8 +3,10 @@
 .loop/regression-limits.tsv (`id TAB limit TAB reason`) holds the owner's per-row exceptions: a number is that row's own row limit in
 seconds; the word `nightly` keeps a nightly row out of the PR shards (it still runs in the nightly run). A row not on it keeps the
 run's own limit. Whole-tree rows run in the tree job only (TD504)."""
+import glob
 import os
 import re
+import statistics
 import time
 
 
@@ -202,3 +204,71 @@ def fit(todo, est, limit):
         else:
             left.append(key)
     return keep, left
+
+
+# -- moved whole from lanes_cli.py
+def table_changed(root, name):
+    """Ids whose line in .loop/<name> differs from the merge-base or base tip; None if neither."""
+    import lanes
+    import tiers
+    base = tiers.config(root).get("base") or "main"
+    ats = [at for at in (tiers.merge_base(root, base), *[(lanes.git(root, "rev-parse", "--verify", "-q", ref) or "").strip()
+            for ref in ("origin/" + base, base)]) if at][:2]
+    if not ats:
+        return None
+    now, memo = tiers.current(root, name), {}
+    return {rid for at in ats for rid in set(now) | set(lanes.table(root, at, name, memo))
+            if lanes.table(root, at, name, memo).get(rid) != now.get(rid)}
+
+
+# -- the miss report (v110-lvl-l1): L1 over its time goal says why; the cut gate beside it still fails an unfinished row
+def span(path):
+    """(start, end or None) of one leg's span.txt; (None, None) when there is none."""
+    marks = {}
+    try:
+        for line in open(path):
+            cells = line.split()
+            if len(cells) >= 2 and cells[1].isdigit():
+                marks[cells[0]] = int(cells[1])
+    except OSError:
+        pass
+    return marks.get("start"), marks.get("end")
+
+
+def miss(pattern, tree_leg, goal, rows_of):
+    """The lines for a run over `goal` minutes, else []. pattern names the numbered legs' times files (its [0-7]),
+    tree_leg the tree job's; rows_of reads a times file into [id, seconds, status] rows."""
+    legs, lines = {}, []
+    for name in sorted(glob.glob(pattern)) + [tree_leg]:
+        if not os.path.exists(name):
+            continue
+        leg = os.path.basename(os.path.dirname(name))
+        start, end = span(os.path.join(os.path.dirname(name), "span.txt"))
+        if start is None or end is None:
+            lines.append("note: leg %s has no end (killed or cancelled); it is left out of the turnaround" % leg)
+            continue
+        legs[leg] = (start, end, [(r[0], float(r[1])) for r in rows_of([name])[0] if r[2] == "RAN"])
+    if not legs:
+        return lines
+    took = (max(v[1] for v in legs.values()) - min(v[0] for v in legs.values())) / 60.0
+    if took <= goal:
+        return lines
+    ran = sorted((r for v in legs.values() for r in v[2]), key=lambda r: -r[1])
+    sums = sorted(sum(s for _, s in v[2]) / 60.0 for v in legs.values())
+    top, apart = sum(s for _, s in ran[:3]) / 60.0, (max(v[0] for v in legs.values()) - min(v[0] for v in legs.values())) / 60.0
+    longest, middle = sums[-1], statistics.median(sums)
+    if longest and top >= longest / 2:
+        cause = "the three slowest rows took %.1f of the %.1f minutes" % (top, took)
+    elif longest > 2 * middle:
+        most = max(legs.values(), key=lambda v: sum(s for _, s in v[2]))
+        cause = "one leg ran %d rows past the others" % len(most[2])
+    elif apart > took / 4:
+        cause = "the legs started %.0f minutes apart: runner queue wait" % apart
+    else:
+        cause = "no single cause: the rows add up"
+    return lines + ["missed: %s" % cause,
+                    "slowest rows: %s" % ", ".join("%s %.0fs" % r for r in ran[:3]),
+                    "l1_minutes is %d; the legs took %.1f minutes (rows %.1f); queue waits between legs are in it, the wait "
+                    "before the first leg is not measured" % (goal, took, sum(sums)),
+                    "fix: move the slowest row to L2 with regression.py level <id> --test-level L2, or raise l1_minutes in "
+                    ".loop/config.json (owner)"]

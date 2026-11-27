@@ -13,9 +13,13 @@ NOTRUN row is never counted as run: it passes only when its id is in skips.tsv (
 on main; a NOTRUN row also needs the flag `notrun` in the third column) and is printed `SKIPPED <id>: <reason>`; any other
 prints a FAIL line naming the row and the repair. With a count (8) every numbered shard file must exist. A skips.tsv that does not exist is an empty list, so every skipped row fails; one that exists but cannot be read is exit 1. It reruns nothing."""
 import glob
+import json
 import math
 import os
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import completion  # noqa: E402
 
 STATES = ("", "RAN", "SEL", "CUT", "LEFT", "SKIP", "NOTRUN")
 LIST = ".loop/regression-skips.tsv"
@@ -47,7 +51,21 @@ def read(files):
     return rows, bad
 
 
+def time_goal():
+    """l1_minutes from .loop/config.json (10 when the file or key is absent)."""
+    try:
+        config = json.load(open(os.path.join(".loop", "config.json")))
+    except (OSError, ValueError):
+        config = {}
+    return completion.l1_minutes(config if isinstance(config, dict) else {})
+
+
 def main(pattern, out="all.tsv", known=None, expect=None):
+    try:
+        goal = time_goal()
+    except ValueError as err:
+        print(err, file=sys.stderr)
+        return 1
     files = sorted(glob.glob(pattern))
     if not files:
         print("FAIL cut or not run: no shard times file matches " + pattern)
@@ -105,6 +123,9 @@ def main(pattern, out="all.tsv", known=None, expect=None):
     for i in unfinished:
         what = "%s %ss" % (best[i][2], best[i][1]) if i in best else "not run"
         print("FAIL cut or not run: %s %s: raise the shard budget (owner) or move the row" % (i, what))
+    if expect and "shard-[0-7]" in pattern:  # the affected job: the numbered legs and the tree leg
+        for line in completion.miss(pattern, pattern.replace("shard-[0-7]", "shard-tree"), goal, read):
+            print(line)
     return 1 if unfinished or fail else 0
 
 
