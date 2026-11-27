@@ -1,7 +1,7 @@
 # Four known toy leaks fixed
 
 - Slug: v110-toy-leak-fixes
-- Touches: skills/workflow-regression/scripts/actions.py, dev/toy/test-merge-where.py, dev/toy/test-budget-order.py, dev/toy/test-platform-limits.py, dev/toy/test-entry-config.sh, .loop/regression.tsv, docs/wiki/Tests.md
+- Touches: skills/workflow-regression/scripts/actions.py, dev/toy/test-merge-where.py, dev/toy/test-budget-order.py, dev/toy/test-platform-limits.py, dev/toy/test-entry-config.sh, .loop/regression.tsv, docs/wiki/Tests.md, dev/check-row-merge.py
 - ETA: 460 active minutes (estimate 367m plus a 25% margin)
 
 ## Done lines
@@ -39,6 +39,7 @@ Each fix is proved red and green as that check's own assertion.
 
 - DF1 (owner: #5352 alone): "Build: row entry-committed-config passes again, with its negative control able to fail for its stated reason (#5352)."
 - DF2: "Build: the remaining row-start paths are deferred; the list is kept privately. The slots.started() docstring says what a row receives."
+- Deliver-first: "review --again does not check the active budget".
 
 Neither touches .loop/regression-known.tsv.
 
