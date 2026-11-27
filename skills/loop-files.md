@@ -54,6 +54,7 @@ Wiki pages live in `docs/wiki/`. Each starts with the line `<!-- workflow-docs -
 - `agent_command` runs a goal in the background; the prompt is its last argument.
 - `auto_approve` (default `false`): `true` approves what a flow step leaves for the owner, logged as auto-approved.
 - `review_depth` (default `full`): `full` makes the plan and review steps run their skill's whole pipeline and refuses a
+- `plan_fix_reads` (default `2`): the most reads of fixes a plan gets after its reviews, on the changes only; wording findings are build notes (REVW-5).
   condensed reply; `condensed` allows a shorter run. Every step's reply states `DEPTH: full|condensed`, record stamps it
   on the step, and the board and the pull request body show it. The flow file's private `full_markers` (per step, strings)
   must appear in a full plan or review reply. `config.json` carries its one-line explanation under `_help`.
@@ -1942,6 +1943,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `smtp_host` | `smtp.gmail.com` | The SMTP server digest_mail smtp uses (with the DIGEST_SMTP_* secrets). |
 | `smtp_port` | `465` | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. |
 | `review_depth` | `full` | full runs the whole plan and review pipeline and refuses a condensed one; condensed allows a shorter run. |
+| `plan_fix_reads` | `2` | The most reads of fixes a plan gets after its reviews, on the changes only; wording findings are build notes. |
 | `criteria` | `true` | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). |
 | `wiki_dir` | `docs/wiki` | The folder of wiki pages. |
 | `risky_paths` | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | Regexes for paths whose goals need extra care. |

@@ -36,6 +36,7 @@ TABLE = [
     ("smtp_host", REPO, "smtp.gmail.com", "The SMTP server digest_mail smtp uses (with the DIGEST_SMTP_* secrets)."),
     ("smtp_port", REPO, 465, "465 (TLS) or 587 (STARTTLS) for digest_mail smtp."),
     ("review_depth", REPO, "full", "full runs the whole plan and review pipeline and refuses a condensed one; condensed allows a shorter run."),
+    ("plan_fix_reads", REPO, 2, "The most reads of fixes a plan gets after its reviews, on the changes only; wording findings are build notes."),
     ("criteria", REPO, True, "true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests)."),
     ("wiki_dir", REPO, "docs/wiki", "The folder of wiki pages."),
     ("risky_paths", REPO, RISKY, "Regexes for paths whose goals need extra care."),
