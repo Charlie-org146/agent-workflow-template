@@ -25,7 +25,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import tiers, lanes, narrow  # noqa: E401,E402
-from completion import merge_runs  # noqa: E402
+from completion import merge_runs, table_changed  # noqa: E402
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
@@ -85,18 +85,6 @@ def relative(root, path):
 def picked(root, rows, path, cache):
     return {r["id"] for r in rows if lanes.names_any(root, r["command"], [path], cache)
             or lanes.hits(lanes.RUNNER, lanes.closure(root, r["command"], cache)[0])}
-
-
-def table_changed(root, name):
-    """Ids whose line in .loop/<name> differs from the merge-base or base tip; None if neither."""
-    base = tiers.config(root).get("base") or "main"
-    ats = [at for at in (tiers.merge_base(root, base), *[(lanes.git(root, "rev-parse", "--verify", "-q", ref) or "").strip()
-            for ref in ("origin/" + base, base)]) if at][:2]
-    if not ats:
-        return None
-    now, memo = tiers.current(root, name), {}
-    return {rid for at in ats for rid in set(now) | set(lanes.table(root, at, name, memo))
-            if lanes.table(root, at, name, memo).get(rid) != now.get(rid)}
 
 
 def affected(root, rows, paths, cache):
@@ -196,6 +184,8 @@ jobs:
           key: row-times-${{ github.sha }}
           restore-keys: row-times-
       - run: |
+          S=${{ runner.temp }}/span.txt; echo "start $(date +%s)" > $S; export LOOP_FLAKY_FILE=${{ runner.temp }}/flaky.tsv
+          trap 'c=$?; echo "end $(date +%s) $c" >> "$S"' EXIT
           T=${{ runner.temp }}/t.tsv; D=$(git diff --name-only origin/@BASE@...HEAD) || { echo "FAIL cannot read the diff against origin/@BASE@: fetch the base (fetch-depth 0) and rerun the shard"; exit 1; }
           printf %s "$D" | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; >>$T; exit 0; }
           touch all.tsv; cat .github/workflows/row-times.tsv all.tsv 2>/dev/null | awk -F'\t' -v OFS='\t' '$3!="CUT"{$3=""}1' >$T; rm all.tsv  # o852: committed times, the cache's over them
@@ -207,7 +197,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: shard-${{ matrix.shard }}
-          path: ${{ runner.temp }}/t.tsv
+          path: |
+            ${{ runner.temp }}/t.tsv
+            ${{ runner.temp }}/span.txt
+          if-no-files-found: ignore
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaky-${{ matrix.shard }}
+          path: ${{ runner.temp }}/flaky.tsv
           if-no-files-found: ignore
   affected:
     needs: shard
@@ -313,6 +311,8 @@ def workflow(root, given, write_main):
         os.makedirs(base, exist_ok=True)
         open(path, "w").write(NARROW.replace("@BASE@", str(cfg.get("base") or "main")).replace("@LEVELS@", str(cfg.get("ci_levels") or "nightly")))
         print("WROTE " + path)
+        import completion
+        completion.write_flaky_workflow(base, ours)
     return code
 
 
