@@ -380,6 +380,42 @@ import notify  # noqa: E402
 mails = notify.events(tmp, "")
 check(not [e for e in mails if e[2] in ("w1", "w2")], "no mail asks the owner about a one-review goal's stop: %s" % [(e[1], e[2]) for e in mails])
 os.chdir(here)
+# what stays the owner's: the release choice, and a goal whose deliver-first is off or set to always ask
+record("w4", status="waiting", step="release", release="ask", waiting={"ask": "cut or leave", "words": ["cut w4", "leave w4"]})
+record("w5", status="waiting", waiting={"ask": "a question with deliver first off", "words": ["go on w5"]})
+record("w6", status="waiting", waiting={"ask": "a question set to always ask", "words": ["go on w6"]})
+record("w7", status="stopped", finding="stopped with deliver first off")
+put(".loop/config.json", json.dumps({"base": "main", "one_review": True, "deliver_first": {"goal": {"w5": False, "w7": False}}}))
+open(os.path.join(tmp, ".git", "loop", "owner-words.tsv"), "a").write('o9\t2026-01-01T00:00:00Z\toperation\t"always ask me"\talways-ask:w6\n')
+# the operation's own lines are not lost for a one-review goal
+record("w8", status="done", step="release", review_wait=True, pr="https://example.invalid/pr/8")
+record("w9", status="running", worker="session", session={"id": "local_x", "name": "w"}, updated="2026-01-01T00:00:00Z", log=["2026-01-01T00:00:00Z STEP build"])
+said = checkin()
+needs, held = part(said, "Needs you"), part(said, "Held by the operation")
+check("w4 asks: cut or leave" in needs and "w4" not in held, "the owner's release choice stays under Needs you: %s" % needs[:260])
+check("w5 asks" in needs and "w6 asks" in needs and "w5" not in held and "w6" not in held,
+      "a goal with deliver-first off or set to always ask waits for the owner as before: %s" % needs[:300])
+kept = {slug: open(os.path.join(runs, slug + ".json")).read() for slug in ("w4", "w5", "w6", "w7")}
+for slug, text in kept.items():
+    json.dump({k: v for k, v in json.loads(text).items() if k != "one_review"}, open(os.path.join(runs, slug + ".json"), "w"))
+plain_head = checkin().split("\n")[0]
+for slug, text in kept.items():
+    open(os.path.join(runs, slug + ".json"), "w").write(text)
+check(said.split("\n")[0] == plain_head, "and the headline counts them as it counts any goal waiting on the owner: %s / %s" % (said.split("\n")[0], plain_head))
+check("w8" in held and "review.py record w8" in held and "w8: merge waiting on review" not in needs, "the review-wait line is kept, for the operation: %s" % held[-400:])
+check("STALLED w9" in held and "STALLED w9" not in needs, "the stalled line is kept, for the operation: %s" % held[-400:])
+here = os.getcwd()
+os.chdir(tmp)
+sys.path.append(os.path.join(root, "skills", "workflow-monitoring", "scripts"))
+import notify  # noqa: E402
+told = {e[2] for e in notify.events(tmp, "") if e[1] == "stopped"}
+check("w7" in told and "w2" not in told, "a stop with deliver-first off is mailed to the owner as before: %s" % sorted(told))
+os.chdir(here)
+sh("checkout", "-q", "--", ".loop/config.json")
+for slug in ("w4", "w5", "w6", "w7", "w8", "w9"):
+    for name in os.listdir(runs):
+        name.startswith(slug + ".") and os.remove(os.path.join(runs, name))
+os.remove(os.path.join(tmp, ".git", "loop", "owner-words.tsv"))
 got = tool("operation", "answer", "w1")
 last = [e for e in decisions.entries(runs, "w1") if e["kind"] == "decision"]
 check("ANSWERED w1" in got and last and last[-1]["stop"] == "hold" and "pick the colour" in last[-1]["question"], "operation's answer is a listed decision: %s %s" % (got.strip()[:60], last[-1:]))

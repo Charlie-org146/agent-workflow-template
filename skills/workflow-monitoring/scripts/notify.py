@@ -123,7 +123,10 @@ def events(root, text):
         out.append(("needs:" + key, "needs you", slug_in(item, slugs), item))
     for run in runs:
         slug, status = run["slug"], run.get("status")
-        owns = not run.get("one_review")  # DLF-1.3: its own stops are the operation's, so no owner mail
+        owns = True
+        if run.get("one_review"):  # DLF-1.3: its stops are the operation's, unless they still wait for the owner
+            import review_view
+            owns = review_view.owners(root, run)
         if owns and status in ("stopped", "failed"):
             why = run.get("finding") or "it stopped at %s" % (run.get("step") or "a step")
             out.append(("stopped:%s:%s" % (slug, run.get("attempt") or 1), "stopped", slug,

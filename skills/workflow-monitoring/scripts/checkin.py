@@ -104,6 +104,7 @@ def render(root=None, at=None, stamp=None):
     root = root or bs.git("rev-parse", "--show-toplevel")
     at = at or datetime.datetime.now(datetime.timezone.utc)
     stamp = stamp or last_at(root) or "0000"
+    import review_view
     mine = gather(root, at, stamp)
     folder, cfg, runs, found, why, taken, states, live, queue = (mine[k] for k in (
         "folder", "cfg", "runs", "found", "why", "taken", "states", "live", "queue"))
@@ -114,7 +115,7 @@ def render(root=None, at=None, stamp=None):
     counts = lambda *names, live=None: sum(s in names and live in (None, v) for _, s, v in rows)
     parked, old = counts("running", "held", "silent", "waiting", live=False), [k for k, s, v in rows if s in ("failed", "stopped") and not v]  # TD481, TD502
     pool_line = pl.status_line(found or {}, cfg) if found is not None else "pool: unreadable"
-    out = ["%d running, %d waiting on you, %d queued%s; %s" % (counts("running", "held", "silent", live=True), counts("waiting", "failed", "stopped", live=True) - sum(r.get("status") in ("waiting", "failed", "stopped") for g in pod for r in g["live"] if r.get("one_review")),
+    out = ["%d running, %d waiting on you, %d queued%s; %s" % (counts("running", "held", "silent", live=True), counts("waiting", "failed", "stopped", live=True) - review_view.operations_count(pod),
                                                               sum(len(g["queue"]) for g in pod), ", %d parked" % parked * bool(parked) + ", %d old" % len(old) * bool(old), pool_line),
            *machines.lines(root, cfg, bs.machine_line(cfg)), *["Old: " + ", ".join(old)] * bool(old)]
     for g in pod:
@@ -170,8 +171,7 @@ def render(root=None, at=None, stamp=None):
     out += ["", "Needs you"]
     needs, readonly = [], []
     owned = lambda prefix, run: "- %s%s asks (owned by %s, read-only here)" % (prefix, run["slug"], graph.foreign(run))
-    mine_held = [run for g in pod for run in g["runs"] if run.get("one_review") and not graph.foreign(run)]
-    for run in [r for r in live if not r.get("one_review")]:  # DLF-1.3: a one-review goal is never the owner's to move
+    for run in [r for r in live if review_view.owners(root, r)]:  # DLF-1.3: the rest is held by the operation
         state, ask = states[run["slug"]], run.get("waiting") or {}
         run.get("review_wait") and needs.append("%s: merge waiting on review; review.py record %s" % (run["slug"], run["slug"]))
         if line := bs.stalled_line(run, state, at, cfg, lb.worker_of(run, taken)):
@@ -220,7 +220,7 @@ def render(root=None, at=None, stamp=None):
     for g in pod[1:]:
         for run in g["live"]:
             ask = run.get("waiting") or {}
-            if g["states"][run["slug"]] == "waiting" and not run.get("one_review"):
+            if g["states"][run["slug"]] == "waiting" and review_view.owners(g["root"], run):
                 readonly.append(owned(g["name"] + "/", run)) if graph.foreign(run) else needs.append("%s/%s asks: %s; options: %s" % (
                     g["name"], run["slug"], lb.plain(ask.get("ask"), 160), quoted(ask.get("words") or ["go on"])))
     needs += ["%s: can't be read (%s); the other repos are shown" % item for item in broken]
@@ -236,8 +236,7 @@ def render(root=None, at=None, stamp=None):
     out[spot:spot] = grouped(blocks, at, {(n, i["slug"]): tags[keys(n, i["slug"])] for n, items in blocks for i in items if keys(n, i["slug"]) in tags}, folder)
     out += ["%d. %s" % (i, text) for i, text in enumerate(needs, 1)] or ["Nothing needs you"]
     out += readonly
-    import review_view
-    out += review_view.held_section([r for g in pod for r in g["runs"]], {k: v for g in pod for k, v in g["states"].items()}, lb.plain)
+    out += review_view.held_section(pod, lb.plain, lambda g, r: bs.stalled_line(r, g["states"].get(r["slug"]), at, g["cfg"], lb.worker_of(r, g["taken"])))
     out += ["", "Coming up"] + ([operation] if operation else [])
     for run in live:
         if states[run["slug"]] == "done":

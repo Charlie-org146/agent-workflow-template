@@ -11,6 +11,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import board_status as bs  # noqa: E402
+import graph  # noqa: E402
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 
@@ -118,12 +119,34 @@ def held_line(run, state, ask=""):
     return "%s is %s: %s; the operation decides (resume, or retire)" % (slug, state, str(run.get("finding") or "no reason recorded")[:160])
 
 
-def held_section(runs, states, plain):
-    """The "Held by the operation" lines for the one-review goals among these live runs."""
+def owners(root, run):
+    """Whether this goal's waits are the owner's: every unmarked goal's; for a one-review goal only the release choice they
+    kept (cut or leave), and any wait while deliver-first is off or set to always ask. Unreadable counts as the owner's."""
+    if not run.get("one_review") or run.get("release") == "ask" and run.get("step") == "release":
+        return True
+    try:
+        return bool(delivery("outcomes").off(root, run))
+    except (Exception, SystemExit):  # noqa: BLE001 - never move a wait away from the owner on a guess
+        return True
+
+
+def operations_count(pod):
+    """The headline's waiting goals that are the operation's, so they aren't counted as waiting on the owner."""
+    return sum(r.get("status") in ("waiting", "failed", "stopped") for g in pod for r in g["live"] if not owners(g["root"], r))
+
+
+def held_section(pod, plain, stalled):
+    """The "Held by the operation" lines: what one-review goals wait for, with the review-wait and stalled lines."""
     out = []
-    for run in runs:
-        state = states.get(run["slug"], run.get("status"))
-        state = run.get("status") if run.get("status") in ("stopped", "failed") else state
-        if run.get("one_review") and state in ("waiting", "silent", "held", "stopped", "failed"):
-            out.append("- " + held_line(run, state, plain((run.get("waiting") or {}).get("ask"), 160)))
+    for g in pod:
+        for run in g["runs"]:
+            if graph.foreign(run) or owners(g["root"], run):
+                continue
+            slug, quiet = run["slug"], stalled(g, run) if run.get("slug") in g["states"] else ""
+            state = run.get("status") if run.get("status") in ("stopped", "failed") else g["states"].get(slug, run.get("status"))
+            run.get("review_wait") and out.append("- %s: merge waiting on review; review.py record %s" % (slug, slug))
+            if quiet:
+                out.append("- " + quiet)
+            elif state in ("waiting", "silent", "held", "stopped", "failed"):
+                out.append("- " + held_line(run, state, plain((run.get("waiting") or {}).get("ask"), 160)))
     return ["", "Held by the operation"] + out if out else []
