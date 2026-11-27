@@ -349,6 +349,9 @@ lvl-l1-missed	PASS	2026-11-27
 lvl-l1-pin	PASS	2026-11-27	
 lvl-l1-queue	PASS	2026-11-27	
 lvl-l1-select	PASS	2026-11-27	
+lvl-l2-fail	PASS	2026-11-27	
+lvl-l2-reach	PASS	2026-11-27	
+lvl-l2-skip	PASS	2026-11-27	
 lvl-relevel-record	PASS	2026-11-27	
 lvl-sizing-levels	PASS	2026-11-27	
 lvl-table-refused	PASS	2026-11-27	
