@@ -86,7 +86,8 @@ with tempfile.TemporaryDirectory() as TMP:
             json.dump({"notify_email": True, "machine_sync": True, "notify_budget": budget}, f)
 
     def env_of(name):
-        env = dict(os.environ, HOME=TMP, USERPROFILE=TMP, LOOP_FLOW=flow, LOOP_MAIL_ENV=env_file, LOOP_MACHINE_NAME=name,
+        open(os.path.join(TMP, "names.txt"), "w").write("# no names" + chr(10))  # a mail is scanned first; a comments-only list passes
+        env = dict(os.environ, LOOP_PRIVATE_NAMES=os.path.join(TMP, "names.txt"), HOME=TMP, USERPROFILE=TMP, LOOP_FLOW=flow, LOOP_MAIL_ENV=env_file, LOOP_MACHINE_NAME=name,
                    DIGEST_MAIL_RETRY_SECONDS="0", DIGEST_MAIL_API="http://127.0.0.1:%d" % server.server_address[1])
         for var in ("LOOP_ROLE", "LOOP_POD_ID", "CLAUDE_SESSION_ID", "DIGEST_SMTP_TEST_PORT"):
             env.pop(var, None)

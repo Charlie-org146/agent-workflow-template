@@ -47,7 +47,7 @@ def mailer():
     return importlib.import_module("mail")  # another skill's script: no static import, so the package scan sees none
 
 
-import notify_gate as gate  # noqa: E402  (BOARD-5, BOARD-8)
+import notify_gate as gate  # noqa: E402
 
 
 def say(text):
@@ -202,7 +202,7 @@ def cmd_send(args):
         return 0
     repo = os.path.basename(os.path.abspath(args.root))
     for key, kind, slug, action in new:
-        got = mailbox.claim(folder, key, flow_path(), args.root)
+        got = True if kind == "check-in" else mailbox.claim(folder, key, flow_path(), args.root)
         if got is not True:  # one stream: the other machine mailed it (done), or the budget is spent (tried again next time)
             got == "sent" and sent.update({key: "covered"})
             say("not sent %s %s: %s" % (kind, slug, "the other machine mailed it" if got == "sent" else "the send budget is spent"))
@@ -212,10 +212,11 @@ def cmd_send(args):
         body = mailbox.compose(folder, key, kind, slug, action, repo)
         subject = "Loop: %s %s (%s) [%s]" % (kind, slug, repo, mailbox.qid(key))
         refused = gate.outgoing_refusal({"subject": subject, "body": body, "page": mail.rounds.to_html(body)})
-        if refused:  # nothing is sent; the refusal names the place, not the word
+        if refused:
             del sent[key]
-            mailbox.claim(folder, key, flow_path(), args.root, release=True)
-            say("not sent %s %s: private-name scan refused %s" % (kind, slug, refused))
+            kind == "check-in" or mailbox.claim(folder, key, flow_path(), args.root, release=True)
+            say("not sent %s: private scan refused %s" % (kind, refused))
+            save(path, state)
             continue
         try:
             outcome, detail, _ = mail.deliver(mode, keys, subject, body, mail.rounds.to_html(body),
@@ -230,8 +231,8 @@ def cmd_send(args):
             say("%s %s may have been sent: %s; kept, so it is not sent twice (MAIL_UNKNOWN)" % (kind, slug, detail))
         else:
             sent[key] = "mailed"
-            kind == "check-in" and gate.mark(state, text, needs, sent, key)
             say("sent %s %s" % (kind, slug))
+        outcome != "refused" and kind == "check-in" and gate.mark(state, text, needs, sent, key)
         save(path, state)
     return 0
 

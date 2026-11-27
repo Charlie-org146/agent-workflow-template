@@ -25,6 +25,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import graph  # noqa: E402
 import board_cards  # noqa: E402
+import board_views  # noqa: E402
 import schedule_load as sl  # noqa: E402
 from board_log import stamp, unread  # noqa: E402,F401  (aware UTC or None; a zone-less stamp is named, not guessed)
 try:  # without board_status.py there is no estimate
@@ -212,7 +213,7 @@ def collect(name, path, base, at):
             "repo": run.get("repo") or name, "slug": run["slug"], "goal": get("goal", 80), "level": kind(run), "status": get("status"),
             "step": get("step") or "-", "tries": run.get("tries", 0), "pr": pr, "prstate": ((known.get(pr) or "unknown").lower() if pr in known else pr_state(pr, path)) if pr else "",
             "wiki_error": "yes" if run.get("wiki_error") else "", "release_error": "yes" if run.get("release_error") else "",
-            "checks": get("checks"), "quiet": "yes" if quiet else "no", "report": clean((run.get("report") or {}).get("text")),
+            "checks": get("checks"), "machine": get("machine", 40), "quiet": "yes" if quiet else "no", "report": clean((run.get("report") or {}).get("text")),
             "note": clean(note.get("text")) if isinstance(note, dict) else "",
             "waiting": run.get("waiting") if isinstance(run.get("waiting"), dict) else None, "finding": get("finding", 200),
             "elapsed": (at - begun).total_seconds() if begun else 0, "age": span((at - begun).total_seconds()) if begun else "0m",
@@ -314,8 +315,12 @@ def cmd_board(args):
     folder = os.path.abspath(args.out) if args.out else loop_dir(common())
     os.makedirs(folder, exist_ok=True)
     path = os.path.join(folder, "board.json")
-    write(path, json.dumps(doc, indent=2, sort_keys=True) + "\n")
-    helper = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "live_board.py")
+    text = json.dumps(doc, indent=2, sort_keys=True) + "\n"
+    said = board_views.notify_gate.outgoing_refusal({"board.json": text}, strict=False)
+    print("BOARD_REFUSED the private-name scan refused %s; board.json was not written" % said) if said else write(path, text)
+    for name, repo_path, base in followed():  # BOARD-7: each repo's cards and views go to its own folder
+        print(board_views.publish(name, repo_path, base, doc["runs"], doc["dependencies"], clock(args.at), repo_setting, write) or "", end="")
+    helper =os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "live_board.py")
     if os.path.exists(helper):
         print(subprocess.run([sys.executable, helper], capture_output=True, text=True, cwd=git("rev-parse", "--show-toplevel")).stdout)
     print("DIGEST " + doc["digest"])

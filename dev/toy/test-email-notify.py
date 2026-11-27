@@ -137,6 +137,19 @@ with tempfile.TemporaryDirectory() as tmp:
     check(len(posts) == 1 and "stopped late-goal" in posts[0].get("subject", ""),
           "a stopped goal also under Needs you gets one mail, not two (%d)" % len(posts))
 
+    posts.clear()  # BOARD-5: text the scan refuses is not sent, is retried once clean, and leaves no "mailing" key behind
+    with open(names, "w") as f:
+        f.write("zorblax" + chr(10))
+    record("zorblax-goal", status="stopped", step="build", attempt=1, finding="finding:zorblax-goal-build")
+    out = run(CHECKIN)
+    left = open(state).read()
+    check(not posts and "private scan refused" in out and "zorblax" not in out, "text the private-name scan refuses is not mailed and the refusal hides the word")
+    check('"mailing"' not in left, "a refused mail leaves no mailing key behind, so it is retried")
+    with open(names, "w") as f:
+        f.write("# no names" + chr(10))
+    out = run(CHECKIN)
+    check(len(posts) == 1 and "zorblax-goal" in posts[0].get("subject", ""), "once the text is clean the refused mail goes out")
+
     kept = open(state).read()
     check(ADDR not in out and ADDR not in kept and "owner.fixture" not in kept, "no address is printed or kept in notified.json")
 

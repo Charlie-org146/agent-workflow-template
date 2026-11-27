@@ -2,19 +2,23 @@
 """What notify.py checks before a mail goes out (BOARD-5, BOARD-8): the private-name scan and the check-in gate."""
 import importlib
 import os
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DELIVERY = os.path.join(HERE, "..", "..", "workflow-delivery", "scripts")
 
 
-def outgoing_refusal(units):
+def outgoing_refusal(units, strict=True):
     """What the private-name scan refuses in the text about to go out: its places, never the word ("" when clean). {place: text}.
     No list, a broken list or a scan past its limit refuses too (it fails closed); a list that holds only comments passes."""
-    sys.path.insert(1, DELIVERY)
-    private = importlib.import_module("private")  # another skill's script: no static import, so the package scan sees none
-    found = private.scan(".", "", texts=units)
-    if found["state"] in ("none", "broken"):
+    try:
+        DELIVERY in sys.path or sys.path.insert(1, DELIVERY)
+        private = importlib.import_module("private")  # another skill's script: no static import, so the package scan sees none
+        found = private.scan(".", "", texts=units)
+    except Exception as err:  # noqa: BLE001 - a scan that cannot run refuses; it never lets text through
+        return "the private-name scan crashed: " + type(err).__name__
+    if strict and found["state"] in ("none", "broken"):  # a mail fails closed; a board file is held back only by a hit
         return "the private-name scan could not run: " + str(found.get("note", found["state"]))
     return "; ".join(found["hits"]) if found["state"] == "hit" else ""
 
@@ -38,7 +42,7 @@ def checkin_sent(state, lines, now):
 
 def checkin_lines(text, needs):
     """What a check-in says, without its clock: its headline and its Needs you items."""
-    first = next((x.strip() for x in str(text or "").splitlines() if x.strip()), "")
+    first = re.sub(r"\d{1,2}:\d{2}", "", next((x.strip() for x in str(text or "").splitlines() if x.strip()), ""))  # no clock in the key
     return ([first] if first else []) + needs(text)
 
 

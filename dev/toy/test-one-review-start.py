@@ -517,7 +517,8 @@ threading.Thread(target=server.serve_forever, daemon=True).start()
 mail_env = os.path.join(home, "mail.env")
 open(mail_env, "w").write("DIGEST_TO=owner@example.invalid\nDIGEST_FROM=loop@example.invalid\nCLOUDFLARE_ACCOUNT_ID=a\nCLOUDFLARE_EMAIL_TOKEN=toy\n")
 os.chmod(mail_env, 0o600)
-env.update(LOOP_MAIL_ENV=mail_env, DIGEST_MAIL_RETRY_SECONDS="0", DIGEST_MAIL_API="http://127.0.0.1:%d" % server.server_address[1])
+open(os.path.join(home, "names.txt"), "w").write("# no names" + chr(10))  # a mail is scanned first; a comments-only list passes
+env.update(LOOP_PRIVATE_NAMES=os.path.join(home, "names.txt"), LOOP_MAIL_ENV=mail_env, DIGEST_MAIL_RETRY_SECONDS="0", DIGEST_MAIL_API="http://127.0.0.1:%d" % server.server_address[1])
 sh(tmp, "reset", "-q", "--hard")
 for other in os.listdir(runs):  # only this goal's events are mailed in this part
     os.remove(os.path.join(runs, other))

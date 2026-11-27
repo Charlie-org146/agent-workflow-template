@@ -111,9 +111,9 @@ VOLATILE = ("generated", "next_at")  # clock fields: a refresh that changed noth
 def same(path, text):
     """True when the file already holds this text, JSON compared without its clock fields."""
     try:
-        with open(path) as handle:
+        with open(path, encoding="utf-8", errors="replace") as handle:
             old = handle.read()
-    except OSError:
+    except (OSError, ValueError):
         return False
     if old == text:
         return True
@@ -131,7 +131,7 @@ def card_list(rows, deps, at, repos, setting_of):
         out = []
         for name, path, base in repos:
             mine = [r for r in rows if r["repo"] == name]
-            items = [{"mark": r["status"], "slug": r["slug"], "left": r.get("left"), "machine": "", "bars": []} for r in mine]
+            items = [{"mark": r["status"], "slug": r["slug"], "left": r.get("left"), "machine": r.get("machine") or "", "bars": []} for r in mine]
             runs = [{"slug": r["slug"], "status": r["status"], "updated": r.get("last") or ""} for r in mine]
             batches = {}
             for slug in [x["slug"] for x in mine] + [d["slug"] for d in deps if d["repo"] == name]:

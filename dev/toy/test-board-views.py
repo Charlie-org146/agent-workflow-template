@@ -74,6 +74,33 @@ def build(root, runs, items, **more):
     return board_cards.cards(items, runs, task_rows, {"v1.1.0": ["g1", "g2", "g3"]}, AT, root, **more)
 
 
+BOARD = os.path.join(scripts, "board.py")
+
+
+def e2e(tmp, slug_a="g-a", names=None):
+    """Two repos on one machine; the board is refreshed from repo A (which follows B) with a pinned clock. Returns (a, b, run)."""
+    a, b = repo(tmp, "repo-a"), repo(tmp, "repo-b")
+    for root, slug in ((a, slug_a), (b, "g-b")):
+        put(os.path.join(root, ".git", "loop", "runs", slug + ".json"),
+            {"slug": slug, "goal": "a goal", "status": "running", "step": "build", "updated": iso(60), "started": iso(600)})
+    home = os.path.join(tmp, "home")
+    put(os.path.join(home, ".workflow-loop", "repos"), b + chr(10))
+    env = dict(os.environ, HOME=home, USERPROFILE=home)
+    if names:
+        env["LOOP_PRIVATE_NAMES"] = names
+    else:
+        env.pop("LOOP_PRIVATE_NAMES", None)
+    at = datetime.datetime.fromtimestamp(NOW, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    def run():
+        return subprocess.run([sys.executable, BOARD, "board", "--at", at], cwd=a, env=env, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    return a, b, run
+
+
+def loop_of(root):
+    return os.path.join(root, ".git", "loop")
+
+
 def t_cards(tmp):
     import board_cards
     root, runs, items = fixture(tmp)
@@ -122,6 +149,14 @@ def t_nowrite(tmp):
     check(os.stat(path).st_mtime == 1_000_000_000, "a second refresh with nothing changed writes nothing")
     board.write(path, json.dumps({"generated": "2026-11-27T10:06:00Z", "next_at": "10:36 UTC", "digest": "2 runs"}, sort_keys=True) + "\n")
     check(os.stat(path).st_mtime != 1_000_000_000, "a refresh with a real change writes")
+    a, b, run = e2e(tmp)
+    run()
+    files = [os.path.join(loop_of(a), "board.json")] + [os.path.join(loop_of(r), n) for r in (a, b) for n in ("cards.json", "views.txt")]
+    for f in files:
+        os.path.exists(f) and os.utime(f, (1_000_000_000, 1_000_000_000))
+    again = run()
+    check(again.returncode == 0 and all(os.path.exists(f) for f in files), "the refresh runs twice and writes board.json, cards.json and views.txt in each repo")
+    check(all(os.stat(f).st_mtime == 1_000_000_000 for f in files if os.path.exists(f)), "a second refresh with nothing changed writes none of those files")
 
 
 def t_stale(tmp):
@@ -150,6 +185,12 @@ def t_scan(tmp):
     said = notify.outgoing_refusal({"subject": "Loop: stopped %s-goal (repo) [q1]" % word, "body": "a line\nanother line", "page": "ok"})
     check(bool(said) and "subject" in said and word not in said, "text the scan refuses is named by its place, never the word")
     check(notify.outgoing_refusal({"subject": "Loop: stopped goal", "body": "fine"}) == "", "clean text passes")
+    a, b, run = e2e(tmp, slug_a="g-" + word, names=names)
+    done = run()
+    out = done.stdout + done.stderr
+    lines = [x for x in out.splitlines() if x.startswith("BOARD_REFUSED")]
+    check(bool(lines) and all(word not in x for x in lines), "a board the scan refuses is not written, and the refusal does not print the word")
+    check(not os.path.exists(os.path.join(loop_of(a), "cards.json")) and not os.path.exists(os.path.join(loop_of(a), "board.json")), "nothing of the refused board is written")
     os.environ["LOOP_PRIVATE_NAMES"] = os.path.join(tmp, "missing.txt")
     check(bool(notify.outgoing_refusal({"body": "fine"})), "no list fails closed")
 
@@ -205,6 +246,15 @@ def t_repos(tmp):
               "each repo's cards go to its own board folder")
     finally:
         os.chdir(here_now)
+    a, b, run = e2e(tmp)
+    run()
+    ids = lambda root: sorted(c["id"] for c in json.load(open(os.path.join(loop_of(root), "cards.json"), encoding="utf-8")) if c["kind"] == "goal")
+    try:
+        check(ids(a) == ["goal:g-a"] and ids(b) == ["goal:g-b"], "a refresh writes each repo's own cards into its own folder")
+        views = open(os.path.join(loop_of(a), "views.txt"), encoding="utf-8").read()
+        check("By release" in views and "By task" in views and "By goal" in views and "g-a" in views and "g-b" not in views, "each repo's views list the three groupings with only its own goals")
+    except OSError as err:
+        check(False, "a refresh writes cards.json and views.txt in every followed repo: %s" % err)
 
 
 SECTIONS = {"cards": t_cards, "lines": t_lines, "nowrite": t_nowrite, "stale": t_stale, "scan": t_scan, "gate": t_gate, "repos": t_repos}
