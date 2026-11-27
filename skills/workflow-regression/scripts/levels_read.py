@@ -149,9 +149,9 @@ def scripts_of(root, rel, text, memo):
     found = set(references(root, text, os.path.dirname(rel), wide=False, memo=memo)[0])
     if rel.endswith(".py"):
         if "folders" not in memo:
-            memo["folders"] = ["dev/toy"] + sorted("skills/%s/scripts" % name for name in os.listdir(
+            memo["folders"] = sorted("skills/%s/scripts" % name for name in os.listdir(
                 os.path.join(root, "skills")) if os.path.isdir(os.path.join(root, "skills", name, "scripts"))) \
-                if os.path.isdir(os.path.join(root, "skills")) else ["dev/toy"]
+                if os.path.isdir(os.path.join(root, "skills")) else []
         names = {n.split()[0] for a, b in IMPORT.findall(text) for n in ([a] if a else b.split(",")) if n.strip()}
         for name in names:
             here = os.path.join(os.path.dirname(rel), name + ".py")
