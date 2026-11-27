@@ -332,3 +332,13 @@ Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans und
 ### Plan core, third part: "Decided for you"
 
 - checkin.py lists every one-review goal's decisions for each followed repo, after the line fitting, each with its revert command on its own line and what it stops. checkin.py --owner, the operation session's flag for a run it shows the owner, marks only the printed ids delivered; a decision leaves the list once delivered and its goal is cut or retired. The skill text still has to say what --owner is for.
+
+### Still owed in the KEEP set (as of 20:36)
+
+- E9: release holds shared across machines (today they are on this machine only).
+- RT16, needed for done line 4: a revert after a merge opens the revert goal itself (today the output says to queue it).
+- Closing a finding by fix (E14, with RT18's reader).
+- Operation holds in place of the other owner waits (goal.py wait, a worker's waiting report, repeated refusals, a bad flow marker, the merge round cap, full auto, pre-flight), and the mail, headline and Needs-you wording.
+- The one_review setting (settings.py, START.md, this repo's config), full-depth review and the ETA at the monitored start.
+- The approved page wording with README, Principles and Home regenerated; five rows; command lines; the hand list of owner waits.
+- The skill text for checkin.py --owner.
