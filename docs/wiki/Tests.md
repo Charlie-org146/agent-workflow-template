@@ -859,3 +859,6 @@
 | <a id="t-lvl-l2-skip"></a>lvl-l2-skip | requirement | done line v110-lvl-l2:2 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
 | <a id="t-lvl-l2-fail"></a>lvl-l2-fail | requirement | done line v110-lvl-l2:3 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
 | <a id="t-done-lvl-l2-4"></a>done-lvl-l2-4 | requirement | done line v110-lvl-l2:4 | not run | - | local | no |
+| <a id="t-plan-by-size-start"></a>plan-by-size-start | requirement | done line v110-plan-by-size:1 | not run | - | local | 2026-11-27 |
+| <a id="t-plan-by-size-rounds"></a>plan-by-size-rounds | requirement | done line v110-plan-by-size:2 | not run | - | local | 2026-11-27 |
+| <a id="t-done-plan-by-size-3"></a>done-plan-by-size-3 | requirement | done line v110-plan-by-size:3 | not run | - | local | no |
