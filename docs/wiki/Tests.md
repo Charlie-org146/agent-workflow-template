@@ -103,9 +103,9 @@
 | <a id="t-dlf-setting-off-waits"></a>dlf-setting-off-waits | requirement | DLF-1 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-24 |
 | <a id="t-dlf-merge-on-green"></a>dlf-merge-on-green | requirement | DLF-1 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-24 |
 | <a id="t-orv-start-review"></a>orv-start-review | requirement | DLF-1 | not run | - | local | 2026-11-27 |
-| <a id="t-orv-no-owner-wait"></a>orv-no-owner-wait | requirement | DLF-1 | not run | - | local | 2026-11-27 |
-| <a id="t-orv-safe-option"></a>orv-safe-option | requirement | DLF-1 | not run | - | local | 2026-11-27 |
-| <a id="t-orv-checkin-revert"></a>orv-checkin-revert | requirement | DLF-1 | not run | - | local | 2026-11-27 |
+| <a id="t-orv-no-owner-wait"></a>orv-no-owner-wait | requirement | DLF-1 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
+| <a id="t-orv-safe-option"></a>orv-safe-option | requirement | DLF-1 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
+| <a id="t-orv-checkin-revert"></a>orv-checkin-revert | requirement | DLF-1 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
 | <a id="t-orv-checks-stay"></a>orv-checks-stay | requirement | DLF-1 | not run | - | local | 2026-11-27 |
 
 ## Delivery
