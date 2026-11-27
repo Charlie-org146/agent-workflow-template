@@ -87,3 +87,16 @@ def not_run(rows):
 def draft_line(key):
     return ("DRAFT %s: not run, and its requirement is not enforced, until it is ready. Fix: regression.py add %s --level draft "
             "--test-level L1 --command '<a real command>', then regression.py level %s --ready" % (key, key, key))
+
+
+# -- covered rows (R8, plan D4)
+def cover_unmet(root, row, rows, run):
+    """Why a covered row is not met, or '': one of its covers is missing, a draft, or fails at HEAD. `run(row)` is True when the row passes."""
+    from levels import State
+    entry = State(root).entries().get(row["id"]) or {}
+    for key in [k for k in (entry.get("covers") or "").split(",") if k]:
+        if key not in rows or rows[key]["level"] == "draft":
+            return "cover %s is %s" % (key, "not a row" if key not in rows else "a draft")
+        if rows[key]["level"] != "covered" and not run(rows[key]):
+            return "cover %s fails" % key
+    return ""

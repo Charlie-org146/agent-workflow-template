@@ -203,10 +203,11 @@ def cmd_criteria(_args):
         found = criterion_rows(rows, key)
         if not found:
             unmet.append("%s (no regression row)" % key)
+        passes = lambda r: subprocess.run(["sh", "-c", r["command"]], cwd=root, capture_output=True, env=actions.row_env()).returncode in (0, runs.SKIP_CODE)
         for row in found:
-            if row["level"] == "draft" or (row["level"] != "covered" and subprocess.run(["sh", "-c", row["command"]], cwd=root,
-        capture_output=True, env=actions.row_env()).returncode not in (0, runs.SKIP_CODE)):
-                unmet.append("%s (row %s is a draft or failing)" % (key, row["id"]))
+            why = level_words.cover_unmet(root, row, rows, passes) if row["level"] == "covered" else ""
+            if row["level"] == "draft" or why or (row["level"] != "covered" and not passes(row)):
+                unmet.append("%s (row %s is a draft or failing%s)" % (key, row["id"], ": " + why if why else ""))
     print("\n".join(unmet))
     return 1 if unmet else 0
 
