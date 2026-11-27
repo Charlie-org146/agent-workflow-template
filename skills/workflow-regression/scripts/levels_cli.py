@@ -7,6 +7,7 @@ import re
 import sys
 
 import completion
+import level_words
 import levels_read
 import slots
 from levels import (CODE, LEVELS, RISKS, TABLE, TAGS, Problem, State, excuse, file_of, fingerprint, l0_total,
@@ -119,6 +120,8 @@ def remove(root, key, records):
 def cmd_level(root, args):
     state = State(root)
     need_levelled(state)
+    if args.ready:
+        return level_words.ready(root, args)
     edits = [args.test_level, args.risk, args.covers, args.retime, args.refresh]
     if args.rename or args.remove:
         if any(edits) or args.rename and args.remove:
@@ -311,6 +314,7 @@ def register(sub, top):
     item.add_argument("--risk", choices=TAGS)
     item.add_argument("--covers")
     item.add_argument("--remove", action="store_true")
+    item.add_argument("--ready", action="store_true")
     item.add_argument("--rename", metavar="NEW")
     item.add_argument("--retime", action="store_true", help="runs the row's committed command in a throwaway clone; L0")
     item.add_argument("--refresh", action="store_true", help="read a defect row's link labels again")

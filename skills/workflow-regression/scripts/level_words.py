@@ -27,3 +27,52 @@ def goal_target(value, levelled):
         print('SETTINGS (GOAL_LEVELS_BAD): goal_levels is %s in .loop/config.json and runs as land. Fix: set "land" or "nightly", or L0 or L1.' % repr(str(value))[:42])
         return "land"
     return value
+
+
+# -- drafts (R5, plan D3)
+PLACEHOLDER = "echo write a test"  # regression.py's draft(): a command that checks nothing
+READY_WORD = {"L0": "land", "L1": "land", "L2": "nightly"}  # the table's own word for a readied draft: land rows run at L1, nightly at L2
+
+
+def need_stage(args):
+    """add --level draft names the level the row will have; without it nothing is written."""
+    if args.level == "draft" and not args.test_level:
+        sys.exit("REFUSED (LEVELS_NO_STAGE): a draft needs the level it will have. Fix: regression.py add %s --level draft --test-level L1 "
+                 "--command '...' (L0, L1 or L2). Nothing was written." % args.id)
+
+
+def ready(root, args):
+    """`level ID --ready`: clear the draft state and give the table the level's own word. A draft with no real command is refused."""
+    import levels_cli
+    from levels import TABLE, text_of
+    state = levels_cli.State(root)
+    row = state.by_id.get(args.id)
+    if not row:
+        levels_cli.stop("LEVELS_NO_ROW", "no row %s" % args.id)
+    if row["level"] != "draft":
+        levels_cli.stop("LEVELS_NOT_DRAFT", "%s is not a draft. Fix: nothing to do" % args.id)
+    if row["command"].strip() in ("", PLACEHOLDER):
+        levels_cli.stop("LEVELS_NO_REAL_COMMAND", "%s has no real command yet. Fix: regression.py add %s --level draft --test-level <L> "
+                        "--command '<a real command>', then run --ready again" % (args.id, args.id))
+    word = {}
+
+    def change(now):
+        if now.by_id.get(args.id) != row:
+            levels_cli.stop("LEVELS_CHANGED", "the row changed meanwhile. Fix: rerun the command")
+        entries = now.entries()
+        got = entries[args.id]
+        word["new"] = READY_WORD[got["level"]]
+        got.update(old=word["new"])
+        lines = []
+        for line in text_of(root, TABLE).split("\n"):
+            cells = line.split("\t")
+            if cells[0] == args.id and len(cells) > 1:
+                cells[1] = word["new"]
+            lines.append("\t".join(cells))
+        now.table_text = "\n".join(lines)
+        levels_cli.keep(now, entries)
+        return {args.id}
+    levels_cli.update(root, change)
+    done = levels_cli.State(root).entries()[args.id]
+    print("READY %s: level %s, the table's word %s, state blank (it runs from now on)" % (args.id, done["level"], word["new"]))
+    return 0

@@ -40,7 +40,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
-import actions, completion, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
+import actions, completion, lanes, lanes_cli, level_words, runs, slots, tiers  # noqa: E401,E402
 import levels_cli, levels_gate, levels_read, levels_write  # noqa: E401,E402
 from completion import split  # noqa: E402,F401
 from runs import chosen, clean, criteria_ids, criterion_rows, done_lines, lines_of, today  # noqa: E402,F401
@@ -113,6 +113,7 @@ def cmd_add(args):
     if not ID.match(args.id):
         sys.exit("REFUSED: bad id. Fix: letters, digits, dots, dashes.")
     root = top()
+    level_words.need_stage(args)
     if args.category == "defect" and not args.link:
         sys.exit("REFUSED: a defect row links to its issue or finding. Fix: add --link URL or finding:SLUG.")
 
