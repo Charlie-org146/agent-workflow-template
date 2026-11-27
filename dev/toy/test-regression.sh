@@ -115,6 +115,9 @@ $reg sync > "$d/o5"; rc=$?; cat "$d/o5"
 $reg sync --write >/dev/null
 grep -q "add-median-1.*draft" .loop/regression.tsv && ok "draft written" || bad "draft"
 [ "$($reg run nightly | grep add-median | grep -vc '^not run: draft add-median-[12]$')" = 0 ] && $reg run nightly | grep -q '^not run: draft add-median-1$'  && ok "drafts don't run: the draft's id is only in its not-run line" || bad "ran a draft"
+$reg add marker-draft --level draft --command "touch RAN-DRAFT" >/dev/null; $reg run nightly >/dev/null; $reg run marker-draft >/dev/null 2>&1
+[ ! -e RAN-DRAFT ] && ok "a draft's command did not execute (its marker file stays absent), by level or by id" || bad "a draft's command executed"
+grep -v '^marker-draft	' .loop/regression.tsv > .loop/regression.tsv.new; mv .loop/regression.tsv.new .loop/regression.tsv; rm -f RAN-DRAFT
 $reg add add-median-1 --level land --command "test -e calc.py" --goal add-median:1
 $reg add add-median-2 --level covered --command "read by a person" --goal add-median:2
 git add -A; git commit -qm "Rows for the goal"
