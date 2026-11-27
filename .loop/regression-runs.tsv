@@ -110,14 +110,14 @@ del1-new-here-main-refused	PASS	2026-11-14
 del5-docs-bump-minor	PASS	2026-11-15	
 del5-docs-patch-default	PASS	2026-11-15	
 del5-merge-forwards-checkout	PASS	2026-11-15	
-del5-patch-default	PASS	2026-11-25	
+del5-patch-default	PASS	2026-11-27	
 del6-depth-by-size	PASS	2026-11-27	
 del7-kill-resume	PASS	2026-11-27	
 del8-board-over	PASS	2026-11-27	
-del8-floor-step	PASS	2026-11-25	
+del8-floor-step	PASS	2026-11-27	
 del8-prep-board	PASS	2026-11-27	
 del9-lane-part-no-path	PASS	2026-11-27	
-del9-merge-refuses	PASS	2026-11-25	
+del9-merge-refuses	PASS	2026-11-27	
 del9-pr-refuses	PASS	2026-11-27	
 del9-scan-sites	FAIL	2026-11-27	
 dependency-held	PASS	2026-11-09	
@@ -201,7 +201,7 @@ eta-preflight-asked	PASS	2026-11-27
 eta-preflight-missed	PASS	2026-11-25	
 every-row-described	PASS	2026-11-27	
 failed-waits-mender	PASS	2026-11-09	
-flaky-marked	PASS	2026-11-25	
+flaky-marked	PASS	2026-11-27	
 format-frontdoor	PASS	2026-11-19	
 format-home	PASS	2026-11-26	
 format-key	PASS	2026-11-26	
@@ -283,7 +283,7 @@ hook-stub-mark-foreign	PASS	2026-11-17
 hook-stub-mark-own	PASS	2026-11-17	
 issue-117-bind-self	PASS	2026-11-27	
 issue-117-github-touches	PASS	2026-11-27	
-issue-129-docs-published	PASS	2026-11-25	
+issue-129-docs-published	PASS	2026-11-27	
 issue-38-verdicts	PASS	2026-11-27	
 issue-closed-ignored	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 issue-gh-fail-unread	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -531,7 +531,7 @@ reg-defect-label	PASS	2026-11-24
 reg-local-relabel	PASS	2026-11-12	
 reg-same-env	PASS	2026-11-24	
 reg2-wording	PASS	2026-11-27	
-reg7-floor-test	PASS	2026-11-25	
+reg7-floor-test	PASS	2026-11-27	
 reg7-prep-setting	PASS	2026-11-27	
 reg7-unmapped-tier	PASS	2026-11-24	
 reg7-unrun-warn-cost	PASS	2026-11-24	
@@ -604,7 +604,7 @@ settings-refresh	PASS	2026-11-26
 settings-render-fresh	PASS	2026-11-25	
 settings-start-fresh	PASS	2026-11-16	
 settings-template-line	PASS	2026-11-26	
-setup-both-halves	PASS	2026-11-26	
+setup-both-halves	PASS	2026-11-27	
 setup-fit	PASS	2026-11-27	
 setup-owner-words-up-front	PASS	2026-11-24	
 setup-refusal-writes-120	PASS	2026-11-27	
@@ -636,7 +636,7 @@ spec-decisions-log	PASS	2026-11-13
 spec-decisions-wording	PASS	2026-11-27	
 stale-comments-only-3122	PASS	2026-11-15	
 stale-found	PASS	2026-11-27	
-stale-groups-defect	PASS	2026-11-12	
+stale-groups-defect	PASS	2026-11-27	
 stale-own-finding	PASS	2026-11-15	
 stale-own-main-reported	PASS	2026-11-15	
 status-graph-board	PASS	2026-11-25	
