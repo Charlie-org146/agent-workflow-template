@@ -63,6 +63,10 @@ def mend(git, files, base):
                 at[k] = len(out)
                 out.append(line)
             elif line != out[at[k]]:
+                same = line.split("\t")[:8] == out[at[k]].split("\t")[:8]
+                if f == tsv[2] and same:  # one record entry with and without the ninth (state) cell: keep the longer
+                    out[at[k]] = max(line, out[at[k]], key=len)
+                    continue
                 if f != tsv[1] or line.split("\t")[2:3] == out[at[k]].split("\t")[2:3]:
                     return False
                 out[at[k]] = max(line, out[at[k]], key=lambda l: l.split("\t")[2:3])
