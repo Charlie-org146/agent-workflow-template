@@ -19,7 +19,7 @@ def goal_target(value, levelled):
             return OLD[value]
         if value in LEVELS:
             return value
-        print('REFUSED (GOAL_LEVELS_BAD): goal_levels is %s in .loop/config.json; the values are L0 and L1. Fix: set one there and commit it. Nothing was run.' % repr(str(value))[:42], file=sys.stderr)
+        print('REFUSED (GOAL_LEVELS_BAD): goal_levels is %s in .loop/config.json; the values are L0, L1 and L2. Fix: set one there and commit it. Nothing was run.' % repr(str(value))[:42], file=sys.stderr)
         sys.exit(2)
     if value in PLAIN:
         return PLAIN[value]

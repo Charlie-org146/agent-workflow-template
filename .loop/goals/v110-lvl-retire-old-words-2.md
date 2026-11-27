@@ -33,3 +33,4 @@ Frozen. A wrong done line needs a new goal.
 - This repo ran land (720 rows) before; L1 plans from 778 rows, a superset. nightly = L2 (747, the same set). D2a's reviewed table (land -> L0) was corrected under TD2334 because it planned from 3 rows.
 - test-level-words.py, the settings case: its expected config word is changed to match (L0 to L1), not weakened; that one assertion edit was not seen red on its own.
 - Departure: `setup update` does not rewrite an old goal_levels word yet; the sync commit's only seams are sync.py (private-scans A's file, TD1609) and settings.py (no room, TD1987). The run-time GOAL_LEVELS_OLD line names the value to set. Filed as a deliver-first line.
+- skills/workflow-regression/scripts/tiers.py is 19,163 B after this goal: over the 19,000 B warning, under the 20,480 B limit.
