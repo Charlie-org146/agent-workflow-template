@@ -238,7 +238,7 @@
 | <a id="t-blocks-no-insert"></a>blocks-no-insert | requirement | DOC-25 | not run | - | local | 2026-11-18 |
 | <a id="t-spec-decisions-wording"></a>spec-decisions-wording | requirement | DOC-25 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-12 |
 | <a id="t-spec-decisions-log"></a>spec-decisions-log | requirement | DOC-25 | PASS | 2026-11-13 | [CI 2026-11-13](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-13) | 2026-11-12 |
-| <a id="t-command-reference-complete"></a>command-reference-complete | requirement | DOC-25 | not run | - | local | 2026-11-13 |
+| <a id="t-command-reference-complete"></a>command-reference-complete | requirement | DOC-25 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-13 |
 | <a id="t-automation-links-runbook"></a>automation-links-runbook | requirement | DOC-25 | not run | - | local | 2026-11-13 |
 | <a id="t-owner-record-applies"></a>owner-record-applies | requirement | DOC-2 | not run | - | local | 2026-11-13 |
 | <a id="t-link-page-passes"></a>link-page-passes | requirement | DOC-25 | PASS | 2026-11-26 | [CI 2026-11-26](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-26) | 2026-11-14 |
