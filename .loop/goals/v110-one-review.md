@@ -69,7 +69,7 @@ The other build items are listed under Build list below.
 
 ### Spec check of E1 to E3: rulings and clarifications
 
-(moved out of the PR body for length; kept in the operation notes)
+(moved for PR-body length: see .loop/goals/v110-one-review.notes.md, section 'Spec check of E1 to E3')
 
 ### Target text: the DLF-1 unit
 
@@ -208,7 +208,7 @@ E1 to E5 are under Build order above. Every item below is required unless it say
 
 ### DEL-21 comparison (RT15), written after E2 to E5
 
-(moved out of the PR body for length; kept in the operation notes)
+(moved for PR-body length: see .loop/goals/v110-one-review.notes.md, section 'DEL-21 comparison (RT15)')
 
 ### Build record: slices
 
@@ -267,7 +267,7 @@ safety_scan.py has one rule set for a stop's words and one for a diff. Nothing c
 
 ### Correction to the E7 counts
 
-(moved out of the PR body for length; kept in the operation notes)
+(moved for PR-body length: see .loop/goals/v110-one-review.notes.md, section 'Correction to the E7 counts')
 
 ### E1, last part: the whole-unit comparison
 
