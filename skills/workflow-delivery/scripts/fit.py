@@ -93,16 +93,29 @@ def depth_for(setting, seen):
     return ("condensed" if size.get("small") else "full"), size.get("why") or ""
 
 
+def overridden(seen):
+    """An owner depth override the tool honors (depth_for): a dict naming full or condensed."""
+    over = seen.get("depth_override")
+    return isinstance(over, dict) and over.get("depth") in ("full", "condensed")
+
+
 def start_row(state, step, runs, cfg, table):
     """CBS-1: (row, forms text, plan-review passes) a plan step starts from before the plan is sized, else ("", "", 0): large unless
-    frozen small with no safety class or risky path."""
+    frozen small (exactly true) with no safety class or risky path; any odd value in the goal makes it large."""
     seen = view(state, runs)
-    if step != "plan" or state.get("sized") or seen.get("one_review") or seen.get("depth_override"):
+    if step != "plan" or state.get("sized") or seen.get("one_review") or overridden(seen):
         return "", "", 0
     size = seen.get("size") if isinstance(seen.get("size"), dict) else {}
+    import posixpath
+    import re
     import sizing
-    touches = list(seen.get("touches") or [])
-    row = "small" if size.get("small") and not sizing.classes_of(cfg, " ".join([seen.get("goal") or ""] + touches), touches) else "large"
+    try:
+        raw = seen.get("touches") or []
+        paths = [posixpath.normpath(re.sub(r"^(\./|/)+", "", p.replace("\\", "/"))) for p in ([raw] if isinstance(raw, str) else raw)]
+        small = size.get("small") is True and not sizing.classes_of(cfg, " ".join([seen.get("goal") or ""] + paths), paths + [p.lower() for p in paths])
+    except (TypeError, AttributeError):
+        small = False
+    row = "small" if small else "large"
     return row, ", ".join("%s %s" % (c, table[row][c]) for c in ("plan-review", "red-team")), table["forms"]["plan-review"][table[row]["plan-review"]]["passes"]
 
 

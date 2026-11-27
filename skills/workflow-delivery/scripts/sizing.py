@@ -399,7 +399,7 @@ def prompted(fn):
 
 def depth(state, step):
     import fit
-    if fit.view(state, runs()).get("depth_override"):
+    if fit.overridden(fit.view(state, runs())):
         return ""
     got = (state.get("sized") or {}).get("checks", {}).get(DEPTH_AT.get(step, "")) or {"passes": start(state, step)[2]}
     return ("full" if got["passes"] > 1 else "condensed") if got["passes"] else ""
