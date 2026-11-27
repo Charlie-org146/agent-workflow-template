@@ -361,3 +361,16 @@ Filed deliver-first for TD2194: v110-one-review-choice-2. Explicit pre-scans und
 
 - DLF-1: marked Reviewed with criteria.py review DLF-1 --user --owner-record o1048, printed "REVIEWED DLF-1", after a scripted diff against the TD2136 unit file showed 0 differing lines.
 - DEL-3 and OPS-1 stay Unreviewed, for the owner's list. Each changed line equals the approved text apart from the line's own tag. A review mark covers the whole unit, which has 6 (DEL-3) and 13 (OPS-1) lines no approval covers, and neither was Reviewed on main. The Operation non-goal and metric lines (outside a unit) equal TD2128 C and D. The wording compared is the A to D quotes in these Notes.
+
+### Wide toy run and the failures main also has
+
+The wide run: 93 toys on d4204241e (before the merge of d25f31e5d and the later commits), in isolated clones. The failures below are also on main. Compared with 7784d862f unless noted:
+- Same failing lines: test-automation-email.sh, test-docs-command.sh, test-docs-format.sh, test-docs-issues.sh, test-docs-sections.sh, test-delivery-prd.sh (10).
+- Same failing case: test-milestones.sh, test-release-gate.py, test-release.sh, test-merge-guard.sh (6) and test-who-merges.py (filed, v110-one-review-choice-1), test-batch.sh, test-plan-cache.sh ("nightly after land").
+- Against d25f31e5d, same failing lines: test-guards.sh, test-lanes.sh (both compared before the merge), test-defect.sh (after it). test-task-first-3.py showed no FAIL line on either side when compared again.
+- Mine, fixed: test-plan-cache.sh's other two fails and test-pods.sh (start_answer.py did not run alone, 6e4df0871). test-goal.sh and test-pods.sh pass run alone since.
+
+test-monitoring.sh, against d25f31e5d:
+- Alternating runs (branch, main, branch, main, branch; load 15 to 20, 41 to 44% memory free): all five failed only the two "watch.py alone" cases (its copied file list lacks batch.py). None timed out.
+- One earlier branch run had failed 16. With LOOP_FREE_GB=2 faked, main and the branch fail identically (29 FAIL lines each, the same lines), and 15 of that run's 16 are among them. Under 3 GB free (min_free_memory_gb's default) watch starts no goal, and the toy does not turn that off. That run's memory was not recorded, so this is the likely cause, not a proven one. replan.py and lanes_cli.py are unchanged here.
+- Filed deliver-first: v110-one-review-choice-3. Explicit pre-scans under TD2170 so far: 3, all clean.
