@@ -490,7 +490,7 @@ def swallow():
     got = listing("")
     line = [l.split("\t") for l in got.stdout.splitlines() if l.split("\t")[1:2] == ["c"]]
     raw = line[0][6] if line else got.stdout + got.stderr
-    check(got.returncode == 0 and raw.startswith("PASS"), "in CI (level_words absent) a covered row with a stale own PASS shows PASS although its cover fails: the raw state CAN be greener than the local worst-of-covers", raw)
+    check(got.returncode == 0 and raw.startswith("no result"), "in CI (level_words absent) a covered row's own stale PASS record is ignored: it shows no result, never PASS (R2, TD2348)", raw)
     real = subprocess.run([sys.executable, os.path.join(REG, "tests.py"), "list", "--tsv"], cwd=repo.path, env=repo.env, capture_output=True, text=True)
     local = [l.split("\t")[6] for l in real.stdout.splitlines() if l.split("\t")[1:2] == ["c"]]
     check(local and local[0].startswith("FAIL abc123456789"), "locally the same row shows the worst of its covers: FAIL with the commit", local)
