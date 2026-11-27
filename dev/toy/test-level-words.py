@@ -302,7 +302,29 @@ def enforced():
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced}
+def critcover():
+    print("== R8: a covered row is met only when its covers are")
+    # Value: protects=criteria applies a covered row's covers: it is met when every cover passes at HEAD and unmet when a cover fails or is a
+    #   draft; fails_when=a covered row is met whatever its covers do
+    from lvl_fixture import Repo, entry, row
+    page = "# Page\n\n## Requirements\n\n- ABC-1: **Unreviewed** covers a passing row\n- ABC-2: **Unreviewed** covers a failing row\n- ABC-3: **Unreviewed** covers a draft\n"
+    rows = [row("good"), row("bad", command="false"), row("drf", level="draft"),
+            row("ABC-1", level="covered", command="read by a person"), row("ABC-2", level="covered", command="read by a person"),
+            row("ABC-3", level="covered", command="read by a person")]
+    ents = [entry("good"), entry("bad"), entry("drf", old="draft"), entry("ABC-1", old="covered", covers="good"),
+            entry("ABC-2", old="covered", covers="bad"), entry("ABC-3", old="covered", covers="drf")]
+    repo = Repo(rows, ents, ["label\tsecurity\tsecurity\tfixture label"])
+    repo.write("docs/wiki/Page.md", page)
+    repo.commit()
+    done, said = repo.run("criteria")
+    lines = said.splitlines()
+    check(not any(l.startswith("ABC-1") for l in lines), "a covered row whose cover passes is met", said)
+    check(any(l.startswith("ABC-2") and "bad" in l for l in lines), "a covered row whose cover fails is unmet, and names the cover", said)
+    check(any(l.startswith("ABC-3") and "drf" in l for l in lines), "a covered row whose cover is a draft is unmet, and names the cover", said)
+    repo.close()
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
