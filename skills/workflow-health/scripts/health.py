@@ -80,7 +80,7 @@ def criteria_rows(root):
         gap = re.match(r"^GAP (\S+) (.*)$", line)
         if gap and re.match(r"^[A-Za-z0-9-]+:\d+$", gap.group(1)):
             loose += 1
-        elif gap and "criterion has no regression row" in gap.group(2):
+        elif gap and ("criterion has no regression row" in gap.group(2) or "no row the workflow runs" in gap.group(2)):  # drafts and covered rows run nothing
             rows.append(sibling_module("enforce").row(root, gap.group(1), row))
         elif line.startswith("PENDING "):  # owed elsewhere: WARN past a week
             old = re.search(r"owed on (.+?) since (\d{4}-\d{2}-\d{2})", line)
@@ -89,6 +89,8 @@ def criteria_rows(root):
                                 "regression.py red ID --off-platform"))
         elif line.startswith(("DRAFT ", "UNPROVEN ")):
             word, key = line.split()[:2]
+            if word == "DRAFT" and re.match(r"^[A-Z]{2,5}-\d+:?$", key):
+                continue  # a requirement held only by drafts: its GAP line above routes it to not enforced
             rows.append(row("FAIL", "requirements", key.rstrip(":"), "proof", "a draft row: no command or level yet",
                             "give it a command and level") if word == "DRAFT" else
                         row("FAIL", "tests", key.rstrip(":"), "seen-red", "never seen failing", "run regression.py red"))

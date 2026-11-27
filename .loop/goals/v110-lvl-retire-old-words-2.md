@@ -38,3 +38,4 @@ Frozen. A wrong done line needs a new goal.
 - R6: "not run: draft <id>" repeats once per shard in the scheduled runner's log (cosmetic).
 - R6: not_run is also copied into the summary job's l2 text (regression.yml, second copy) without a call there; it is dead text from the shared copied block. It is called once, in the run step, before the row loop.
 - R6: actions.py is 20,466 B, 14 B under the 20,480 B cap.
+- Hand-running dev/toy/test-regression.sh prints FAIL lines ("FAIL flag" four times, "labels on", "label create fails", "label on issue fails", "hostile: label create ..."). They are harness-only and the same on main e2fa360a9, run by hand in a clone with its own HOME (env -i, no --live); the rows that call the toy pass through the tool. Main's clone run shows three more, on main only: "shard split", "cron setting", "bad cron written".
