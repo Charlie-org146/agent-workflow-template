@@ -751,7 +751,57 @@ def gate():
     check("a" not in found, "a row with a PASS and a FAIL for the same commit is not proven (R8: PASS never wins over FAIL)", found)
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "draftl0": draftl0, "wfrows": wfrows, "gate": gate, "wfpin": wfpin}
+def mixedrecord():
+    print("== R13: an old branch with 8-cell record lines merges with a new record of 9-cell lines")
+    # Value: protects=a branch written before the state column merges cleanly where it touched other rows, mixed lines read, and one id changed
+    #   on both sides is left to the person merging; fails_when=a mixed record is refused, or the repair merges two different lines of one id
+    import subprocess
+    from lvl_fixture import Repo, entry, row, ROOT
+    sys.path.insert(0, os.path.join(ROOT, "skills", "workflow-delivery", "scripts"))
+    import mend_tables
+    risks = ["label\tsecurity\tsecurity\tfixture label"]
+    rec = ".loop/regression-relevel.tsv"
+    line = lambda e, extra="": "\t".join([e[c] for c in ("id", "old", "level", "risk", "covers", "seconds", "cmdhash", "reason")]) + extra + "\n"
+    rows = [row("a"), row("b"), row("c")]
+
+    def merged(ours, theirs):
+        repo = Repo(rows, None, risks)
+        repo.write(rec, line(entry("a")) + line(entry("b")) + line(entry("c")))
+        repo.commit("base")
+        repo.git("checkout", "-q", "-b", "other")
+        repo.write(rec, theirs)
+        repo.commit("old branch, 8 cells")
+        repo.git("checkout", "-q", "main")
+        repo.write(rec, ours)
+        repo.commit("new record, 9 cells")
+        got = repo.git("merge", "other", "--no-edit", check_it=False)
+        text = repo.read(rec)
+        git = lambda *a: subprocess.run(["git"] + list(a), cwd=repo.path, env=repo.env, capture_output=True, text=True)
+        ok = None
+        if got.returncode:
+            cwd = os.getcwd()
+            os.chdir(repo.path)
+            try:
+                ok = mend_tables.mend(git, [rec], "other")
+            finally:
+                os.chdir(cwd)
+            text = repo.read(rec)
+        check_state = repo.run("levels", "--check")
+        repo.close()
+        return got.returncode, ok, text, check_state
+    new9 = line(entry("a"), "\t") + line(entry("b"), "\t") + line(entry("c"), "\t")
+    code, ok, text, chk = merged(new9, line(entry("a")) + line(entry("b")) + line(entry("c")) + line(entry("d")))
+    cells = sorted({len(l.split("\t")) for l in text.splitlines()})
+    check((code == 0 or ok) and cells == [8, 9] and "d\t" in text and "<<<<" not in text and ">>>>" not in text,
+          "an old branch's added row merges (git, or the repair) with a new record of 9-cell lines into a mixed record", (code, ok, cells, text[-160:]))
+    check(chk[0] in (0, 2) and "doesn't have" not in chk[1], "a mixed record reads: no 'the line doesn't have' refusal", chk[1][:200])
+    code, ok, text, chk = merged(new9, line(entry("a", level="L2")) + line(entry("b")) + line(entry("c")))
+    check(code != 0 and not ok, "one id changed on both sides (a 9-cell line against an 8-cell edit) is left to the person merging", (code, ok))
+    repo = Repo(rows, None, risks)
+    repo.close()
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "draftl0": draftl0, "wfrows": wfrows, "gate": gate, "mixedrecord": mixedrecord, "wfpin": wfpin}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
