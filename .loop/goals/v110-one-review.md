@@ -42,7 +42,7 @@ E1 to E5 come first, with one spec check on E1 to E3 before their code. They are
 - E4: decisions are kept in an append-only file with its own lock, read again under the merge and revert lock, and handed over with the pre-flight and plan-review files. A missing file refuses.
 - E5: a stop holds at every path that sets a goal queued or running.
 
-The other required items of the reviews (CEO B1 to B10, DX D1 to D17, eng E6 to E19) are summarised in the recorded plan reply.
+The other build items are listed under Build list below.
 
 ### Rulings
 
@@ -56,47 +56,115 @@ The other required items of the reviews (CEO B1 to B10, DX D1 to D17, eng E6 to 
   - Operation, OPS-1: "**Full auto:** top decides process choices and numbers each decision. On a goal past its start review, a safety item found later takes the safe option without asking (DLF-1.3); outside that, the safety classes wait for my typed words."
   - Operation, non-goal: "Full auto never answers for me on destructive, money, security or owner-contradicting decisions. On a goal past its start review, a safety item found later takes the safe option without asking (DLF-1.3)."
   - Operation, metric: "With full auto on, a goal needs me only at its start review; the merge and release rules I set stay. Minutes a goal waits for me after its start review: target 0."
-- The DLF-1 metric and the DLF-1 heading wait for the owner. They hold the merge, not the build, and are built as separable edits. If the owner declines, both lines stay as they are and the PR notes the mismatch.
+- The owner approved the DLF-1 heading and metric ("Approve both", o1045), so they no longer hold the merge:
+  - DLF-1 heading: "Deliver first: a goal waits for me once, at its start"
+  - DLF-1 metric: "**Metric.** Minutes a goal waits for me after its start review. Target 0."
+- Revert rule, a required build item (TD2128): each decision records what it let go on, and its revert line says "stops the goal" when that is the whole goal.
+- The Delivery wording above is the one top approved; it takes the place of the earlier DEL-3 draft under Words used for the page edit.
 
 ### Red-team dispositions (plan file sha1 defb36a61622)
 
-36 breaks, named by number, principle and short id; their text is not repeated here. All 36 are accepted (operation: principles 1, 3, 4, 6 and 8 under o1000; 2 and 7 under o1037). PW means the break showed the plan wrong as written.
+36 breaks, named by number, principle and short id; their text is not repeated here. All 36 are accepted in the tool's record (operation: principles 1, 3, 4, 6 and 8 under o1000; 2 and 7 under o1037). In that record, accepted means the disposition below, never a waiver. REQ is a required build item, DF is filed as a deliver-first line, and PW means the break showed the plan wrong as written. All 9 breaks of principle 6 are required build items.
 
-| break | principle | short id | disposition |
-|---|---|---|---|
-| 1 | 8 | b1p87f0ae6 | required (PW): the start message is sent once, after its items are final, after plan and red team and before the build (B2, E6) |
-| 2 | 8 | b2p831ef23 | required (PW): a safety item names exact files or an existing folder |
-| 3 | 6 | b3p667b05d | required (PW): labels raise the class, and unknown stays safety (B1, E7) |
-| 4 | 2 | b4p2507a43 | required (PW): a fix's row is tied to the finding and was red without the fix; a fresh reader gives a verdict on the fix (E14) |
-| 5 | 8 | b5p893dca2 | required (PW): a rule for ordinary test updates that loosens no check |
-| 6 | 8 | b6p8f4ac32 | required (PW): after a merge the revert command opens a revert goal for that part, and the owner's revert command is its start review (TD2127); each decision records what it let go on, and its revert line says what it stops, "stops the goal" when that is the whole goal (TD2128, B4) |
-| 7 | 8 | b7p8144c52 | required (PW): the DLF-1.4 accept list is named as a kept owner rule, in the PR and beside the metric (TD2127) |
-| 8 | 1 | b8p1913e68 | required (PW): only wording approved by top or the owner lands; any other line stays as it is |
-| 9 | 1 | b9p1108665 | required (PW): README and Principles are regenerated |
-| 10 | 1 | b10p12ee017 | deliver-first: the other requirement lines that still describe waits |
-| 11 | 6 | b11p66acb23 | required: the config file is among the settings paths |
-| 12 | 6 | b12p67426f6 | required: the diff scan covers every class a diff can show; the gate is on every later command; an action asked or reported during the build that is not positively cleared is not taken (E12) |
-| 13 | 6 | b13p6fb9a58 | required: a safety stop keeps the branch off origin (E11) |
-| 14 | 6 | b14p6dd986e | required: closing a finding and its statements need a verified operation identity (E13) |
-| 15 | 6 | b15p64186be | required: revert and decide are operation-only, mail text is treated as untrusted, and the owner has a way back from a mistaken hold (E13, B8) |
-| 16 | 6 | b16p67ee30f | required: the shared owner-record reader refuses start records unless a use is allowed (E15) |
-| 17 | 2 | b17p2d20eca | required: with 28 |
-| 18 | 2 | b18p22104b7 | required for behaviour: on a marked goal the safety-class check is met by the start review or the safe option, and the check stays; deliver-first for the CBS-1.2 wording |
-| 19 | 2 | b19p2ede9b9 | required: a named acknowledgement of decision ids (D9) |
-| 20 | 2 | b20p242ae28 | required: the new rows name DLF-1.3 |
-| 21 | 3 | b21p32146d5 | required: holds and open findings show age, responsible session and next step (D17); deliver-first for time limits and missed-with-cause |
-| 22 | 8 | b22p898a825 | required: one message with a recommendation per item, one code, and what happens without an answer |
-| 23 | 1 | b23p12524c0 | required: a written DEL-21 comparison with GitHub required checks and environment reviewers, before the E1-E5 code |
-| 24 | 1 | b24p1b389b6 | required (PW): approval comes before the DLF-1 revision (with 8) |
-| 25 | 1 | b25p1902119 | required: with 9 |
-| 26 | 8 | b26p8ef5b5d | required (PW): hand merge and cut or leave are named as kept owner rules (TD2127) |
-| 27 | 8 | b27p830d75f | required (PW): modes the owner switched off are named as kept owner rules (TD2127) |
-| 28 | 2 | b28p23ff37a | required (PW): the kept owner rules are named beside the metric, with waiting time by cause (B6) |
-| 29 | 6 | b29p6ce5a29 | required (PW): a proposed action counts as not safety only on positive grounds; otherwise it takes the safe option (with 3) |
-| 30 | 7 | b30p7b208de | required (PW): recovery of a lost record that keeps approvals and restrictions (E2, E3, D15) |
-| 31 | 7 | b31p75d6ee2 | required: approval evidence travels with a handover (E1, E4) |
-| 32 | 2 | b32p2cbff9b | required: safe concurrent writes of decisions (E4) |
-| 33 | 6 | b33p667f29a | required: revert needs operation authority and goal ownership (E13) |
-| 34 | 8 | b34p8145e13 | required (PW): with 6; an ongoing outside action is stopped or gets corrective work |
-| 35 | 3 | b35p3c0770c | required (PW): "no estimate" is kept apart from the budget, with a stated cap rule |
-| 36 | 4 | b36p49b9bbc | deliver-first: step token budgets |
+| break | principle | short id | REQ or DF | build item | disposition |
+|---|---|---|---|---|---|
+| 1 | 8 | b1p87f0ae6 | REQ (PW) | CEO B2, E6, DX D1 | the start message is sent once, after its items are final, after plan and red team and before the build (B2, E6) |
+| 2 | 8 | b2p831ef23 | REQ (PW) | RT1 | a safety item names exact files or an existing folder |
+| 3 | 6 | b3p667b05d | REQ (PW), build item CEO B1, E7, accepted by o1000 means a disposition, not a waiver | CEO B1, E7 | labels raise the class, and unknown stays safety (B1, E7) |
+| 4 | 2 | b4p2507a43 | REQ (PW) | E14, RT18 | a fix's row is tied to the finding and was red without the fix; a fresh reader gives a verdict on the fix (E14) |
+| 5 | 8 | b5p893dca2 | REQ (PW) | RT2 | a rule for ordinary test updates that loosens no check |
+| 6 | 8 | b6p8f4ac32 | REQ (PW) | RT16, CEO B4 | after a merge the revert command opens a revert goal for that part, and the owner's revert command is its start review (TD2127); each decision records what it let go on, and its revert line says what it stops, "stops the goal" when that is the whole goal (TD2128, B4) |
+| 7 | 8 | b7p8144c52 | REQ (PW) | RT17 | the DLF-1.4 accept list is named as a kept owner rule, in the PR and beside the metric (TD2127) |
+| 8 | 1 | b8p1913e68 | REQ (PW) | RT11 | only wording approved by top or the owner lands; any other line stays as it is |
+| 9 | 1 | b9p1108665 | REQ (PW) | RT5 | README and Principles are regenerated |
+| 10 | 1 | b10p12ee017 | DF | filed later | the other requirement lines that still describe waits |
+| 11 | 6 | b11p66acb23 | REQ, build item RT4, accepted by o1000 means a disposition, not a waiver | RT4 | the config file is among the settings paths |
+| 12 | 6 | b12p67426f6 | REQ, build item E12, CEO B1, accepted by o1000 means a disposition, not a waiver | E12, CEO B1 | the diff scan covers every class a diff can show; the gate is on every later command; an action asked or reported during the build that is not positively cleared is not taken (E12) |
+| 13 | 6 | b13p6fb9a58 | REQ, build item E11, accepted by o1000 means a disposition, not a waiver | E11 | a safety stop keeps the branch off origin (E11) |
+| 14 | 6 | b14p6dd986e | REQ, build item E13, accepted by o1000 means a disposition, not a waiver | E13 | closing a finding and its statements need a verified operation identity (E13) |
+| 15 | 6 | b15p64186be | REQ, build item E13, CEO B8, accepted by o1000 means a disposition, not a waiver | E13, CEO B8 | revert and decide are operation-only, mail text is treated as untrusted, and the owner has a way back from a mistaken hold (E13, B8) |
+| 16 | 6 | b16p67ee30f | REQ, build item E15, accepted by o1000 means a disposition, not a waiver | E15 | the shared owner-record reader refuses start records unless a use is allowed (E15) |
+| 17 | 2 | b17p2d20eca | REQ | CEO B6, RT17 | with 28 |
+| 18 | 2 | b18p22104b7 | REQ + DF part | RT12; wording filed later | on a marked goal the safety-class check is met by the start review or the safe option, and the check stays; deliver-first for the CBS-1.2 wording |
+| 19 | 2 | b19p2ede9b9 | REQ | DX D9 | a named acknowledgement of decision ids (D9) |
+| 20 | 2 | b20p242ae28 | REQ | RT13 | the new rows name DLF-1.3 |
+| 21 | 3 | b21p32146d5 | REQ + DF part | DX D17; time limits filed later | holds and open findings show age, responsible session and next step (D17); deliver-first for time limits and missed-with-cause |
+| 22 | 8 | b22p898a825 | REQ | RT14 | one message with a recommendation per item, one code, and what happens without an answer |
+| 23 | 1 | b23p12524c0 | REQ | RT15 | a written DEL-21 comparison with GitHub required checks and environment reviewers, before the E1-E5 code |
+| 24 | 1 | b24p1b389b6 | REQ (PW) | RT11 | approval comes before the DLF-1 revision (with 8) |
+| 25 | 1 | b25p1902119 | REQ | RT5 | with 9 |
+| 26 | 8 | b26p8ef5b5d | REQ (PW) | RT17 | hand merge and cut or leave are named as kept owner rules (TD2127) |
+| 27 | 8 | b27p830d75f | REQ (PW) | RT17 | modes the owner switched off are named as kept owner rules (TD2127) |
+| 28 | 2 | b28p23ff37a | REQ (PW) | CEO B6, RT17 | the kept owner rules are named beside the metric, with waiting time by cause (B6) |
+| 29 | 6 | b29p6ce5a29 | REQ (PW), build item CEO B1, E7, accepted by o1000 means a disposition, not a waiver | CEO B1, E7 | a proposed action counts as not safety only on positive grounds; otherwise it takes the safe option (with 3) |
+| 30 | 7 | b30p7b208de | REQ (PW) | E2, E3, DX D15 | recovery of a lost record that keeps approvals and restrictions (E2, E3, D15) |
+| 31 | 7 | b31p75d6ee2 | REQ | E1, E4 | approval evidence travels with a handover (E1, E4) |
+| 32 | 2 | b32p2cbff9b | REQ | E4 | safe concurrent writes of decisions (E4) |
+| 33 | 6 | b33p667f29a | REQ, build item E13, accepted by o1000 means a disposition, not a waiver | E13 | revert needs operation authority and goal ownership (E13) |
+| 34 | 8 | b34p8145e13 | REQ (PW) | RT16 | with 6; an ongoing outside action is stopped or gets corrective work |
+| 35 | 3 | b35p3c0770c | REQ (PW) | RT3 | "no estimate" is kept apart from the budget, with a stated cap rule |
+| 36 | 4 | b36p49b9bbc | DF | filed later | step token budgets |
+
+### Build list
+
+E1 to E5 are under Build order above. Every item below is required unless it says it is filed later.
+
+- E6: the start message is held until its items are final.
+- E7: separate scan rules for stop text and for diffs, using changed Reviewed units rather than wiki paths, checked on past breaks and diffs before the build; an unknown action is held under operation.
+- E8: merge scans the head it merges for new uncovered changes; a hand or already-merged pull request is checked before release; where that cannot be enforced the output says so; a new finding or revert marks the open pull request.
+- E9: release holds are shared across machines and read by every local release path; a replacement goal is new or unmerged; making a hold and publishing are ordered.
+- E10: the diff is read with external diff tools off, as text, decoded safely, with NUL-separated names; an unreadable diff refuses.
+- E11: findings keep hashes and blob ids, not content; stored text passes the existing secret and private-name checks; a safety stop does not push the branch.
+- E12: the build gate also guards flow runs, record, pr and every merge, with or without the principles page; merge refuses an unanswered marked goal.
+- E13: answer, closing a finding, revert and the delivered mark are operation-only.
+- E14: a fix's row names its finding and has a red run without the fix; drop and revert follow renames and copies.
+- E15: a start record is recognised by its content wherever owner records are read, and its uses are recorded in one place.
+- E16: for a marked goal, deliver-first is read from the committed base config, and off wins.
+- E17: one exact reply form after quoted text is removed; operation can resend; start mail goes first under the daily limit.
+- E18: a stated drop rule for goals released as leave or by hand; the list is paged and only printed ids are marked.
+- E19: a missing new script does not break an unmarked goal; a handover checks the receiver's version.
+- CEO B1: an action that is not positively cleared is treated as safety; a label raises the class; each not-safety ruling on an action is listed with its reason, with toy cases for money, deletion and steward-merge stops in varied wording.
+- CEO B2: the start message is sent only after its items are written, and a toy expects one send.
+- CEO B3: no removal or revert goal targets a fix or drop decision.
+- CEO B4: each revert line says what it can stop.
+- CEO B5: the Operation page keeps the protection against full auto answering a question that contradicts the owner.
+- CEO B6: the board shows blocked minutes by who they wait for and why, beside the owner metric, with goals stopped and parts dropped.
+- CEO B7: a queued merge that cannot be withdrawn is reported with the next step.
+- CEO B8: the owner has a recorded way back from a mistaken revert.
+- CEO B9: a refusal for a pending removal names it and how to clear it; operation can name a replacement.
+- CEO B10: safety and irreversible decisions are listed first.
+- DX D1: an items-pending state; one command records the items and then sends once.
+- DX D2: each operation action has a named command, with who may run it, exit codes and an example; a refusal prints the command.
+- DX D3: one exact reply form; a refusal gives the current code, the forms and whether the answer is unused.
+- DX D4: a read-only command shows the start review; the freeze and the build refusal print it and how to answer.
+- DX D5: new refusals carry a stable code, values, fix, recovery, side effects and a non-zero exit.
+- DX D6: a failed queued-merge withdrawal is saved as pending, holds releases, exits non-zero and names who finishes it.
+- DX D7: each revert command is on its own line, unwrapped, with its folder quoted.
+- DX D8: revert has a read-only preview.
+- DX D9: the delivered mark is a named acknowledgement of decision ids.
+- DX D10: a read-only scan preview.
+- DX D11: command names that do not clash; class values are printed.
+- DX D12: each new stored, mailed or printed field passes the private-name scan.
+- DX D13: the goal's mark, effective mode and controlling setting are shown; an older receiver is refused at handover.
+- DX D14: accepting an answer can be retried with the same record after a failed push.
+- DX D15: a lost owning record has a recovery that keeps approvals and findings.
+- DX D16: one end-to-end How-to example; the Machines and Release How-to pages are updated.
+- DX D17: a hold shows its age, last progress, responsible session and next command.
+- RT1: a safety item names exact files or an existing folder.
+- RT2: a rule for ordinary test updates that loosens no check.
+- RT3: "no estimate" is kept apart from the budget, with a stated cap rule.
+- RT4: the config file is among the settings paths.
+- RT5: README and Principles are regenerated.
+- RT6: filed later (not one of the 36): the CI release workflow reads the holds.
+- RT7: the answer command records the action taken.
+- RT8: the merge lock is held only around the last check and the merge request.
+- RT9: a re-review step for the revised DLF-1 unit.
+- RT10: filed later (break 36): step token budgets.
+- RT11: only wording approved by top or the owner lands, and approval comes before the DLF-1 revision.
+- RT12: on a marked goal the safety-class check is met by the start review or the safe option, and the check stays.
+- RT13: the new rows name DLF-1.3.
+- RT14: one start message with a recommendation per item, one code, and what happens without an answer.
+- RT15: a written DEL-21 comparison with GitHub required checks and environment reviewers, before the E1 to E5 code.
+- RT16: after a merge, the owner's revert command opens a revert goal for that part and is its start review; each decision records what it let go on, and its revert line says what it stops.
+- RT17: the kept owner rules (hand merge with auto_merge off, cut or leave, the DLF-1.4 accept list, modes the owner switched off) are named in the PR and beside the metric.
+- RT18: a fresh reader gives a verdict on each fix.
