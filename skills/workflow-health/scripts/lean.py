@@ -148,7 +148,7 @@ def unrun_rows(root):
         return []
     left = int(full[-1][4]) if full and len(full[-1]) > 4 and full[-1][4].isdigit() else 0
     return [row("WARN", "lane", "unrun-rows", "the full suite left %d rows unrun" % left,
-                "add a shard or move the slowest rows to nightly")] if left else []
+                "add a shard or move the slowest rows to L2 (nightly in column 2 of .loop/regression.tsv)")] if left else []
 
 
 def hit_rows(root):
@@ -160,7 +160,7 @@ def hit_rows(root):
             if isinstance(hit, dict):
                 found.append(row("INFO", "budget", "test-time", "%s: %s %s hit its %s-minute budget; left: %s" % (
                     state["slug"], hit.get("step"), {"step": "step", "prep": "preparation"}.get(hit.get("kind"), "tests"),
-                    hit.get("minutes"), hit.get("left")), "run what it left with regression.py run land, or raise the budget"))
+                    hit.get("minutes"), hit.get("left")), "run what it left with regression.py run L1 (land: the land rows), or raise the budget"))
     return found
 
 
@@ -171,7 +171,7 @@ def test_rows(root):
 def lane_rows(root):
     record, mine, why = lane_record(root)
     if record is None:
-        return [row("UNREAD" if mine else "INFO", "lane", "test-time", why, "run regression.py run land --reuse")]
+        return [row("UNREAD" if mine else "INFO", "lane", "test-time", why, "run regression.py run L1 --reuse (land --reuse works too)")]
     whose = "" if mine else " (from another branch's record, %s)" % why
     land = land_rows(root)
     seconds = land_seconds(root, record)
@@ -191,7 +191,7 @@ def lane_rows(root):
     return [row("WARN" if mine else "INFO", "lane", "test-time", "the land lane takes %d s, over test_budget_minutes=%d in .loop/config.json; "
                 "slowest rows: %s; slowest scripts: %s%s" % (
                     total, minutes, ", ".join("%s %ds" % pair for pair in slow), ", ".join("%s %ds" % pair for pair in worst), whose),
-                "move the slowest rows to nightly in .loop/regression.tsv, or raise test_budget_minutes")]
+                "move the slowest rows to L2 (nightly in column 2 of .loop/regression.tsv), or raise test_budget_minutes")]
 
 
 def runs(root, bad=None):

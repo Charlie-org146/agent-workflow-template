@@ -509,8 +509,8 @@ workflow
 
 | Level | Runs in |
 |---|---|
-| `land` | `run land` and `run nightly` |
-| `nightly` | `run nightly` |
+| `land` | `run land` and `run nightly` (L1's rows: `run L1`) |
+| `nightly` | `run nightly` (L2's rows: `run L2`) |
 | `draft` | Nothing, until given a real command |
 | `covered` | Nothing; proved elsewhere |
 
@@ -732,7 +732,7 @@ outside it. All three take `--root DIR` (default: the git top level), exit 2 on 
 
 **New test script, three steps:** write the header; `python3 scripts/lanes_cli.py check dev/toy/test-new.sh`; then
 `python3 scripts/lanes_cli.py affected <a file it runs>` shows its rows. Register rows with `regression.py add ...
---level land`.
+--level land` (L1's rows; give a level with `--test-level L0`, `L1` or `L2`).
 
 **Nightly read trace.** `bash dev/toy/check-reads.sh [ROW-ID...]` (row `lanes-trace`) runs each row under a Python
 audit hook and fails a row whose run read a skill file outside its closure (`LANES-TRACE-UNDECLARED`, with the line
@@ -858,7 +858,7 @@ checks. No row output is published.
 
 ## Goal tier
 
-A goal lane runs `run land --reuse --tier goal` (`scripts/tiers.py`). It plans from the branch's record only when A land or nightly run that has rows to run first waits while free memory (Windows: free virtual memory) is below `min_free_memory_gb` (default 4), logs `LANE_MEMORY`, never stops a run already going, and gives up with exit 6 (EXIT_ENV, a MEMORY_WAIT note, no try used) after four times the lane's time limit.
+A goal lane runs `run land --reuse --tier goal` (the level it plans from is `goal_levels`: L0, L1 or L2) (`scripts/tiers.py`). It plans from the branch's record only when A land or nightly run that has rows to run first waits while free memory (Windows: free virtual memory) is below `min_free_memory_gb` (default 4), logs `LANE_MEMORY`, never stops a run already going, and gives up with exit 6 (EXIT_ENV, a MEMORY_WAIT note, no try used) after four times the lane's time limit.
 the record's merge-base with the base branch is the current one (else from the merge-base, plus what a base merge
 brought in) and runs the rows a change reaches, new or edited rows, root runners and the record's failures; it takes a
 lane slot only when it has no plan to follow (FULL, no merge-base). It stays within `test_budget_minutes`: rows run in tier
@@ -935,7 +935,7 @@ settings. The Regression wiki page holds the requirements (REG-1..REG-9); this s
 | goal lane, qa and ship | rows whose closure reaches a file the goal changed since its merge-base, the goal's new or changed rows, rows that run tools on the repo root, and rows that failed last time | no |
 | goal lane, pr | the same; a path no row declares, or a deleted one, adds the rows that name it and the runners, never the full suite | no |
 | goal lane with no merge-base (shallow clone, missing base) | every row is a candidate (`FULL (no merge-base with <base>)`), kept to `test_budget_minutes` | yes |
-| hand run `regression.py run land\|nightly\|ID [--kind K]` | what you name; a plain `run nightly` is the full suite and records its time | when it is a full run |
+| hand run `regression.py run L0\|L1\|L2\|land\|nightly\|ID [--kind K]` (land is the land rows, L1; nightly is L2) | what you name; a plain `run nightly` is the full suite and records its time | when it is a full run |
 | hand run `regression.py run L2` | every land and nightly row, whatever a change reached; a covered row is proved by its cover and is not run | when it is a full run |
 | GitHub Actions, on the `regression_cron` schedule (every 4 hours by default; `off` stops it) and every v* tag | `ci_levels` (default nightly: the schedule's default target is L2, which runs every land and nightly row whatever a change reached; a covered row is proved by its cover and is not run; land: land rows only) | n/a (a runner) |
 | GitHub Actions, run by hand | its `target` input: land, nightly, L2 or a row id (empty: `ci_levels`, so L2 by default; a cleanup run with an empty target stays nightly); the workflow's own runner checks it, so a repo without the skills folder works | n/a |

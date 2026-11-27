@@ -605,8 +605,7 @@ def advice():
     def src(rel):
         return open(os.path.join(root, rel), encoding="utf-8").read()
     lean, mile = src("skills/workflow-health/scripts/lean.py"), src("skills/workflow-health/scripts/milestone.py")
-    check("run what it left with regression.py run L1, or raise the budget" in lean and "run regression.py run L1 --reuse" in lean, "lean.py's lane advice says run L1, not run land")
-    check("regression.py run land" not in lean, "lean.py names no 'regression.py run land'")
+    check("run what it left with regression.py run L1 (land: the land rows), or raise the budget" in lean and "run regression.py run L1 --reuse (land --reuse works too)" in lean, "lean.py's lane advice says run L1 and keeps the old word land beside it")
     check("move the slowest rows to L2 (nightly in column 2 of .loop/regression.tsv)" in lean, "lean.py says where to move a slow row: L2, the nightly word of column 2")
     check("regression.py run L2" in mile and "regression.py run nightly" not in mile, "milestone.py's full-suite advice says run L2")
     check(mile.count("move the slowest to L2 (nightly in column 2)") == 1 and "move the slowest to nightly" not in mile, "milestone.py's slow-row advice says L2 and where the word nightly still goes")

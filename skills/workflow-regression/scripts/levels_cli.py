@@ -291,8 +291,8 @@ def cmd_levels(root, args):
 
 def old_word(text):
     if re.fullmatch(r"[Ll]\d", text):
-        raise argparse.ArgumentTypeError("%s is a test level: give it with --test-level; --level takes land, nightly, "
-                                         "draft or covered" % text)
+        raise argparse.ArgumentTypeError("%s is a test level: give it with --test-level; --level takes the old words land, nightly, "
+                                         "draft or covered (the levels are L0, L1 and L2)" % text)
     return text
 
 
