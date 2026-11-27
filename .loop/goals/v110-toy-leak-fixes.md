@@ -101,4 +101,4 @@ One full-depth review of the build, then a fresh reader on the changes made afte
 
 ### A named build item outside the done lines (the operation's decision; the owner can revert it)
 
-- Build: rows no longer receive the app's host session id (row row-env-drops-host-session). No done line changes. To revert: revert eff50e866.
+- Build (TD2140): APP_DROP in actions.row_env, so rows no longer receive the app's host session id (row row-env-drops-host-session). Outside the frozen done lines, and listed for the owner to revert: revert eff50e866. No done line changes.
