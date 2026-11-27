@@ -108,7 +108,7 @@ jobs:
           bad and sys.exit(print(bad, file=sys.stderr) or 1)
           SKIPS = {r[0]: (r[1] if len(r) > 1 else "", r[2] if len(r) > 2 else "") for r in rows(".loop/regression-skips.tsv")}
           def wanted(row):
-              return row[0] == TARGET if TARGET not in ("land", "nightly", "L2") else row[1] in ("land", "nightly" if TARGET == "L2" else TARGET)
+              return row[0] == TARGET and row[1] != "draft" if TARGET not in ("land", "nightly", "L2") else row[1] in ("land", "nightly" if TARGET == "L2" else TARGET)
           def gh(*args, body=None):
               if args[0] != "api" and "--live" not in sys.argv[1:]:
                   print("WOULD gh " + " ".join(args)[:70])
@@ -207,6 +207,7 @@ jobs:
           red, start, dupes, unrun = [], time.time(), [600 if CLEANUP else 20], [0]
           with open(os.environ.get("REGRESSION_RESULTS") or os.devnull, "w") as handle:
               handle.write("# started %d\n" % start)
+          not_run(rows(".loop/regression.tsv"))
           mine, seen = (os.environ.get("REGRESSION_SHARD") or "0/1").split("/"), 0
           mine, shards = int(mine[0]), int(mine[1])
           for row in rows(".loop/regression.tsv"):

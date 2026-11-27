@@ -44,6 +44,12 @@ def l2_refuse(target, cleanup):
     if target == "L2" and cleanup == "true":
         return "REFUSED (L2_CLEANUP_EXCLUSIVE): cleanup runs no row and L2 runs every row. Fix: rerun with cleanup off, or with target nightly"
     return ""
+
+
+def not_run(table):
+    """Name each draft row of the table: a draft is never run, whatever the target."""
+    for row in table:
+        row[1:2] == ["draft"] and print("not run: draft " + row[0])
 # l2tail:end
 
 
