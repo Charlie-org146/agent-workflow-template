@@ -93,6 +93,25 @@ def depth_for(setting, seen):
     return ("condensed" if size.get("small") else "full"), size.get("why") or ""
 
 
+def start_row(state, step, runs, cfg, table):
+    """CBS-1: (row, forms text, plan-review passes) a plan step starts from before the plan is sized, else ("", "", 0): large unless
+    frozen small with no safety class or risky path."""
+    seen = view(state, runs)
+    if step != "plan" or state.get("sized") or seen.get("one_review") or seen.get("depth_override"):
+        return "", "", 0
+    size = seen.get("size") if isinstance(seen.get("size"), dict) else {}
+    import sizing
+    touches = list(seen.get("touches") or [])
+    row = "small" if size.get("small") and not sizing.classes_of(cfg, " ".join([seen.get("goal") or ""] + touches), touches) else "large"
+    return row, ", ".join("%s %s" % (c, table[row][c]) for c in ("plan-review", "red-team")), table["forms"]["plan-review"][table[row]["plan-review"]]["passes"]
+
+
+def plan_reads(cfg):
+    """plan_fix_reads (REVW-5): an int from 0 up, else 2."""
+    got = (cfg or {}).get("plan_fix_reads")
+    return got if isinstance(got, int) and not isinstance(got, bool) and got >= 0 else 2
+
+
 def budget_of(cfg):
     def number(key):
         value = (cfg or {}).get(key)
