@@ -389,7 +389,11 @@ def write_flaky_workflow(base, ours):
 
 
 if __name__ == "__main__":
+    usage = "usage: completion.py file-flaky DIR [--pr N] [--sha SHA] [--live]"
+    if sys.argv[1:2] in (["-h"], ["--help"]):
+        print(usage)
+        sys.exit(0)
     if sys.argv[1:2] != ["file-flaky"] or len(sys.argv) < 3:
-        print("usage: completion.py file-flaky DIR [--pr N] [--sha SHA] [--live]", file=sys.stderr)
+        print(usage, file=sys.stderr)
         sys.exit(2)
     sys.exit(file_flaky(sys.argv[2:]))
