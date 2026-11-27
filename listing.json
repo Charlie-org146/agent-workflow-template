@@ -124,6 +124,9 @@
     "decide-text",
     "fixes",
     "reads",
+    "level",
+    "levels",
+    "relevel",
     "git-hooks",
     "automation",
     "batch",
@@ -162,6 +165,7 @@
     ".loop/docs.tsv and docs/wiki/*.md on a branch",
     "pages it wrote, or that you name, in the repo's GitHub wiki, when you publish",
     ".loop/regression.tsv, .loop/regression-known.tsv and .github/workflows/regression.yml",
+    ".loop/regression-relevel.tsv and .loop/regression-risk.tsv (and, on a rename or removal, the limits, known and red lists), when you run relevel, level, levels --fill, add, red or sync --write on a levelled table; a pending-write mark in the git folder while such a write is under way",
     "a version bump commit on a goal's branch, only with pr_bumps_version on",
     "loop/board.json, cadence and handoff.md under the git common dir, and a run record's note, retired mark, report or met lines, and loop/checkin.json (the last check-in time), when you run board.py, worker.py or operate.py",
     "loop/session-pool.json (the worker session pool), its lock file loop/session-pool.json.lock, and a run record's worker, session and reports, when you run sessions.py, watch.py or mend.py; and the session tool named in session_command, called as start, rename and send",
@@ -179,7 +183,7 @@
     "~/.workflow-loop/agents.json (agent profiles and routes), only when you run routing.py detect --write; a routed build step also commits its changes on the goal's branch"
   ],
   "network": [
-    "github.com (git push, wiki push, gh pull request, issue, milestone and draft release calls, only when you run them)",
+    "github.com (git push, wiki push, gh pull request, issue, milestone and draft release calls, only when you run them; gh reads of issue labels, when you run regression.py relevel, level --refresh or add with a defect link)",
     "the model host your own claude or codex command already uses",
     "api.cloudflare.com (Cloudflare Email Service send API, from the scheduled health run on your Mac only, with the CLOUDFLARE_EMAIL_TOKEN you put in the schedule's mail.env)",
     "your smtp_host (default smtp.gmail.com), from the scheduled health run on your Mac only, when digest_mail is smtp",

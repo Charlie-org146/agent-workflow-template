@@ -92,7 +92,7 @@ Each requirement and how it is delivered:
 
 ## Automations and schedules
 
-The land tests also run in GitHub Actions on the workflow's schedule (every 4 hours, `17 */4 * * *`) once `Write the GitHub workflow` has been merged; a failing test keeps one open issue.
+The land tests also run in GitHub Actions on the workflow's schedule (every 4 hours, `17 */4 * * *`) once `Write the GitHub workflow` has been merged; a failing test keeps one open issue. The job that runs the tests checks out the full history, so a test that compares a past merge can run there.
 
 ## Runbooks
 
