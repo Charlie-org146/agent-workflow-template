@@ -1,7 +1,7 @@
 # Test levels G2 (LVL-1.1, LVL-1.3 run rule, LVL-1.4; owner o980, o985; split TD1749): L1 on the pull request
 
 - Slug: v110-lvl-l1
-- Touches: skills/workflow-regression, skills/workflow-delivery, .github/workflows, dev/toy, .loop/regression.tsv
+- Touches: skills/workflow-regression, skills/workflow-delivery, .github/workflows, dev/toy, .loop/regression.tsv, skills/workflow-regression/scripts/completion.py, skills/workflow-regression/scripts/levels_cli.py, skills/workflow-setup/scripts/settings.py, skills/loop-files.md, .loop/START.md
 - ETA: 430 active minutes (estimate 342m plus a 25% margin)
 
 ## Done lines

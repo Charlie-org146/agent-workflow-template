@@ -1,8 +1,8 @@
 # id	status	date	run	flaky
 adopt-record-qa	PASS	2026-11-16		c2d9ae715ff3
-adopt-set-1	PASS	2026-11-25	
-adopt-set-3	PASS	2026-11-25	
-adopt-set-5	PASS	2026-11-25	
+adopt-set-1	PASS	2026-11-27	
+adopt-set-3	PASS	2026-11-27	
+adopt-set-5	PASS	2026-11-27	
 adopt-stamps-version	PASS	2026-11-24	
 adoption-golden	PASS	2026-11-13	
 affected-deleted-root-runner	PASS	2026-11-24	
@@ -263,7 +263,7 @@ hlt6-branches	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 hlt6-controls-fire	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 hlt6-refused	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 hlt7-fast-check	PASS	2026-11-12	
-home-guard-catches-leak	PASS	2026-11-26	
+home-guard-catches-leak	PASS	2026-11-27	
 home-header-both	PASS	2026-11-14	
 home-milestone-optional	PASS	2026-11-26	
 home-sandbox-4859	PASS	2026-11-27	
@@ -317,7 +317,7 @@ link-page-passes	PASS	2026-11-26
 list-link-ids	PASS	2026-11-26	
 list-no-tests	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 list-tsv-raw	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-listing-names-every-command	PASS	2026-11-25	
+listing-names-every-command	PASS	2026-11-27	
 live-board-arrows	PASS	2026-11-12	
 live-board-flow	PASS	2026-11-12	
 live-board-header	PASS	2026-11-12	
@@ -334,6 +334,12 @@ ls-private-tick	PASS	2026-11-27
 ls-size-budget	FAIL	2026-11-25	
 ls-usage-steps	PASS	2026-11-27	
 lvl-armed	PASS	2026-11-27	
+lvl-l1-cover	PASS	2026-11-27	
+lvl-l1-flaky	PASS	2026-11-27	
+lvl-l1-missed	PASS	2026-11-27	
+lvl-l1-pin	PASS	2026-11-27	
+lvl-l1-queue	PASS	2026-11-27	
+lvl-l1-select	PASS	2026-11-27	
 lvl-relevel-record	PASS	2026-11-27	
 lvl-sizing-levels	PASS	2026-11-27	
 lvl-table-refused	PASS	2026-11-27	
@@ -430,17 +436,17 @@ operate-wait-99	PASS	2026-11-25
 ops-findings-filed	PASS	2026-11-19	
 package-caps-held	PASS	2026-11-25	
 package-gate-controls	PASS	2026-11-25	
-package-gate-head	PASS	2026-11-25	
+package-gate-head	PASS	2026-11-27	
 package-hang-bound	PASS	2026-11-26	
 package-hang-no-skills-file	PASS	2026-11-26	
 package-hang-slot	PASS	2026-11-26	
 package-hang-stdin	PASS	2026-11-26	
 package-headroom-held	PASS	2026-11-26	
-package-passes	PASS	2026-11-26	
-package-passes-3800	PASS	2026-11-26	
+package-passes	PASS	2026-11-27	
+package-passes-3800	PASS	2026-11-27	
 package-rows-tracked	FAIL	2026-11-25	
-package-static-toy	PASS	2026-11-25	
-package-win-parity-1397	PASS	2026-11-26	
+package-static-toy	PASS	2026-11-27	
+package-win-parity-1397	PASS	2026-11-27	
 package-win-stdin-1397	PASS	2026-11-26	
 page-relock	PASS	2026-11-14	
 page-shape	PASS	2026-11-26	
@@ -514,7 +520,7 @@ release-hold-red	PASS	2026-11-24
 release-lists-fixes	PASS	2026-11-24	
 release-scripts-under-19000	PASS	2026-11-25	
 release-skill-no-size-4172	PASS	2026-11-26	
-release-static-rules	PASS	2026-11-26	
+release-static-rules	PASS	2026-11-27	
 reopened-shows-failing	PASS	2026-11-11	
 repeat-no-second	PASS	2026-11-27	
 reply-hook-blocks	PASS	2026-11-10	
@@ -632,7 +638,7 @@ summary-render-guard	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-step	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 summary-unknown-row	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 sync-both-sides	PASS	2026-11-18	
-sync-check-preview	PASS	2026-11-25	
+sync-check-preview	PASS	2026-11-27	
 sync-dry-run-drift	PASS	2026-11-18	
 sync-first-adopts	PASS	2026-11-18	
 sync-not-connected	PASS	2026-11-20	
