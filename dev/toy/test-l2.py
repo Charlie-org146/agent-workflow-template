@@ -365,15 +365,18 @@ def usage():
 
 
 def guard():
-    print("== DEL-10: l2.py starts gh with no prompt and no editor")
-    # Value: protects=the summary job's gh calls never wait on a prompt; fails_when=l2.py runs processes without the env guard
-    #   every script that starts processes sets at import (GIT_TERMINAL_PROMPT and the rest)
-    text = open(os.path.join(root, "skills", "workflow-regression", "scripts", "l2.py")).read()
-    check("GIT_TERMINAL_PROMPT" in text and "GH_PROMPT_DISABLED" in text and "subprocess" in text, "l2.py sets the no-prompt guard where it imports subprocess")
-    env = {"PATH": os.environ["PATH"], "HOME": tempfile.mkdtemp(prefix="test-l2-home."), "GH_PROMPT_DISABLED": "0", "GIT_EDITOR": "vim"}
-    done = subprocess.run([sys.executable, "-c", "import sys, os; sys.path.insert(0, %r); import l2; print(os.environ['GIT_EDITOR'], os.environ['GH_PROMPT_DISABLED'])"
-                           % os.path.join(root, "skills", "workflow-regression", "scripts")], capture_output=True, text=True, env=env)
-    check(done.stdout.split() == ["true", "1"], "importing l2 forces GIT_EDITOR=true and GH_PROMPT_DISABLED=1")
+    print("== DEL-10: l2.py's gh calls carry their own no-prompt env, and importing it changes nothing")
+    # Value: protects=the summary job's gh calls never wait on a prompt, with the guard on the call and not process-wide (TD2266(4));
+    #   fails_when=the gh call runs with the caller's env, or importing l2 rewrites os.environ
+    scripts = os.path.join(root, "skills", "workflow-regression", "scripts")
+    env = {"PATH": os.environ["PATH"], "HOME": tempfile.mkdtemp(prefix="test-l2-home."), "USERPROFILE": "x", "GH_PROMPT_DISABLED": "0", "GIT_EDITOR": "vim"}
+    code = ("import sys, os, subprocess; sys.path.insert(0, %r); import l2; seen = []\n"
+            "subprocess.run = lambda *a, **k: seen.append(k.get('env')) or subprocess.CompletedProcess(a, 0, '', '')\n"
+            "l2.gh('issue', 'list'); g = seen[0] or {}\n"
+            "print(os.environ['GIT_EDITOR'], os.environ['GH_PROMPT_DISABLED'], g.get('GIT_TERMINAL_PROMPT'), g.get('GH_PROMPT_DISABLED'), g.get('GIT_EDITOR'), g.get('GIT_ASKPASS'), g.get('SSH_ASKPASS'))") % scripts
+    done = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env)
+    check(done.stdout.split()[:2] == ["vim", "0"], "importing l2 leaves the process's own GIT_EDITOR and GH_PROMPT_DISABLED alone")
+    check(done.stdout.split()[2:] == ["0", "1", "true", "true", "true"], "the gh call's own env sets GIT_TERMINAL_PROMPT=0, GH_PROMPT_DISABLED=1, GIT_EDITOR, GIT_ASKPASS and SSH_ASKPASS")
 
 
 cases = {"target": target, "label": label, "pick": pick, "state": state, "jobtime": jobtime, "concurrency": concurrency, "verdict": verdict, "covered": covered, "step": stepcheck, "second": second, "marker": marker, "usage": usage, "guard": guard}
