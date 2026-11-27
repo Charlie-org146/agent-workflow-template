@@ -21,7 +21,8 @@ import subprocess
 _run = subprocess.run
 def run(args, *a, **k):
     if args and args[0] == "gh":
-        out = os.environ.get("TOY_PRS", "[]") if "list" in args else '{"url": "https://github.com/o/r/pull/7", "state": "OPEN"}'
+        view = '{"url": "https://github.com/o/r/pull/7", "state": "OPEN", "headRefOid": "%s"}' % os.environ.get("TOY_HEAD", "")
+        out = os.environ.get("TOY_PRS", "[]") if "list" in args else view
         return subprocess.CompletedProcess(args, 0, out, "")
     return _run(args, *a, **k)
 subprocess.run = run
@@ -689,6 +690,30 @@ check(fit.depth_for("condensed", small)[0] == "condensed" and fit.depth_for("con
 settings = open(os.path.join(root, "skills", "workflow-setup", "scripts", "settings.py"), encoding="utf-8").read()
 check('("one_review", REPO, False,' in settings and json.load(open(os.path.join(root, ".loop", "config.json"))).get("one_review") is True,
       "the setting is off in the package and on in this repository")
+
+# the checks stay (done line 5): on a one-review goal the private-name scan still stops a push, and merge still refuses a
+# head that the reached-test run didn't see
+os.chdir(tmp)
+sh(tmp, "reset", "-q", "--hard")
+branch("stay", base=OFF)
+commit(tmp, "notes.txt", "zz-dummy-private-name\n", "a private name slips in")
+json.dump({"slug": "stay", "status": "running", "step": "idea", "flow": {}, "pid": None, "branch": "loop/stay", "worktree": tmp, "touches": [],
+           "goal": "Do stay", "log": [], "tries": 0, "done_sha": __import__("hashlib").sha256(b"1. stay works").hexdigest(),
+           "start_required": {"why": "t"}}, open(os.path.join(runs, "stay.json"), "w"))
+before = sh(tmp, "ls-remote", "origin", "refs/heads/loop/stay")
+items("stay", [])
+shown = tool("start-review", "stay", role="operation")
+code = shown.split("approve start stay ", 1)[1].split()[0] if "approve start stay " in shown else "none"
+said = answer("stay", words("approve start stay " + code))
+check("ONE_REVIEW_PUSH" in said and "private-name scan" in said and sh(tmp, "ls-remote", "origin", "refs/heads/loop/stay") == before
+      and "start_answer" not in record("stay"), "the private-name scan still stops the push: %s" % said.strip()[:160])
+moved = dict(record("stay"), status="done", step="release", pr="https://github.com/o/r/pull/7", pr_head="a" * 40, one_review={"at": "t"},
+             start_answer={"record": "o1", "verdict": "approve", "items": []}, flow={s: "done" for s in ("idea", "plan", "review", "qa", "ship")})
+json.dump(moved, open(os.path.join(runs, "stay.json"), "w"))
+open(os.path.join(runs, "stay.decisions.jsonl"), "w").write('{"n": 1, "kind": "mark"}\n')
+got = subprocess.run([sys.executable, merge_py, "stay"], capture_output=True, text=True, cwd=tmp, env=dict(env, TOY_HEAD="b" * 40))
+check("HEAD_MOVED" in got.stdout + got.stderr and "MERGED" not in got.stdout, "merge still refuses a head the pr lane didn't test: %s" % (got.stdout + got.stderr).strip()[-200:])
+os.chdir(root)
 
 os.environ.get("TOY_SHOW") and print(open(os.path.join(home, "last.txt")).read())
 print("ALL PASS" if not failed else "%d FAILED" % len(failed))
