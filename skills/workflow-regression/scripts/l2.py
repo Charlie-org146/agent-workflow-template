@@ -8,8 +8,6 @@ import subprocess
 import sys
 import time
 
-os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no gh or git call waits on a prompt (DEL-10)
-
 
 # l2tail:begin (actions.py copies this block into the workflow)
 def l2_state(rid, code, said, late, known, skips):
@@ -131,7 +129,8 @@ def gh(*args, body=None):
             path = os.path.join(os.environ.get("RUNNER_TEMP") or ".", "l2-body")
             open(path, "w", encoding="utf-8").write(body)
             args += ("--body-file", path)
-        return subprocess.run(("gh",) + args, capture_output=True, text=True, timeout=60)
+        return subprocess.run(("gh",) + args, capture_output=True, text=True, timeout=60,
+                              env=dict(os.environ, GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true"))  # no prompt (DEL-10)
     except (OSError, subprocess.TimeoutExpired):
         return subprocess.CompletedProcess(args, 1, "", "no answer")
 
