@@ -635,7 +635,50 @@ def advice2():
     check("| `land` | `run land` and `run nightly` (L1's rows: `run L1`" in book and "| `nightly` | `run nightly` (L2's rows: `run L2`" in book, "SKILL.md's level table says what land and nightly mean in L1 and L2")
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "wfpin": wfpin}
+def draftl0():
+    print("== R5: L0 and covers for a draft, and every refusal's fix command runs")
+    # Value: protects=a draft is never run to measure it and takes no covers; each refusal's fix is a command that works;
+    #   fails_when=--retime runs a draft's command, a draft takes --covers, or a printed fix does not run once its placeholders are filled
+    import re
+    from lvl_fixture import Repo, entry, row
+    repo = Repo([row("alpha")], [entry("alpha")], ["label\tsecurity\tsecurity\tfixture label"])
+    repo.commit()
+    marker = os.path.join(repo.path, "RAN-DRAFT")
+
+    def fix_of(said, command="true"):
+        """The command a refusal's Fix: line prints (up to its first '. ' or ';'), its placeholders filled in, as an argument list."""
+        text = re.split(r"\. |; |\n", said.split("Fix:", 1)[1].strip())[0]
+        for old, value in (("'...'", "'%s'" % command), ("'<a real command>'", "'%s'" % command), ("<L>", "L1"), ("<workflow-regression>/scripts/", "")):
+            text = text.replace(old, value)
+        return __import__("shlex").split(re.sub(r"^(python3 )?(regression\.py )?", "", text.strip()))
+    done, said = repo.run("add", "d1", "--level", "draft", "--command", "touch RAN-DRAFT")
+    check(done != 0 and "LEVELS_NO_STAGE" in said, "control: a draft with no stage is refused", said)
+    fixed = fix_of(said, "touch RAN-DRAFT")
+    done, said = repo.run(*fixed)
+    check(done == 0 and not os.path.exists(marker), "the LEVELS_NO_STAGE fix runs and makes the draft without running it", (fixed, said))
+    done, said = repo.run("level", "d1", "--test-level", "L0", "--retime")
+    check(done != 0 and "LEVELS_DRAFT_NOT_READY" in said and "level d1 --ready" in said and not os.path.exists(marker),
+          "--retime on a draft is refused with the fix 'level d1 --ready' and does not run the draft's command", said)
+    done, said = repo.run("level", "d1", "--covers", "alpha")
+    check(done != 0 and "LEVELS_DRAFT_NOT_READY" in said, "a draft takes no --covers: it is refused until it is ready", said)
+    done, said = repo.run("add", "d2", "--level", "draft", "--test-level", "L1", "--covers", "alpha", "--command", "true")
+    check(done != 0 and "LEVELS_DRAFT_NOT_READY" in said, "add --level draft --covers is refused (a draft is not a covered row)", said)
+    done, said = repo.run("add", "d3", "--level", "draft", "--test-level", "L1", "--command", "echo write a test")
+    done, said = repo.run("level", "d3", "--ready")
+    check(done != 0 and "LEVELS_NO_REAL_COMMAND" in said, "control: a placeholder draft cannot be readied", said)
+    fixed = fix_of(said)
+    done, said = repo.run(*fixed)
+    check(done == 0, "the LEVELS_NO_REAL_COMMAND fix runs once its placeholders are filled", (fixed, said))
+    done, said = repo.run("level", "d3", "--ready")
+    check(done == 0, "and then --ready works", said)
+    done, said = repo.run("level", "d1", "--ready")
+    fixed = "level d1 --test-level L0 --retime"
+    done, said = repo.run(*fixed.split())
+    check(done == 0 and "LEVEL d1 L0" in said, "after --ready, L0 is measured with --retime (the fix text says so)", said)
+    repo.close()
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "draftl0": draftl0, "wfpin": wfpin}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
