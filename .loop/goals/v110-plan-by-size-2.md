@@ -2,7 +2,7 @@
 
 - Slug: v110-plan-by-size-2
 - Review: one
-- Touches: skills/workflow-delivery, dev/toy, .loop/regression.tsv, skills/workflow-setup/scripts/settings.py, .loop/config.json, skills/loop-files.md, .loop/START.md, docs/wiki/How-to-use-Setup.md, .loop/regression-relevel.tsv
+- Touches: skills/workflow-delivery, dev/toy, .loop/regression.tsv, skills/workflow-setup/scripts/settings.py, .loop/config.json, skills/loop-files.md, .loop/START.md, docs/wiki/How-to-use-Setup.md, .loop/regression-relevel.tsv, docs/wiki/Guardrails.md
 - ETA: 730 active minutes (estimate 583m plus a 25% margin)
 
 ## Done lines
