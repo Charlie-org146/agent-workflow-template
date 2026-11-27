@@ -598,7 +598,22 @@ def wfpin():
     check(report(False, old) == [], "update says nothing on an unarmed table: the nightly text is the one it writes")
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "wfpin": wfpin}
+def advice():
+    print("== R15: advice and help text name L0, L1 and L2 (the old words only as the column-2 words they still are)")
+    # Value: protects=the health advice and the --level help send a person to the level words; fails_when=an advice line goes back to
+    #   "run land"/"run nightly" as the level to run, or the --level error forgets the levels
+    def src(rel):
+        return open(os.path.join(root, rel), encoding="utf-8").read()
+    lean, mile, cli = src("skills/workflow-health/scripts/lean.py"), src("skills/workflow-health/scripts/milestone.py"), src("skills/workflow-regression/scripts/levels_cli.py")
+    check("run what it left with regression.py run L1, or raise the budget" in lean and "run regression.py run L1 --reuse" in lean, "lean.py's lane advice says run L1, not run land")
+    check("regression.py run land" not in lean, "lean.py names no 'regression.py run land'")
+    check("move the slowest rows to L2 (nightly in column 2 of .loop/regression.tsv)" in lean, "lean.py says where to move a slow row: L2, the nightly word of column 2")
+    check("regression.py run L2" in mile and "regression.py run nightly" not in mile, "milestone.py's full-suite advice says run L2")
+    check(mile.count("move the slowest to L2 (nightly in column 2)") == 1 and "move the slowest to nightly" not in mile, "milestone.py's slow-row advice says L2 and where the word nightly still goes")
+    check("--level takes the old words land, nightly, draft or covered (the levels are L0, L1 and L2)" in cli, "levels_cli.py's --level error names the old words and the levels")
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "wfpin": wfpin}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
