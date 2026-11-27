@@ -26,3 +26,7 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+## PR notes
+
+- After the upgrade, every row is re-picked once by entry_moved (the 9th state cell makes each line differ); this runs more rows, never fewer.

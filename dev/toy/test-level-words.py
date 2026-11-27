@@ -90,7 +90,29 @@ def settings():
     check(len(line) == 1 and "L0 (the default), L1 or L2" in line[0] and "`L0` | default" in line[0], "the How-to-use-Setup row for goal_levels names L0, L1 and L2 and the default L0")
 
 
-cases = {"goal": goal, "settings": settings}
+def moved():
+    print("== TD2333: an 8-cell record line against a 9-cell one reads as moved")
+    # Value: protects=after the upgrade every row is re-picked once (more rows, never fewer); a guard that holds on today's code
+    import subprocess
+    import lanes
+    top = tempfile.mkdtemp(prefix="test-level-words-git.")
+    sh = lambda *a: subprocess.run(["git", "-C", top, "-c", "user.email=t@t", "-c", "user.name=t"] + list(a), capture_output=True, text=True)
+    sh("init", "-q", "-b", "main")
+    os.makedirs(os.path.join(top, ".loop"))
+    record = os.path.join(top, ".loop", "regression-relevel.tsv")
+    old = "a\tland\tL1\tnone\t\t\t\tdefault"
+    open(record, "w").write("# id\told\tlevel\trisk\tcovers\tseconds\tcmdhash\treason\n" + old + "\nb\tland\tL1\tnone\t\t\t\tdefault\n")
+    sh("add", "-A"); sh("commit", "-q", "-m", "eight cells")
+    at = sh("rev-parse", "HEAD").stdout.strip()
+    open(record, "w").write("# id\told\tlevel\trisk\tcovers\tseconds\tcmdhash\treason\tstate\n" + old + "\t\nb\tland\tL1\tnone\t\t\t\tdefault\t\n")
+    memo = {}
+    check(lanes.entry_moved(top, at, "a", memo) and lanes.entry_moved(top, at, "b", memo), "a row's 8-cell line at the branch point against the same row's 9-cell line now reads as moved")
+    memo = {}
+    open(record, "w").write("# id\told\tlevel\trisk\tcovers\tseconds\tcmdhash\treason\n" + old + "\nb\tland\tL1\tnone\t\t\t\tdefault\n")
+    check(not lanes.entry_moved(top, at, "a", memo), "an unchanged line does not read as moved")
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
