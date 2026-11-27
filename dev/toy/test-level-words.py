@@ -362,7 +362,39 @@ def unarmed():
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed}
+def writers():
+    print("== R4: fill and an interrupted two-file write keep the state column")
+    # Value: protects=a record written by fill, or finished from a pending mark, has nine cells whose state follows the table's own word;
+    #   fails_when=fill leaves the draft's state blank, or an interrupted --ready finishes with a stale state
+    import subprocess
+    from lvl_fixture import Repo, entry, row, REG
+    risks = ["label\tsecurity\tsecurity\tfixture label"]
+    repo = Repo([row("alpha"), row("drf", level="draft")], [entry("alpha")], risks)
+    repo.commit()
+    done, said = repo.run("levels", "--fill")
+    cells = {l.split("\t")[0]: l.split("\t") for l in repo.read(".loop/regression-relevel.tsv").splitlines() if l and l[0] != "#"}
+    check(len(cells.get("drf", [])) == 9 and cells["drf"][8] == "draft" and cells["drf"][1] == "draft", "levels --fill adds the draft's entry as nine cells with state draft", cells.get("drf"))
+    repo.close()
+    repo = Repo([row("drf", level="draft", command="true")], [entry("drf", old="draft")], risks)
+    repo.commit()
+    code = ("import sys; sys.path.insert(0, %r); import levels_write as w, regression\n"
+            "real = w.put\n"
+            "def put(root, name, text):\n"
+            "    if name == 'regression.tsv': raise OSError('stopped')\n"
+            "    real(root, name, text)\n"
+            "w.put = put\n"
+            "sys.argv = ['regression.py', 'level', 'drf', '--ready']\n"
+            "sys.exit(regression.main())\n") % REG
+    got = subprocess.run([sys.executable, "-c", code], cwd=repo.path, env=repo.env, capture_output=True, text=True)
+    check(got.returncode != 0 and "LEVELS_UNEXPECTED" in got.stdout + got.stderr, "control: the --ready write stops between the two files", got.stdout + got.stderr)
+    done, said = repo.run("levels", "--fill")
+    cells = [l.split("\t") for l in repo.read(".loop/regression-relevel.tsv").splitlines() if l.startswith("drf\t")]
+    table = [l.split("\t") for l in repo.read(".loop/regression.tsv").splitlines() if l.startswith("drf\t")]
+    check(done == 0 and len(cells[0]) == 9 and cells[0][8] == "" and cells[0][1] == "land" and table[0][1] == "land", "the pending mark finishes the --ready: both files agree, state blank", (cells, table, said))
+    repo.close()
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
