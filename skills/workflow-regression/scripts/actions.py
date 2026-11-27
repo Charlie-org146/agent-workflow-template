@@ -52,7 +52,7 @@ permissions:
   pull-requests: read
 concurrency:
   group: regression-${{ github.ref }}
-  cancel-in-progress: true  # GRD-7
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}  # GRD-7
 jobs:
   regression:
     runs-on: ubuntu-latest
@@ -96,6 +96,7 @@ jobs:
                   return []
               return [line.rstrip("\n").split("\t") for line in open(path) if line.strip() and not line.startswith("#")]
 @ROWTAIL@
+@L2TAIL@
           known = {row[0] for row in rows(".loop/regression-known.tsv")}
           TARGET = os.environ.get("REGRESSION_TARGET") or os.environ.get("REGRESSION_LEVELS") or "nightly"
           if not re.fullmatch(r"land|nightly|L2|[A-Za-z0-9_.-]+", TARGET) or TARGET not in ("land", "nightly", "L2") and \
@@ -103,6 +104,9 @@ jobs:
               print("REFUSED (BAD_TARGET): bad target %s: use land, nightly, L2 or a row id from regression.py list. Fix: rerun the "
                     "workflow with one of those" % json.dumps(TARGET), file=sys.stderr)
               sys.exit(1)
+          bad = l2_refuse(TARGET, os.environ.get("REGRESSION_CLEANUP"))
+          bad and sys.exit(print(bad, file=sys.stderr) or 1)
+          SKIPS = {r[0]: (r + ["", ""])[1:3] for r in rows(".loop/regression-skips.tsv")}
           def wanted(row):
               return row[0] == TARGET if TARGET not in ("land", "nightly", "L2") else row[1] in ("land", "nightly" if TARGET == "L2" else TARGET)
           def gh(*args, body=None):
@@ -157,10 +161,7 @@ jobs:
                   handle.write("%s\t%s\n" % (name, state))
           gh("label", "create", "regression", "--force", "--description", "A regression row is failing")
           gh("label", "create", "defect", "--description", "A test that guards it is failing")
-          def gone():
-              if TARGET == "L2":
-                  with open(os.environ.get("REGRESSION_RESULTS") or os.devnull, "a") as handle:
-                      handle.write("# gh-failed\n")
+          gone = lambda: TARGET == "L2" and open(os.environ.get("REGRESSION_RESULTS") or os.devnull, "a").write("# gh-failed\n")
           if TARGET == "L2" and gh("label", "create", "l2-red", "--force", "--description", "A row failed in the full L2 run").returncode:
               print("FAILED label l2-red: it could not be created (FILE_FAILED)")
               gone()
@@ -235,7 +236,11 @@ jobs:
                       write("close duplicate #%d" % item["number"], "issue", "close", str(item["number"]), "--comment",
                             "Duplicate of #%d, kept for row %s." % (hit["number"], row[0]))
               state = "PASS" if code == 0 else "SKIPPED" if skipped or code == 77 else "KNOWN" if row[0] in known else "FAIL"
-              print(state, row[0])
+              reason = ""
+              if TARGET == "L2":
+                  state, note, reason = l2_state(row[0], code, said, skipped, known, SKIPS)
+                  note and open(os.environ.get("REGRESSION_RESULTS") or os.devnull, "a").write(note + "\n")
+              print(state, row[0], *["(%s)" % reason] * bool(reason))
               result(row[0], state)
               if code == 0:
                   if hit and hit["state"] == "OPEN":
@@ -246,9 +251,9 @@ jobs:
                           dupes[0] -= 1
                           write("close skipped #%d" % item["number"], "issue", "close", str(item["number"]), "--comment",
                                 "Closed: a skipped row files no issue.")
-              elif row[0] not in known and code != 77:
+              elif state == "FAIL":
                   red.append(row[0])
-                  text = shown(lambda c: run(c, ROW_SECONDS), row[2], code, said)
+                  text = shown(l2_again(run, ROW_SECONDS, JOB_SECONDS, start, code), row[2], code, said)
                   note = "#### FAIL %s\n```\n%s\n```" % (row[0], "\n".join(text.splitlines()[-20:]))
                   print(note)
                   with open(os.environ.get("GITHUB_STEP_SUMMARY") or os.devnull, "a") as handle:
@@ -330,7 +335,12 @@ jobs:
 
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-UNSAFE = ("${{", "@CRON@", "@ROWDROP@", "@TESTS@", "@SCHEDULE@", "@LEVELS@", "@TARGET@", "@BUDGET@", "@ROWTAIL@", "@MATRIX@", "@SHARDS@", "@SUMMARY@", "@ROUTINE@", "TESTS_PY_EOF")
+UNSAFE = ("${{", "@CRON@", "@ROWDROP@", "@TESTS@", "@SCHEDULE@", "@LEVELS@", "@TARGET@", "@BUDGET@", "@ROWTAIL@", "@L2TAIL@", "@MATRIX@", "@SHARDS@", "@SUMMARY@", "@ROUTINE@", "TESTS_PY_EOF")
+
+
+def copied(name, mark):
+    with open(os.path.join(HERE, name)) as handle:
+        return "\n".join(("          " + x).rstrip() for x in handle.read().split(mark)[1].split("\n")[1:-1])
 
 
 def render(cron, levels="nightly"):
@@ -340,12 +350,11 @@ def render(cron, levels="nightly"):
     if bad:
         sys.exit("REFUSED: tests.py contains %s, which the workflow can't carry. Fix: reword that line" % bad[0])
     body = "\n".join(("          " + line).rstrip() for line in source.rstrip("\n").split("\n"))
-    with open(os.path.join(HERE, "runs.py")) as handle:
-        tail = "\n".join(("          " + x).rstrip() for x in handle.read().split("# rowtail:")[1].split("\n")[1:-1])
+    tail, l2tail = (copied(name, mark) for name, mark in (("runs.py", "# rowtail:"), ("l2.py", "# l2tail:")))
     schedule = "" if cron == "off" else '  schedule:\n    - cron: "%s"\n' % cron
     return WORKFLOW.replace("@ROUTINE@", ROUTINE_STEP).replace("@SUMMARY@", SUMMARY_JOB).replace("@SCHEDULE@", schedule).replace("@CRON@", cron).replace("@TARGET@", "${{ inputs.target || (inputs.cleanup && 'nightly' || 'L2') }}" if levels == "nightly" else "${{ inputs.target }}").replace("@LEVELS@", levels).replace("@ROWDROP@", repr(ROW_DROP)) \
         .replace("@BUDGET@", str(BUDGET_MINUTES)).replace("@SHARDS@", str(SHARDS)).replace("@MATRIX@", str(list(range(SHARDS)))) \
-        .replace("@TESTS@", body).replace("@ROWTAIL@", tail)
+        .replace("@TESTS@", body).replace("@ROWTAIL@", tail).replace("@L2TAIL@", l2tail)
 
 
 def write(root, default):

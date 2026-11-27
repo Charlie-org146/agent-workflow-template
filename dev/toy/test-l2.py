@@ -124,7 +124,7 @@ def state():
     print("== item 7: what counts as run at L2")
     # Value: protects=a by-design skip counts as run and is shown apart; any other skip is named; a known row is KNOWN;
     #   fails_when=a skip-list row files an issue or reads as a failure, or an unlisted skip reads as run
-    rows = [("ok", "land", "true"), ("des", "land", "exit 77"), ("both", "land", "exit 77"), ("nostart", "nightly", "pnpm: command not found; exit 127"),
+    rows = [("ok", "land", "true"), ("des", "land", "exit 77"), ("both", "land", "exit 77"), ("nostart", "nightly", "echo 'pnpm: command not found'; exit 127"),
             ("other", "nightly", "exit 77"), ("kn", "nightly", "echo nope; exit 1")]
     files = {"regression-skips.tsv": "# id\treason\tflag\ndes\tmacOS only\t\nboth\tby design\t\nnostart\tno pnpm here\tnotrun\n",
              "regression-known.tsv": "both\tknown\nkn\tknown\n"}

@@ -48,6 +48,14 @@ def shown(run, command, code, text):
         text = run(again(command))[1]
     lines = [line[:400] for line in text.rstrip().splitlines()[-LAST:]]
     return "\n".join(lines).replace("`" * 3, "'" * 3) or "(the row printed nothing; it exited %s)" % code
+
+TOOL = r"(?:pnpm|node|npm|npx|yarn|corepack)"
+MISSING = re.compile(r"\b%s: (?:command )?not found|^'?%s'? is not recognized as an internal|No module named '(?:fcntl|termios|pwd|grp|resource)'"
+                     r"|spawn %s ENOENT" % (TOOL, TOOL, TOOL), re.M)
+
+
+def unrunnable(code, text):
+    return bool(code and MISSING.search(text or ""))
 # rowtail:end
 
 
@@ -330,15 +338,6 @@ def unproven(root, rows, seen):
         elif not seen.match(row["seen_red"]):
             out.append(row["id"])
     return out
-
-
-TOOL = r"(?:pnpm|node|npm|npx|yarn|corepack)"
-MISSING = re.compile(r"\b%s: (?:command )?not found|^'?%s'? is not recognized as an internal|No module named '(?:fcntl|termios|pwd|grp|resource)'"
-                     r"|spawn %s ENOENT" % (TOOL, TOOL, TOOL), re.M)
-
-
-def unrunnable(code, text):
-    return bool(code and MISSING.search(text or ""))
 
 
 def owed_issue(root, key, ids, title, text, live, word="owed"):
