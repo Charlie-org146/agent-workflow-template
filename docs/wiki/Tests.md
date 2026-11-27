@@ -167,7 +167,7 @@
 | <a id="t-unattended-checkin-line"></a>unattended-checkin-line | requirement | DEL-3 | PASS | 2026-11-25 | [CI 2026-11-25](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-25) | 2026-11-14 |
 | <a id="t-merge-refused-failed"></a>merge-refused-failed | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4004) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-perms-private-never-written"></a>perms-private-never-written | requirement | DEL-9 | not run | - | local | 2026-11-14 |
-| <a id="t-merge-refuses-worktree"></a>merge-refuses-worktree | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4020 https://github.com/jcl2018/agent-workflow-template/issues/4004) state unknown | PASS | 2026-11-14 | [CI 2026-11-14](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-14) | 2026-11-14 |
+| <a id="t-merge-refuses-worktree"></a>merge-refuses-worktree | defect | [#4004](https://github.com/jcl2018/agent-workflow-template/issues/4020 https://github.com/jcl2018/agent-workflow-template/issues/4004) state unknown | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-14 |
 | <a id="t-lane-affected-memory"></a>lane-affected-memory | defect | 4151 | PASS | 2026-11-24 | [CI 2026-11-24](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-24) | 2026-11-14 |
 | <a id="t-merge-main-own-printed"></a>merge-main-own-printed | defect | [#4020](https://github.com/jcl2018/agent-workflow-template/issues/4020) closed (2026-11-14) | not run | - | local | 2026-11-14 |
 | <a id="t-skill-refusals-in-references"></a>skill-refusals-in-references | requirement | DEL-1 | PASS | 2026-11-26 | [CI 2026-11-26](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-26) | 2026-11-14 |
@@ -451,7 +451,7 @@
 | <a id="t-defect-4375-toys-fake-machine"></a>defect-4375-toys-fake-machine | defect | [#4375](https://github.com/jcl2018/agent-workflow-template/issues/4375) closed (2026-11-15) | not run | - | local | 2026-11-15 |
 | <a id="t-mon16-checkin-grouped"></a>mon16-checkin-grouped | requirement | OPS-16 | PASS | 2026-11-18 | [CI 2026-11-18](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-18) | 2026-11-18 |
 | <a id="t-ops-findings-filed"></a>ops-findings-filed | requirement | OPS-1 | PASS | 2026-11-19 | [CI 2026-11-19](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-19) | 2026-11-19 |
-| <a id="t-platform-sends-counted"></a>platform-sends-counted | requirement | OPS-1 | not run | - | local | 2026-11-20 |
+| <a id="t-platform-sends-counted"></a>platform-sends-counted | requirement | OPS-1 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-20 |
 | <a id="t-machine-status-live-workers"></a>machine-status-live-workers | requirement | OPS-1 | PASS | 2026-11-20 | [CI 2026-11-20](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-20) | 2026-11-20 |
 
 ## Regression
@@ -513,7 +513,8 @@
 | <a id="t-private-checks-classify"></a>private-checks-classify | requirement | REG-4 | not run | - | local | 2026-11-16 |
 | <a id="t-toys-no-leak-schedule"></a>toys-no-leak-schedule | requirement | REG-4 | not run | - | local | 2026-11-17 |
 | <a id="t-toys-no-leak-lane-pool"></a>toys-no-leak-lane-pool | requirement | REG-4 | not run | - | local | 2026-11-17 |
-| <a id="t-budget-order-first"></a>budget-order-first | requirement | REG-4 | not run | - | local | 2026-11-20 |
+| <a id="t-budget-order-first"></a>budget-order-first | requirement | REG-4 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-20 |
+| <a id="t-row-env-drops-host-session"></a>row-env-drops-host-session | requirement | REG-4 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
 
 ## Setup
 
@@ -595,7 +596,7 @@
 | <a id="t-st-setup-readonly"></a>st-setup-readonly | requirement | done line local-schedule:2 | not run | - | local | 2026-11-12 |
 | <a id="t-two-lanes-toy-435"></a>two-lanes-toy-435 | defect | [#435](https://github.com/jcl2018/agent-workflow-template/issues/435) closed (2026-11-11) | PASS | 2026-11-10 | [CI 2026-11-10](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-10) | 2026-11-10 |
 | <a id="t-done-line-rows-128"></a>done-line-rows-128 | defect | [#128](https://github.com/jcl2018/agent-workflow-template/issues/128) closed (2026-11-11) | PASS | 2026-11-26 | [CI 2026-11-26](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-26) | 2026-11-10 |
-| <a id="t-lane-limit-150"></a>lane-limit-150 | defect | [#150](https://github.com/jcl2018/agent-workflow-template/issues/150) closed (2026-11-11) | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-10 |
+| <a id="t-lane-limit-150"></a>lane-limit-150 | defect | [#150](https://github.com/jcl2018/agent-workflow-template/issues/150) closed (2026-11-11) | PASS 2026-11-27 FLAKY | - | local | 2026-11-10 |
 | <a id="t-red-race-135"></a>red-race-135 | defect | [#135](https://github.com/jcl2018/agent-workflow-template/issues/135) closed (2026-11-11) | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-10 |
 | <a id="t-lane-last-152"></a>lane-last-152 | defect | [#152](https://github.com/jcl2018/agent-workflow-template/issues/152) closed (2026-11-11) | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-10 |
 | <a id="t-head-moved-168"></a>head-moved-168 | defect | [#168](https://github.com/jcl2018/agent-workflow-template/issues/168) closed (2026-11-11) | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-10 |
@@ -825,6 +826,15 @@
 | <a id="t-pkg-no-echo-2"></a>pkg-no-echo-2 | requirement | done line v110-pkg-secret-print:2 | PASS | 2026-11-26 | [CI 2026-11-26](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-26) | 2026-11-25 |
 | <a id="t-pkg-secret-print-4-sizes"></a>pkg-secret-print-4-sizes | requirement | done line v110-pkg-secret-print:4 | PASS | 2026-11-26 | [CI 2026-11-26](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-26) | 2026-11-25 |
 | <a id="t-done-pkg-secret-print-3"></a>done-pkg-secret-print-3 | workflow | done line v110-pkg-secret-print:3 | not run | - | local | no |
+| <a id="t-toy-leak-merge-where"></a>toy-leak-merge-where | requirement | done line v110-toy-leak-fixes:1 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-26 |
+| <a id="t-done-toy-leak-fixes-2"></a>done-toy-leak-fixes-2 | workflow | done line v110-toy-leak-fixes:2 | not run | - | local | no |
+| <a id="t-done-toy-leak-fixes-3"></a>done-toy-leak-fixes-3 | workflow | done line v110-toy-leak-fixes:3 | not run | - | local | no |
+| <a id="t-toy-leak-entry-config"></a>toy-leak-entry-config | requirement | done line v110-toy-leak-fixes:4 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-26 |
+| <a id="t-done-toy-leak-fixes-5"></a>done-toy-leak-fixes-5 | workflow | done line v110-toy-leak-fixes:5 | not run | - | local | no |
+| <a id="t-toy-leak-row-merge"></a>toy-leak-row-merge | requirement | done line v110-toy-leak-fixes:2 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
+| <a id="t-toy-leak-config-keep"></a>toy-leak-config-keep | requirement | done line v110-toy-leak-fixes:2 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
+| <a id="t-toy-leak-row-setup"></a>toy-leak-row-setup | requirement | done line v110-toy-leak-fixes:4 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
+| <a id="t-toy-leak-entry-commit"></a>toy-leak-entry-commit | requirement | done line v110-toy-leak-fixes:4 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
 | <a id="t-lvl-table-refused"></a>lvl-table-refused | requirement | done line v110-lvl-relevel:1 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-26 |
 | <a id="t-done-lvl-relevel-2"></a>done-lvl-relevel-2 | requirement | done line v110-lvl-relevel:2 | not run | - | local | no |
 | <a id="t-lvl-relevel-record"></a>lvl-relevel-record | requirement | done line v110-lvl-relevel:4 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-26 |

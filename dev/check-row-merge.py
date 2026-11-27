@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """Prove a row merge kept every check: the (script, mode, PASS text) set the rows of the base branch check equals the set
 the rows of this tree check, and each merged row also fails on a FAIL line. usage: check-row-merge.py [BASE-REF=origin/main]"""
+import os
 import re
 import subprocess
 import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "skills", "workflow-regression", "scripts"))
+sys.dont_write_bytecode = True
+import actions  # noqa: E402
 
 OLD = re.compile(r'^(?P<s>(?:bash|python3) dev/toy/[A-Za-z0-9_.-]+(?: [A-Za-z0-9_-]+)?) {1,2}2>&1 \| grep -q(?P<f>[Fx]?) (?P<q>"(?:[^"\\]|\\.)*")$')
 NEW = re.compile(r'^out=\$\((?P<s>(?:bash|python3) dev/toy/[A-Za-z0-9_.-]+(?: [A-Za-z0-9_-]+)?) 2>&1\); (?P<c>.*) && ! printf "%s\\n" "\$out" \| grep -q "\^ \*FAIL"$')
@@ -39,11 +44,11 @@ for item in added[:10]:
 for row in bad:
     print("NO CHECK in merged row", row)
 # rows run under /bin/sh (dash on the CI runner): every merged command must pass there, not only under bash
-dash = "/bin/dash" if __import__("os").path.exists("/bin/dash") else None
+dash = "/bin/dash" if os.path.exists("/bin/dash") else None
 for line in open(".loop/regression.tsv").read().splitlines():
     cells = line.split("\t")
     if dash and len(cells) > 3 and NEW.match(cells[2]):
-        done = subprocess.run([dash, "-c", cells[2]], capture_output=True, text=True)
+        done = subprocess.run([dash, "-c", cells[2]], capture_output=True, text=True, env=actions.row_env())  # as the runner does
         print("dash %s %s" % ("PASS" if done.returncode == 0 else "FAIL", cells[0]))
         if done.returncode:
             bad.append(cells[0])

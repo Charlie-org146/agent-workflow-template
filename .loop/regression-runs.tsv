@@ -65,6 +65,7 @@ board-tz-mixed-stamps	PASS	2026-11-25
 breaking-asks	PASS	2026-11-09	
 budget-fair-base-moved	PASS	2026-11-25	
 budget-fair-failed-stays	PASS	2026-11-15	
+budget-order-first	PASS	2026-11-27	
 budgets-agree	PASS	2026-11-27	
 builtin-flow	PASS	2026-11-26	
 capture-row-ci	FAIL	2026-11-13	
@@ -292,7 +293,7 @@ lane-affected-memory	PASS	2026-11-24
 lane-died-signal	PASS	2026-11-27	
 lane-env-states	PASS	2026-11-24	
 lane-last-152	PASS	2026-11-27	
-lane-limit-150	PASS	2026-11-27	
+lane-limit-150	PASS	2026-11-27		b62ca9627eb0
 lane-messages-table	PASS	2026-11-11	
 lane-order	PASS	2026-11-24	
 lane-over-minutes	PASS	2026-11-27	
@@ -383,7 +384,7 @@ matrix-health-rule	PASS	2026-11-24
 merge-batch-split	PASS	2026-11-24	
 merge-guard-base-head	PASS	2026-11-11	
 merge-reach-fail-closed	PASS	2026-11-25	
-merge-refuses-worktree	PASS	2026-11-14	
+merge-refuses-worktree	PASS	2026-11-27	
 merged-frees-175	PASS	2026-11-25	
 migration-base-config	PASS	2026-11-27	
 migration-clean	PASS	2026-11-27	
@@ -455,6 +456,7 @@ plan-cache-key	PASS	2026-11-12
 plan-calls-flat	PASS	2026-11-27	
 plan-identity	PASS	2026-11-27	
 plan-sizes	PASS	2026-11-27	
+platform-sends-counted	PASS	2026-11-27	
 pods-blocks	PASS	2026-11-27	
 pods-caps-3919	PASS	2026-11-26	
 pods-docs	PASS	2026-11-27	
@@ -536,6 +538,7 @@ review-findings-wording	PASS	2026-11-27
 review-help-runs-alone	PASS	2026-11-24	
 review-hold-blocks	PASS	2026-11-24	
 roadmap-closed-drops	PASS	2026-11-15	
+row-env-drops-host-session	PASS	2026-11-27	
 row-timeout-holds	PASS	2026-11-27	
 rows-pr-full	PASS	2026-11-27	
 rowtail-block-in-workflow	PASS	2026-11-27	
@@ -670,6 +673,12 @@ token-diet-output-cap	PASS	2026-11-25
 token-diet-quiet	PASS	2026-11-25	
 token-diet-step-tokens	PASS	2026-11-25	
 topics-in-reference	PASS	2026-11-13	
+toy-leak-config-keep	PASS	2026-11-27	
+toy-leak-entry-commit	PASS	2026-11-27	
+toy-leak-entry-config	PASS	2026-11-27	
+toy-leak-merge-where	PASS	2026-11-27	
+toy-leak-row-merge	PASS	2026-11-27	
+toy-leak-row-setup	PASS	2026-11-27	
 toy-no-leftovers	PASS	2026-11-12	
 toys-set-userprofile	PASS	2026-11-25	
 tree-once-lock	PASS	2026-11-24	
