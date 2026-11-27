@@ -31,7 +31,7 @@ JOB = {"shard": "github.event_name != 'merge_group'", "affected": "always() && g
 # sha1 of the base's regression-pr.yml as reviewed: any edit turns the cover off. Exactly two generated texts are reviewed (TD2357):
 WF_SHA = ("533fbed6f28fac049a2bd2c45eaa3bdbffed1ac6",  # the text with the `run nightly --reuse --tier goal` line (a table that is not armed)
           "19b5c86b5523cea9c2219fb081e82592e9f48370")  # the text with the `run L1 --reuse --tier goal` line (an armed table)
-WF_FIX = "Fix: python3 skills/workflow-regression/scripts/regression.py workflow, then commit .github/workflows/regression-pr.yml and merge it. "
+WF_FIX = ". Fix: python3 skills/workflow-regression/scripts/regression.py workflow, then commit .github/workflows/regression-pr.yml and merge it"
 SILENT = ("GH", "RUNS")
 PLAN = r"""
 import json, sys
@@ -186,8 +186,8 @@ def drop(runs, slug):
 def off(runs, slug, step, code):
     data = load(runs, slug)
     if code not in SILENT and data.get("off", {}).get(step) != code:
-        print("COVER OFF: %s. %s%sNothing is lost: the local lane runs in full; rerun %s if the cause was transient" % (
-            code, "private repo: no cover. " if code == "PRIV" else "", WF_FIX if code == "WF" else "", "goal.py pr " + slug if step == "pr" else "flow.py %s %s" % (slug, step)))
+        print("COVER OFF: %s. %sNothing is lost: the local lane runs in full; rerun %s if the cause was transient%s" % (
+            code, "private repo: no cover. " if code == "PRIV" else "", "goal.py pr " + slug if step == "pr" else "flow.py %s %s" % (slug, step), WF_FIX if code == "WF" else ""))
     data.setdefault("off", {})[step] = code
     if data.pop("claim", None):
         drop(runs, slug)
