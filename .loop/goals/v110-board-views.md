@@ -2,7 +2,7 @@
 
 - Slug: v110-board-views
 - Review: one
-- Touches: skills/workflow-monitoring, skills/workflow-setup, .loop/config.json, dev/toy, .loop/regression.tsv, .loop/START.md
+- Touches: skills/workflow-monitoring, skills/workflow-setup, .loop/config.json, dev/toy, .loop/regression.tsv, .loop/START.md, skills/loop-files.md, .loop/regression-relevel.tsv, docs/wiki/How-to-use-Setup.md, docs/wiki/Tests.md
 - ETA: 335 active minutes (estimate 267m plus a 25% margin)
 
 ## Done lines
