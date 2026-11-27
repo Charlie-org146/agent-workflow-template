@@ -678,7 +678,27 @@ def draftl0():
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "draftl0": draftl0, "wfpin": wfpin}
+def wfrows():
+    print("== R14: update names the rows that stop running in the pull request check when the old workflow is replaced")
+    # Value: protects=an adopter is told, before regenerating, which rows the new L1 check no longer runs; fails_when=the report is silent about
+    #   rows, names a row that still runs, or says nothing is lost when a land row's stage is L2
+    sys.path.insert(0, os.path.join(root, "skills", "workflow-setup", "scripts"))
+    import update
+    from lvl_fixture import Repo, entry, row
+    risks = ["label\tsecurity\tsecurity\tfixture label"]
+    rows = [row("lvl-armed"), row("a"), row("x"), row("n", level="nightly")]
+    ents = [entry("lvl-armed"), entry("a"), entry("x", level="L2"), entry("n", old="nightly", level="L2")]
+    new = open(os.path.join(root, ".github", "workflows", "regression-pr.yml"), encoding="utf-8").read()
+    for word, want in (("land", "ROWS: 1 row stops running in the pull request check: x"), ("nightly", "ROWS: no row stops running")):
+        repo = Repo(rows, ents, risks)
+        repo.write(".loop/config.json", json.dumps({"ci_levels": word}))
+        repo.write(".github/workflows/regression-pr.yml", new.replace("run L1 --reuse", "run %s --reuse" % word))
+        got = update.old_workflow(repo.path)
+        repo.close()
+        check(any(want in line for line in got), "old text 'run %s': %s" % (word, want), got)
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "draftl0": draftl0, "wfrows": wfrows, "wfpin": wfpin}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
