@@ -96,3 +96,5 @@ One full-depth review of the build, then a fresh reader on the changes made afte
 - Deliver-first: "Build: the row-merge check reports a skip where /bin/dash is missing."
 - Deliver-first: "Build: the merge toy and the entry toy each get a check for their environment cleanup."
 - Deliver-first: "Build: test comments and docstrings match what the checks cover."
+- Deliver-first (the fresh reader, not blocking): "Build: the entry toy's merge check also fails when its checkout step fails."
+- Deliver-first (the fresh reader, not blocking): "Build: row toy-leak-entry-commit sets the signing format it relies on."
