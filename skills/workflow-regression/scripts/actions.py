@@ -18,13 +18,17 @@ SHARDS = 16  # REG-4, REG-7
 ROW_DROP = ("GH_TOKEN", "GITHUB_TOKEN", "GITHUB_STEP_SUMMARY", "GITHUB_ENV", "GITHUB_OUTPUT", "GITHUB_PATH", "GITHUB_STATE",
             "REGRESSION_RESULTS", "REGRESSION_MAP", "RUNNER_TEMP", "SUITE_TIME_FILE",
             "LOOP_ROW_TIMES", "REGRESSION_SHARD", "REGRESSION_LEVELS", "REGRESSION_TARGET", "REGRESSION_CLEANUP")
+LANE_DROP = ("_LOOP_LANE_NOTE", "_LOOP_LANE_QUEUED", "_LOOP_LANE_STARTED")  # the lane runner's own handoff files
+APP_DROP = ("CLAUDE_CODE_HOST_SESSION_ID",)  # app-session names, never set on GitHub, so not mirrored in the workflow
+GIT_KEEP = ("GIT_TERMINAL_PROMPT", "GIT_EDITOR", "GIT_ASKPASS",  # set above, so no row's git waits
+            "GIT_CEILING_DIRECTORIES")  # a caller's limit; its GIT_CONFIG_ files and settings stay too; other GIT_ names go
 
 
 LANE_ONLY = ("LOOP_FLAKY_FILE", "GITHUB_EVENT_NAME")  # this run's own: no row inherits them
 
 
 def row_env():
-    return dict({k: v for k, v in os.environ.items() if k not in ROW_DROP + LANE_ONLY}, LOOP_PRIVATE_NAMES=os.environ.get("LOOP_PRIVATE_NAMES") or os.devnull)
+    return dict({k: v for k, v in os.environ.items() if k not in ROW_DROP + LANE_DROP + APP_DROP + LANE_ONLY and (k in GIT_KEEP or k.startswith("GIT_CONFIG_") or not k.startswith("GIT_"))}, LOOP_PRIVATE_NAMES=os.environ.get("LOOP_PRIVATE_NAMES") or os.devnull)
 
 
 WORKFLOW = r"""# Written by workflow-regression. It reads .loop/regression.tsv and .loop/regression-known.tsv.

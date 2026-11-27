@@ -744,6 +744,16 @@ docs-skill-no-size-4171	land	L1	none				src:cedcf14fae
 regression-skill-no-size-3983	land	L1	none				src:79b6c58ab5
 regression-skill-no-size-3815	land	L1	none				src:06c7ba8073
 docs-skill-no-size-1403	land	L1	none				src:de6746dc1e
+toy-leak-merge-where	land	L1	none				default
+done-toy-leak-fixes-2	covered	L1	none	budget-order-first			covers
+done-toy-leak-fixes-3	covered	L1	none	platform-sends-counted			covers
+toy-leak-entry-config	land	L1	none				default
+done-toy-leak-fixes-5	covered	L1	none	release-static-rules			covers
+toy-leak-row-merge	land	L1	none				default
+toy-leak-config-keep	land	L1	none				default
+toy-leak-row-setup	land	L1	none				default
+toy-leak-entry-commit	land	L1	none				default
+row-env-drops-host-session	land	L1	none				default
 lvl-table-refused	land	L1	none				default
 done-lvl-relevel-2	covered	L1	none	lvl-table-refused			covers
 lvl-relevel-record	land	L1	none				default
