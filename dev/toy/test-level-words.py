@@ -801,7 +801,39 @@ def mixedrecord():
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "draftl0": draftl0, "wfrows": wfrows, "gate": gate, "mixedrecord": mixedrecord, "wfpin": wfpin}
+def targets():
+    print("== R11: the run targets table, one asserted case per line; L0, L1 and L2 wait for memory like land and nightly")
+    # Value: protects=every surface that takes a target is listed once with what it does, and the memory wait is the same for the level words
+    #   as for the old words; fails_when=a level target skips the memory wait, or a table line is dropped or says something the tool does not do
+    import re
+    from lvl_fixture import Repo, entry, row
+    repo = Repo([row("a")], [entry("a")], ["label\tsecurity\tsecurity\tfixture label"])
+    repo.commit()
+    for target in ("land", "nightly", "L0", "L1", "L2"):
+        done, said = repo.run("run", target, LOOP_FREE_GB="0.5", LOOP_MEMORY_WAIT_SECONDS="1")
+        check(done == 6 and "LANE_MEMORY" in said, "run %s waits for memory (exit 6 after the wait under 0.5 GB free)" % target, (done, said[-160:]))
+    done, said = repo.run("run", "--ids", "a", LOOP_FREE_GB="0.5", LOOP_MEMORY_WAIT_SECONDS="1")
+    check(done == 6 and "LANE_MEMORY" in said, "run --ids waits for memory", (done, said[-160:]))
+    done, said = repo.run("run", "a", LOOP_FREE_GB="0.5", LOOP_MEMORY_WAIT_SECONDS="1")
+    check(done == 0 and "LANE_MEMORY" not in said, "run <row id> does not wait: it runs the one row", (done, said[-160:]))
+    repo.close()
+    how = open(os.path.join(root, "docs", "wiki", "How-to-use-Regression.md"), encoding="utf-8").read()
+    block = how.split("**Run targets**", 1)
+    check(len(block) == 2, "How-to-use-Regression.md has the block 'Run targets'")
+    lines = [l for l in (block[1].split("\n#", 1)[0] if len(block) == 2 else "").splitlines() if l.startswith("| `") or l.startswith("| the ")]
+    want = (("regression.py run", ("L0", "L1", "L2", "land", "nightly", "a row id", "waits for memory")),
+            ("regression.py run --ids", ("takes a slot", "waits for memory")),
+            ("regression.yml", ("land", "nightly", "L2", "L0 and L1 only when the table is armed", "BAD_TARGET", "COVERED_ROW", "not run: draft")),
+            ("suite time", ("plain `run nightly`", "SUITE_TIME")),
+            ("ci_levels", ("regression-pr.yml", "L1 when the table is armed", "land or nightly otherwise")),
+            ("review.py", ("run nightly", "major gate", "covers")),
+            ("goal lane", ("goal_levels", "L0 by default", "--reuse --tier goal", "cover", "regression-pr.yml")))
+    for name, tokens in want:
+        got = [l for l in lines if name in l.split("|")[1]]
+        check(len(got) == 1 and all(t in got[0] for t in tokens), "the Run targets table has one line for %s with %s" % (name, ", ".join(tokens)), got)
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "draftl0": draftl0, "wfrows": wfrows, "gate": gate, "targets": targets, "mixedrecord": mixedrecord, "wfpin": wfpin}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
