@@ -110,9 +110,16 @@ def start_row(state, step, runs, cfg, table):
     import re
     import sizing
     try:
-        raw = seen.get("touches") or []
-        paths = [posixpath.normpath(re.sub(r"^(\./|/)+", "", p.replace("\\", "/"))) for p in ([raw] if isinstance(raw, str) else raw)]
-        small = size.get("small") is True and not sizing.classes_of(cfg, " ".join([seen.get("goal") or ""] + paths), paths + [p.lower() for p in paths])
+        raw = seen.get("touches")
+        raw = [raw] if isinstance(raw, str) else raw
+        if not isinstance(raw, (list, tuple)) or not raw:
+            raise TypeError("no usable touches")
+        raw = [p.strip().replace("\\", "/") for p in raw]
+        paths = [posixpath.normpath(re.sub(r"^(\./|/)+", "", p)) for p in raw]
+        if any(p.startswith(("..", "github:")) for p in paths):
+            raise TypeError("a path outside the repo or a GitHub surface")
+        tested = raw + paths + [p + "/" for p in paths]
+        small = size.get("small") is True and not sizing.classes_of(cfg, " ".join([seen.get("goal") or ""] + paths), tested + [p.lower() for p in tested])
     except (TypeError, AttributeError):
         small = False
     row = "small" if small else "large"
