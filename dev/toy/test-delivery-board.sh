@@ -164,12 +164,5 @@ if want bind; then
   check "bind SLUG self binds the session named by CLAUDE_CODE_HOST_SESSION_ID" 'grep -q "^BOUND s1 to session s77" "$d/bind1" && [ "$(python3 -c "import json;print(json.load(open(\"$R/s1.json\"))[\"session\"][\"id\"])")" = s77 ]'
 fi
 
-if [ -z "$only" ]; then
-  echo "== sizes"
-  for f in board_lines.py live_board.py mend.py worker.py sessions.py; do
-    check "$f stays under 20,480 bytes" '[ "$(wc -c < "$S/$f")" -lt 20480 ]'
-  done
-  check "this test stays under 20,480 bytes" '[ "$(wc -c < "$here/dev/toy/test-delivery-board.sh")" -lt 20480 ]'
-fi
 
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

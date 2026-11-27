@@ -317,6 +317,11 @@ Proof: toy tests (test-guards.sh).
 | `NO_STEP_LINE` | A session reply has no `STEP:` line | End it with the DEPTH line and a STEP line |
 | `NOT_RUN_BY_FLOW` | The reply or run marker isn't where `flow` leaves them | Run `flow` for the step until it prints NEXT |
 | `LANE_MISSING` | The qa lane hasn't passed on HEAD | `role.py lane SLUG qa` |
+| `LANE_MISSING_UNCOVERED` | A goal ran with a cover and its uncovered rows have no passing local lane | `python3 skills/workflow-delivery/scripts/cover.py lane SLUG STEP` |
+| `BODY_STALE` | The PR is open and its body still shows the old Regression lane text | `goal.py pr SLUG` reruns the pr step (re-sync, lane if needed, push), then retries the edit |
+| `LATE_INPUTS` | After a late cover loss, the second bookkeeping commit changed a file a test may read | `goal.py pr SLUG` runs the whole lane on the new head |
+| `COVER_MOVED` | The open PR's head moved or could not be read after the push, so the cover is dropped | `goal.py pr SLUG` reruns the pr step on the current head, with the whole lane |
+| `COVER_NOBATCH` | merge.py was asked to batch a goal that ran with a cover | `merge.py SLUG` alone |
 | `WAITING_OWNER` | The goal waits for the owner | The operation answers |
 | `NOT_WORKER` | A goal step outside a worker | Run it in the bound session as `LOOP_ROLE=worker ...` (the refusal prints it) |
 | `WORKER_SELF_REPAIR` | A worker ran resume or touches | Ask the operation session |
@@ -544,7 +549,7 @@ fewer, no gate and no safety class; medium is 10 files or fewer and no safety cl
 under a safety class. The reason is stored with the size (`sized` in the goal's run record, separate from DEL-5's `size`). The
 checks come from the table `checks_by_size` in the base branch's `.loop/config.json`, read from `origin/<base>` so a goal's own
 branch can't lighten it; a row that drops or lightens a fixed check (build gate, full test run, two leak readers, every safety
-class) is refused (`SIZING_BAD_TABLE`). Sizing is off, and nothing here applies, until the base config carries the key. A size
+class) is refused (`SIZING_BAD_TABLE`). A size row may list its test levels, `"levels": ["L0","L1"]` (plus "L2"): it is not a check, must hold L0 and L1, and any other list is refused (`SIZING_BAD_LEVELS`, naming the size and the level); without the key, small and medium run L0 and L1, large L0, L1 and L2. Sizing is off, and nothing here applies, until the base config carries the key. A size
 only goes up: it is re-sized from the diff when review, qa and ship start and at `pr`, the checks the size adds are stored in
 `sized.added`, and ship and `pr` refuse (`SIZING_ADDED_UNMET`) until each has a `CHECK:` line. A failed diff or config read
 refuses with `SIZING_READ_FAILED`. The owner raises a size with `sizeline.py set SLUG SIZE --owner-record ID` (never down, never

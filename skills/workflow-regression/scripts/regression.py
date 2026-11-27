@@ -20,6 +20,7 @@ usage: regression.py <command> [options]
       a public repo: write regression.yml (schedule in regression_cron) and regression-pr.yml (the rows a change
       reaches: 8 shards by recorded time, a tree job); a private repo: nothing (runs on the Mac)
   reads ROW                     suggest a # reads: header for ROW's script
+  level, levels, relevel        row levels (L0-L2) and risk tags (levels_cli.py; <command> -h)
 
 Rows: .loop/regression.tsv (id, level, command, goal, seen_red, description, category, link). Each run records status, date and run in
 .loop/regression-runs.tsv (runs.py). Known failures: .loop/regression-known.tsv (id, reason); they never
@@ -40,7 +41,10 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
 import actions, completion, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
+import levels_cli, levels_gate, levels_read, levels_write  # noqa: E401,E402
+from completion import split  # noqa: E402,F401
 from runs import chosen, clean, criteria_ids, criterion_rows, done_lines, lines_of, today  # noqa: E402,F401
+from lanes import merged  # noqa: E402,F401
 
 # A prompt from git or gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -87,14 +91,10 @@ def read_rows(root):
     return rows
 
 
-def edit_rows(root, change):
-    """Re-read the rows, apply this change and write, under the table's lock (slots.edit)."""
-    def apply():
-        rows = read_rows(root)
-        change(rows)
-        os.makedirs(os.path.join(root, ".loop"), exist_ok=True)
-        slots.write_table(path_of(root, "regression.tsv"), HEADER, ["\t".join(r[n] for n in FIELDS) for r in rows.values()])
-    slots.edit(root, "regression.tsv", apply)
+def edit_rows(root, change, options=None):
+    """Re-read the rows, apply this change and write under the table's lock; the levels record moves with them."""
+    levels_write.edit(root, read_rows, change, lambda rows: (
+        HEADER, ["\t".join(r[n] for n in FIELDS) for r in rows.values()]), options)
 
 
 def new(**kw):
@@ -122,7 +122,7 @@ def cmd_add(args):
             category=args.category, link=clean(args.link),
             seen_red=old.get("seen_red", "") if old.get("command") == args.command else "",
             description=clean(args.describe if args.describe is not None else old.get("description", "")))
-    edit_rows(root, change)
+    edit_rows(root, change, levels_read.add_options(root, args))
     print("ROW %s %s: %s" % (args.id, args.level, args.command))
     return 0
 
@@ -153,6 +153,7 @@ def gaps(root):
 
 def cmd_sync(args):
     root = top()
+    levels_gate.check_read(root)
     rows, drafted = read_rows(root), {}
     missing = gaps(root)
     for key in criteria_ids(root):
@@ -194,6 +195,7 @@ def cmd_sync(args):
 
 def cmd_criteria(_args):
     root = top()
+    levels_gate.check_read(root)
     rows = read_rows(root)
     unmet = []
     for key in criteria_ids(root):
@@ -210,6 +212,7 @@ def cmd_criteria(_args):
 
 def cmd_red(args):
     root = top()
+    levels_gate.check_read(root)
     if args.owed:
         return runs.owed_record(root, args, today, read_rows)
     if args.off_platform:
@@ -245,36 +248,21 @@ def cmd_red(args):
     return 0
 
 
-def merged(path, results=(), left=(), limit=0):
-    """{id: [seconds, state]} from a times file (`id TAB seconds TAB state`), then this shard's results."""
-    rows = {}
-    try:
-        rows.update({c[0]: [float(c[1]), "CUT" if c[2:3] == ["CUT"] else ""] for c in (x.split("\t") for x in open(path).read().splitlines()) if len(c) > 1})
-    except (OSError, ValueError):
-        pass
-    rows.update({r["id"]: [r["seconds"], ""] for r in results}, **{k: [limit, "LEFT"] for k in left})
-    return rows
-
-
-def split(ids, times, n):
-    """n shards of ids: longest time first to the least-loaded shard; no time weighs the median."""
-    seen = sorted(times[k] for k in ids if k in times)
-    weight, load, shards = {k: times.get(k, seen[len(seen) // 2] if seen else 1) for k in ids}, [0] * n, [[] for _ in range(n)]
-    for key in sorted(ids, key=lambda k: (-weight[k], k)):
-        j = min(range(n), key=lambda x: (load[x], x))
-        shards[j].append(key)
-        load[j] += weight[key]
-    return shards
 
 
 def cmd_run(args):
     root = top()
+    levels_gate.check_read(root)
     rows = read_rows(root)
     if not rows:
         print("NO ROWS: nothing to run" if args.reuse else "NO ROWS: run add first")
         return 0 if args.reuse else 1
+    ids = [i for i in (args.ids or "").split(",") if i]
+    bad = [i for i in ids if i not in rows]
+    bad and sys.exit("REFUSED: no row called %s." % ", ".join(bad))
+    args.reuse = args.reuse or bool(ids)  # an ids lane (SKP-1.1) reuses and keeps the record, never writes a tracked file
     expected, picked = known(root), []
-    for row in tiers.kinds(chosen(rows, tiers.target(root, args)), args.kind):
+    for row in tiers.kinds([rows[i] for i in ids] if ids else chosen(rows, tiers.target(root, args)), args.kind):
         if row["level"] in ("draft", "covered"):
             print("SKIP %s: %s" % (row["id"], row["level"]))
         else:
@@ -309,9 +297,9 @@ def cmd_run(args):
         mine = split(todo, {k: v[0] for k, v in seen.items() if v[0] > 0}, n)
         print("SPLIT %d/%d: %d of %d rows" % (i, n, len(mine[i]), len(todo)))
         todo = [key for key in todo if key in mine[i]]
-    if todo and args.target in ("land", "nightly"):
+    if todo and (args.target in ("land", "nightly") or ids):
         lanes_cli.wait_memory(root)
-    if todo and args.target in ("land", "nightly") and (why or not args.reuse):
+    if todo and (args.target in ("land", "nightly") or ids) and (why or not args.reuse or ids):
         slot = slots.acquire(root, os.environ.get("_LOOP_LANE_LABEL") or os.path.basename(root) + " by hand", head, unclean)
     else:
         slots.started()
@@ -412,6 +400,7 @@ def main():
     item.add_argument("--kind", choices=tuple(tiers.KINDS))
     item.add_argument("--tree", action="store_true")
     item.add_argument("--budget", type=int, default=0, help="seconds a --reuse run may take (-1: no limit)")
+    item.add_argument("--ids", help="run exactly these row ids (comma-separated) as one lane")
     item.set_defaults(func=cmd_run)
     item = sub.add_parser("workflow")
     item.add_argument("--visibility", choices=("public", "private"), help="skip the probe")
@@ -419,6 +408,7 @@ def main():
     item = sub.add_parser("reads")
     item.add_argument("id")
     item.set_defaults(func=lambda a: lanes.narrow.suggest(top(), a.id))
+    levels_cli.register(sub, top)
     args = parser.parse_args()
     return args.func(args)
 

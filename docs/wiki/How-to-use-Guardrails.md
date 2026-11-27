@@ -42,7 +42,7 @@ Each guardrail with what it protects against, the requirement that owns it ("new
 | SET-1 (was GRD-10) | A repo adopted without the whole set | SET-1 | none | Adoption |
 | OPS-16 (was GRD-12) | A goal or test lane starting while free memory is low | OPS-16 | `min_free_memory_gb` | Performance |
 | MCH-1 (was GRD-18) | A POSIX-only call, or long text passed on a command line, breaking native Windows | MCH-1 | none | none yet |
-| HLT-11 (was GRD-19) | A feature page too large to review | HLT-11 | `criteria_max` | Size: `requirements-per-page` |
+| HLT-11 (was GRD-19) | A feature page too large to review: retired by principle 5 (o988), no rule | HLT-11 | none | none |
 | GRD-20 (with the former GRD-21 and GRD-22) | A release package that fails Agensi's rules, a package limit of ours looser than Agensi's, or a goal that outgrows a package limit, learned only at release | GRD-20 | none | none yet |
 
 ## How to reach or run it
@@ -87,8 +87,8 @@ Each requirement and how it is delivered:
 
 ### API/file contract: .loop/config.json
 - **Path:** `.loop/config.json`
-- **Fields:** `token_budget`, `step_budget_minutes`, `test_budget_minutes`, `silent_minutes` and `criteria_max`.
-- **Example:** `"criteria_max": 19` is this repo's cap on a page's requirements.
+- **Fields:** `token_budget`, `step_budget_minutes`, `test_budget_minutes` and `silent_minutes`.
+- **Example:** `"test_budget_minutes": 15` is this repo's time limit on a land lane.
 - **Writer:** workflow-setup writes the defaults; the owner edits a value.
 - **Reader:** the guards, the lanes, docs check and health.
 

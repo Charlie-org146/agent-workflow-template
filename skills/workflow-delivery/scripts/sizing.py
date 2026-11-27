@@ -14,6 +14,9 @@ fcntl = lanekit.fcntl
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")  # no prompt ever blocks (DEL-10)
 
 ORDER = ("small", "medium", "large")
+BAD_LEVELS = "SIZING_BAD_LEVELS"
+ABSENT = object()  # a row with no `levels` key; `null` is not absent
+SIZE_LEVELS = {"small": ("L0", "L1"), "medium": ("L0", "L1"), "large": ("L0", "L1", "L2")}  # when a row has no `levels`
 FIXED = ("build-gate", "full-test-run", "leak-readers", "safety-classes")
 VARIABLE = ("plan-review", "red-team", "review")
 CHECKS_AT = {"plan": ("plan-review", "red-team"), "review": ("review",)}
@@ -85,6 +88,21 @@ def on(base=None):
     return ok and "checks_by_size" in cfg
 
 
+def levels_of(size, given):
+    """The test levels a size runs: its row's list (L0, L1, L2; L0 and L1 always), else the second default."""
+    if given is ABSENT:
+        return list(SIZE_LEVELS[size]), ""
+    show = 'write "levels": ["L0","L1"] (with "L2" if wanted), or remove the key for the default'
+    if not isinstance(given, list) or not all(isinstance(x, str) for x in given):
+        return None, "%s size %s: levels is not a list; %s" % (BAD_LEVELS, size, show)
+    odd = [x for x in given if x not in ("L0", "L1", "L2")]
+    gone = [x for x in ("L0", "L1") if x not in given]
+    if odd or gone:
+        return None, "%s size %s %s; %s" % (BAD_LEVELS, size, "names %s, which is not L0, L1 or L2" % ", ".join(odd)
+                                            if odd else "leaves out " + " and ".join(gone), show)
+    return list(given), ""
+
+
 def validate(raw):
     try:
         return _validate(raw)
@@ -102,11 +120,15 @@ def _validate(raw):
             if d.get("passes", have["passes"]) != have["passes"]:
                 return None, "form %s of %s changes its pass count" % (f, c)
             forms[c][f].update({k: d[k] for k in ("covers", "run", "markers") if k in d})
-    table = {"forms": forms}
+    table = {"forms": forms, "levels": {}}
     for size in ORDER:
         row = raw.get(size)
         if not isinstance(row, dict):
             return None, "row %s is missing" % size
+        row = dict(row)  # `levels` is read from a copy and is not a check
+        table["levels"][size], why = levels_of(size, row.pop("levels") if "levels" in row else ABSENT)
+        if why:
+            return None, why
         bad = [c for c in FIXED if row.get(c) != "full"] or [c for c in VARIABLE if c not in row]
         if bad:
             return None, "row %s drops or lightens %s (fixed checks must be full)" % (size, bad[0])
@@ -122,7 +144,8 @@ def read_table():
         refuse("the base config can't be read", "rerun after the read works, then run sizing.py size SLUG", "SIZING_READ_FAILED")
     table, why = validate(cfg.get("checks_by_size", DEFAULTS))
     if not table:
-        refuse("the checks table is refused: " + why, "edit the row on %s with the owner's words, then sizing.py size SLUG" % base, "SIZING_BAD_TABLE")
+        refuse("the checks table is refused: " + why, "edit the row on %s with the owner's words, then sizing.py size SLUG" % base,
+               BAD_LEVELS if why.startswith(BAD_LEVELS) else "SIZING_BAD_TABLE")
     return table, base, cfg
 
 
@@ -254,7 +277,8 @@ def rule(step, state):
     if not state.get("sized"):
         return "NOT SIZED: run sizing.py size " + state["slug"]
     try:
-        return "CHECKS at %s (size %s):\n%s" % (step or "every step", state["sized"]["size"], block(state["sized"], read_table()[0], step))
+        import cover
+        return cover.rule_fix("CHECKS at %s (size %s):\n%s" % (step or "every step", state["sized"]["size"], block(state["sized"], read_table()[0], step)), runs(), state["slug"])
     except Refusal as err:
         return "REFUSED: %s (%s)" % (err.args[0], err.args[2])
     except KeyError:

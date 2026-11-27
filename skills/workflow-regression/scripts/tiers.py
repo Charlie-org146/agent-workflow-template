@@ -196,6 +196,8 @@ def hit(root, row, path, at, cache, memo):
         return lanes.table(root, at, "regression-known.tsv", memo).get(row["id"]) != memo["known"].get(row["id"])
     if path == narrow.CONFIG:
         return narrow.config_hit(root, at, row["command"], cache)
+    if path in lanes.LEVEL_FILES:
+        return lanes.level_change(root, row, path, lanes.entry_moved(root, at, row["id"], memo), cache)
     return lanes.touches(root, row["command"], path, cache)
 
 
@@ -203,7 +205,7 @@ def reason(root, row, old, ok, base, cache, memo):
     """Why this row runs, or ''."""
     if ok and old["rows"].get(row["id"], {}).get("status") == "FAIL":
         return "failure rerun"
-    if ok and old["rows"].get(row["id"], {}).get("status") == "SKIPPED":
+    if ok and old["rows"].get(row["id"], {}).get("status") in ("SKIPPED", "LEFT"):
         return "skipped last time"
     at, paths = since(root, row, old, ok, base, memo)
     if lanes.table(root, at, "regression.tsv", memo).get(row["id"]) != memo["tsv"].get(row["id"]):
@@ -214,14 +216,14 @@ def reason(root, row, old, ok, base, cache, memo):
         return ""
     if found:
         return "reaches " + found
-    if paths and lanes.closure(root, row["command"], cache)[1]:
+    if set(paths) - set(lanes.LEVEL_FILES) and lanes.closure(root, row["command"], cache)[1]:
         return "root runner"
     return "failure rerun (flaky: never reused)" if (old or {}).get("rows", {}).get(row["id"], {}).get("flaky") else ""
 
 
 def quiet(path, gone):
     """Paths the unmapped rule ignores: deleted ones, the loop's tables and files no row reads."""
-    return path in gone or path in (lanes.TABLE, KNOWN) or path.startswith(lanes.BOOKKEEPING) or any(
+    return path in gone or path in (lanes.TABLE, KNOWN, *lanes.LEVEL_FILES) or path.startswith(lanes.BOOKKEEPING) or any(
         path == n or (n.endswith("/") and path.startswith(n)) for n in lanes.NO_EFFECT)
 
 

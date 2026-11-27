@@ -32,15 +32,17 @@ d = json.load(sys.stdin)
 sys.exit(0 if d['rows'] and d['verdict'].startswith('HEALTH:') and all(k in d['rows'][0] for k in ('state', 'family', 'subject', 'rule', 'detail', 'fix')) else 1)" \
   && ok "json prints the rows as records" || bad "json"
 
-echo "== size: a script near and over 20 KB"
-pad 19000 > skills/x/scripts/near.py; pad 21000 > skills/x/scripts/over.py
-git add -A; git commit -qm "Big scripts"
-out=$($health check --family size); rc=$?; echo "$out"
-grep -q "^WARN size skills/x/scripts/near.py scripts: .* -> fix: " <<<"$out" && ok "90 percent of the limit is a WARN with a fix" || bad "size warn"
-grep -q "^FAIL size skills/x/scripts/over.py scripts: .* -> fix: " <<<"$out" && ok "over 20 KB is a FAIL with a fix" || bad "size fail"
+echo "== a WARN and a FAIL, each with a fix (the Docs group: a stale page and a missing one; principle 5 retired the size rule, o988)"
+mkdir -p docs/wiki
+printf '<!-- workflow-docs -->\n# Calc\n\nThe calculator adds and prints the sum of the numbers given on the line.\n' > docs/wiki/Calc.md
+printf 'Calc\tcalc.py\nGhost\tghost.py\n' > .loop/docs.tsv
+git add -A; git commit -qm "Map Calc and Ghost"; echo "WARNED = 1" >> calc.py; git commit -qam "Change calc"
+out=$($health check --family docs); rc=$?; echo "$out"
+grep -q "^WARN docs Calc stale: .* -> fix: " <<<"$out" && ok "a stale page is a WARN with a fix" || bad "docs warn"
+grep -q "^FAIL docs Ghost missing: .* -> fix: " <<<"$out" && ok "a missing page is a FAIL with a fix" || bad "docs fail"
 [ $rc = 1 ] && tail -1 <<<"$out" | grep -q "^HEALTH: not green" && ok "a FAIL makes the verdict not green" || bad "red verdict"
-git rm -q skills/x/scripts/over.py; git commit -qm "Drop the big one"
-out=$($health check --family size); rc=$?
+printf 'Calc\tcalc.py\n' > .loop/docs.tsv; git commit -qam "Drop the ghost"
+out=$($health check --family docs); rc=$?
 [ $rc = 0 ] && grep -q "^HEALTH: green (.* 1 warn, 0 fail" <<<"$out" && ok "a WARN alone stays green" || bad "warn green"
 
 echo "== docs and requirements are composed, not re-implemented"
@@ -127,7 +129,6 @@ after="$(git status --porcelain --ignored)|$(git rev-parse HEAD)|$(git branch | 
 mkdir -p "$d/bin"; printf '#!/bin/bash\necho "$*" >> "%s/gh-calls"\nexit 1\n' "$d" > "$d/bin/gh"; chmod +x "$d/bin/gh"
 PATH="$d/bin:$PATH" $health check >/dev/null
 [ "$(grep -v '^auth status$' "$d/gh-calls" 2>/dev/null)" = 'api repos/{owner}/{repo}/issues?state=open&labels=health&per_page=100&page=1' ] && ok "check reads one filtered page of gh, read-only" || bad "check gh calls: $(cat "$d/gh-calls" 2>/dev/null)"
-for f in health enforce judge; do [ "$(wc -c < "$here/skills/workflow-health/scripts/$f.py")" -lt 20480 ] || bad "size of $f.py"; done; ok "health scripts under 20 KB"
 
 echo "repo: $d/repo"
 [ "$fails" = 0 ] && echo "ALL PASS" || { echo "$fails FAILED"; exit 1; }

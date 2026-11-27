@@ -37,7 +37,7 @@ def recorded_gate(args, runs, job):
 
 
 def over_caps():
-    """A refusal when the repo is over a test cap and this goal adds rows net (the base branch's caps; removing or merging as many always passes)."""
+    """TEST_CAPS when the full suite is over max_suite_seconds (the base branch's) and this goal adds rows net; else None."""
     top = _s.git_out("rev-parse", "--show-toplevel")
     at = "origin/" + (json.loads(_s.git_out("show", "HEAD:.loop/config.json") or "{}").get("base") or "main")
 
@@ -52,12 +52,11 @@ def over_caps():
     net = len(now - old) - len(old - now)
     tests = os.path.join(_s.git_out("rev-parse", "--git-common-dir"), "loop", "tests", "*.json")
     secs = max([d.get("total_seconds") or 0 for d in (json.load(open(f)) for f in glob.glob(tests)) if "--reuse" not in str(d.get("command"))] + [0])
-    over = [text for have, key, default, text in ((len(now), "max_regression_rows", 1200, "%d rows, max_regression_rows is %d"),
-                                                  (secs, "max_suite_seconds", 1900, "the full suite takes %d s, max_suite_seconds is %d"))
-            if 0 < cfg.get(key, default) < have for text in [text % (have, cfg.get(key, default))]]
-    if net > 0 and over:
-        return ("over the test caps (%s) and this goal adds %d rows net (+%d, -%d)" % ("; ".join(over), net, len(now - old), len(old - now)),
-                "remove or merge at least %d rows, or the owner raises the cap in their own words" % net, "TEST_CAPS")
+    most = cfg.get("max_suite_seconds", 1900)
+    if net > 0 and 0 < most < secs:
+        return ("over the test cap (the full suite takes %d s, max_suite_seconds is %d) and this goal adds %d rows net (+%d, -%d)"
+                % (secs, most, net, len(now - old), len(old - now)),
+                "remove or merge at least %d rows, or the owner raises max_suite_seconds in their own words" % net, "TEST_CAPS")
     return None
 
 

@@ -38,3 +38,69 @@ task-first-2	TD1679 (v110-tsk-1: each TSK-1 case on its own row)	added: a row fo
 task-first-3	TD1679 (v110-tsk-1: each TSK-1 case on its own row)	added: a row for one TSK-1 requirement; no existing row changed or removed
 task-first-4	TD1679 (v110-tsk-1: each TSK-1 case on its own row)	added: a row for one TSK-1 requirement; no existing row changed or removed
 task-first-5	TD1679 (v110-tsk-1: each TSK-1 case on its own row)	added: a row for one TSK-1 requirement; no existing row changed or removed
+setup-fit	TD1847 (v110-pkg-secret-print: the setup-fit toy edit, seen red with the base checker)	date field only, re-dated by its seen-red proof; command and text unchanged
+test-caps-controls	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1879	runs only the suite-cap control and greps that it fires; the rows-cap control is retired with the rule
+test-caps-settings	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1879	greps the max_suite_seconds setting line only; max_regression_rows is retired
+test-caps-qa-refused	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1880	rewritten: greps the max_suite_seconds refusal with the seconds and its control (suite under the cap passes); the rows half is retired
+health-live-requirements	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1879	drops the two requirements-per-page count clauses; the migration and lazy-import clauses stay
+same-lines	o988 (owner o984: the size limits end), v110-no-size-cap-a	drops the over-20 KB clause of test-health.sh (and its Windows skip group); the other five clauses stay
+page-shape	o988 (owner o984: the size limits end), v110-no-size-cap-a	drops the criteria_max clause of test-criteria.sh; the other seven clauses stay
+template-sheet	o988 (owner o984: the size limits end), v110-no-size-cap-a	drops the criteria_max clause of test-docs-command.sh; the other two clauses stay
+est-backtest-loo	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1879	module_size becomes module_names: the size half goes, the reader-name, MODEL, by-path load and lanes-split checks stay
+ls-size-budget	o988 (owner o984: the size limits end), v110-no-size-cap-a	keeps only its scheduledrule case; the size case is retired
+skill-size-116	o988 (owner o984: the size limits end), v110-no-size-cap-a	drops the skill-size case (150-line SKILL.md limit); size-139 and size-141 stay
+size-lf-crlf	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: health's size and skill-lines halves are retired, the package half stays
+docs-block-split	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: the size claims are retired; command unchanged
+plan-sizes	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: the planner size check is retired, the package file cap stays; command unchanged
+pods-size	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: our script-size caps are retired, the package rules stay; command unchanged
+package-headroom-held	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: the 19,000-byte target is retired, MAX_FILES stays; command unchanged
+trim-package-98	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: the 19,000-byte target is retired, MAX_FILES and the package gate stay; command unchanged
+machine-task-layout	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: machine-caps no longer names a byte cap; command unchanged
+machine-done-12	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: the byte cap is retired, machine.py stays out of the package; command unchanged
+tree-rules-first	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: size-check.py is no longer a whole-tree script; command unchanged
+pods-caps-3919	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (test-pods.sh's per-script caps line)
+test-caps-health	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1880, done line 4	removed with its checker (lean.rows_cap and test-test-caps.py's health half)
+repo-rules-threshold	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1880, done line 4	removed with its checker (test-health-repo-rules.py threshold, health_script_bytes)
+hands-off-size	o988 (owner o984: the size limits end), v110-no-size-cap-a, TD1880, done line 4	removed with its checker (test-hands-off.py size); off the known list
+backlog-milestones-made	o988 (owner o984: the size limits end), v110-no-size-cap-a, o1007	its health finding is the Docs group's stale page, not a size finding; it greps that PASS line; every other clause unchanged
+size-budget	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+docs-release-scripts-under-19000	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+scripts-c-regression-under-19000	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+release-scripts-under-19000	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+docs-scripts-under-19000	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+scripts-a-monitoring-under-19000	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+trim-setup-under-19000	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: size-check.py)
+size-warn-band	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: test-size-warn.py)
+trim-monitoring-4-size	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: test-trim-monitoring.py)
+dlf-done-3-sizes	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 20,480-byte find)
+sizing-done-4-sizes	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 20,480-byte find)
+make-room-5-sizes	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 20,480-byte find)
+make-room-b-5-sizes	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 20,480-byte find)
+make-room-1-room	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its 13,000-byte room loop on pinned objects)
+make-room-b-1-room	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its 13,000-byte room loop on pinned objects)
+skill-lines-release-4172	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 150-line SKILL.md count)
+skill-lines-docs-4171	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 150-line SKILL.md count)
+skill-lines-regression-3983	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 150-line SKILL.md count)
+skill-lines-regression-3815	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 150-line SKILL.md count)
+skill-lines-docs-1403	o988 (owner o984: the size limits end), v110-no-size-cap-a, done line 4	removed with its checker (one of our size limits only: its inline 150-line SKILL.md count)
+review-findings-skill-lines	o988 (owner o984: the size limits end), v110-no-size-cap-a, plan-wrong (the step-1 sweep missed the literal 150)	drops only the 150-line SKILL.md clause; every other clause stays
+skill-criteria-in-references	o988 (owner o984: the size limits end), v110-no-size-cap-a, plan-wrong (the step-1 sweep missed the literal 150)	drops only the 150-line SKILL.md clause; every other clause stays
+skill-refusals-in-references	o988 (owner o984: the size limits end), v110-no-size-cap-a, plan-wrong (the step-1 sweep missed the literal 150)	drops only the 150-line SKILL.md clause; every other clause stays
+skill-workflow-in-references	o988 (owner o984: the size limits end), v110-no-size-cap-a, plan-wrong (the step-1 sweep missed the literal 150)	drops only the 150-line SKILL.md clause; every other clause stays
+auto-owner-words-wait	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: its question fixture names a non-size key now; command unchanged
+full-auto-all-answers	o988 (owner o984: the size limits end), v110-no-size-cap-a	description only: its question fixture names a non-size key now; command unchanged
+settings-reference	o988 (owner o984: the size limits end), v110-no-size-cap-a, gate d5a	the criteria_max clause becomes 'none of the four retired keys is listed', and the d5a case (a config carrying them loads) is added; the other clauses stay
+repo-rules-run	o988 (owner o984: the size limits end), v110-no-size-cap-a, gate d13 d23 d29 d32	adds the retired case (item 8); its four cases stay
+format-home	o988 (owner o984: the size limits end), v110-no-size-cap-a	its DOC-1 clause greps the renamed check: no requirements cap is left in criteria, setup or health; the other seven clauses stay
+every-row-described	o988 (owner o984: the size limits end), TD1943	loses only its 400-character description cap (`|| length($6) > 400`); NODESC = 0 and the non-empty, not '-' check stay
+prd-section-order	o1007, TD1943	the metrics case greps 'four Success metrics lines pass' and the new control 'an empty Success metrics section still fails'; every other clause stays
+known:size-140	o988, o1007, TD1958	known reason only: drops the retired size-warning cause; restates the remaining red (docs.py imports back sources, which the moved-names list doesn't name), red on base 37417a6d9 singly
+known:rel-major-refused	o988, o1007, TD1958	known reason only: drops the retired byte-cap cause; restates the remaining red (the Release page check misses REL-3, REL-12, REL-13), red on base 37417a6d9 singly
+known:ls-size-budget	o988, o1007, TD1958	known reason only: drops the retired size case; restates the remaining red (scheduledrule: a leftover health.yml is a WARN naming git rm), red on base 37417a6d9 singly; its CI skip stays
+settings-reference	o988 (done line 3), TD1962	adds the case: an adopted config with leftover retired keys gets no START.md row; its other clauses stay
+release-skill-no-size-4172	o988 (done line 5), v110-no-size-cap-a, TD2065	added: the defect row for issue 4172, which had no other once skill-lines-release-4172 went; it checks that health files no size finding on a 150-line release SKILL.md; every other row unchanged
+docs-skill-no-size-4171	o1035, o988 (done line 5), v110-no-size-cap-a	added: the defect row for issue 4171, restored as the owner ordered; it checks that health files no size finding on a docs SKILL.md of 155 lines; every other row unchanged
+regression-skill-no-size-3983	o1035, o988 (done line 5), v110-no-size-cap-a	added: the defect row for issue 3983, restored as the owner ordered; it checks that health files no size finding on a regression SKILL.md of 151 lines; every other row unchanged
+regression-skill-no-size-3815	o1035, o988 (done line 5), v110-no-size-cap-a	added: the defect row for issue 3815, restored as the owner ordered; it checks that health files no size finding on a regression SKILL.md of 151 lines; every other row unchanged
+docs-skill-no-size-1403	o1035, o988 (done line 5), v110-no-size-cap-a	added: the defect row for issue 1403, restored as the owner ordered; it checks that health files no size finding on a docs SKILL.md of 155 lines; every other row unchanged
+tasks-rows-only-added	o1074, TD1995, v110-main-red	tightened only: the row also needs its test to end cleanly, and prints the test's last lines when it doesn't; its three greps are unchanged

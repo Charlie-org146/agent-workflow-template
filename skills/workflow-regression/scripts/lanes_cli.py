@@ -25,6 +25,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import tiers, lanes, narrow  # noqa: E401,E402
+from completion import merge_runs  # noqa: E402
 
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
@@ -101,6 +102,9 @@ def table_changed(root, name):
 def affected(root, rows, paths, cache):
     """(rerun ids, notes) for a change to paths: plan()'s rules, no record."""
     ids, notes, real = set(), [], False
+    base = tiers.config(root).get("base") or "main"  # a base with no record yet reads the level files as any file
+    levels = lanes.LEVEL_FILES if any(lanes.git(root, "cat-file", "-e", at + ":" + lanes.LEVEL_FILES[0]) is not None
+                                      for at in ("origin/" + base, base)) else ()
     known = table_changed(root, "regression-known.tsv") if ".loop/regression-known.tsv" in paths else None
     edited = table_changed(root, "regression.tsv") if lanes.TABLE in paths else None
     for row in rows:
@@ -120,9 +124,12 @@ def affected(root, rows, paths, cache):
             or lanes.closure(root, r["command"], cache)[1]}
         elif path in (lanes.TABLE, ".loop/regression-known.tsv"):  # never unmapped
             hit = {r["id"] for r in rows if lanes.reads_table(root, r["command"], cache)}
+        elif path in levels:
+            moved = table_changed(root, "regression-relevel.tsv")  # None (no base): every entry may have moved
+            hit = {r["id"] for r in rows if lanes.level_change(root, r, path, moved is None or r["id"] in moved, cache)}
         else:
             hit = {r["id"] for r in rows if lanes.touches(root, r["command"], path, cache)}
-        no_effect = path in (lanes.TABLE, ".loop/regression-known.tsv") or lanes.no_effect(path)
+        no_effect = path in (lanes.TABLE, ".loop/regression-known.tsv", *levels) or lanes.no_effect(path)
         if not hit and not no_effect and not any(lanes.hits(path, lanes.closure(root, r["command"], cache)[0])
             for r in rows):
             ids |= picked(root, rows, path, cache)
@@ -153,20 +160,6 @@ def chain(parent, path):
     while parent.get(links[-1]) and parent[links[-1]] not in links:
         links.append(parent[links[-1]])
     return " -> ".join(reversed(links))
-
-
-def merge_runs(root):
-    """The lane record's row results, with any flaky flag (tiers.py), into regression-runs.tsv."""
-    import runs, slots
-    record, _ = lanes.load(lanes.record_path(root), root)
-    rows = (record or {}).get("rows") or {}
-    done = [dict(id=key, state=value.get("status"), **{k: value[k] for k in ("flaky",) if k in value})
-            for key, value in sorted(rows.items()) if value.get("status") in ("PASS", "FAIL")]
-    if done:
-        day = time.strftime("%Y-%m-%d", time.gmtime())
-        head = (lanes.git(root, "rev-parse", "HEAD") or "").strip()
-        slots.edit(root, "regression-runs.tsv", lambda: runs.write(root, done, day, head))
-    return 0
 
 
 NARROW = """# Written by workflow-regression (regression.py workflow). The rows a change reaches; the full suite runs on the schedule only.
@@ -208,8 +201,8 @@ jobs:
           touch all.tsv; cat .github/workflows/row-times.tsv all.tsv 2>/dev/null | awk -F'\t' -v OFS='\t' '$3!="CUT"{$3=""}1' >$T; rm all.tsv  # o852: committed times, the cache's over them
           R="python3 skills/workflow-regression/scripts/regression.py run @LEVELS@ --reuse --tier goal"
           B=866; printf %s "$D" | grep -qE '^[.]loop/regression(-known)?[.]tsv$' && B=-1  # rows changed: no budget, nothing LEFT
-          [ "${{ matrix.shard }}" != tree ] || { LOOP_ROW_TIMES=$T $R --tree --timeout 200 --budget -1 && python3 skills/workflow-regression/scripts/cutgate.py $T tree.tsv .loop/regression-skips.tsv; exit $?; }
-          LOOP_ROW_TIMES=$T LOOP_PR_SHARD=${{ matrix.shard }}/8 $R --budget $B --timeout 200
+          [ "${{ matrix.shard }}" != tree ] || { LOOP_ROW_TIMES=$T $R --tree --timeout 300 --budget -1 && python3 skills/workflow-regression/scripts/cutgate.py $T tree.tsv .loop/regression-skips.tsv; exit $?; }
+          LOOP_ROW_TIMES=$T LOOP_PR_SHARD=${{ matrix.shard }}/8 $R --budget $B --timeout 300
       - if: always()
         uses: actions/upload-artifact@v4
         with:

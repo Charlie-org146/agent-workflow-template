@@ -1,13 +1,11 @@
 # id	reason
 lanes-headers	fails on clean main since v0.27.17; fixed by package-cap-3
 prd-repo-green	fails on clean main since v0.27.17; fixed by package-cap-3
-size-140	fails on clean main since v0.27.17: skills/workflow-docs/scripts/docs.py is 18,702 bytes, past the 90% size warning; fixed by package-cap-3 (moves a block out of docs.py)
-package-headroom-held	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
+size-140	fails on clean main since v0.27.17: docs.py imports back sources from counting.py, which the case's moved-names list does not name (split-check.py names check); fixed by package-cap-3; see #5933
 package-rows-tracked	package at the 99-file cap; toy wants 98; fold one script in v1.1, issue 4497
-trim-package-98	fails on main: workflow-health rules.py (19,759) and report.py (20,461) are over 19,000; the Mac's trim-scripts-19k trims them
-rel-major-refused	its size check fails on clean main 1ca5ae2f: checkin.py is 19,502 bytes against the cap of 19,495 (test-release-gate.py major)
+rel-major-refused	fails on clean main: test-release-gate.py major finds the Release page without REL-3, REL-12 and REL-13 (its size check was retired by principle 5, o988); see #5796
 ls-judge-login	red on main f3a20557: test-local-schedule.sh judge fails 'the default judge_command grants no tools (--tools "")'; see #5343
-ls-size-budget	red on main f3a20557: test-local-schedule.sh size fails 'the package holds at most 99 files'; see #5343
+ls-size-budget	red on this Mac at f7f86150d: test-local-schedule.sh scheduledrule fails 'a leftover health.yml is a WARN naming git rm' (its size case was retired by principle 5, o988); skipped in CI, see #5343
 runbook-registry	red on main 427590d4: test-runbook.sh fails 'the same routine passes once its page carries the runbook' and 'with no registry file the check still passes'; see #5343
 guards-resume	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4104
 lane-messages-table	fails on main since v1.0.72 or earlier (unverified: v1.0.72 is the oldest run checked); see #4091
@@ -27,7 +25,6 @@ setup-no-milestone-step	fails on main since v1.0.99; see #5312
 hlt2-twelve-groups	fails on main since v1.0.100; see #5326
 migration-robustness	fails on main since v1.0.100; see #5323
 entry-committed-config	fails on main since v1.0.100; fixed by kept-reds-5; see #5352
-hands-off-size	fails on main since v1.0.106; fixed by kept-reds-5; see #5282
 plan-cache-key	fails on main since v1.0.107; fixed by kept-reds-5; see #5372
 format-frontdoor	fails on main since v1.0.109; fixed by principle-8-readme; see #5382
 apply-rerender-blocks	fails on main since v1.0.96; fixed by kept-reds-2; see #4993
@@ -37,3 +34,4 @@ del5-patch-default	local-lane only; green on main 45110588623; #5860; removed by
 scripts-no-hang	local-lane only; green on main 45236323222; #5860; removed by lane-home-isolation
 defect-flow-steps	local-lane only; green on main 45236323222; #5860; removed by lane-home-isolation
 defect-closing-keywords	local-lane only; green on main 45236323222; #5860; removed by lane-home-isolation
+codex-ro-home	Mac-local red on main f7f86150d (fresh clone, clean env); #5925; TD1898

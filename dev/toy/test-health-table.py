@@ -5,7 +5,7 @@
 # reads: dev/toy/fakegh/fake.py
 """HLT-3 and HLT-4 (issue 4658): the findings table, and every filed issue tagged with its feature or Other.
 
-A throwaway repo with findings in four groups (requirements, docs, freshness's issue read, size) and the fake gh
+A throwaway repo with findings in four groups (requirements, docs, freshness's issue read, hygiene) and the fake gh
 (dev/toy/fakegh/fake.py, called in place of gh, so it runs on Windows too). check prints one FINDINGS table with the
 feature, group, rule, severity, finding and issue columns, every row a docs.tsv page or Other; file, with feature_labels
 false, tags each issue feature:<Page> or feature:Other and prints the table again naming the issues it filed; the digest
@@ -102,14 +102,17 @@ with tempfile.TemporaryDirectory() as tmp:
     write(os.path.join(repo, ".loop", "docs.tsv"), "Calc\tskills/calc\nGhost\tghost.py\nHome\tREADME.md\n")
     write(os.path.join(repo, "docs", "wiki", "Calc.md"),
           "<!-- workflow-docs -->\n# Calc\n\n## Summary\n\nCalc adds numbers.\n\n## Criteria\n\n- REL-1: **Reviewed 2026-01-01** calc adds.\n")
-    write(os.path.join(repo, "skills", "calc", "scripts", "near.py"), "# pad\n" * 3400)
-    write(os.path.join(repo, "skills", "x", "scripts", "near.py"), "# pad\n" * 3400)
+    write(os.path.join(repo, "skills", "calc", "scripts", "calc.py"), "# calc\n")
+    write(os.path.join(repo, ".loop", "findings.md"), "# Findings\n\n" + "".join("- f%d: open\n" % n for n in range(6)))  # a hygiene WARN about no page
     git("init", "-q", "-b", "main", repo)
     for key, value in (("user.email", "t@example.test"), ("user.name", "t"), ("core.autocrlf", "false")):
         git("-C", repo, "config", key, value)
     git("-C", repo, "add", "-A")
     git("-C", repo, "commit", "-qm", "Findings in several groups")
-    groups = "requirements,docs,freshness,size"
+    with open(os.path.join(repo, "skills", "calc", "scripts", "calc.py"), "a") as handle:  # Calc's page goes stale: a Docs WARN about a page
+        handle.write("X = 1\n")
+    git("-C", repo, "commit", "-qam", "Change calc")
+    groups = "requirements,docs,freshness,hygiene"  # principle 5 retired the size rule (o988): hygiene is the second group
 
     if only != "--labels":
         out = run_script(repo, "health.py", "check", "--group", groups)
@@ -123,8 +126,8 @@ with tempfile.TemporaryDirectory() as tmp:
         cells = [[c.strip() for c in r.strip("|").split(" | ")] for r in rows]
         check(len({c[1] for c in cells}) >= 3, "findings from at least three groups in the one table (%s)" % sorted({c[1] for c in cells}))
         check(cells and all(c[0] in ("Calc", "Ghost", "Other") for c in cells), "every row names a feature page or Other")
-        check(any(c[0] == "Calc" and c[1] == "Size" and "calc" in c[4] for c in cells)
-              and any(c[0] == "Other" and c[1] == "Size" and "x" in c[4] for c in cells), "a finding about a page names it, one about none says Other")
+        check(any(c[0] == "Calc" and c[1] == "Docs" and "calc" in c[4] for c in cells)
+              and any(c[0] == "Other" and c[1] == "Hygiene" and "findings" in c[4] for c in cells), "a finding about a page names it, one about none says Other")
         bad = [l for l in lines if re.match(r"^(WARN|FAIL|UNREAD) ", l)]
         check(len(rows) == len(bad), "one row per WARN, FAIL and UNREAD finding (%d rows, %d findings)" % (len(rows), len(bad)))
         check(all(len(c) == 6 and c[5] for c in cells), "every row has all six cells")
@@ -132,7 +135,7 @@ with tempfile.TemporaryDirectory() as tmp:
     if only != "--table":
         before = run_script(repo, "health.py", "check", "--group", groups)  # the tick: check, then file, one report
         calls.clear()
-        filed = run_script(repo, "health.py", "file", "--group", "size,docs")
+        filed = run_script(repo, "health.py", "file", "--group", "hygiene,docs")
         print(filed)
         made = [c for c in calls if c.startswith("label create feature:")]
         created = [c for c in calls if c.startswith("issue create")]
@@ -141,7 +144,7 @@ with tempfile.TemporaryDirectory() as tmp:
         check(any("calc" in c and "--label feature:Calc" in c for c in created) and any("--label feature:Other" in c for c in created),
               "a Calc finding is tagged feature:Calc, one about no page feature:Other")
         cells = [[c.strip() for c in r.strip("|").split(" | ")] for r in rows_of(filed)]
-        check(cells and all(re.fullmatch(r"#\d+", c[5]) for c in cells if c[1] in ("Size", "Docs")), "file's table names the issue it filed for each finding")
+        check(cells and all(re.fullmatch(r"#\d+", c[5]) for c in cells if c[1] in ("Hygiene", "Docs")), "file's table names the issue it filed for each finding")
         report = os.path.join(tmp, "report.txt")
         write(report, before + "\n" + filed)
         os.environ["HEALTH_REPORT"] = report
