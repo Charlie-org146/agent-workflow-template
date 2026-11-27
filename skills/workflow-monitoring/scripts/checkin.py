@@ -303,6 +303,7 @@ def main():
     parser.add_argument("--owner", action="store_true", help="the operation session shows the owner this run: mark its decisions delivered")
     args = parser.parse_args()
     args.since and bs.timed(args.since, "--since %r")
+    args.owner and os.environ.get("LOOP_ROLE") == "worker" and sys.exit("REFUSED: only the operation session shows the owner a check-in (ONE_REVIEW_OWNER_FLAG)")
     lines = render(stamp=args.since or None)
     import review_view  # after the line fitting: each revert command stands whole on its own line (DLF-1.3)
     at = lines.index("Coming up") - 1 if "Coming up" in lines else len(lines)

@@ -10,6 +10,7 @@ import cover
 def cmd_record(args):
     slug, step = args.slug, args.step
     state = _s.held(slug)
+    _s.fit.start_review().gate(state, _s.root(), step)
     _s.guards.waiting_gate(_s.ME, state)
     _s.add_tokens(state, step, args.tokens, True)
     ran = os.path.join(_s.state_dir(), "%s.%s.ran" % (slug, step))

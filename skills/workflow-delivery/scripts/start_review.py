@@ -180,7 +180,7 @@ def gate(state, top, step):
     that only needs a start review (adopted) is held at the merge."""
     half_frozen(state) and refuse("%s was never fully frozen. Fix: the operation session runs goal.py recover %s"
                                   % (state["slug"], state["slug"]), "ONE_REVIEW_HALF_FROZEN")
-    if step not in ("build", "pr"):
+    if step not in ("build", "qa", "ship", "pr"):  # idea and plan, its review included, may come before the answer
         return
     why = unanswered(dict(state, start_required=None), top)
     why and refuse(why, "ONE_REVIEW_UNANSWERED")

@@ -200,6 +200,17 @@ check("FROZEN frz" in said and "\n- Review: one\n" in goal_in_head("frz") and re
       and ledger("frz") == ["mark"], "a freeze with the setting on marks the goal: " + said.strip()[:150])
 said = tool("step", "frz", "build")
 check("ONE_REVIEW_UNANSWERED" in said and record("frz").get("step") == "idea", "build waits for the start review: " + said.strip()[:110])
+reply = os.path.join(home, "reply.txt")
+open(reply, "w").write("STEP: done\n")
+for step in ("review", "qa", "ship"):
+    got = tool("record", "frz", step, "--file", reply)
+    if step != "review":
+        check("ONE_REVIEW_UNANSWERED" in got, "no %s is recorded before the start answer: %s" % (step, got.strip()[:90]))
+flow_py = os.path.join(delivery, "flow.py")
+got = subprocess.run([sys.executable, flow_py, "frz", "qa"], capture_output=True, text=True, cwd=tmp, env=env)
+check("ONE_REVIEW_UNANSWERED" in got.stdout + got.stderr, "and no qa is run before it: %s" % (got.stdout + got.stderr).strip()[:90])
+got = subprocess.run([sys.executable, os.path.join(root, "skills", "workflow-monitoring", "scripts", "checkin.py"), "--owner"], capture_output=True, text=True, cwd=tmp, env=env)
+check(got.returncode != 0 and "ONE_REVIEW_OWNER_FLAG" in got.stdout + got.stderr, "a worker's check-in marks nothing delivered: %s" % (got.stdout + got.stderr).strip()[-100:])
 lost = {k: v for k, v in record("frz").items() if k != "one_review"}
 json.dump(lost, open(os.path.join(runs, "frz.json"), "w"))
 check("ONE_REVIEW_UNANSWERED" in tool("step", "frz", "build"), "the committed mark holds a record that lost it")
