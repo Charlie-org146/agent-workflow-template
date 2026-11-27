@@ -22,7 +22,7 @@ Each of the four rows seen red on Windows before its fix and green after (done l
 The Linux run of the same toys (a forward slash is also fine there; a CRLF-tolerant check must still catch a real missing file), and the other rows that share these toys or the borrowed command.
 
 ## Out of scope
-Anything beyond the four rows (OPS-1.10); no new rows; no change to product code under skills/.
+Anything beyond the four rows (OPS-1.10); no new rows; the one product-code fix is criteria.py (see the Red team revisions).
 
 ## Review round revisions (ceo approve; design and engineering changes; this section wins over the steps above)
 - Causes are hypotheses until step 1 names the failing line of each row. Step 1 also names which `bash` ran (Git Bash or the System32 launcher) and captures each red run's output into the PR notes as the red evidence for done line 4.
@@ -55,6 +55,17 @@ Anything beyond the four rows (OPS-1.10); no new rows; no change to product code
 - Done line 3: if toy-leak-row-setup passes on Windows with no change, the line is met as written; the PR notes say why (the row compares names only) and it goes to the owner as a deliver-first line.
 - Touches: the goal file's Touches line is the operation session's to extend (it said it added skills/workflow-docs/scripts/criteria.py); the build waits on that line showing it.
 
+## Round 2 red team revisions (3 BREAKs; this section wins over every section above; condensed re-plan)
+- criteria.py:102 uses `posixpath.join(folder, name)`: byte-identical on Linux and no "//" when the wiki folder has a trailing slash. Its LF byte count after the change is pasted (under 20,480). On Windows the rows of the other `criteria.pages()` callers are rerun too (milestones, audit, render, prd and the docs toys), not only the toy neighbours; the fix is shown red first.
+- Mechanical guard for done line 4 (besides the fresh-context reader): in the build diff of dev/toy/test-shard-balance.py and dev/toy/test-one-review-start.py, no removed or changed line may contain an expected string, a check or assert call, or a PASS or FAIL literal. A script greps the diff for that, and its output is printed as the evidence for done line 4.
+- test-shard-balance.py: one `BASH` constant, `shutil.which("bash")` when `os.name == "nt"`, else `"bash"`, used at all five call sites (about lines 119, 137, 165, 170, 193); it resolves Git Bash on Windows and there is no bash.exe lookup on Linux.
+- The fixed rule is widened: a toy edit may change how a fixture is written or how the runner is called (the BASH constant, `shlex.quote`), never an expected value or a comparison.
+- The `newline="\n"` fixture edit is dropped unless step 1 shows it is needed (the compare strips a carriage return).
+- toy-leak-config-keep: if it is red on its own, STOP and report; fixing a fifth row is a new goal. Any edit to test-budget-order.py, test-merge-where.py or test-entry-config.sh is a STOP too.
+- Deliver-first lines for the owner, listed in the PR notes: (1) the root-cause fix is in product code (criteria.py), not the toy; (2) the bash resolution is a runner change; (3) done line 2 is met by the producer emitting "/", and the compare stays exact.
+- The scrub of red output replaces the repo root, the account folder and the temp root with `<repo>`, `<home>` and `<tmp>`.
+- Housekeeping: one Files line; add the `# windows: ok` header to test-shard-balance.py once it passes there.
+
 ## PENDING
 PENDING: 1. Whether test-one-review-start.py's failure is a fixture line-ending problem (in scope) or a backslash built in product code (stop and report): resolved by step 1.
 PENDING: 2. Which layer of the `toy-leak-config-keep` command fails on Windows and whether it lies in dev/toy: resolved by step 1.
@@ -64,7 +75,7 @@ PENDING: 2. Which layer of the `toy-leak-config-keep` command fails on Windows a
 - If the STOP for a product-code backslash fires, done line 2 stays unmet in this goal; no toy-side normaliser is added.
 - test-entry-config.sh is in Files only if step 1 names it as the failing layer.
 
-Files: dev/toy/test-shard-balance.py, dev/toy/test-one-review-start.py, dev/toy/test-budget-order.py, dev/toy/test-merge-where.py, dev/toy/test-entry-config.sh, .loop/regression.tsv
+Files: skills/workflow-docs/scripts/criteria.py, dev/toy/test-shard-balance.py, dev/toy/test-one-review-start.py, .loop/regression.tsv
 Lines: 60
 Gates: none
 Classes: none
