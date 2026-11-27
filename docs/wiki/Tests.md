@@ -829,5 +829,5 @@
 | <a id="t-done-lvl-relevel-2"></a>done-lvl-relevel-2 | requirement | done line v110-lvl-relevel:2 | not run | - | local | no |
 | <a id="t-lvl-relevel-record"></a>lvl-relevel-record | requirement | done line v110-lvl-relevel:4 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-26 |
 | <a id="t-lvl-sizing-levels"></a>lvl-sizing-levels | requirement | done line v110-lvl-relevel:5 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-26 |
-| <a id="t-lvl-armed"></a>lvl-armed | requirement | done line v110-lvl-relevel:3 | not run | - | local | 2026-11-26 |
+| <a id="t-lvl-armed"></a>lvl-armed | requirement | done line v110-lvl-relevel:3 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-26 |
 | <a id="t-done-lvl-relevel-6"></a>done-lvl-relevel-6 | requirement | done line v110-lvl-relevel:6 | not run | - | local | no |

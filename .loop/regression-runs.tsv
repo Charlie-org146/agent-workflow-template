@@ -329,6 +329,7 @@ ls-private-no-workflow	PASS	2026-11-26
 ls-private-tick	PASS	2026-11-26	
 ls-size-budget	FAIL	2026-11-25	
 ls-usage-steps	PASS	2026-11-26	
+lvl-armed	PASS	2026-11-27	
 lvl-relevel-record	PASS	2026-11-27	
 lvl-sizing-levels	PASS	2026-11-27	
 lvl-table-refused	PASS	2026-11-27	
