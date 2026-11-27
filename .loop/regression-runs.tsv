@@ -113,7 +113,7 @@ del5-merge-forwards-checkout	PASS	2026-11-15
 del5-patch-default	PASS	2026-11-25	
 del6-depth-by-size	PASS	2026-11-27	
 del7-kill-resume	PASS	2026-11-27	
-del8-board-over	PASS	2026-11-25	
+del8-board-over	PASS	2026-11-27	
 del8-floor-step	PASS	2026-11-25	
 del8-prep-board	PASS	2026-11-27	
 del9-lane-part-no-path	PASS	2026-11-27	
@@ -219,8 +219,8 @@ grd2-limits-in-settings	PASS	2026-11-25
 grd2-pr-lane-holds-merge-slot	PASS	2026-11-15	
 grd2-step-budget	PASS	2026-11-25	
 grd2-time-stop	PASS	2026-11-25	
-grd4-budget	PASS	2026-11-25	
-grd4-touches	PASS	2026-11-25	
+grd4-budget	PASS	2026-11-27	
+grd4-touches	PASS	2026-11-27	
 grd4-worker-commit-main-refused	PASS	2026-11-15	
 grd5-health-close	PASS	2026-11-26	
 grd6-head-moved	PASS	2026-11-25	
@@ -276,8 +276,8 @@ home-topic-live	PASS	2026-11-24
 hook-count	PASS	2026-11-19	
 hook-stub-mark-foreign	PASS	2026-11-17	
 hook-stub-mark-own	PASS	2026-11-17	
-issue-117-bind-self	PASS	2026-11-25	
-issue-117-github-touches	PASS	2026-11-25	
+issue-117-bind-self	PASS	2026-11-27	
+issue-117-github-touches	PASS	2026-11-27	
 issue-129-docs-published	PASS	2026-11-25	
 issue-38-verdicts	PASS	2026-11-27	
 issue-closed-ignored	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -444,8 +444,10 @@ operate-toy-no-check	PASS	2026-11-25
 operate-wait-99	PASS	2026-11-25	
 ops-findings-filed	PASS	2026-11-19	
 orv-checkin-revert	PASS	2026-11-27	
+orv-checks-stay	PASS	2026-11-27	
 orv-no-owner-wait	PASS	2026-11-27	
 orv-safe-option	PASS	2026-11-27	
+orv-start-review	PASS	2026-11-27	
 package-caps-held	PASS	2026-11-25	
 package-gate-controls	PASS	2026-11-25	
 package-gate-head	PASS	2026-11-27	
@@ -603,8 +605,8 @@ shard-fits-budget	PASS	2026-11-25
 size-140	PASS	2026-11-12	
 size-budget	PASS	2026-11-24	
 size-lf-crlf	PASS	2026-11-26	
-sizing-asz-1-1	PASS	2026-11-25	
-sizing-asz-1-2	PASS	2026-11-25	
+sizing-asz-1-1	PASS	2026-11-27	
+sizing-asz-1-2	PASS	2026-11-27	
 sizing-asz-1-3	PASS	2026-11-27	
 sizing-cbs-1-1	PASS	2026-11-27	
 sizing-cbs-1-2	PASS	2026-11-27	
