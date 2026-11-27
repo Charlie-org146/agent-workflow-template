@@ -73,6 +73,15 @@ for name, odd in (("a dot-slash path", {"touches": ["./.github/workflows/x.yml"]
                   ("a bogus depth_override", {"touches": [".github/x"], "depth_override": {"depth": "x"}})):
     text = prompt(dict(SMALL, **odd))
     check("never condense" in text.lower() and "one-round" not in text, "%s is held to full at plan start" % name, text)
+# red team pass 2 (v110-plan-by-size): more inputs that must stay full
+for name, odd, cfg in (("a directory path with a slash", {"touches": [".github/"]}, None), ("a path leaving the repo", {"touches": ["../.github/x"]}, None),
+                       ("a path with leading blanks", {"touches": [" .github/x"]}, None), ("touches as a dict", {"touches": {"a": 1}}, None),
+                       ("touches as None", {"touches": None}, None), ("empty touches", {"touches": []}, None),
+                       ("a GitHub surface", {"touches": ["github:wiki"]}, None),
+                       ("a pattern for the dot-slash spelling", {"touches": ["./skills/x/a.py"]}, {"risky_paths": [r"^\./skills/"]})):
+    text = prompt(dict(SMALL, **odd), cfg)
+    check("never condense" in text.lower() and "one-round" not in text, "%s is held to full at plan start" % name, text)
+check("one-round" in prompt(dict(SMALL, touches=["skills/x/a.py", "skills/x/b.py"])), "control: two files in one area stay small")
 sys.path.insert(0, os.path.join(ROOT, "skills", "workflow-setup", "scripts"))
 import settings  # noqa: E402
 rows = {row[0]: row for row in settings.TABLE}
