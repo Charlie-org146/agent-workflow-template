@@ -508,9 +508,9 @@ def runbook():
     check(not found, "the Runbook section holds none of land, nightly, covered, draft: %s" % (found or "none"))
     check(all(re.search(r"\b%s\b" % level, book) for level in ("L0", "L1", "L2")) and "L0, L1, L2 or one row id" in book, "the Runbook names the targets L0, L1, L2 and a row id")
     how = open(os.path.join(root, "docs", "wiki", "How-to-use-Regression.md"), encoding="utf-8").read()
-    table = how.split("### Old words and the new levels", 1)
-    check(len(table) == 2, "How-to-use-Regression.md has the section 'Old words and the new levels'")
-    rows = [l for l in (table[1].split("\n##", 1)[0] if len(table) == 2 else "").splitlines() if l.startswith("| `")]
+    table = how.split("**Old words and the new levels**", 1)
+    check(len(table) == 2, "How-to-use-Regression.md has the block 'Old words and the new levels'")
+    rows = [l for l in (table[1].split("\n#", 1)[0] if len(table) == 2 else "").splitlines() if l.startswith("| `")]
     want = (("regression.py add --level", ("land", "nightly", "draft", "covered"), "--test-level"),
             ("regression.py run", ("land", "nightly"), "L1"),
             ("goal_levels", ("land", "nightly"), "L2"),
@@ -555,7 +555,48 @@ def prlevel():
     check("run L1 --reuse --tier goal" in committed, "this repository's regression-pr.yml names L1")
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel}
+def wfpin():
+    print("== S7/R14: the cover pins exactly two generated texts; the fix is named; update reports the old text")
+    # Value: protects=the cover accepts the two reviewed generated workflows (nightly line, L1 line) and nothing else, a refusal says how to fix it,
+    #   and update names an old generated workflow on an armed table; fails_when=the old text turns the cover off for an unarmed adopter, a third
+    #   text passes, or either message has no runnable fix
+    import contextlib, hashlib, io
+    delivery = os.path.join(root, "skills", "workflow-delivery", "scripts")
+    sys.path.insert(0, delivery)
+    sys.path.insert(0, os.path.join(root, "skills", "workflow-setup", "scripts"))
+    import cover
+    new = open(os.path.join(root, ".github", "workflows", "regression-pr.yml"), encoding="utf-8").read()
+    old = new.replace("run L1 --reuse --tier goal", "run nightly --reuse --tier goal")
+    third = new.replace("run L1 --reuse --tier goal", "run L1 --reuse --tier goal --kind defect")
+    sha = lambda t: hashlib.sha1(t.strip().replace("\r\n", "\n").encode()).hexdigest()
+    check(tuple(cover.WF_SHA) == ("533fbed6f28fac049a2bd2c45eaa3bdbffed1ac6", "19b5c86b5523cea9c2219fb081e82592e9f48370") and sha(old) == cover.WF_SHA[0] and sha(new) == cover.WF_SHA[1],
+          "WF_SHA holds exactly two shas: the nightly-line text and the L1-line text", cover.WF_SHA)
+    check(cover.pinned(new) and cover.pinned(old), "the cover accepts the L1 text and the nightly text", (cover.pinned(new), cover.pinned(old)))
+    check(not cover.pinned(third), "a third, edited regression-pr.yml is still off")
+    folder = tempfile.mkdtemp(prefix="test-level-words-cover.")
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        cover.off(folder, "slug", "pr", "WF")
+    said = out.getvalue()
+    check("COVER OFF: WF" in said and "regression.py workflow" in said and "regression-pr.yml" in said, "COVER OFF: WF names the fix: regenerate with regression.py workflow, commit regression-pr.yml", said)
+    import update
+    from lvl_fixture import Repo, entry, row
+    risks = ["label\tsecurity\tsecurity\tfixture label"]
+
+    def report(armed, text, levels="land"):
+        repo = Repo([row("a")] + ([row("lvl-armed")] if armed else []), [entry("a")] + ([entry("lvl-armed")] if armed else []), risks)
+        repo.write(".loop/config.json", json.dumps({"ci_levels": levels}))
+        repo.write(".github/workflows/regression-pr.yml", text)
+        got = update.old_workflow(repo.path)
+        repo.close()
+        return got
+    armed_old = report(True, old)
+    check(armed_old and "regression.py workflow" in " ".join(armed_old) and "ci_levels" in " ".join(armed_old), "update names an old generated workflow on an armed table, the fix, and that ci_levels is ignored", armed_old)
+    check(report(True, new) == [], "update says nothing when the armed table's workflow is the L1 text")
+    check(report(False, old) == [], "update says nothing on an unarmed table: the nightly text is the one it writes")
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "wfpin": wfpin}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))

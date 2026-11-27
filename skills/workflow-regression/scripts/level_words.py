@@ -161,3 +161,9 @@ def tsv_of(root, name):
             return [l.rstrip("\n").split("\t") for l in handle if l.strip() and l[0] != "#"]
     except OSError:
         return []
+
+
+def pr_target(root, cfg):
+    """The level the pull request check runs: L1 once the table is armed (ci_levels no longer steers it), else ci_levels or nightly."""
+    import completion
+    return "L1" if completion.armed(root) else str(cfg.get("ci_levels") or "nightly")

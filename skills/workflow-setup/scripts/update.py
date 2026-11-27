@@ -340,6 +340,19 @@ def apply_skills(skills, manifest, read, old, fixes, take, where):
     print("UPDATED skills to %s in %s" % (manifest["version"], skills))
 
 
+def old_workflow(repo):
+    """Lines naming an old generated pull request workflow: ours, run at nightly, on a table that is armed (L1 is what it runs now)."""
+    try:
+        text = open(os.path.join(repo, ".github", "workflows", "regression-pr.yml"), encoding="utf-8").read()
+        armed = any(line.split("\t")[0] == "lvl-armed" for line in open(os.path.join(repo, ".loop", "regression.tsv"), encoding="utf-8"))
+    except OSError:
+        return []
+    if not (armed and text.startswith("# Written by workflow-regression")) or "regression.py run L1 " in text:
+        return []
+    return ["WORKFLOW: .github/workflows/regression-pr.yml is the old generated text (it runs ci_levels; an armed table runs L1 and ci_levels no longer steers it). "
+            "Fix: python3 skills/workflow-regression/scripts/regression.py workflow, then commit it and merge it (until then the cover is off)"]
+
+
 def locked(skills):
     handle = open(os.path.join(skills, ".workflow-update.lock"), "w")
     stop = time.time() + 10
@@ -401,6 +414,8 @@ def main():
         return 0
     target = manifest["version"] if version_key(manifest["version"]) > version_key(ours) else ours
     behind = sync.report(repo, base_cfg, target) if repo else False
+    for line in old_workflow(repo) if repo else []:
+        print(line)
     changed, dropped = check(skills, manifest, old, fixes, ours) if not tree else ([], [])
     if not args.apply:
         up = not changed and not dropped and not behind and not args.take and (tree or manifest["version"] == ours)
