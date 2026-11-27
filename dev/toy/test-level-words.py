@@ -698,7 +698,60 @@ def wfrows():
         check(any(want in line for line in got), "old text 'run %s': %s" % (word, want), got)
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "draftl0": draftl0, "wfrows": wfrows, "wfpin": wfpin}
+def gate():
+    print("== R2, R8, R9: the major gate evaluates a covered row through its covers, on a levelled table only; PASS never wins over FAIL")
+    # Value: protects=a requirement held by a covered row is unmet when a cover is failing, a draft or missing, is met when every cover passes
+    #   or is known, and the old skip stays for a table that is not levelled; a PASS never wins over a FAIL for the same commit;
+    #   fails_when=the gate skips a covered row whatever its covers do
+    import json as _json, subprocess
+    sys.path.insert(0, os.path.join(root, "skills", "workflow-release", "scripts"))
+    import review
+    from lvl_fixture import Repo, entry, row
+
+    def unmet(rows, ents, known="", failing=(), proven=()):
+        repo = Repo(rows, ents, ["label\tsecurity\tsecurity\tfixture label"])
+        repo.write("docs/wiki/P.md", "# P\n\n## Requirements\n\n" + "".join("- %s: **Unreviewed** t\n" % r["id"] for r in rows if r["id"].startswith("ABC-")))
+        known and repo.write(".loop/regression-known.tsv", known)
+        ents is None and os.remove(os.path.join(repo.path, ".loop", "regression-relevel.tsv")) if ents is None and os.path.exists(os.path.join(repo.path, ".loop", "regression-relevel.tsv")) else None
+        repo.commit()
+        old = review.proven
+        review.proven = lambda top: set(proven)
+        try:
+            got = review.criteria(repo.path, {}, lambda top: ["P"], lambda cmd, top: cmd in failing)
+        finally:
+            review.proven = old
+        repo.close()
+        return got[0]
+    base = [row("good", command="g"), row("bad", command="b"), row("drf", level="draft"), row("ABC-1", level="covered", command="x"),
+            row("ABC-2", level="covered", command="x"), row("ABC-3", level="covered", command="x"), row("ABC-4", level="covered", command="x")]
+    ents = [entry("good"), entry("bad"), entry("drf", old="draft"), entry("ABC-1", old="covered", covers="good"), entry("ABC-2", old="covered", covers="bad"),
+            entry("ABC-3", old="covered", covers="drf"), entry("ABC-4", old="covered", covers="good,bad")]
+    got = unmet(base, ents, failing=("b",))
+    check(not any(u.startswith("ABC-1") for u in got), "a covered row whose cover passes is met", got)
+    check(any(u.startswith("ABC-2") and "bad" in u for u in got), "a covered row whose cover fails is unmet and names the cover", got)
+    check(any(u.startswith("ABC-3") and "drf" in u for u in got), "a covered row whose cover is a draft is unmet and names the cover", got)
+    check(any(u.startswith("ABC-4") and "bad" in u for u in got), "one failing cover among two makes the row unmet", got)
+    got = unmet(base, ents, known="bad\tknown red\n", failing=("b",))
+    check(not any(u.startswith("ABC-2") for u in got), "a known cover is treated as the gate treats a known row today (met), and nothing says green", got)
+    got = unmet(base, None, failing=("b",))
+    check(not any(u.startswith(("ABC-2", "ABC-3", "ABC-4")) for u in got), "a table with no levels record keeps the old skip of covered rows (R9: levelled tables only)", got)
+    repo = Repo([row("a")], [entry("a")], ["label\tsecurity\tsecurity\tx"])
+    repo.commit()
+    head = repo.git("rev-parse", "HEAD").stdout.strip()
+    folder = os.path.join(review.common_of(repo.path), "tests")
+    os.makedirs(folder, exist_ok=True)
+    for name, status in (("pass", "PASS"), ("fail", "FAIL")):
+        open(os.path.join(folder, name + ".json"), "w").write(_json.dumps({"rows": {"a": {"status": status, "commit": head}}}))
+    only = {"a"} if review.proven(repo.path) else set()
+    os.remove(os.path.join(folder, "fail.json"))
+    check("a" in review.proven(repo.path), "control: with only the PASS record the row is proven", only)
+    open(os.path.join(folder, "fail.json"), "w").write(_json.dumps({"rows": {"a": {"status": "FAIL", "commit": head}}}))
+    found = review.proven(repo.path)
+    repo.close()
+    check("a" not in found, "a row with a PASS and a FAIL for the same commit is not proven (R8: PASS never wins over FAIL)", found)
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft, "unarmed": unarmed, "writers": writers, "coverstate": coverstate, "mixedruns": mixedruns, "swallow": swallow, "runbook": runbook, "prlevel": prlevel, "advice": advice, "advice2": advice2, "draftl0": draftl0, "wfrows": wfrows, "gate": gate, "wfpin": wfpin}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
