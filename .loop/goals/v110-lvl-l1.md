@@ -19,3 +19,37 @@ Frozen. A wrong done line needs a new goal.
 ## Verify by hand
 
 <!-- Numbered steps for a person, each with an Expect: line. A release needs this. -->
+
+1. In a copy of this repository with its own .git folder and HOME, run `python3 dev/toy/test-l1.py`. Expect: the last line is `ALL PASS`.
+2. In the same copy, run `python3 dev/toy/test-l1-pr.py`. Expect: the last line is `ALL PASS`.
+
+## Notes
+
+Departures from the plan (TD2073: the plan no longer matched the code it was written for), each with its reason:
+
+1. Room in lanes_cli.py: table_changed moved whole into completion.py (merge_runs had already moved).
+2. No marker step: the lvl-armed row is already in the table. Rows this goal adds have level entries.
+3. The L1 functions are in completion.py (levels.py is past its split size and levels_read.py has no room); the miss report is in cutgate.py. notes and rank (from tiers.py) and fit, minutes and budget (from runs.py) also moved whole into completion.py, so tiers.py did not grow.
+4. The flag is --test-level; the help of `add --test-level` now says what it does.
+5. There is no noretry tag, so that clause is dropped.
+6. A private row listed nightly runs on L1 with a NOTE; nothing is refused.
+7. A security or private row is always L1, so there is no private row at L2.
+8. flaky.tsv is uploaded by its own step with if-no-files-found: ignore (a hashFiles condition cannot see the runner's temp folder).
+9. The private-name scan is loaded by path from the delivery skill; the secret-shape pattern is copied.
+10. Step 1's local mapping is dropped (ruled by top): only the pull request's `nightly` run is L1. While the cover claims L1, the goal's local lane runs the L0 rows and the planned rows the pull request leaves out; with the cover off it runs as before.
+11. regression-flaky.yml grants its three permissions on its one job, with `permissions: {}` at the top.
+
+Security:
+
+- The owner approved the new .github/workflows/regression-flaky.yml (issues: write on its one job) and the level-map edit to .github/workflows/regression-pr.yml: owner record o1065 (earlier relayed approvals o991, o998).
+- TRUST CHANGE: cover.py's WF_SHA, the fingerprint of the reviewed pull request workflow, is re-pinned to 533fbed6f28fac049a2bd2c45eaa3bdbffed1ac6. The value is computed from the committed file the way cover.py reads it: `git show HEAD:.github/workflows/regression-pr.yml | python3 -c 'import hashlib,sys; print(hashlib.sha1(sys.stdin.read().strip().replace("\r\n","\n").encode()).hexdigest())'`. A reviewer of this re-pin reads the workflow file it pins. The row lvl-l1-pin shows the cover is refused when the workflow differs.
+
+Later work:
+
+- Using a size's levels is not in this goal.
+
+Pull request notes:
+
+- TRUST CHANGE: the cover's pinned fingerprint of the pull request workflow changes with this goal's edit to that workflow (owner record o1065).
+- A new workflow, regression-flaky.yml, runs from the default branch and files one issue for a security row that fails once and then passes (owner record o1065).
+- Deliver-first: cover.py is 17,957 B, over the 17,500 B its earlier plan set for it (the 20,480 B limit holds).
