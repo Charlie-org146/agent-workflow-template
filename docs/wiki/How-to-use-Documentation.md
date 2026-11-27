@@ -59,6 +59,8 @@ Upgrading a repo whose pages still have Summary and Criteria:
 5. Render: `python3 criteria.py render`.
 6. Check: `python3 docs.py check` prints `DOCS OK`.
 
+`criteria.py` joins page paths with `/` on every OS, so a page is named `docs/wiki/Setup.md` on Windows too.
+
 Rollback is reverting that commit.
 
 | You say | What happens |

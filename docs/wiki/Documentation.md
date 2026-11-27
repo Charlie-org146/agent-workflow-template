@@ -7,6 +7,8 @@ Review: **Unreviewed** <!-- kept fast-3min@d4d7dad03 -->
 
 How to use: [How-to-use-Documentation](How-to-use-Documentation)
 
+Page paths from `criteria.py` use `/` on every OS.
+
 ## Problem
 - I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested.
 - Pages drift from the code, and each repo writes them its own way, so reviewing them takes too long.
