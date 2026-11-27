@@ -21,10 +21,10 @@ Frozen. A wrong done line needs a new goal.
 
 What it does: a plan step with no stored size starts from a provisional row (small; large for a goal frozen large, with no frozen size, or touching a safety class or risky path) and is told that row's forms; the plan step prints REVW-5's round rule with `plan_fix_reads` (new setting, default 2, read from the base branch's config). Touches were widened through the tool to hold the setting and its generated references: settings.py, .loop/config.json, skills/loop-files.md, .loop/START.md, docs/wiki/How-to-use-Setup.md and .loop/regression-relevel.tsv.
 
-Found outside this change (sent to the operation as deliver-first drafts, WHAT only; the operation files them):
-1. The shared safety-class word list misses the word "oauth", so a goal about oauth login is not detected as touching a safety class: a fail-open in safety-class detection, which the plan-start row also relies on.
-2. An owner-edited checks table that gives the large row a one-pass plan review makes a large goal's plan step run condensed, because the depth follows the table.
-3. A malformed stored `sized` record (not a dict, `checks` null, or a `passes` value that is not a number) raises in `sizing.depth`, which `guards._record` also calls. Four such crashes were found by the red team and left as out of scope.
+Found outside this change (filed as deliver-first by the operation, WHAT only):
+1. (v110-plan-by-size-later-goal-1) The shared safety-class word list misses the word "oauth", so a goal about oauth login is not detected as touching a safety class: a fail-open in safety-class detection, which the plan-start row also relies on.
+2. (v110-plan-by-size-later-goal-2) An owner-edited checks table that gives the large row a one-pass plan review makes a large goal's plan step run condensed, because the depth follows the table.
+3. (v110-plan-by-size-later-goal-3) A malformed stored `sized` record (not a dict, `checks` null, or a `passes` value that is not a number) raises in `sizing.depth`, which `guards._record` also calls. Four such crashes were found by the red team and left as out of scope.
 
 Red team (form full, 2 passes):
 - Pass 1 at 81f1fafda: 8 fail-open inputs inside this change, red 7db69f536 (10 failing checks), fix 0d4651050.
