@@ -73,3 +73,13 @@ All six plan reviews said build with changes; none rejected. The goal's record k
 - Build: the two toys and the row filter no longer pass the caller's git environment.
 - Red for line 2 (RT17; run on the same patch as 4da454609): "FAIL: a row never inherits a lane's note, queued or started path".
 - Red for line 3 (RT17; run on the same patch as 5425fb21b): "FAIL: d: with no free session a new one is refused with the reason" and "FAIL: d: a free (archived) session is woken, renamed and sent the goal".
+
+### Red team pass 2 (the rerun, on plan sha1 6922e7719dc4) and its dispositions
+
+One Codex pass after the size of this goal rose to large. It added three breaks to the record; pass 1's ten are unchanged. The record's accept mark (o1000, set by the operation for principles 2, 3, 4, 7 and 8) does not say which break is which; this table does. N is the break's order in pass 2; id as in the table above.
+
+| N | principle | id | disposition | what the build or record does |
+|---|---|---|---|---|
+| N1 | 2 | de85878b | in two parts: fixed in build; the part pass 1 already raised stays deferred | The row-merge checker (dev/check-row-merge.py) starts rows with the row environment; row toy-leak-row-merge. The deferred part is DF2. |
+| N2 | 2 | fcb48bc2 | deliver-first, with DF1 (#5352) | "Build: the entry toy's old control reports a setup error apart from its expected result." |
+| N3 | 7 | 0fa1c48f | deliver-first | "Build: the entry toy runs with its own git configuration and home." |
