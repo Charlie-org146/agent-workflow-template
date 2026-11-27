@@ -17,6 +17,7 @@ sys.dont_write_bytecode = True
 
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 sys.path.insert(0, os.path.join(root, "skills", "workflow-regression", "scripts"))
+os.chdir(root)
 os.environ["HOME"] = os.environ["USERPROFILE"] = tempfile.mkdtemp(prefix="test-level-words-home.")
 failed = []
 
@@ -55,7 +56,7 @@ def goal():
     print("== D2a: the goal_levels table")
     # Value: protects=a goal lane plans from the level the setting names, and an old word is read and said; fails_when=L0, L1 or L2 is
     #   ignored, or an old word is read in silence, or a bad value passes on a levelled table; why_new=the setting knew only land and nightly
-    for value, want in (("land", "L0"), ("nightly", "L1"), ("L0", "L0"), ("L1", "L1"), ("L2", "L2")):
+    for value, want in (("land", "L1"), ("nightly", "L2"), ("L0", "L0"), ("L1", "L1"), ("L2", "L2")):
         got, out, err, code = plan(True, value)
         old = value in ("land", "nightly")
         check(got == want and code is None and (("GOAL_LEVELS_OLD" in out) == old), "levelled table: goal_levels %r plans from %s%s" % (value, want, " and says so" if old else ""))
@@ -148,7 +149,24 @@ def coverlevel():
     check(status == 0, "a covered row over an L0 cover is L0 when stored as L0")
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel}
+def superset():
+    print("== TD2334: on this repo's real table an old word's replacement selects at least the rows the old word did")
+    # Value: protects=reading "land" or "nightly" on a levelled table never plans a goal lane from fewer rows; fails_when=an old
+    #   word is replaced by a level that selects fewer rows (land read as L0 planned from 3 rows instead of 720)
+    import level_words
+    import regression
+    import runs
+    rows = regression.read_rows(root)
+    for old, same in (("land", False), ("nightly", True)):
+        was = {r["id"] for r in runs.chosen(rows, old)}
+        target = level_words.goal_target(old, True)
+        now = {r["id"] for r in runs.chosen(rows, target)}
+        check(was <= now and (not same or was == now) and len(was) > 100,
+              "goal_levels %r reads as %s: %d rows before, %d now, %s" % (old, target, len(was), len(now), "the same set" if same else "a superset"))
+    check(len({r["id"] for r in runs.chosen(rows, "L0")}) < 20, "L0 keeps only L0's rows")
+
+
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
