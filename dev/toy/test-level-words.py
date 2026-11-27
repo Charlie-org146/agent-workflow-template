@@ -257,6 +257,19 @@ def notrun():
         lines = [l for l in said.splitlines() if "drf" in l]
         check(lines == ["not run: draft drf"], "%s: the draft is named only in its own line (not run: draft drf)" % " ".join(args), said)
     check(not os.path.exists(os.path.join(repo.path, "RAN-DRAFT")), "no route ran the draft's command")
+    done, said = repo.run("run", "--ids", "no-such-row")
+    check(done != 0 and "not run: draft drf" in said.splitlines(), "a refused run (no such row) still names the draft first (R6: before any early exit)", said)
+    repo.close()
+
+
+def plaindraft():
+    print("== R5: on a table that is not levelled a draft is added without --test-level")
+    # Value: protects=add --level draft works where --test-level is refused; fails_when=the stage is demanded on a table with no record
+    from lvl_fixture import Repo, row
+    repo = Repo([row("alpha")], None, None)
+    repo.commit()
+    done, said = repo.run("add", "drf", "--level", "draft", "--command", "echo write a test")
+    check(done == 0 and "LEVELS_NO_STAGE" not in said and "drf" in (repo.read(".loop/regression.tsv") or ""), "a draft is added without --test-level on a table that is not levelled", said)
     repo.close()
 
 
@@ -324,7 +337,7 @@ def critcover():
     repo.close()
 
 
-cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover}
+cases = {"goal": goal, "settings": settings, "moved": moved, "coverlevel": coverlevel, "superset": superset, "state": state, "drafts": drafts, "notrun": notrun, "syncdraft": syncdraft, "enforced": enforced, "critcover": critcover, "plaindraft": plaindraft}
 for name in (sys.argv[1:] or list(cases)):
     cases[name]()
 print("%d failed" % len(failed))
