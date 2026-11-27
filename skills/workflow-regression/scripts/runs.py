@@ -16,6 +16,7 @@ import time
 import actions
 import completion
 import lanes
+from completion import budget, fit, minutes  # noqa: F401
 
 # A prompt from gh must fail, not block.
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
@@ -160,34 +161,6 @@ def sync_issues(results, live, day):
 FLOOR, DEFAULT = 15, 15
 
 
-def minutes(cfg, key, default=DEFAULT):
-    value = cfg.get(key, default)
-    if isinstance(value, bool) or not isinstance(value, int) or value < FLOOR:
-        sys.exit("REFUSED: %s is %r in .loop/config.json, under the %d-minute floor. Fix: set it to %d or more." % (
-            key, value, FLOOR, FLOOR))
-    return value
-
-
-def budget(root):
-    try:
-        with open(path_of(root, "config.json")) as handle:
-            cfg = json.load(handle)
-    except (OSError, ValueError):
-        cfg = {}
-    return minutes(cfg if isinstance(cfg, dict) else {}, "test_budget_minutes") * 60
-
-
-def fit(todo, est, limit):
-    keep, left, used = [], [], 0.0
-    for key in todo:
-        if used + est.get(key, 0) <= limit:
-            keep.append(key)
-            used += est.get(key, 0)
-        else:
-            left.append(key)
-    return keep, left
-
-
 def execute(root, picked, todo, est, limit, timeout, expected, reuse):
     keep, left = fit(todo, est, limit) if limit else (todo[:], [])
     by, results, start, first = {row["id"]: row for row in picked}, [], time.time(), {}
@@ -276,6 +249,9 @@ def criterion_rows(rows, key):
 def chosen(rows, target):
     if target in rows:
         return [rows[target]]
+    if target in ("L0", "L1", "L2"):
+        top = (lanes.git(".", "rev-parse", "--show-toplevel") or ".").strip()
+        return completion.at_level(list(rows.values()), target, completion.entries(top))
     if target == "land":
         return [row for row in rows.values() if row["level"] == "land"]
     if target == "nightly":
