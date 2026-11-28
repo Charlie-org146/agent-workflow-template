@@ -43,12 +43,72 @@ def l2_refuse(target, cleanup):
     """The refusal line for a target and cleanup that L2 does not take, else an empty string."""
     if target == "L2" and cleanup == "true":
         return "REFUSED (L2_CLEANUP_EXCLUSIVE): cleanup runs no row and L2 runs every row. Fix: rerun with cleanup off, or with target nightly"
-    return ""
+    return covered_by(target)
+
+
+def covered_by(target):
+    """A covered row asked for by its id is refused: it never runs, so it never makes a PASS of its own (R2). Fail closed: once the table
+    says the row is covered, an unreadable levels record still refuses."""
+    try:
+        with open(".loop/regression.tsv", encoding="utf-8") as table:
+            kind = {line.split("\t")[0]: line.split("\t")[1:2] for line in table if line.strip() and line[0] != "#"}
+    except OSError:
+        return ""
+    if kind.get(target) != ["covered"]:
+        return ""
+    try:
+        with open(".loop/regression-relevel.tsv", encoding="utf-8") as record:
+            covers = next((c[4] for c in (line.split("\t") for line in record) if c[0] == target and len(c) > 4), "")
+    except OSError:
+        covers = "(levels record unreadable)"
+    return "REFUSED (COVERED_ROW): %s is covered by %s; run those" % (target, covers or "no listed row")
+
+
+def not_run(table):
+    """Name each draft row of the table: a draft is never run, whatever the target."""
+    for row in table:
+        row[1:2] == ["draft"] and print("not run: draft " + row[0])
+
+
+def armed(table):
+    """The table holds lvl-armed and regression-pr.yml is this tool's: only then are L0 and L1 targets (completion.armed)."""
+    try:
+        with open(".github/workflows/regression-pr.yml", encoding="utf-8") as flow:
+            return any(row[0] == "lvl-armed" for row in table) and flow.readline().startswith("# Written by workflow-regression")
+    except OSError:
+        return False
+
+
+def level_names(table):
+    """The level targets: land, nightly and L2 as always; L0 and L1 too once the table is armed."""
+    return ("land", "nightly", "L2") + (("L0", "L1") if armed(table) else ())
+
+
+def level_pick(target, row, record=[]):
+    """Does `row` run for the target? land, nightly and L2 as they always did; for L0 or L1 completion.at_level's rule from the committed levels record: L0 is the rows
+    recorded L0; L1 is L0 and L1 and every security or private row; no entry is L1; drafts and covered rows never run."""
+    if target in ("land", "nightly", "L2"):
+        return row[1] in ("land", "nightly" if target == "L2" else target)
+    if row[1] not in ("land", "nightly"):
+        return False  # a draft, a covered row, or a word the table does not know never runs
+    if not record:
+        try:
+            with open(".loop/regression-relevel.tsv", encoding="utf-8") as handle:
+                record.append({c[0]: (c[2], c[3]) for c in (line.rstrip("\n").split("\t") for line in handle if line.strip() and line[0] != "#") if len(c) > 3})
+        except OSError:
+            sys.exit("REFUSED (NO_RECORD): .loop/regression-relevel.tsv is not in the checkout, so no L0 or L1 row can be picked. Fix: commit the levels record")
+    level, risk = record[0].get(row[0], ("L1", ""))
+    return level in (("L0",) if target == "L0" else ("L0", "L1")) or (target == "L1" and risk in ("security", "private"))
 # l2tail:end
 
 
 # Everything below runs in the summary job only (it embeds this whole file); the runner copies only the block above.
-ORDER = ("no result", "FAIL", "SKIPPED", "KNOWN", "EXEMPT", "PASS")  # worst first
+ORDER = ("FAIL", "FLAKY", "no result", "draft", "SKIPPED", "KNOWN", "EXEMPT", "excepted", "PASS")  # worst first; the one order (level_words reads it)
+
+
+def rank(state):
+    """Where a state sits in ORDER; a state not in it ranks worst, never raises."""
+    return ORDER.index(state) if state in ORDER else -1
 FIX = {"out of job time": "raise the job budget or move rows to another shard", "cannot run here": "list it in .loop/regression-skips.tsv with a reason, or make it runnable",
        "no result (shard did not finish)": "rerun the workflow and read that shard's log"}
 
@@ -103,10 +163,10 @@ def covered_lines(record, states, ids=()):
         if not cells[4] and cells[7].startswith("excepted"):
             lines.append("excepted (record) " + cells[0])
             continue
-        worst = min(((states.get(c) or "no result") for c in cells[4].split(",") if c), key=ORDER.index, default="no result")
+        worst = min(((states.get(c) or "no result") for c in cells[4].split(",") if c), key=rank, default="no result")
         via = [c for c in cells[4].split(",") if (states.get(c) or "no result") == worst][:1]
         lines.append("L2_COVERED %s -> %s via %s" % (cells[0], worst, via[0] if via else "-"))
-        if worst == "no result":
+        if worst == "no result" or worst not in ORDER:  # an unknown state is never green: it counts with the covers that have no result
             incomplete.append(cells[0])
     return lines, incomplete
 

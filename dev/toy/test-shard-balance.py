@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# windows: ok
 # reads: skills/workflow-regression/scripts/regression.py skills/workflow-regression/scripts/lanes_cli.py skills/workflow-regression/scripts/cutgate.py
 """shard-balance (o643): PR CI shards split the selected rows by recorded time, longest first to the least-loaded shard.
 
@@ -9,10 +10,17 @@ non-zero still does, and without the shard it fails as before. The workflow carr
 import os
 import random
 import re
+import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
 
+# On Windows the first bash on PATH can be the WSL launcher; the toy runs Git Bash or refuses (exit 1, never 77).
+BASH = shutil.which("bash") if os.name == "nt" else "bash"
+if not BASH or "system32" in BASH.lower():
+    print("FAIL: bash is %s here; put Git Bash first on PATH" % (BASH or "missing"))
+    sys.exit(1)
 root = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 scripts = os.path.join(root, "skills", "workflow-regression", "scripts")
 REG = os.path.join(scripts, "regression.py")
@@ -109,14 +117,14 @@ flow = lanes_cli.NARROW
 check("LOOP_ROW_TIMES" in flow and "actions/cache/save" in flow and 'cutgate.py' in flow and "upload-artifact" in flow,
       "the PR workflow restores and saves the times file and its affected job runs cutgate.py, which counts only RAN rows as run")
 # The affected job's coverage guard: run its script on fixtures where one row ran in no shard and one ran in two.
-script = "python3 " + os.path.join(root, "skills", "workflow-regression", "scripts", "cutgate.py") + " 's/shard-[0-7]/t.tsv'"
+script = "python3 " + shlex.quote(os.path.join(root, "skills", "workflow-regression", "scripts", "cutgate.py")) + " 's/shard-[0-7]/t.tsv'"
 work = tempfile.mkdtemp(prefix="shard-balance-affected-")
 for name, body in (("shard-0", "a\t5\tRAN\nb\t1\tSEL\nc\t1\tSEL\nd\t2\tSEL\nold\t9\t\n"), ("shard-1", "a\t5\tSEL\nb\t3\tRAN\nc\t1\tRAN\nd\t0\tSEL\n"),
                    ("shard-2", "a\t5\tSEL\nb\t3\tSEL\nc\t2\tRAN\nd\t0\tSEL\ne\t7\tLEFT\n")):
     os.makedirs(os.path.join(work, "s", name))
     with open(os.path.join(work, "s", name, "t.tsv"), "w") as handle:
         handle.write(body)
-gate = subprocess.run(["bash", "--noprofile", "--norc", "-eo", "pipefail", "-c", script], cwd=work, capture_output=True, text=True)
+gate = subprocess.run([BASH, "--noprofile", "--norc", "-eo", "pipefail", "-c", script], cwd=work, capture_output=True, text=True)
 check(gate.returncode == 1 and "FAIL cut or not run: d not run" in gate.stdout and "run twice: c" in gate.stdout and "FAIL cut or not run: e" not in gate.stdout,
       "affected fails the row no shard ran by name, names the row two shards ran, and reads only rows selected in this run (exit %d)" % gate.returncode)
 kept = open(os.path.join(work, "all.tsv")).read().split("\n")
@@ -134,7 +142,7 @@ check(flow.count("docs.py check") == 1 and len(step) == 1 and docs not in job an
 clone = tempfile.mkdtemp(prefix="pr-docs-")
 subprocess.run(["git", "clone", "-q", root, clone], check=True, capture_output=True)  # a CI checkout: origin set, no .git/loop/reviews.tsv
 subprocess.run(["git", "update-ref", "refs/remotes/origin/main", "HEAD"], cwd=clone, check=True)  # the base is the pull request's own start
-good = subprocess.run(["bash", "-c", step[0]], cwd=clone, capture_output=True, text=True)
+good = subprocess.run([BASH, "-c", step[0]], cwd=clone, capture_output=True, text=True)
 check(good.returncode == 0 and "DOCS OK" in good.stdout, "a pull request whose docs pass passes the docs step (exit %d)" % good.returncode)
 setup = os.path.join(clone, "docs", "wiki", "Setup.md")
 lines = open(setup).read().split("\n")
@@ -162,15 +170,15 @@ lines, at = reviewed_fixture(lines)
 open(setup, "w").write("\n".join(lines))
 subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qam", "fixture: one requirement marked Reviewed", "--allow-empty"], cwd=clone, check=True, capture_output=True)
 subprocess.run(["git", "update-ref", "refs/remotes/origin/main", "HEAD"], cwd=clone, check=True)
-good = subprocess.run(["bash", "-c", step[0]], cwd=clone, capture_output=True, text=True)
+good = subprocess.run([BASH, "-c", step[0]], cwd=clone, capture_output=True, text=True)
 check(good.returncode == 0 and "DOCS OK" in good.stdout, "the fixture's Reviewed requirement passes the docs step before it is changed (exit %d)" % good.returncode)
 lines[at] += " (changed with no review)"
 open(setup, "w").write("\n".join(lines))
 subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qam", "change a reviewed requirement"], cwd=clone, check=True, capture_output=True)
-bad = subprocess.run(["bash", "-c", step[0]], cwd=clone, capture_output=True, text=True)
+bad = subprocess.run([BASH, "-c", step[0]], cwd=clone, capture_output=True, text=True)
 check(bad.returncode != 0 and "LOCKED Setup" in bad.stdout, "negative control: a changed reviewed requirement with no review log fails the docs step with its own LOCKED line (exit %d)" % bad.returncode)
 # rows-pr-full (TD512): a PR whose diff touches .loop/regression.tsv or the known list runs its shards with no budget, so nothing is LEFT.
-shard_job = flow.replace("@BASE@", "main").replace("@LEVELS@", "nightly").split("\n  shard:")[1].split("\n  affected:")[0]
+shard_job = flow.replace("@BASE@", "main").replace("@LEVELS@", "L1").split("\n  shard:")[1].split("\n  affected:")[0]
 block = shard_job.split("      - run: |\n")[1].split("\n      - ")[0]
 sh = "\n".join(x[10:] for x in block.splitlines()).replace("${{ matrix.shard }}", "0").replace("${{ runner.temp }}", "/tmp")
 rf = tempfile.mkdtemp(prefix="rows-full-")
@@ -190,7 +198,7 @@ def budget_of(changed):
     subprocess.run(["git", "checkout", "-q", "-B", "pr", "main"], cwd=rf, check=True, capture_output=True)
     open(os.path.join(rf, changed), "a").write("y\n")
     subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qam", "change"], cwd=rf, check=True, capture_output=True)
-    done = subprocess.run(["bash", "-e", "-c", sh], cwd=rf, capture_output=True, text=True)
+    done = subprocess.run([BASH, "-e", "-c", sh], cwd=rf, capture_output=True, text=True)
     return re.search(r"--budget (\S+)", done.stdout).group(1) if done.returncode == 0 and "--budget" in done.stdout else "none"
 
 
@@ -223,6 +231,6 @@ check("BUDGET" in out4 and "LEFT" in out4 and code4 == 0, "a shard with a 4-seco
 check("BUDGET" not in outu and "LEFT" not in outu and all(("PASS %s" % r) in outu for r in "abc") and codeu == 0,
       "rows-pr-full: with --budget -1 the same shard runs every row and prints no LEFT (exit %d)" % codeu)
 wf = os.path.join(root, ".github", "workflows", "regression-pr.yml")
-check(not os.path.exists(wf) or open(wf).read() == flow.replace("@BASE@", "main").replace("@LEVELS@", "nightly"),
+check(not os.path.exists(wf) or open(wf).read() == flow.replace("@BASE@", "main").replace("@LEVELS@", "L1"),
       ".github/workflows/regression-pr.yml is the rendered workflow")
 sys.exit(1 if failed else 0)

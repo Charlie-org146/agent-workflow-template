@@ -154,9 +154,10 @@ full = re.search(r'^- \*\*Full run:\*\* (.*)', sub, re.M).group(1).lower()
 never = re.search(r'^- \*\*Never:\*\* (.*)', sub, re.M).group(1).lower()
 assert 'live' in full or 'every' in full
 assert 'fixture' in never or 'dry run' in never or 'subset' in never
-need = {'health-round': ('feature_labels', 'claude'), 'regression-round': ('exits 77', 'not a full run', 'feature_labels', 'draft and covered')}[sys.argv[2]]
+need = {'health-round': ('feature_labels', 'claude'), 'regression-round': ('exits 77', 'not a full run', 'feature_labels')}[sys.argv[2]]
 missing = [word for word in need if word not in (full + ' ' + sub.lower())]
 assert not missing, missing
+assert sys.argv[2] != 'regression-round' or ('not ready' in full and 'proved by' in full), 'the Full run field does not say which rows a full run leaves out'
 PY"
   done
   check "the registry names both routines on their pages" 'grep -q "^health-round[[:space:]]Health$" '"$here"'/.loop/routines.tsv && grep -q "^regression-round[[:space:]]Regression$" '"$here"'/.loop/routines.tsv'

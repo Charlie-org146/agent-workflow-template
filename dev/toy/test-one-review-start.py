@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # windows: ok
-# reads: skills/workflow-delivery/scripts/start_review.py skills/workflow-delivery/scripts/goal.py skills/workflow-monitoring/scripts/batch.py skills/workflow-release/scripts/merge.py
+# reads: skills/workflow-delivery/scripts/start_review.py skills/workflow-delivery/scripts/goal.py skills/workflow-monitoring/scripts/batch.py skills/workflow-release/scripts/merge.py skills/workflow-docs/scripts/criteria.py
 """One review (DLF-1.3), a goal's start: adopt marks no goal and refuses one with any sign of a mark or with history it
 can't read; a goal first committed where the setting is on needs a start review, and merge refuses until it is answered.
 Throwaway repos with a bare origin, their own home and a stand-in gh; no network."""

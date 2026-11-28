@@ -176,11 +176,12 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `smtp_host` | The SMTP server digest_mail smtp uses (with the DIGEST_SMTP_* secrets). | set "smtp_host" in .loop/config.json | `smtp.gmail.com` | default |
 | `smtp_port` | 465 (TLS) or 587 (STARTTLS) for digest_mail smtp. | set "smtp_port" in .loop/config.json | `465` | default |
 | `review_depth` | full runs the whole plan and review pipeline and refuses a condensed one; condensed allows a shorter run. | set "review_depth" in .loop/config.json | `full` | default |
+| `plan_fix_reads` | The most reads of fixes a plan gets after its reviews, on the changes only; wording findings are build notes. | set "plan_fix_reads" in .loop/config.json | `2` | default |
 | `criteria` | true makes docs check enforce the PRD page contract (Problem, Requirements, Non-goals, Success metrics, Tests). | set "criteria" in .loop/config.json | `true` | default |
 | `wiki_dir` | The folder of wiki pages. | set "wiki_dir" in .loop/config.json | `docs/wiki` | default |
 | `risky_paths` | Regexes for paths whose goals need extra care. | set "risky_paths" in .loop/config.json | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | default |
 | `step_limit` | Seconds a flow step may run when the flow file sets none; 0 is built-in. | set "step_limit" in .loop/config.json | `0` | default |
-| `goal_levels` | Row levels a goal lane plans from: land, or nightly (land and nightly rows). | set "goal_levels" in .loop/config.json | `land` | default |
+| `goal_levels` | Row levels a goal lane plans from: L0 (the default), L1 or L2 (every row). | set "goal_levels" in .loop/config.json | `L0` | **overridden:** `L1` |
 | `regression_runs` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. | set "regression_runs" in .loop/config.json | `(empty)` | **overridden:** `actions` |
 | `machine_setup` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. | set "machine_setup" in .loop/config.json | `[]` | default |
 | `automation` | Routines the Automation table lists: {name, does, cadence, runs}. | set "automation" in .loop/config.json | `[]` | **overridden:** `[{"name": "health", "does": "Checks the repo, files findings.", "cadence": "47 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "regression", "does": "Runs the regression rows.", "cadence": "17 */4 * * *", "runs": "mac:agent-workflow-template-health-regression"}, {"name": "digest email", "does": "Mails the round's digest.", "cadence": "with each health round", "runs": "mac:agent-workflow-template-health-regression"}]` |

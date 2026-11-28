@@ -12,8 +12,8 @@ Rows live in `.loop/regression.tsv`: id, level, command, goal, and the date it w
 
 | Level | Runs in |
 |---|---|
-| `land` | `run land` and `run nightly`. Keep these to seconds: a row whose suite takes 20 seconds or more is `nightly` |
-| `nightly` | `run nightly` |
+| `land` | `run land` and `run nightly` (L1's rows: `run L1`). Keep these to seconds: a row whose suite takes 20 seconds or more is `nightly` |
+| `nightly` | `run nightly` (L2's rows: `run L2`) |
 | `draft` | Nothing, until you give it a real command and level |
 | `covered` | Nothing. The done line is proved elsewhere; say where in the command. On a levelled table, name the proving rows with `--covers A,B` |
 

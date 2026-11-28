@@ -15,7 +15,7 @@ import subprocess
 os.environ.update(GIT_TERMINAL_PROMPT="0", GH_PROMPT_DISABLED="1", GIT_EDITOR="true", GIT_ASKPASS="true", SSH_ASKPASS="true")
 
 TABLE, RECORD, RISKS = "regression.tsv", "regression-relevel.tsv", "regression-risk.tsv"
-COLS = ("id", "old", "level", "risk", "covers", "seconds", "cmdhash", "reason")
+COLS = ("id", "old", "level", "risk", "covers", "seconds", "cmdhash", "reason", "state")  # a line written before the state column has 8 cells
 HEAD = "# " + "\t".join(COLS) + "\n"
 RHEAD = "# kind\tkey\ttag\twhy\n"
 LEVELS, OLD, TAGS = ("L0", "L1", "L2"), ("land", "nightly", "draft", "covered"), ("security", "private", "none")
@@ -97,10 +97,14 @@ def parse_record(text):
     out, bad = [], []
     for n, line in lines_of(text):
         cells = line.split("\t")
-        if len(cells) != len(COLS) or line.startswith(("<<<<<<<", "=======", ">>>>>>>")):
-            bad.append(bad_file(RECORD, n, "the line doesn't have %d tab-separated cells" % len(COLS)))
+        if len(cells) not in (len(COLS) - 1, len(COLS)) or line.startswith(("<<<<<<<", "=======", ">>>>>>>")):
+            bad.append(bad_file(RECORD, n, "the line doesn't have %d or %d tab-separated cells" % (len(COLS) - 1, len(COLS))))
             continue
-        entry = dict(zip(COLS, cells))
+        entry = dict(zip(COLS, cells + [""] * (len(COLS) - len(cells))), nine=len(cells) == len(COLS))
+        if entry["state"] not in ("", "draft"):
+            bad.append(Problem("LEVELS_BAD_STATE", entry["id"], "the state %r is neither blank nor draft" % entry["state"],
+                               "set it blank, or draft for a draft row (" + CODE + "level %s --ready clears it)" % entry["id"], name=RECORD, line=n))
+            entry["state"] = ""
         if entry["seconds"] and not re.fullmatch(r"\d+(\.\d+)?", entry["seconds"]):
             bad.append(bad_file(RECORD, n, "seconds is not a number", entry["id"]))
             entry["seconds"] = ""
@@ -237,12 +241,17 @@ def check_entry(state, n, row, entry, levels_by_id):
             edit + "--risk " + tag)
     elif entry["risk"] not in TAGS:
         say("LEVELS_BAD_FILE", "the risk %r is not security, private or none" % entry["risk"], edit + "--risk <tag>")
+    if entry["nine"] and entry["state"] != ("draft" if row["level"] == "draft" else ""):
+        say("LEVELS_STATE_MISMATCH", "the state %r does not match the table's level word %r" % (entry["state"], row["level"]),
+            "make them agree: " + CODE + "level %s --ready for a draft that is ready, or set the state cell to match" % key)
     if entry["old"] not in OLD or not tokens(entry) or not all(REASON.match(t) for t in tokens(entry)):
         say("LEVELS_BAD_FILE", "the old word or the reason is blank or not a known one", "repair the entry by hand")
     covers = [k for k in entry["covers"].split(",") if k]
     level = entry["level"]
     if row["level"] == "covered":
         level = covered_level(entry, levels_by_id)
+        if entry["level"] in LEVELS and entry["level"] != level:
+            say("LEVELS_COVER_LEVEL", "the stored level %s is not %s, the level its covers give" % (entry["level"], level), edit + "--covers " + entry["covers"])
         if entry["seconds"] or entry["cmdhash"]:
             say("LEVELS_BAD_FILE", "a covered row carries no seconds or command hash", "empty both cells")
         if not (excuse(row) and not covers):

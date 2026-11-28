@@ -86,7 +86,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `eta_margin_percent` | 25 | Percent added to a goal's estimate for its hard ETA, 0 to 300. |
 | `feature_labels` | false | true tags each health and regression issue feature:<Page>, creating the label. |
 | `full_auto` | true | Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait. |
-| `goal_levels` | land | Row levels a goal lane plans from: land, or nightly (land and nightly rows). |
+| `goal_levels` | L1 | Row levels a goal lane plans from: L0 (the default), L1 or L2 (every row). |
 | `govern_hook` | true | false turns off the govern-only hook (edits, commits, pushes refused in the operation session). |
 | `health_cron` | 47 */4 * * * | Five cron fields: when health, the judge and its digest run on the Mac; or off. |
 | `judge_env` | ANTHROPIC_API_KEY | No longer read. |
@@ -105,6 +105,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `min_free_memory_gb` | 3.0 | Free GB below which no lane or goal starts; 0 off. |
 | `one_review` | true | true: a goal asks the owner once, at its start (DLF-1.3). Read from committed config. false: later stops wait again; open findings stay. |
 | `parallel` | 0 | Workers running at once; 0 means unlimited. |
+| `plan_fix_reads` | 2 | The most reads of fixes a plan gets after its reviews, on the changes only; wording findings are build notes. |
 | `plan_pause_percent` | 80 | Weekly plan % above which no goal starts; 0 is off. |
 | `pool_size` | 20 | Idle worker sessions the pool keeps; low, the operation session asks you for more. |
 | `pr_bumps_version` | false | true moves the last version number once on a goal's branch. |

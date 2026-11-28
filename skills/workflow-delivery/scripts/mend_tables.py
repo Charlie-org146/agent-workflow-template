@@ -63,6 +63,16 @@ def mend(git, files, base):
                 at[k] = len(out)
                 out.append(line)
             elif line != out[at[k]]:
+                a, b = line.split("\t"), out[at[k]].split("\t")
+                same = a[:8] == b[:8] and (len(a) < 9 or len(b) < 9 or a[8] == b[8])  # two different state cells are a real conflict
+                if f == tsv[2] and same:  # one record entry with and without the ninth (state) cell: keep the longer
+                    out[at[k]] = max(line, out[at[k]], key=len)
+                    continue
+                if f == tsv[1]:  # a run line with and without the sixth (commit) cell: when the first five cells are byte-equal, keep the longer
+                    ca, cb = line.rstrip("\t").split("\t"), out[at[k]].rstrip("\t").split("\t")  # the shorter line must be a prefix of the longer, which has at most 6 cells
+                    if len(max(ca, cb, key=len)) <= 6 and (ca[:len(cb)] == cb or cb[:len(ca)] == ca):
+                        out[at[k]] = max(line, out[at[k]], key=len)
+                        continue
                 if f != tsv[1] or line.split("\t")[2:3] == out[at[k]].split("\t")[2:3]:
                     return False
                 out[at[k]] = max(line, out[at[k]], key=lambda l: l.split("\t")[2:3])
