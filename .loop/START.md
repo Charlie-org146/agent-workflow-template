@@ -84,7 +84,7 @@ Every repo setting, its value and its one-line explanation is in the Settings ta
 | `eta_margin_percent` | 25 | Percent added to a goal's estimate for its hard ETA, 0 to 300. |
 | `feature_labels` | false | true tags each health and regression issue feature:<Page>, creating the label. |
 | `full_auto` | true | Off keeps every gate; true lets the operation session take a worker's recommended option, safety ones wait. |
-| `goal_levels` | land | Row levels a goal lane plans from: land, or nightly (land and nightly rows). |
+| `goal_levels` | L1 | Row levels a goal lane plans from: L0 (the default), L1 or L2 (every row). |
 | `govern_hook` | true | false turns off the govern-only hook (edits, commits, pushes refused in the operation session). |
 | `health_cron` | 47 */4 * * * | Five cron fields: when health, the judge and its digest run on the Mac; or off. |
 | `judge_env` | ANTHROPIC_API_KEY | No longer read. |

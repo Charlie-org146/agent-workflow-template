@@ -114,8 +114,8 @@ wf '  pull_request:
 '; off "a pull_request filter" WF; unwf
 wf "if: always() && github.event_name != 'merge_group'" "if: false"; off "a job that can be skipped" WF; unwf
 wf "if: always() && github.event_name != 'merge_group'" "if: github.event_name == 'merge_group'"; off "affected runs only in the merge queue" WF; unwf
-wf "run nightly --reuse --tier goal" "run nightly --tier goal"; off "a no-op shard (no --reuse)" WF; unwf
-wf "run nightly --reuse --tier goal" "run nightly --reuse --tier goal --ids example-row"; off "a shard limited to chosen rows" WF; unwf
+wf "run L1 --reuse --tier goal" "run L1 --tier goal"; off "a no-op shard (no --reuse)" WF; unwf
+wf "run L1 --reuse --tier goal" "run L1 --reuse --tier goal --ids example-row"; off "a shard limited to chosen rows" WF; unwf
 wf 'test "${{ needs.shard.result }}" = success' 'true'; off "a missing aggregate" WF; unwf
 git switch -q main; git rm -q .github/workflows/regression-pr.yml; git commit -qm "no workflow"; git push -q origin main; git switch -q feat
 off "no workflow on the base" WF; git switch -q main; git revert --no-edit HEAD >/dev/null; git push -q origin main; git switch -q feat

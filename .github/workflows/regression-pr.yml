@@ -37,7 +37,7 @@ jobs:
           T=${{ runner.temp }}/t.tsv; D=$(git diff --name-only origin/main...HEAD) || { echo "FAIL cannot read the diff against origin/main: fetch the base (fetch-depth 0) and rerun the shard"; exit 1; }
           printf %s "$D" | grep -qvE '[.]md$|^[.]loop/(goals|kept)/' || { echo "documents and goal records only: no rows to run"; >>$T; exit 0; }
           touch all.tsv; cat .github/workflows/row-times.tsv all.tsv 2>/dev/null | awk -F'	' -v OFS='	' '$3!="CUT"{$3=""}1' >$T; rm all.tsv  # o852: committed times, the cache's over them
-          R="python3 skills/workflow-regression/scripts/regression.py run nightly --reuse --tier goal"
+          R="python3 skills/workflow-regression/scripts/regression.py run L1 --reuse --tier goal"
           B=866; printf %s "$D" | grep -qE '^[.]loop/regression(-known)?[.]tsv$' && B=-1  # rows changed: no budget, nothing LEFT
           [ "${{ matrix.shard }}" != tree ] || { LOOP_ROW_TIMES=$T $R --tree --timeout 300 --budget -1 && python3 skills/workflow-regression/scripts/cutgate.py $T tree.tsv .loop/regression-skips.tsv; exit $?; }
           LOOP_ROW_TIMES=$T LOOP_PR_SHARD=${{ matrix.shard }}/8 $R --budget $B --timeout 300

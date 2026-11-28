@@ -40,7 +40,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.dont_write_bytecode = True
-import actions, completion, lanes, lanes_cli, runs, slots, tiers  # noqa: E401,E402
+import actions, completion, lanes, lanes_cli, level_words, runs, slots, tiers  # noqa: E401,E402
 import levels_cli, levels_gate, levels_read, levels_write  # noqa: E401,E402
 from completion import split  # noqa: E402,F401
 from runs import chosen, clean, criteria_ids, criterion_rows, done_lines, lines_of, today  # noqa: E402,F401
@@ -113,6 +113,7 @@ def cmd_add(args):
     if not ID.match(args.id):
         sys.exit("REFUSED: bad id. Fix: letters, digits, dots, dashes.")
     root = top()
+    level_words.need_stage(root, args)
     if args.category == "defect" and not args.link:
         sys.exit("REFUSED: a defect row links to its issue or finding. Fix: add --link URL or finding:SLUG.")
 
@@ -176,7 +177,7 @@ def cmd_sync(args):
         edit_rows(root, lambda current: [current.setdefault(k, v) for k, v in drafted.items()])
     drafts = [row["id"] for row in rows.values() if row["level"] == "draft"]
     for key in drafts:
-        print("DRAFT %s: not run until it has a command and level" % key)
+        print(level_words.draft_line(key))
     never = runs.unproven(root, [row for row in rows.values() if row["level"] in ("land", "nightly")], SEEN)
     for key in never:
         print("UNPROVEN %s: never seen failing. Run red." % key)
@@ -202,10 +203,11 @@ def cmd_criteria(_args):
         found = criterion_rows(rows, key)
         if not found:
             unmet.append("%s (no regression row)" % key)
+        passes = lambda r: subprocess.run(["sh", "-c", r["command"]], cwd=root, capture_output=True, env=actions.row_env()).returncode in (0, runs.SKIP_CODE)
         for row in found:
-            if row["level"] == "draft" or (row["level"] != "covered" and subprocess.run(["sh", "-c", row["command"]], cwd=root,
-        capture_output=True, env=actions.row_env()).returncode not in (0, runs.SKIP_CODE)):
-                unmet.append("%s (row %s is a draft or failing)" % (key, row["id"]))
+            why = level_words.cover_unmet(root, row, rows, passes) if row["level"] == "covered" else ""
+            if row["level"] == "draft" or why or (row["level"] != "covered" and not passes(row)):
+                unmet.append("%s (row %s is a draft or failing%s)" % (key, row["id"], ": " + why if why else ""))
     print("\n".join(unmet))
     return 1 if unmet else 0
 
@@ -254,6 +256,7 @@ def cmd_run(args):
     root = top()
     levels_gate.check_read(root)
     rows = read_rows(root)
+    level_words.not_run(rows)
     if not rows:
         print("NO ROWS: nothing to run" if args.reuse else "NO ROWS: run add first")
         return 0 if args.reuse else 1
@@ -264,7 +267,7 @@ def cmd_run(args):
     expected, picked = known(root), []
     for row in tiers.kinds([rows[i] for i in ids] if ids else chosen(rows, tiers.target(root, args)), args.kind):
         if row["level"] in ("draft", "covered"):
-            print("SKIP %s: %s" % (row["id"], row["level"]))
+            row["level"] == "covered" and print("SKIP %s: covered" % row["id"])
         else:
             picked.append(row)
     head, record, unclean = git("rev-parse", "HEAD"), lanes.record_path(root), lanes.dirty(root)
@@ -297,9 +300,10 @@ def cmd_run(args):
         mine = split(todo, {k: v[0] for k, v in seen.items() if v[0] > 0}, n)
         print("SPLIT %d/%d: %d of %d rows" % (i, n, len(mine[i]), len(todo)))
         todo = [key for key in todo if key in mine[i]]
-    if todo and (args.target in ("land", "nightly") or ids):
+    heavy = args.target in ("land", "nightly", "L0", "L1", "L2") or ids
+    if todo and heavy:
         lanes_cli.wait_memory(root)
-    if todo and (args.target in ("land", "nightly") or ids) and (why or not args.reuse or ids):
+    if todo and heavy and (why or not args.reuse or ids):
         slot = slots.acquire(root, os.environ.get("_LOOP_LANE_LABEL") or os.path.basename(root) + " by hand", head, unclean)
     else:
         slots.started()
