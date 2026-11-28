@@ -157,6 +157,8 @@ Every repo setting from the template's settings reference, with this repo's valu
 | `check_slots` | Open PRs with unfinished checks allowed before a push. | set "check_slots" in .loop/config.json | `2` | default |
 | `parallel` | Workers running at once; 0 means unlimited. | set "parallel" in .loop/config.json | `0` | default |
 | `cadence` | Minutes between operation check-ins, 1 to 60, or off. | set "cadence" in .loop/config.json | `30` | **overridden:** `30` |
+| `board_max_age` | Minutes after which a board card whose state has not changed shows as stale. | set "board_max_age" in .loop/config.json | `5` | default |
+| `checkin_every` | Minutes between mailed check-ins at the least, 5 to 10; one goes only when something changed. | set "checkin_every" in .loop/config.json | `10` | default |
 | `auto_approve` | true approves what a flow step leaves for the owner, logged auto-approved. | set "auto_approve" in .loop/config.json | `false` | **overridden:** `true` |
 | `auto_merge` | true lets the release step merge a goal's PR and publish. | set "auto_merge" in .loop/config.json | `false` | **overridden:** `true` |
 | `merge_queue` | true: GitHub's merge queue checks a moved base; merge.py waits for MERGED. | set "merge_queue" in .loop/config.json | `false` | default |
