@@ -2,7 +2,7 @@
 
 - Slug: fix-windows-toy-rows
 - Review: one
-- Touches: dev/toy, .loop/regression.tsv
+- Touches: dev/toy, .loop/regression.tsv, skills/workflow-docs/scripts/criteria.py, docs/wiki/Documentation.md, docs/wiki/How-to-use-Documentation.md
 - ETA: 240 active minutes (estimate 190m plus a 25% margin)
 
 ## Done lines
