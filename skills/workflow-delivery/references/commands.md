@@ -661,6 +661,12 @@ Sizing is on for this repo (CBS-1, ASZ-1). Write `Files:` (one path per file, no
 ## sizing check
 Sizing is on for this repo. First run `python3 {path} rule {slug} {step}`, run each check in the form it prints and write its `CHECK: <check> <form> <passes>` lines before the STEP line; a check the size added since the plan needs its line before ship.
 
+## sizing start
+This goal's size row is {row} (provisional: `sizing.py size` sets the real row from the plan). The row lists these forms: {forms}. Run them in a condensed pass of this step and say so with DEPTH: condensed. Write the CHECK lines in the forms `sizing.py` prints, not these.
+
+## sizing rounds
+A plan gets the reviews its size's row lists, once. A read after a fix covers only what changed, and at most `{reads}` such reads run. After that, only a finding that makes the plan wrong is fixed, and the build's review checks that fix. A finding about wording alone is a build note at any round.
+
 ## sizing depth full
 This goal's depth follows its size (its stored forms): run the skill's full pipeline, every phase, reviewer and pass it has, and say so with DEPTH: full. Never condense it on your own.
 
