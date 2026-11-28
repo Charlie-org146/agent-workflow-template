@@ -870,3 +870,5 @@
 | <a id="t-plan-by-size-start"></a>plan-by-size-start | requirement | done line v110-plan-by-size:1 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
 | <a id="t-plan-by-size-rounds"></a>plan-by-size-rounds | requirement | done line v110-plan-by-size:2 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-27 |
 | <a id="t-done-plan-by-size-3"></a>done-plan-by-size-3 | requirement | done line v110-plan-by-size:3 | no result | - | local | no |
+| <a id="t-mailbox-comments-only-list"></a>mailbox-comments-only-list | requirement | done line v110-board-views:5 | not run | - | local | 2026-11-28 |
+| <a id="t-settings-new-keys-listed"></a>settings-new-keys-listed | requirement | done line v110-board-views:4 | not run | - | local | 2026-11-28 |
