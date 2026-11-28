@@ -791,3 +791,4 @@ plan-by-size-rounds	land	L1	none				default
 done-plan-by-size-3	covered	L1	none	package-passes			covers	
 mailbox-comments-only-list	land	L1	none				default	
 settings-new-keys-listed	land	L1	none				default	
+board-views-rows-add-only	land	L1	none				default	
