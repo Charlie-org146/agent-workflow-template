@@ -872,3 +872,4 @@
 | <a id="t-done-plan-by-size-3"></a>done-plan-by-size-3 | requirement | done line v110-plan-by-size:3 | no result | - | local | no |
 | <a id="t-mailbox-comments-only-list"></a>mailbox-comments-only-list | requirement | done line v110-board-views:5 | not run | - | local | 2026-11-28 |
 | <a id="t-settings-new-keys-listed"></a>settings-new-keys-listed | requirement | done line v110-board-views:4 | not run | - | local | 2026-11-28 |
+| <a id="t-board-views-rows-add-only"></a>board-views-rows-add-only | requirement | done line v110-board-views:8 | not run | - | local | 2026-11-28 |
