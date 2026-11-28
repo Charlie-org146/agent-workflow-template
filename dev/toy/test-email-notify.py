@@ -65,6 +65,10 @@ with tempfile.TemporaryDirectory() as tmp:
     state = os.path.join(root, ".git", "loop", "notified.json")
     env = dict(os.environ, HOME=tmp, USERPROFILE=tmp, LOOP_FLOW=flow, LOOP_MAIL_ENV=env_file, DIGEST_MAIL_RETRY_SECONDS="0",
                DIGEST_MAIL_API="http://127.0.0.1:%d" % server.server_address[1])
+    names = os.path.join(tmp, "private-names.txt")  # BOARD-5: a mail is scanned first; a list of only comments passes
+    with open(names, "w") as f:
+        f.write("# no names" + chr(10))
+    env["LOOP_PRIVATE_NAMES"] = names
     for name in ("DIGEST_TO", "DIGEST_FROM", "CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_EMAIL_TOKEN", "DIGEST_SMTP_TEST_PORT", "LOOP_ROLE"):
         env.pop(name, None)
 
@@ -132,6 +136,19 @@ with tempfile.TemporaryDirectory() as tmp:
     out = run(CHECKIN.replace("[blocks nothing]", "[blocks nothing]\n2. late-goal stopped after 3 tries; resume it [blocks nothing]"))
     check(len(posts) == 1 and "stopped late-goal" in posts[0].get("subject", ""),
           "a stopped goal also under Needs you gets one mail, not two (%d)" % len(posts))
+
+    posts.clear()  # BOARD-5: text the scan refuses is not sent, is retried once clean, and leaves no "mailing" key behind
+    with open(names, "w") as f:
+        f.write("zorblax" + chr(10))
+    record("zorblax-goal", status="stopped", step="build", attempt=1, finding="finding:zorblax-goal-build")
+    out = run(CHECKIN)
+    left = open(state).read()
+    check(not posts and "private scan refused" in out and "zorblax" not in out, "text the private-name scan refuses is not mailed and the refusal hides the word")
+    check('"mailing"' not in left, "a refused mail leaves no mailing key behind, so it is retried")
+    with open(names, "w") as f:
+        f.write("# no names" + chr(10))
+    out = run(CHECKIN)
+    check(len(posts) == 1 and "zorblax-goal" in posts[0].get("subject", ""), "once the text is clean the refused mail goes out")
 
     kept = open(state).read()
     check(ADDR not in out and ADDR not in kept and "owner.fixture" not in kept, "no address is printed or kept in notified.json")

@@ -41,7 +41,7 @@ import machines  # noqa: E402
 
 LEDGER = "refs/loop/mail-ledger"
 FIXED = {"stopped": (["resume it", "retire it"], 0), "past ETA": (["ship now", "extend once", "defer"], 0),
-         "released": (["noted, nothing to do"], 0)}
+         "released": (["noted, nothing to do"], 0), "check-in": (["noted, nothing to do"], 0)}
 RISKY = re.compile(r"\b(delete|destroy|wipe|force[- ]push|reset --hard|rm -rf|secrets?|tokens?|passwords?|credentials?|api keys?|"
                    r"mail\.env|private|pay|payment|billing|purchase|spend|money|cost|\$\d)", re.I)
 BARE = re.compile(r"^\W*(?:option\s*)?(\d+)?\W*(?:recommended|approve|approved|yes|ok|go)?\W*$", re.I)

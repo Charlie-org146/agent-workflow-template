@@ -58,6 +58,8 @@
   "step_budget_minutes": 30,
   "prep_budget_minutes": 25,
   "cadence": "30",
+  "board_max_age": 5,
+  "checkin_every": 10,
   "smtp_host": "smtp.gmail.com",
   "smtp_port": 465,
   "step_limit": 0,

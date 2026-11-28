@@ -47,6 +47,9 @@ def mailer():
     return importlib.import_module("mail")  # another skill's script: no static import, so the package scan sees none
 
 
+import notify_gate as gate  # noqa: E402
+
+
 def say(text):
     print("NOTIFY: " + (sys.modules["mail"].scrub(text) if "mail" in sys.modules else str(text)))
 
@@ -146,10 +149,7 @@ def events(root, text):
 
 
 def save(path, state):
-    temp = path + ".tmp"
-    with open(temp, "w") as handle:
-        json.dump(state, handle, indent=1, sort_keys=True)
-    os.replace(temp, path)
+    gate.save(path, state)
 
 
 def cmd_send(args):
@@ -167,7 +167,9 @@ def cmd_send(args):
     found = [e for e in found if not only or (e[1] == "start review" and e[2] == only)]
     if not os.path.exists(path):
         held = [e for e in found if e[1] != "start review"]  # a start review is never part of the baseline: it must go out
-        save(path, {"sent": {key: "baseline" for key, _, _, _ in held}})
+        base = {"sent": {key: "baseline" for key, _, _, _ in held}}
+        gate.checkin_event(base, text, needs, args.root, False)
+        save(path, base)
         only or say("baseline %d events, nothing sent; from now on each new one is mailed" % len(held))
         if len(held) == len(found):
             return 0
@@ -177,6 +179,7 @@ def cmd_send(args):
     for key, kind, _, _ in [e for e in new if e[1] == "covered"]:  # its stopped or past-ETA mail says it
         sent[key] = "covered"
     new = [e for e in new if e[1] != "covered"]
+    new += gate.checkin_event(state, text, needs, args.root, not only)
     save(path, state)
     if not new:
         return 0
@@ -196,7 +199,7 @@ def cmd_send(args):
         return 0
     repo = os.path.basename(os.path.abspath(args.root))
     for key, kind, slug, action in new:
-        got = mailbox.claim(folder, key, flow_path(), args.root)
+        got = True if kind == "check-in" else mailbox.claim(folder, key, flow_path(), args.root)
         if got is not True:  # one stream: the other machine mailed it (done), or the budget is spent (tried again next time)
             got == "sent" and sent.update({key: "covered"})
             say("not sent %s %s: %s" % (kind, slug, "the other machine mailed it" if got == "sent" else "the send budget is spent"))
@@ -204,20 +207,30 @@ def cmd_send(args):
         sent[key] = "mailing"
         save(path, state)
         body = mailbox.compose(folder, key, kind, slug, action, repo)
+        subject = "Loop: %s %s (%s) [%s]" % (kind, slug, repo, mailbox.qid(key))
+        refused = gate.outgoing_refusal({"subject": subject, "body": body, "page": mail.rounds.to_html(body)})
+        if refused:
+            del sent[key]
+            kind == "check-in" or mailbox.claim(folder, key, flow_path(), args.root, release=True)
+            say("not sent %s: private scan refused %s" % (kind, refused))
+            gate.drop_pending(folder, mailbox.qid(key))
+            save(path, state)
+            continue
         try:
-            outcome, detail, _ = mail.deliver(mode, keys, "Loop: %s %s (%s) [%s]" % (kind, slug, repo, mailbox.qid(key)), body, mail.rounds.to_html(body),
+            outcome, detail, _ = mail.deliver(mode, keys, subject, body, mail.rounds.to_html(body),
                                               (host, port, wait, api))
         except Exception as err:  # noqa: BLE001 - maybe mid-send: keep it marked, never send twice
             outcome, detail = "unknown", type(err).__name__
         if outcome == "refused":
             del sent[key]
-            mailbox.claim(folder, key, flow_path(), args.root, release=True)
+            kind == "check-in" or mailbox.claim(folder, key, flow_path(), args.root, release=True)
             say("not sent %s %s: %s (MAIL_REFUSED)" % (kind, slug, detail))
         elif outcome == "unknown":
             say("%s %s may have been sent: %s; kept, so it is not sent twice (MAIL_UNKNOWN)" % (kind, slug, detail))
         else:
             sent[key] = "mailed"
             say("sent %s %s" % (kind, slug))
+        outcome != "refused" and kind == "check-in" and gate.mark(state, text, needs, sent, key)
         save(path, state)
     return 0
 

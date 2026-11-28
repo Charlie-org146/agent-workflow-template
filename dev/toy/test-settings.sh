@@ -23,6 +23,9 @@ missing=""
 for k in parallel cadence auto_approve auto_merge pr_bumps_version version_file routines regression_cron step_limit token_budget mend max_tries resume_on_limit base wiki_dir risky_paths command allowed_tools model steps overrides rules repos; do
   grep -q "^| \`$k\` | .* | .[A-Za-z0-9]" <<<"$ref" || missing="$missing $k"
 done
+for k in board_max_age checkin_every; do
+  grep -q "^| \`$k\` | .* | .[A-Za-z0-9]" <<<"$ref" || missing="$missing $k"
+done
 check "the reference lists every repo and private setting with a default and a line" '[ -z "$missing" ]'
 saved=$(sed -n '/^# Settings reference$/,$p' "$here/skills/loop-files.md")
 check "the saved reference is the generated one" '[ "$ref" = "$saved" ]'
