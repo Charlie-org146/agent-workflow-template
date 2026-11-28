@@ -106,5 +106,3 @@ docs-skill-no-size-1403	o1035, o988 (done line 5), v110-no-size-cap-a	added: the
 tasks-rows-only-added	o1074, TD1995, v110-main-red	tightened only: the row also needs its test to end cleanly, and prints the test's last lines when it doesn't; its three greps are unchanged
 rows-pr-full	o1120, TD2463, C22	tightened only: the row also needs the toy to exit 0 and to print no FAIL line; its two greps are unchanged
 toy-leak-config-keep	o1120, TD2466, C2	the hooksPath is written through cygpath -m with a fall-back to the plain folder, and no check is removed
-mailbox-two-mails	TD2544, console C68 (finding 13)	tagged only: the link cell gains finding:v110-board-views:13; no other cell changes
-settings-reference	TD2544, console C68 (finding 15)	tagged only: the link cell gains finding:v110-board-views:15; no other cell changes
