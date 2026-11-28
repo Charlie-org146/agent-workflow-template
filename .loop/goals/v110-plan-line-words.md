@@ -28,3 +28,4 @@ Frozen. A wrong done line needs a new goal.
 - Done line 2 ("that one line, in that one file") is read as: the diff is that one line plus the goal's own two files.
 - QA is partial: the tool lane ran 18 of 150 rows in the budget, 45 passed (36 reused), 9 known, 0 failed, 132 left to the PR's reached-test run and the scheduled full suite (TD2401 (2)). Build-gate: no separate command found.
 - Readers: design, CEO and engineering read f93a1debc; red team and review read 48741fdba.
+- A fresh reader listed every file of the tool's commit 3d0b710e7: the run record regression-runs.tsv and the generated wiki tables on 10 pages (Automation, Check-in-and-board, Delivery, Guardrails, Health, Machines, Operation, Regression, Setup, Tests), date tokens only; no row file changed (regression.tsv, regression-skips.tsv, approved-row-changes.tsv, regression-known.tsv); the content diff is exactly line 75 of the fix-windows-toy-rows plan (console C73, TD2551).
