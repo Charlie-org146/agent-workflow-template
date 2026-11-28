@@ -220,7 +220,7 @@
 
 | Test | Kind | Guards | Result | Date | Run | Seen failing |
 |---|---|---|---|---|---|---|
-| <a id="t-stale-found"></a>stale-found | requirement | DOC-25 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-09 |
+| <a id="t-stale-found"></a>stale-found | requirement | DOC-25 | PASS | 2026-11-28 | [CI 2026-11-28](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-28) | 2026-11-09 |
 | <a id="t-page-shape"></a>page-shape | requirement | DOC-25 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-10 |
 | <a id="t-review-dated"></a>review-dated | requirement | DOC-2 | PASS | 2026-11-27 | [CI 2026-11-27](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-27) | 2026-11-10 |
 | <a id="t-template-sheet"></a>template-sheet | requirement | DOC-25 | PASS | 2026-11-26 | [CI 2026-11-26](https://github.com/Charlie-org146/agent-workflow-template/actions/workflows/regression.yml?query=created%3A2026-11-26) | 2026-11-08 |
