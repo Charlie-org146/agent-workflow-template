@@ -141,7 +141,7 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
-| [ci-summary](Tests#t-ci-summary) | requirement | AUT-1 | Given the nightly run, when it ends, then it writes a results table to the job summary. | PASS 2026-11-27 |
+| [ci-summary](Tests#t-ci-summary) | requirement | AUT-1 | Given the nightly run, when it ends, then it writes a results table to the job summary. | PASS 2026-11-28 |
 | [schedule-setting](Tests#t-schedule-setting) | requirement | AUT-1 | Given a changed schedule setting, when the workflow is rewritten, then the Actions schedule changes. | PASS 2026-11-27 |
 | [aut-defect-issue](Tests#t-aut-defect-issue) | requirement | AUT-1 | Given AUT-1, when test-automation.sh runs its 2 cases, then each passes: it prints every PASS line the 3 merged rows checke; the issue gains the defect label. | PASS 2026-11-28 |
 | [ls-private-tick](Tests#t-ls-private-tick) | requirement | AUT-1 | Given AUT-1, when test-local-schedule.sh runs its 3 cases, then each passes: health runs, the regression runs live, one issue i; health runs, no regression runs the tick says REGR; it says Last ran and MISSED, a recent last run say. | PASS 2026-11-28 |
@@ -153,7 +153,7 @@ How to use: [How-to-use-Automation](How-to-use-Automation)
 | [aut-routine-block](Tests#t-aut-routine-block) | requirement | AUT-1 | Given the AUT-1 cases of test-automation-routines.py, when it runs once, then it prints every PASS line the 3 merged rows checked and no FAIL line. | PASS 2026-11-27 |
 | [health-register-no-launchd](Tests#t-health-register-no-launchd) | requirement | AUT-1 | Given a machine that is not a Mac, when local register runs, then the repo is in the schedule registry, a second run keeps one entry, and no launch agent is written. | PASS 2026-11-14 |
 | [perms-docs-check](Tests#t-perms-docs-check) | requirement | AUT-1 | Given a routine with no declared permissions, when docs.py check runs, then it prints a PERMISSIONS finding (the same check as audit.py permissions check, run inside docs.py check). | not run |
-| [refuse-replace](Tests#t-refuse-replace) | requirement | AUT-5 | Given AUT-5, when test-docs.sh runs its 2 cases, then each passes: that page is never overwritten; the original page is back. | PASS 2026-11-27 |
+| [refuse-replace](Tests#t-refuse-replace) | requirement | AUT-5 | Given AUT-5, when test-docs.sh runs its 2 cases, then each passes: that page is never overwritten; the original page is back. | PASS 2026-11-28 |
 | [bad-schedule-refused](Tests#t-bad-schedule-refused) | requirement | AUT-5 | Given a schedule setting that is not a cron time, when it is applied, then it is refused. | PASS 2026-11-27 |
 | [aut-regression-off](Tests#t-aut-regression-off) | requirement | AUT-5 | Given AUT-5, when test-automation.sh runs its 2 cases, then each passes: it prints every PASS line the 5 merged rows checke; it prints every PASS line the 3 merged rows checke. | PASS 2026-11-28 |
 | [publish-tables-regen](Tests#t-publish-tables-regen) | requirement | AUT-5 | Given the AUT-5 cases of test-publish-tables.py, when it runs once, then it prints every PASS line the 2 merged rows checked and no FAIL line. | PASS 2026-11-13 |

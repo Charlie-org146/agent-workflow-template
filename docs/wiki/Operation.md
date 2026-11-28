@@ -221,8 +221,8 @@ None
 | Test | Kind | Guards | Checks | Last result |
 |---|---|---|---|---|
 | [dependency-held](Tests#t-dependency-held) | requirement | OPS-1 | Given OPS-1, when test-board.sh runs its 2 cases, then each passes: it is held until that goal merges; it records what it waits on. | PASS 2026-11-28 |
-| [no-line-in-governor](Tests#t-no-line-in-governor) | requirement | OPS-1 | Given OPS-1, when test-batch.sh runs its 2 cases, then each passes: no goal runs inside it; it says the operation session only governs. | PASS 2026-11-27 |
-| [failed-waits-mender](Tests#t-failed-waits-mender) | requirement | OPS-1 | Given a failed goal, when mending is due, then it waits before a mender starts. | PASS 2026-11-09 |
+| [no-line-in-governor](Tests#t-no-line-in-governor) | requirement | OPS-1 | Given OPS-1, when test-batch.sh runs its 2 cases, then each passes: no goal runs inside it; it says the operation session only governs. | PASS 2026-11-28 |
+| [failed-waits-mender](Tests#t-failed-waits-mender) | requirement | OPS-1 | Given a failed goal, when mending is due, then it waits before a mender starts. | PASS 2026-11-28 |
 | [worker-refuses](Tests#t-worker-refuses) | requirement | OPS-1 | Given OPS-1, when test-workers.sh runs its 2 cases, then each passes: it prints every PASS line the 2 merged rows checke; it shows its pull request. Given a goal with a PR,. | PASS 2026-11-28 |
 | [one-way-to-run](Tests#t-one-way-to-run) | requirement | OPS-1 | Given the tools, when a goal is started, then no old way to start it remains. | PASS 2026-11-28 |
 | [operate-all](Tests#t-operate-all) | requirement | OPS-1 | Given OPS-1, when test-operate.sh runs its 2 cases, then each passes: the whole suite passes; the report reaches its agent once. | PASS 2026-11-25 |
