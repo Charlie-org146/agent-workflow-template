@@ -25,6 +25,7 @@ import datetime
 import hashlib
 import json
 import os
+import posixpath
 import re
 import subprocess
 import sys
@@ -99,7 +100,7 @@ def pages(root):
         names = sorted(name for name in os.listdir(os.path.join(root, folder)) if name.endswith(".md"))
     except OSError:
         return []
-    return [os.path.join(folder, name) for name in names]
+    return [posixpath.join(folder, name) for name in names]
 
 
 def sections(text):

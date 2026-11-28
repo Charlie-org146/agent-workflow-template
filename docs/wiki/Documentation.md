@@ -10,6 +10,7 @@ How to use: [How-to-use-Documentation](How-to-use-Documentation)
 ## Problem
 - I can't tell from the wiki what a feature does, how to use it, or whether its requirements are really tested.
 - Pages drift from the code, and each repo writes them its own way, so reviewing them takes too long.
+- A page used to have two names, one on Windows and one on Linux; its path now uses a forward slash everywhere.
 - I need my approved requirements to stay exactly as I wrote them, while the loop keeps tests up to date for me; and when a PRD also lives in Notion, I want any difference between the two told to me, never silently overwritten.
 
 ## Requirements

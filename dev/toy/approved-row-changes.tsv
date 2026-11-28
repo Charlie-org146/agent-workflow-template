@@ -104,3 +104,5 @@ regression-skill-no-size-3983	o1035, o988 (done line 5), v110-no-size-cap-a	adde
 regression-skill-no-size-3815	o1035, o988 (done line 5), v110-no-size-cap-a	added: the defect row for issue 3815, restored as the owner ordered; it checks that health files no size finding on a regression SKILL.md of 151 lines; every other row unchanged
 docs-skill-no-size-1403	o1035, o988 (done line 5), v110-no-size-cap-a	added: the defect row for issue 1403, restored as the owner ordered; it checks that health files no size finding on a docs SKILL.md of 155 lines; every other row unchanged
 tasks-rows-only-added	o1074, TD1995, v110-main-red	tightened only: the row also needs its test to end cleanly, and prints the test's last lines when it doesn't; its three greps are unchanged
+rows-pr-full	o1120, TD2463, C22	tightened only: the row also needs the toy to exit 0 and to print no FAIL line; its two greps are unchanged
+toy-leak-config-keep	o1120, TD2466, C2	the hooksPath is written through cygpath -m with a fall-back to the plain folder, and no check is removed
