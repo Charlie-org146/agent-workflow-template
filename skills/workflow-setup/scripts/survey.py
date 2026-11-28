@@ -210,7 +210,7 @@ PORTABLE = ("parallel", "max_tries", "cadence", "criteria", "review_depth", "tok
             "silent_minutes", "test_budget_minutes", "prep_budget_minutes", "step_budget_minutes", "risky_paths")
 HELD = ("auto_approve", "auto_merge", "full_auto", "mend", "resume_on_limit", "pr_bumps_version", "reply_hook", "govern_hook",
         "agent_files", "routines")
-ENUMS = {"goal_levels": ("land", "nightly"), "ci_levels": ("nightly", "land"), "digest_mail": ("cloudflare", "smtp", "off"),
+ENUMS = {"goal_levels": ("L0", "L1", "L2", "land", "nightly"), "ci_levels": ("nightly", "land"), "digest_mail": ("cloudflare", "smtp", "off"),
          "review_depth": ("full", "condensed")}
 
 

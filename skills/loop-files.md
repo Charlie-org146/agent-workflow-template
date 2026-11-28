@@ -510,8 +510,8 @@ workflow
 
 | Level | Runs in |
 |---|---|
-| `land` | `run land` and `run nightly` |
-| `nightly` | `run nightly` |
+| `land` | `run land` and `run nightly` (L1's rows: `run L1`) |
+| `nightly` | `run nightly` (L2's rows: `run L2`) |
 | `draft` | Nothing, until given a real command |
 | `covered` | Nothing; proved elsewhere |
 
@@ -733,7 +733,7 @@ outside it. All three take `--root DIR` (default: the git top level), exit 2 on 
 
 **New test script, three steps:** write the header; `python3 scripts/lanes_cli.py check dev/toy/test-new.sh`; then
 `python3 scripts/lanes_cli.py affected <a file it runs>` shows its rows. Register rows with `regression.py add ...
---level land`.
+--level land` (L1's rows; give a level with `--test-level L0`, `L1` or `L2`).
 
 **Nightly read trace.** `bash dev/toy/check-reads.sh [ROW-ID...]` (row `lanes-trace`) runs each row under a Python
 audit hook and fails a row whose run read a skill file outside its closure (`LANES-TRACE-UNDECLARED`, with the line
@@ -784,6 +784,9 @@ pull-request check runs rows through `run`, so it refuses too.
 | `LEVELS_L0_OVER` | L0 seconds over 45 in all (names the total) |
 | `LEVELS_L0_TIME` | an L0 entry with no positive seconds, or a command that changed since it was measured |
 | `LEVELS_BAD_COVERS` | a covered row whose list is empty, names itself, an unknown or covered row, or a tagged covered row with an untagged proving row |
+| `LEVELS_COVER_LEVEL` | a covered row whose stored level is not the highest level of the rows its list names (a hand-edited record); the fix is `regression.py level <id> --covers <the same list>`, which writes the level the covers give |
+| `LEVELS_BAD_STATE` | a record line whose ninth cell (the state) is neither blank nor `draft` |
+| `LEVELS_STATE_MISMATCH` | a nine-cell record line whose state disagrees with the table's own level word (`draft` in the table, `draft` in the state, both ways); a line with eight cells, written before the state column, takes its state from the table |
 | `LEVELS_STALE_RISK` | a defect row whose link, goal or category changed since its tag was read: `level ID --refresh` |
 | `LEVELS_BAD_RISK_DATA` | risk data missing, empty, or with a bad or repeated line |
 | `LEVELS_BAD_FILE` | a malformed line, a conflict marker, or an unknown risk, old word or reason |
@@ -856,7 +859,7 @@ checks. No row output is published.
 
 ## Goal tier
 
-A goal lane runs `run land --reuse --tier goal` (`scripts/tiers.py`). It plans from the branch's record only when A land or nightly run that has rows to run first waits while free memory (Windows: free virtual memory) is below `min_free_memory_gb` (default 4), logs `LANE_MEMORY`, never stops a run already going, and gives up with exit 6 (EXIT_ENV, a MEMORY_WAIT note, no try used) after four times the lane's time limit.
+A goal lane runs `run land --reuse --tier goal` (the level it plans from is `goal_levels`: L0, L1 or L2) (`scripts/tiers.py`). It plans from the branch's record only when A land or nightly run that has rows to run first waits while free memory (Windows: free virtual memory) is below `min_free_memory_gb` (default 4), logs `LANE_MEMORY`, never stops a run already going, and gives up with exit 6 (EXIT_ENV, a MEMORY_WAIT note, no try used) after four times the lane's time limit.
 the record's merge-base with the base branch is the current one (else from the merge-base, plus what a base merge
 brought in) and runs the rows a change reaches, new or edited rows, root runners and the record's failures; it takes a
 lane slot only when it has no plan to follow (FULL, no merge-base). It stays within `test_budget_minutes`: rows run in tier
@@ -879,7 +882,7 @@ setting for tests only; the LANE line says when it is in effect. Without `--tier
 A goal lane's planning step works out, for every row, which files it reads. That closure is computed once per lane and kept
 per branch in `<git common dir>/loop/plans/<branch file name>` (zlib-compressed JSON, next to the lane records in `loop/tests/`,
 never in the worktree). The next lane at the same HEAD loads it instead of recomputing. `PLAN_CACHE: <state>` is the first line the
-planner prints (`regression.py run` prints a `SKIP <id>: draft` or `SKIP <id>: covered` line for such rows before it); the rest of the plan output, and the planned rows, are the same with the cache on or off.
+planner prints (`regression.py run` prints a `not run: draft <id>` line for each draft and a `SKIP <id>: covered` line for a covered row picked, before it); the rest of the plan output, and the planned rows, are the same with the cache on or off.
 
 | State and token | Means | What to do |
 |---|---|---|
@@ -933,7 +936,7 @@ settings. The Regression wiki page holds the requirements (REG-1..REG-9); this s
 | goal lane, qa and ship | rows whose closure reaches a file the goal changed since its merge-base, the goal's new or changed rows, rows that run tools on the repo root, and rows that failed last time | no |
 | goal lane, pr | the same; a path no row declares, or a deleted one, adds the rows that name it and the runners, never the full suite | no |
 | goal lane with no merge-base (shallow clone, missing base) | every row is a candidate (`FULL (no merge-base with <base>)`), kept to `test_budget_minutes` | yes |
-| hand run `regression.py run land\|nightly\|ID [--kind K]` | what you name; a plain `run nightly` is the full suite and records its time | when it is a full run |
+| hand run `regression.py run L0\|L1\|L2\|land\|nightly\|ID [--kind K]` (land is the land rows, L1; nightly is L2) | what you name; a plain `run nightly` is the full suite and records its time | when it is a full run |
 | hand run `regression.py run L2` | every land and nightly row, whatever a change reached; a covered row is proved by its cover and is not run | when it is a full run |
 | GitHub Actions, on the `regression_cron` schedule (every 4 hours by default; `off` stops it) and every v* tag | `ci_levels` (default nightly: the schedule's default target is L2, which runs every land and nightly row whatever a change reached; a covered row is proved by its cover and is not run; land: land rows only) | n/a (a runner) |
 | GitHub Actions, run by hand | its `target` input: land, nightly, L2 or a row id (empty: `ci_levels`, so L2 by default; a cleanup run with an empty target stays nightly); the workflow's own runner checks it, so a repo without the skills folder works | n/a |
@@ -1016,7 +1019,7 @@ lane ends.
   it limits concurrent full lanes, not the machine's load; AFFECTED, by-id and red runs take no slot.
 - A goal lane has no limit of its own beside its budget (`test_budget_minutes`, REG-7). The scheduled full suite has a fixed
   30-minute limit that health warns above.
-- `goal_levels` (land) and `ci_levels` (nightly): the levels a goal lane plans from (nightly adds the nightly rows a
+- `goal_levels` (L0) and `ci_levels` (nightly): the levels a goal lane plans from (L1 adds the L1 rows a
   change reaches) and the CI target (with nightly, the schedule's default target is L2; a cleanup stays nightly; land is unchanged). A CI run cut short by its job time still records its time, so health warns.
 - Each lane child gets its own `TMPDIR` and `LOOP_LANE_PORT_BASE` (a leased range of 100 ports from 20000); a row that
   binds ports uses that range or picks a free port itself. The `TMPDIR` is a new folder per lane start,
@@ -1945,7 +1948,7 @@ In `.loop/config.json`, committed and shared. 0 for `parallel` means unlimited.
 | `wiki_dir` | `docs/wiki` | The folder of wiki pages. |
 | `risky_paths` | `["^\\.github/", "(^|/)auth", "(^|/)migrations?/", "(^|/)(schema|data)\\b"]` | Regexes for paths whose goals need extra care. |
 | `step_limit` | `0` | Seconds a flow step may run when the flow file sets none; 0 is built-in. |
-| `goal_levels` | `land` | Row levels a goal lane plans from: land, or nightly (land and nightly rows). |
+| `goal_levels` | `L0` | Row levels a goal lane plans from: L0 (the default), L1 or L2 (every row). |
 | `regression_runs` | `(empty)` | Where the full regression runs: actions (public repo) or mac (private repo, each Mac tick); setup records it. |
 | `machine_setup` | `[]` | Machine setup items (allow, routine, secret, connector) machine.py applies on adoption. |
 | `automation` | `[]` | Routines the Automation table lists: {name, does, cadence, runs}. |

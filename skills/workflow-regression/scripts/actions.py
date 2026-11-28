@@ -98,8 +98,10 @@ jobs:
 @ROWTAIL@
 @L2TAIL@
           known = {row[0] for row in rows(".loop/regression-known.tsv")}
+          not_run(rows(".loop/regression.tsv"))
+          NAMES = level_names(rows(".loop/regression.tsv"))
           TARGET = os.environ.get("REGRESSION_TARGET") or os.environ.get("REGRESSION_LEVELS") or "nightly"
-          if not re.fullmatch(r"land|nightly|L2|[A-Za-z0-9_.-]+", TARGET) or TARGET not in ("land", "nightly", "L2") and \
+          if not re.fullmatch(r"land|nightly|L2|[A-Za-z0-9_.-]+", TARGET) or TARGET not in NAMES and \
                   TARGET not in [row[0] for row in rows(".loop/regression.tsv")]:
               print("REFUSED (BAD_TARGET): bad target %s: use land, nightly, L2 or a row id from regression.py list. Fix: rerun the "
                     "workflow with one of those" % json.dumps(TARGET), file=sys.stderr)
@@ -108,7 +110,7 @@ jobs:
           bad and sys.exit(print(bad, file=sys.stderr) or 1)
           SKIPS = {r[0]: (r[1] if len(r) > 1 else "", r[2] if len(r) > 2 else "") for r in rows(".loop/regression-skips.tsv")}
           def wanted(row):
-              return row[0] == TARGET if TARGET not in ("land", "nightly", "L2") else row[1] in ("land", "nightly" if TARGET == "L2" else TARGET)
+              return row[0] == TARGET and row[1] != "draft" if TARGET not in NAMES else level_pick(TARGET, row)
           def gh(*args, body=None):
               if args[0] != "api" and "--live" not in sys.argv[1:]:
                   print("WOULD gh " + " ".join(args)[:70])

@@ -104,7 +104,7 @@ with tempfile.TemporaryDirectory() as tmp:
     got, _ = run(LOOP_PR_SHARD="0/1")
     check(got and got[0] in ("r3", "tree", "wrap") and "r3" in cut, "the next run puts a row that was cut first (%s, cut %s)" % (got, cut))
 
-flow = lanes_cli.NARROW.replace("@BASE@", "main").replace("@LEVELS@", "nightly")
+flow = lanes_cli.NARROW.replace("@BASE@", "main").replace("@LEVELS@", "L1")
 job = flow.split("\n  shard:")[1].split("\n  affected:")[0]
 tree_part = next(x for x in job.splitlines() if '= tree' in x or '!= tree' in x)
 check("shard: [0, 1, 2, 3, 4, 5, 6, 7, tree]" in job and tree_part.count("--tree") == 1 and "cutgate.py $T tree.tsv .loop/regression-skips.tsv; exit $?; }" in tree_part and "--budget -1 && python3" in tree_part,

@@ -149,6 +149,12 @@ def entries(root, results=None, markdown=False, raw=False):
         ran = {name: (state, "", "") for name, state in results.items()}
     issues, groups = issues_of(root), {}
     rows = {row[0]: (row + [""] * 8)[:8] for row in tsv(root, "regression.tsv")}
+    try:
+        import level_words  # a covered row shows the worst state of its covers (absent in the workflow's copy of this file)
+    except ImportError:
+        level_words = None  # in the workflow: a covered row has no result of its own to show (R2)
+    cover = level_words.cover_results(root, tsv(root, "regression-runs.tsv"), rows) if level_words else {}
+    ran.update({n: cover.get(n, ("no result", "", "")) for n, r in rows.items() if r[1] == "covered"}) if results is None and cover is not None else None
     order = [name for name in rows if rows[name][1] != "draft"] if results is None else list(results)
     for name in order:
         row = rows.get(name) or [name, "", "", "-", "", "", "-", ""]

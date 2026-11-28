@@ -93,6 +93,7 @@ def record_text(state):
     entries = state.entries()
     levels_by_id = {k: e["level"] for k, e in entries.items()}
     for key, entry in entries.items():
+        entry["state"] = "draft" if state.by_id.get(key, {}).get("level") == "draft" else ""
         if state.by_id.get(key, {}).get("level") == "covered" and entry["level"] in LEVELS:
             entry["level"] = covered_level(entry, levels_by_id)
     order = [row["id"] for _, row in state.table if row["id"] in entries]
