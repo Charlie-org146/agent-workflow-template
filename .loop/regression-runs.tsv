@@ -222,7 +222,7 @@ full-goal-lane-timeout	PASS	2026-11-10
 gate-untouched-not-refused	PASS	2026-11-26	
 go-app-holds-goal	PASS	2026-11-19	
 goal-commands-page	PASS	2026-11-25	
-goal-levels-nightly	PASS	2026-11-27			953c0e7f1c87
+goal-levels-nightly	PASS	2026-11-28			3d2aa1209222
 goal-pr-push-error	PASS	2026-11-25	
 goal-pr-push-retried	PASS	2026-11-25	
 goal-pr-regenerates-start	PASS	2026-11-25	
@@ -247,7 +247,7 @@ guards-null-report-writers	PASS	2026-11-27
 guards-resume	PASS	2026-11-12	
 guards-rule-start	PASS	2026-11-27	
 guards-worker-role	PASS	2026-11-27	
-head-moved-168	PASS	2026-11-27			953c0e7f1c87
+head-moved-168	PASS	2026-11-28			3d2aa1209222
 health-feature-always	PASS	2026-11-17	
 health-findings-table	PASS	2026-11-17	
 health-group-no-tests	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
@@ -314,12 +314,12 @@ known-no-block-opens-issue	PASS	2026-11-27			dd00f2364c17
 known-no-block-reads-all	PASS	2026-11-27			dd00f2364c17
 known-recorded	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
 lane-affected-memory	PASS	2026-11-24	
-lane-control-all	PASS	2026-11-27			953c0e7f1c87
+lane-control-all	PASS	2026-11-28			3d2aa1209222
 lane-died-signal	PASS	2026-11-27			f9d90de792b4
 lane-env-states	PASS	2026-11-24	
 lane-fail-text	PASS	2026-11-27	
-lane-last-152	PASS	2026-11-27			953c0e7f1c87
-lane-limit-150	PASS	2026-11-27			953c0e7f1c87
+lane-last-152	PASS	2026-11-28			3d2aa1209222
+lane-limit-150	PASS	2026-11-28			3d2aa1209222
 lane-memory-not-counted	PASS	2026-11-27	
 lane-messages-table	FAIL	2026-11-27	
 lane-order	PASS	2026-11-24	
@@ -540,7 +540,7 @@ pull-ff-only-passes	PASS	2026-11-26
 queue-use	PASS	2026-11-24	
 readme-commands-in-command-map	PASS	2026-11-26	
 record-in-session	PASS	2026-11-12	
-red-race-135	PASS	2026-11-27			953c0e7f1c87
+red-race-135	PASS	2026-11-28			3d2aa1209222
 refuse-replace	PASS	2026-11-27	
 refused-unmet	PASS	2026-11-27			63464ca3f7a7
 reg-defect-label	PASS	2026-11-27			dd00f2364c17
@@ -690,7 +690,7 @@ sync-first-adopts	PASS	2026-11-18
 sync-not-connected	PASS	2026-11-20	
 sync-repo-delta	PASS	2026-11-18	
 sync-source-delta	PASS	2026-11-18	
-tables-prep-151	PASS	2026-11-27		6251fab0a8c1	6251fab0a8c1
+tables-prep-151	PASS	2026-11-28			3d2aa1209222
 task-first	PASS	2026-11-25	
 task-first-1	PASS	2026-11-25	
 task-first-2	PASS	2026-11-25	
@@ -714,7 +714,7 @@ tests-links-workflow-3839	PASS	2026-11-14
 tests-own-folder	PASS	2026-11-13	
 tests-page-stale	PASS	2026-11-26	
 tests-py-missing	PASS	2026-11-10	60def83dfbc8727d0307a13b77f5aad43479da6a
-tiers-unmapped-qa-pr	PASS	2026-11-27			953c0e7f1c87
+tiers-unmapped-qa-pr	PASS	2026-11-28			3d2aa1209222
 token-diet-budget	PASS	2026-11-25	
 token-diet-layout	PASS	2026-11-25	
 token-diet-op-rows	PASS	2026-11-25	
