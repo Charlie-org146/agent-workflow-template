@@ -29,3 +29,26 @@ Frozen. A wrong done line needs a new goal.
 - QA is partial: the tool lane ran 18 of 150 rows in the budget, 45 passed (36 reused), 9 known, 0 failed, 132 left to the PR's reached-test run and the scheduled full suite (TD2401 (2)). Build-gate: no separate command found.
 - Readers: design, CEO and engineering read f93a1debc; red team and review read 48741fdba.
 - A fresh reader listed every file of the tool's commit 3d0b710e7: the run record regression-runs.tsv and the generated wiki tables on 10 pages (Automation, Check-in-and-board, Delivery, Guardrails, Health, Machines, Operation, Regression, Setup, Tests), date tokens only; no row file changed (regression.tsv, regression-skips.tsv, approved-row-changes.tsv, regression-known.tsv); the content diff is exactly line 75 of the fix-windows-toy-rows plan (console C73, TD2551).
+- Final-diff reader (agent a93d2f0c2d2d27d49, a fresh read-only subagent, read head 942f5760d). Its output, byte for byte, between the marker lines:
+
+reader output begins
+HEAD: 942f5760d
+
+F1: Line 75 of `.loop/goals/fix-windows-toy-rows.plan.md` is the only content change in that file. The hunk header is `@@ -75 +75 @@`, with one line removed and one added.
+F2: The added line names the three Windows users-folder forms in words: drive-letter with backslash separators, forward-slash, and MSYS. The worktree path and main-checkout path are still named in words, and the rest of the sentence is word for word the same. The meaning is unchanged, and no path literal is left on the line.
+F3: The commit titled "pr: record issue states and the lane's results" (3d0b710e7) touches 11 files. They are `.loop/regression-runs.tsv` and the generated wiki tables on 10 pages: Automation, Check-in-and-board, Delivery, Guardrails, Health, Machines, Operation, Regression, Setup and Tests.
+F4: In `.loop/regression-runs.tsv`, 52 rows were replaced. Each new row has a changed date token and a changed run-commit hash (79f6c702350f). No row was hand-edited.
+F5: One replaced row went from FAIL to PASS (`codex-ro-home`). That is a run-record result, not an edit.
+F6: In the wiki diff, no changed table row falls outside the PASS/FAIL/SKIP/KNOWN result cells with date tokens.
+F7: `git diff origin/main --name-only` shows no change to `regression.tsv`, `regression-skips.tsv`, `approved-row-changes.tsv` or `regression-known.tsv`.
+F8: The scan covered the added lines of the goal file and the plan file for drive-letter, forward-slash, MSYS and Users-folder forms and found 0 hits. I read both files in full and saw no private data.
+
+N1: Done line 2 ("the diff is that one line, in that one file") is read the way the PR notes say it is: that one line plus the goal's own two files. Beyond that, the diff carries the tool's run-record and generated-table commit.
+N2: The line-75 hand commit (033701a07) is disclosed in the PR notes.
+N3: I did not run the private-name scan, and I did not read any private-name list or hook file.
+
+VERDICT: final-diff: pass
+reader output ends
+
+worker note: the reader read 942f5760d; the pushed head will carry one more goal-file commit by the tool.
+worker note: the codex-ro-home row changed FAIL to PASS in the tool's run record in commit 3d0b710e7 because that lane ran with a real Codex on PATH (operation-mac's slip: the shim was not given to this goal; disclosed, TD2549).
